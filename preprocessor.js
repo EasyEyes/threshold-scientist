@@ -13,8 +13,9 @@ var DataFrame = dfjs.DataFrame;
  * @returns {*[][]} transposed Transposed transformation of nestedArray
  */
 const transpose = (nestedArray) => {
-  const transposed = nestedArray[0].map(
-      (_, colIndex) => nestedArray.map((row) => row[colIndex]));
+  const transposed = nestedArray[0].map((_, colIndex) =>
+    nestedArray.map((row) => row[colIndex])
+  );
   return transposed;
 };
 /**
@@ -46,13 +47,12 @@ const interpretExperimentFile = (parsedContent) => {
   df = df.renameAll(preparedNames);
   // VERIFY correctness
   if ("thresholdGuessLogSd" in df.toDict()) {
-      df = df.withColumn('startValSd', 
-                          (row) => row.get('thresholdGuessLogSd'))
-              .withColumn('startVal',
-                          (row) => Math.log10(row.get('thresholdGuess')));
+    df = df
+      .withColumn("startValSd", (row) => row.get("thresholdGuessLogSd"))
+      .withColumn("startVal", (row) => Math.log10(row.get("thresholdGuess")));
   }
   splitIntoBlockFiles(df);
-}
+};
 /**
  * Given a dataframe of the correctly formatted experiment parameters, split into appropriate files for the user to download
  * @param {Object} df Dataframe (from data-frame.js) of correctly specified parameters for the experiment
@@ -61,51 +61,58 @@ const splitIntoBlockFiles = (df) => {
   // Initialize the set of files to be downloaded as a zip file
   const zip = new JSZip();
   // Split up into block files
-  const blockIndices = {'block': []}
-  df.unique('blockOrder').toDict()['blockOrder'].forEach((blockId, index) => {
+  const blockIndices = { block: [] };
+  df.unique("blockOrder")
+    .toDict()
+    ["blockOrder"].forEach((blockId, index) => {
       // Add an index to our blockCount file (see below) for this block
-      blockIndices['block'].push(index);
+      blockIndices["block"].push(index);
       // Get the parameters from just this block...
-      const blockDf = df.filter(row => row.get('blockOrder') === blockId);
+      const blockDf = df.filter((row) => row.get("blockOrder") === blockId);
       const blockDict = blockDf.toDict();
       const columns = Object.keys(blockDict);
-      const data = transpose(columns.map(column => blockDict[column]));
+      const data = transpose(columns.map((column) => blockDict[column]));
       // ... and use them to create a csv file for this block.
-      const blockCSVString  = Papa.unparse({"fields": columns, "data": data});
+      const blockCSVString = Papa.unparse({ fields: columns, data: data });
       const blockFileName = "block_" + String(blockId) + ".csv";
       // Add this block file to the output zip
       zip.file(blockFileName, blockCSVString);
-  });
+    });
   // Create a "blockCount" file, just one column with the the indicies of the blocks
-  const blockCountCSVString = Papa.unparse({ fields: ["block"], data: blockIndices.block.map(x => [x]) });
+  const blockCountCSVString = Papa.unparse({
+    fields: ["block"],
+    data: blockIndices.block.map((x) => [x]),
+  });
   const blockCountFileName = "blockCount.csv";
   // Add blockCount file to output zip
   zip.file(blockCountFileName, blockCountCSVString);
   // Download the zip of files to the user's computer
-  zip.generateAsync({type:"base64"}).then((base64) => {
-    location.href="data:application/zip;base64," + base64;
+  zip.generateAsync({ type: "base64" }).then((base64) => {
+    location.href = "data:application/zip;base64," + base64;
   });
 };
 
 /**
  * Checks whether the user has provided the files necessary for the experiment
  * TODO use getMissingFontFiles to check if font files are also provided
- * @param {File[]} filelist Array of files that the user has provided
- * @returns {boolean} 
+ * @param {File[]} fileList Array of files that the user has provided
+ * @returns {boolean}
  */
-const containsNecessaryFiles = (filelist) => {
+const containsNecessaryFiles = (fileList) => {
   // Check that there is one, and only one, experiment.csv file
-  const isCsvFile = (file) => file.type == "text/csv"; 
+  const isCsvFile = (file) => file.type == "text/csv";
   // https://stackoverflow.com/questions/45052433/javascript-how-to-check-if-array-of-object-has-one-and-only-one-item-with-given
   if (!fileList.filter(isCsvFile).length == 1) {
-    console.error( "Uh oh! Trouble finding an *.csv file amongst those you uploaded.");
+    console.error(
+      "Uh oh! Trouble finding an *.csv file amongst those you uploaded."
+    );
     return false;
   }
   return true;
 };
 
 /**
- * Compares the fonts provided to those referenced in the experiment file, 
+ * Compares the fonts provided to those referenced in the experiment file,
  * and returns an array of those font files which were referenced but not supported natively or provided font files for.
  * Returning an empty array implies that all fonts are available.
  * @param {String[]} fontsRequired List of font names used in experiment.csv
@@ -113,21 +120,31 @@ const containsNecessaryFiles = (filelist) => {
  */
 const getMissingFontFiles = (fontsRequired, filesProvided) => {
   const webSafeFonts = [
-    "Arial", "Verdana", "Helvetica", "Tahoma", "Trebuchet",
-    "Times New Roman", "Georgia", "Garamond", "Courier New",
-    "Brush Script MT", "sans-serif", "serif",
-  ]
+    "Arial",
+    "Verdana",
+    "Helvetica",
+    "Tahoma",
+    "Trebuchet",
+    "Times New Roman",
+    "Georgia",
+    "Garamond",
+    "Courier New",
+    "Brush Script MT",
+    "sans-serif",
+    "serif",
+  ];
   const missingFontFiles = [];
   const isWebSafe = (font) => webSafeFonts.contains(font);
-  const hasFontFile = (fontFilename) => filesProvided.map(file => file.name).contains(fontFilename);
-  for ( const font of fontsRequired ) {
+  const hasFontFile = (fontFilename) =>
+    filesProvided.map((file) => file.name).contains(fontFilename);
+  for (const font of fontsRequired) {
     const fontString = String(font) + ".woff"; // TODO also allow .woff2?
-    if ( ! (isWebSafe(font) || hasFontFile(fontString))) {
+    if (!(isWebSafe(font) || hasFontFile(fontString))) {
       console.log("Uh oh! Unable to find a font file for " + font);
       missingFontFiles.push(font);
     }
   }
-  return missingFontFiles
+  return missingFontFiles;
 };
 
 /**
@@ -137,26 +154,30 @@ const processFiles = () => {
   // Assume a <input> element of type 'file', multiple, #fileInput
   const fileList = [...document.getElementById("fileInput").files];
   // TEMP just checks for experiment file; should also check for necessary font files
-  const experimentFileProvided = containsNecessaryFiles(filelist);
+  const experimentFileProvided = containsNecessaryFiles(fileList);
   // Look through the files and handle appropriately
   fileList.forEach((file) => {
     switch (file.type) {
       case "text/csv":
         Papa.parse(file, {
           dynamicTyping: true, // check out index 23; make sure null values preserve
-          complete: interpretExperimentFile
+          complete: interpretExperimentFile,
         });
         break;
       case "font/woff":
-        // TODO handle uploaing font files
+        // TODO handle uploading font files
         console.error("TODO uploading fonts now yet supported");
         break;
       case "font/woff2":
-        // TODO handle uploaing font files
+        // TODO handle uploading font files
         console.error("TODO uploading fonts now yet supported");
         break;
       default:
-        console.log("Huh, I don't recognize the type of file that " + String(file) + " is.");
+        console.log(
+          "Huh, I don't recognize the type of file that " +
+            String(file) +
+            " is."
+        );
     }
   });
 };

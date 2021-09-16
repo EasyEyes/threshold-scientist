@@ -1,15 +1,25 @@
 {
   "name": "control-panel",
+  "private":"true",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "format": "prettier --write \"**/*.{js,json,md,html,css,scss}\"",
+    "prepare": "husky install"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "husky": "^7.0.2",
+    "lint-staged": "^11.1.2",
+    "prettier": "^2.4.1"
+  },
+  "lint-staged": {
+    "*.{js,json,md,html,css,scss}": "prettier --write"
   }
 }
