@@ -1,3 +1,3 @@
 # control-panel
 
-Experimenter-facing web-app, used to generate the necessary files for an online experiment from a Threshold script, all from within the browser.
+Scientist-facing web-app accepts an experiment table and generates the necessary files for an online experiment, all from within the browser.
