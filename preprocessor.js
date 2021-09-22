@@ -53,6 +53,7 @@ const interpretExperimentFile = (parsedContent) => {
   }
   splitIntoBlockFiles(df);
 };
+
 /**
  * Given a dataframe of the correctly formatted experiment parameters, split into appropriate files for the user to download
  * @param {Object} df Dataframe (from data-frame.js) of correctly specified parameters for the experiment
@@ -88,7 +89,14 @@ const splitIntoBlockFiles = (df) => {
   zip.file(blockCountFileName, blockCountCSVString);
   // Download the zip of files to the user's computer
   zip.generateAsync({ type: "base64" }).then((base64) => {
-    location.href = "data:application/zip;base64," + base64;
+    const link = document.createElement("a");
+    link.href = "data:application/zip;base64," + base64;
+    link.download = "blocks.zip"; // !
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // location.href = "data:application/zip;base64," + base64;
   });
 };
 
@@ -150,9 +158,9 @@ const getMissingFontFiles = (fontsRequired, filesProvided) => {
 /**
  * On <Change> of #fileInput element, read in files and parse appropriately.
  */
-const processFiles = () => {
+const processFiles = (fileList) => {
   // Assume a <input> element of type 'file', multiple, #fileInput
-  const fileList = [...document.getElementById("fileInput").files];
+  // const fileList = [...document.getElementById("fileInput").files];
   // TEMP just checks for experiment file; should also check for necessary font files
   const experimentFileProvided = containsNecessaryFiles(fileList);
   // Look through the files and handle appropriately
@@ -183,4 +191,4 @@ const processFiles = () => {
 };
 
 // Add Change event handler to #fileInput
-document.getElementById("fileInput").addEventListener("change", processFiles);
+// document.getElementById("fileInput").addEventListener("change", processFiles);

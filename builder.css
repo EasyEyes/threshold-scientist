@@ -1,0 +1,9 @@
+#file-dropzone {
+  border-radius: 0.75rem;
+  border: 3px solid #ccc;
+}
+
+.dz-button,
+.dz-message * {
+  color: #999 !important;
+}
