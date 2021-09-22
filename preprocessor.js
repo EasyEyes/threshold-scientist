@@ -1,13 +1,13 @@
 /**
- * @file Client-side (ie browser) processing of declarative experiment.csv file
- * @see preprocessor.py for the original Python script of the same purpose
+ * @file Client-side (ie browser) processing of declarative table experiment.csv file.
+ * @see preprocessor.py for the original Python script of the same purpose.
  */
 
 // Initialize dataframe-js module
 var DataFrame = dfjs.DataFrame;
 
 /**
- * Return a transposed copy of a 2D array.
+ * Return a transposed copy of a 2D table.
  * CREDIT https://stackoverflow.com/questions/17428587/transposing-a-2d-array-in-javascript
  * @param {*[][]} nestedArray A 2D array (array of arrays of primitives)
  * @returns {*[][]} transposed Transposed transformation of nestedArray
@@ -24,16 +24,16 @@ const transpose = (nestedArray) => {
  */
 const interpretExperimentFile = (parsedContent) => {
   let parsedData = parsedContent.data;
-  // Transpose, to get from Denis' row-major convention to the usual column-major
+  // Transpose, to get from Denis's row-major convention to the usual column-major
   let transposed = parsedData[0].map((_, colIndex) =>
     parsedData.map((row) => row[colIndex])
   );
   // Separate out the column names from rows of values
   let data = transposed.slice(1); // Rows
   let columns = transposed[0]; // Header
-  // Create a dataframe for easy data manipulation
+  // Create a dataframe for easy data manipulation.
   let df = new DataFrame(data, columns);
-  // Change some names to the ones that PsychoJS expects
+  // Change some names to the ones that PsychoJS expects.
   const nameChanges = {
     conditionName: "label",
     thresholdBeta: "beta",
@@ -54,11 +54,12 @@ const interpretExperimentFile = (parsedContent) => {
   splitIntoBlockFiles(df);
 };
 /**
- * Given a dataframe of the correctly formatted experiment parameters, split into appropriate files for the user to download
- * @param {Object} df Dataframe (from data-frame.js) of correctly specified parameters for the experiment
+ * Given a dataframe of the correctly formatted experiment parameters, split into appropriate files to be uploaded to Pavlovia.
+ * @param {Object} df Dataframe (from data-frame.js) of correctly specified parameters for the experiment.
  */
 const splitIntoBlockFiles = (df) => {
-  // Initialize the set of files to be downloaded as a zip file
+  // Initialize the set of files to be downloaded as a zip file. 
+  // September 2021: Instead we plan to upload to the scientist's Pavlovia account. Might skip zipping.
   const zip = new JSZip();
   // Split up into block files
   const blockIndices = { block: [] };
@@ -78,7 +79,7 @@ const splitIntoBlockFiles = (df) => {
       // Add this block file to the output zip
       zip.file(blockFileName, blockCSVString);
     });
-  // Create a "blockCount" file, just one column with the the indicies of the blocks
+  // Create a "blockCount" file, just one column with the the indices of the blocks
   const blockCountCSVString = Papa.unparse({
     fields: ["block"],
     data: blockIndices.block.map((x) => [x]),
@@ -93,10 +94,13 @@ const splitIntoBlockFiles = (df) => {
 };
 
 /**
- * Checks whether the user has provided the files necessary for the experiment
- * TODO use getMissingFontFiles to check if font files are also provided
+ * Checks whether the user has provided the files necessary for the experiment.
+ * OBSOLETE: TODO use getMissingFontFiles to check if font files are also provided
  * @param {File[]} fileList Array of files that the user has provided
  * @returns {boolean}
+ * Denis Pelli, September, 2021. See EasyEyes Threshold manual for new font checking. Read targetFontSelection in the Inputs sheet.
+ * https://docs.google.com/spreadsheets/d/1x65NjykMm-XUOz98Eu_oo6ON2xspm_h0Q0M2u6UGtug/edit#gid=2021552264
+
  */
 const containsNecessaryFiles = (fileList) => {
   // Check that there is one, and only one, experiment.csv file
@@ -116,7 +120,16 @@ const containsNecessaryFiles = (fileList) => {
  * and returns an array of those font files which were referenced but not supported natively or provided font files for.
  * Returning an empty array implies that all fonts are available.
  * @param {String[]} fontsRequired List of font names used in experiment.csv
- * @param {File[]} filesProvided List of file objects the user has provided
+ * @param {File[]} filesProvided List of file objects the user has provided.
+ *
+ * Denis Pelli, September, 2021. See EasyEyes Threshold manual for new plans. 
+ * https://docs.google.com/spreadsheets/d/1x65NjykMm-XUOz98Eu_oo6ON2xspm_h0Q0M2u6UGtug/edit#gid=2021552264
+ * This preprocessor should thoroughly check all parameters against the list of available parameters (and their types) listed in
+ * the Inputs sheet of the manual. Fonts are NOT checked against what is being uploaded now. Instead EasyEyes accumulates
+ * fonts for this scientist in a folder called EasyEyesResources/Fonts in the scientist's account in Pavlovia.
+ * For each condition, the parameter targetFontSelection determines whether the scientist wants to use a font in his Pavlovia folder 
+ * or a font available in the future participant's browser, and whether font substitution is acceptable. 
+ * For each condition, that preference guides how the preprocessor should check the targetFont.
  */
 const getMissingFontFiles = (fontsRequired, filesProvided) => {
   const webSafeFonts = [
