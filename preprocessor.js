@@ -1,8 +1,8 @@
 /**
  * @file Client-side (ie browser) processing of declarative table experiment.csv file.
- * 
+ *
  * @goal Create a verbose, experimenter-friendly compiler, which validates the declarative experiment-specification found in experiment.csv, then prepares the provided files into the files/format which threshold.js expects.
- * 
+ *
  * Program overview:
  * -> Get the list of files uploaded by user
  * -> Confirm that the list has all the necessary files (validateFileList())
@@ -12,18 +12,22 @@
 
 const filesFromDropzone = []; // TODO actually get files
 const fileListValidity = validateFilesList(filesFromDropzone);
-if (fileListValidity.errors.length === 0) { // ie no errors in find finding files
-  const experimentFileValidity = validateExperimentFile(fileListValidity.experimentFile);
+if (fileListValidity.errors.length === 0) {
+  // ie no errors in find finding files
+  const experimentFileValidity = validateExperimentFile(
+    fileListValidity.experimentFile
+  );
 }
 // TODO nicely communicate the errors to the experimenter
-const errorsToDisplay = [...fileListValidity.errors, ...experimentFileValidity.errors];
-
+const errorsToDisplay = [
+  ...fileListValidity.errors,
+  ...experimentFileValidity.errors,
+];
 
 const GLOSSARY = [
   {
     parameter: "conditionName",
     supported: true,
-
   },
   {
     parameter: "conditionTrials",
@@ -173,21 +177,23 @@ const GLOSSARY = [
  */
 const validateFileList = (filesProvided) => {
   const errors = [];
-  const [experimentFilePresent, experimentFile, identifyExperimentFileError] = identifyExperimentFile(filesProvided);
+  const [experimentFilePresent, experimentFile, identifyExperimentFileError] =
+    identifyExperimentFile(filesProvided);
   if (!experimentFilePresent) {
     errors.push({
       name: "Unable to identify experiment file",
       context: `As determined by 'identifyExperimentFile' within 'validateFileList', given the files: ${filesProvided}`,
-      message: "Sorry, I wasn't able to find an csv file, eg 'experiment.csv', in the files that you provided. This file is defines your entire experiment -- I'm afraid I can't make your movie if you don't provide a screenplay.",
+      message:
+        "Sorry, I wasn't able to find an csv file, eg 'experiment.csv', in the files that you provided. This file is defines your entire experiment -- I'm afraid I can't make your movie if you don't provide a screenplay.",
       hint: "Make sure you include exactly one '.csv' file among the files you upload. This file should be in row-major order, ie one row representing each parameter, and should follow the specification laid out in the EasyEyes Threshold Glossary.",
     });
     errors.push(identifyExperimentFileError);
   }
-  return {errors: errors, experimentFile: experimentFile};
+  return { errors: errors, experimentFile: experimentFile };
 };
 
 /**
- * Determines whether a single .csv file (to be used as the experiment specification table) is present; 
+ * Determines whether a single .csv file (to be used as the experiment specification table) is present;
  * returns it, or an error explaining why it couldn't be identified, e.g. there were no candidates or it was ambiguous.
  * @assumes .csv files are only used to specify the 'experiment.csv' file, aka the experiment specification
  * @param {File[]} filesProvided Set of files that the user has provided
@@ -197,25 +203,39 @@ const identifyExperimentFile = (filesProvided) => {
   const isCsvFile = (file) => file.type == "text/csv";
   // Find how many .csv files are provided
   const numberOfCsvFiles = fileList.filter(isCsvFile).length;
-  if (numberOfCsvFiles < 1) return [false, undefined, {
-    name: "No CSV files provided.",
-    context: `Within identifyExperimentFile, give the files: ${filesProvided}`,
-    message: "When looking for an experiment file, I couldn't even find one .csv file as a candidate.",
-    hint: "Make sure you provide a file with the '.csv' extension amongst your files -- this file will be used as your experiment specification.",
-  }];
-  if (numberOfCsvFiles > 1) return [false, undefined, {
-    name: "Multiple CSV files provided.",
-    context: `Within identifyExperimentFile, give the files: ${filesProvided}, I found the following .csv files: ${fileList.fileter(isCsvFile)}`,
-    message: "When looking for an experiment file, I found more than one .csv file, and I don't know which one to pick!",
-    hint: "Make sure you provide a file with the '.csv' extension amongst your files -- this file will be used as your experiment specification.",
-  }];
-  return [true, fileList.filter(isCsvFile)[0], {}]
+  if (numberOfCsvFiles < 1)
+    return [
+      false,
+      undefined,
+      {
+        name: "No CSV files provided.",
+        context: `Within identifyExperimentFile, give the files: ${filesProvided}`,
+        message:
+          "When looking for an experiment file, I couldn't even find one .csv file as a candidate.",
+        hint: "Make sure you provide a file with the '.csv' extension amongst your files -- this file will be used as your experiment specification.",
+      },
+    ];
+  if (numberOfCsvFiles > 1)
+    return [
+      false,
+      undefined,
+      {
+        name: "Multiple CSV files provided.",
+        context: `Within identifyExperimentFile, give the files: ${filesProvided}, I found the following .csv files: ${fileList.fileter(
+          isCsvFile
+        )}`,
+        message:
+          "When looking for an experiment file, I found more than one .csv file, and I don't know which one to pick!",
+        hint: "Make sure you provide a file with the '.csv' extension amongst your files -- this file will be used as your experiment specification.",
+      },
+    ];
+  return [true, fileList.filter(isCsvFile)[0], {}];
 };
 /**
  * Helper function for validateExperimentContent(), which checks the validity of the experiment file
  * provided against a number of different checks.
  * @see validateExperimentContent
- * @param {*} experimentFile 
+ * @param {*} experimentFile
  */
 const validateExperimentFile = (experimentFile) => {
   // TODO Restructure; Papa.parse will run .complete on the content of the file, but there is no ability to return those results here
@@ -223,7 +243,7 @@ const validateExperimentFile = (experimentFile) => {
     dynamicTyping: true, // TODO check out index 23; make sure null values preserve
     complete: validateExperimentContent,
   });
-}
+};
 /**
  * # Check correctness of the experiment file
  * ## Alphabetical parameters
@@ -244,7 +264,6 @@ const validateExperimentContent = (parsedExperimentContent) => {
   */
   areAllPresentParametersRecognized(df);
   areAllPresentParametersSupported(df);
-
 };
 
 // ------------------------- Utilities -------------------------------------------------
@@ -266,12 +285,13 @@ const transpose = (nestedArray) => {
 
 /**
  * Check whether an array of file objects contains one with the name of the value of targetFileName
- * @param {File[]} fileList 
- * @param {String} targetFileName 
+ * @param {File[]} fileList
+ * @param {String} targetFileName
  * @returns {Boolean}
  */
 const fileListContainsFileOfName = (fileList, targetFileName) => {
-  const isFileOfTargetName = (candidateFile) => candidateFile.name == targetFileName;
+  const isFileOfTargetName = (candidateFile) =>
+    candidateFile.name == targetFileName;
   return fileList.filter(isFileOfTargetName).length > 0;
 };
 
@@ -290,7 +310,7 @@ const dataframeFromPapaParsed = (parsedContent) => {
   const data = transposed.slice(1); // Rows
   const columns = transposed[0]; // Header
   // Create and return the DataFrame
-  return  new DataFrame(data, columns);
+  return new DataFrame(data, columns);
 };
 
 /**
@@ -326,7 +346,7 @@ const prepareExperimentFileForThreshold = (parsedContent) => {
  * @param {Object} df Dataframe (from data-frame.js) of correctly specified parameters for the experiment.
  */
 const splitIntoBlockFilesAndDownload = (df) => {
-  // Initialize the set of files to be downloaded as a zip file. 
+  // Initialize the set of files to be downloaded as a zip file.
   // September 2021: Instead we plan to upload to the scientist's Pavlovia account. Might skip zipping.
   const zip = new JSZip();
   // Split up into block files
@@ -368,22 +388,21 @@ const splitIntoBlockFilesAndDownload = (df) => {
   });
 };
 
-
 // ------------------------- Example error messages -------------------------------------------------
 
-  //   errors.push({
-  //     name: "Missing consent page",
-  //     context: `As determined by 'checkForConsentPage', within 'validateFileList', looking for the page ${experiment._consentForm} within the files ${filesProvided}.`,
-  //     message:  "Uh oh, I can't find the consent page to be displayed for the participant to evaluate. A consent page is a mandatory component of any EasyEyes experiment.",
-  //     hint: `You will need to provide a .txt or .pdf file displaying your consent information; the name should match the value you provided for the '_consentForm' parameter of the experiment.csv file; currently that value is: '${experiment._consentForm}.`,
-  //   });
+//   errors.push({
+//     name: "Missing consent page",
+//     context: `As determined by 'checkForConsentPage', within 'validateFileList', looking for the page ${experiment._consentForm} within the files ${filesProvided}.`,
+//     message:  "Uh oh, I can't find the consent page to be displayed for the participant to evaluate. A consent page is a mandatory component of any EasyEyes experiment.",
+//     hint: `You will need to provide a .txt or .pdf file displaying your consent information; the name should match the value you provided for the '_consentForm' parameter of the experiment.csv file; currently that value is: '${experiment._consentForm}.`,
+//   });
 
-  //   errors.push({
-  //     name: "Experiment File isn't valid.",
-  //     context: `As determined by 'validateExperimentFile' for experiment file ${experimentFile.name}`,
-  //     message: "Uh oh, there seems to be something wrong with your experiment file. Don't worry, I'll go ahead and let you know exactly what isn't right with other errors.",
-  //     hint: "Looks like you're going to have to edit your experiment file, and try uploading your files again. Make sure to go through and addess each complain that I lay out here -- I'm a bit of a stickler for the rules, ya'know.",
-  //   })
+//   errors.push({
+//     name: "Experiment File isn't valid.",
+//     context: `As determined by 'validateExperimentFile' for experiment file ${experimentFile.name}`,
+//     message: "Uh oh, there seems to be something wrong with your experiment file. Don't worry, I'll go ahead and let you know exactly what isn't right with other errors.",
+//     hint: "Looks like you're going to have to edit your experiment file, and try uploading your files again. Make sure to go through and addess each complain that I lay out here -- I'm a bit of a stickler for the rules, ya'know.",
+//   })
 
 // ------------------------- Potentially useful legacy code -------------------------------------------------
 /**
@@ -393,13 +412,13 @@ const splitIntoBlockFilesAndDownload = (df) => {
  * @param {String[]} fontsRequired List of font names used in experiment.csv
  * @param {File[]} filesProvided List of file objects the user has provided.
  *
- * Denis Pelli, September, 2021. See EasyEyes Threshold manual for new plans. 
+ * Denis Pelli, September, 2021. See EasyEyes Threshold manual for new plans.
  * https://docs.google.com/spreadsheets/d/1x65NjykMm-XUOz98Eu_oo6ON2xspm_h0Q0M2u6UGtug/edit#gid=2021552264
  * This preprocessor should thoroughly check all parameters against the list of available parameters (and their types) listed in
  * the Inputs sheet of the manual. Fonts are NOT checked against what is being uploaded now. Instead EasyEyes accumulates
  * fonts for this scientist in a folder called EasyEyesResources/Fonts in the scientist's account in Pavlovia.
- * For each condition, the parameter targetFontSelection determines whether the scientist wants to use a font in his Pavlovia folder 
- * or a font available in the future participant's browser, and whether font substitution is acceptable. 
+ * For each condition, the parameter targetFontSelection determines whether the scientist wants to use a font in his Pavlovia folder
+ * or a font available in the future participant's browser, and whether font substitution is acceptable.
  * For each condition, that preference guides how the preprocessor should check the targetFont.
  */
 // const getMissingFontFiles = (fontsRequired, filesProvided) => {
@@ -430,7 +449,6 @@ const splitIntoBlockFilesAndDownload = (df) => {
 //   }
 //   return missingFontFiles;
 // };
-
 
 // // Try to read in the spreadsheet from Sheets
 // const spreadsheetId = '1x65NjykMm-XUOz98Eu_oo6ON2xspm_h0Q0M2u6UGtug';
