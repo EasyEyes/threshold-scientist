@@ -10,19 +10,62 @@
  * -> Display all the errors found along the way, or actually preprocess the files
  */
 
-const filesFromDropzone = []; // TODO actually get files
-const fileListValidity = validateFilesList(filesFromDropzone);
-if (fileListValidity.errors.length === 0) {
-  // ie no errors in find finding files
-  const experimentFileValidity = validateExperimentFile(
-    fileListValidity.experimentFile
-  );
-}
-// TODO nicely communicate the errors to the experimenter
-const errorsToDisplay = [
-  ...fileListValidity.errors,
-  ...experimentFileValidity.errors,
-];
+const processFiles = (fileList) => {
+  // Assume a <input> element of type 'file', multiple, #fileInput
+  // const fileList = [...document.getElementById("fileInput").files];
+  // TEMP just checks for experiment file; should also check for necessary font files
+  const experimentFileProvided = containsNecessaryFiles(fileList);
+  // Look through the files and handle appropriately
+  fileList.forEach((file) => {
+    switch (file.type) {
+      case "text/csv":
+        Papa.parse(file, {
+          dynamicTyping: true, // check out index 23; make sure null values preserve
+          complete: prepareExperimentFileForThreshold,
+        });
+        break;
+      case "font/woff":
+        // TODO handle uploading font files
+        console.error("TODO uploading fonts now yet supported");
+        break;
+      case "font/woff2":
+        // TODO handle uploading font files
+        console.error("TODO uploading fonts now yet supported");
+        break;
+      default:
+        console.log(
+          "Huh, I don't recognize the type of file that " +
+            String(file) +
+            " is."
+        );
+    }
+  });
+};
+
+
+// ------------------------- FUTURE, COMPLETE PREPROCESSING -------------------
+
+/**
+ * @todo complete Denis' compiler vision
+ */
+const futurePreprocessor = () => {
+  // Get all the files
+  const filesFromDropzone = []; // TODO actually get files
+  // Check everything
+  const fileListValidity = validateFilesList(filesFromDropzone);
+  if (fileListValidity.errors.length === 0) {
+    // ie no errors in find finding files
+    const experimentFileValidity = validateExperimentFile(
+      fileListValidity.experimentFile
+    );
+  }
+  // TODO nicely communicate the errors to the experimenter
+  const errorsToDisplay = [
+    ...fileListValidity.errors,
+    ...experimentFileValidity.errors,
+  ];
+
+};
 
 const GLOSSARY = [
   {
