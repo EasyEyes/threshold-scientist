@@ -1,179 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-  <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
-  />
-  <meta
-          name="description"
-          content="Experimenter-facing web-app, used to generate the necessary files for an online experiment from a Threshold script, all from within the browser."
-  />
-  <meta
-          name="keywords"
-          content="measure, calibration, psychology, psychophysics"
-  />
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <meta
+      name="description"
+      content="Experimenter-facing web-app, used to generate the necessary files for an online experiment from a Threshold script, all from within the browser."
+    />
+    <meta
+      name="keywords"
+      content="measure, calibration, psychology, psychophysics"
+    />
 
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-B8LSH945MT"
-  ></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-B8LSH945MT"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
 
-    function gtag() {
-      dataLayer.push(arguments);
-    }
+      function gtag() {
+        dataLayer.push(arguments);
+      }
 
-    gtag("js", new Date());
+      gtag("js", new Date());
 
-    gtag("config", "G-B8LSH945MT");
-  </script>
+      gtag("config", "G-B8LSH945MT");
+    </script>
 
-  <!-- External -->
+    <!-- External -->
 
-  <script
-          src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
-          integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
-          crossorigin="anonymous"
-  ></script>
-  <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
-          crossorigin="anonymous"
-  />
-  <script
-          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
-          integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
-          crossorigin="anonymous"
-  ></script>
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+      integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+      integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+      crossorigin="anonymous"
+    ></script>
 
-  <!-- Threshold Specific -->
+    <!-- Threshold Specific -->
 
-  <script src="lib/dataframe.min.js"></script>
-  <script src="lib/jszip.min.js"></script>
-  <script src="lib/papaparse.min.js"></script>
+    <script src="lib/dataframe.min.js"></script>
+    <script src="lib/jszip.min.js"></script>
+    <script src="lib/papaparse.min.js"></script>
 
-  <script src="lib/dropzone/dropzone.js"></script>
-  <link rel="stylesheet" href="lib/dropzone/basic.css"/>
-  <link rel="stylesheet" href="lib/dropzone/dropzone.css"/>
+    <script src="lib/dropzone/dropzone.js"></script>
+    <link rel="stylesheet" href="lib/dropzone/basic.css" />
+    <link rel="stylesheet" href="lib/dropzone/dropzone.css" />
 
-  <!-- Internal -->
+    <!-- Internal -->
 
-  <link rel="stylesheet" href="../uni.css"/>
-  <link rel="stylesheet" href="builder.css"/>
+    <link rel="stylesheet" href="../uni.css" />
+    <link rel="stylesheet" href="builder.css" />
 
-  <meta
-          name="author"
-          content="Denis Pelli, Peiling Jiang, Augustin Burchell"
-  />
-  <link rel="apple-touch-icon" href="../media/apple-touch-icon-default.png"/>
-  <link
-          rel="shortcut icon"
-          href="../media/favicon-default.ico"
-          type="image/x-icon"
-  />
-  <title>EasyEyes | Threshold</title>
+    <meta
+      name="author"
+      content="Denis Pelli, Peiling Jiang, Augustin Burchell"
+    />
+    <link rel="apple-touch-icon" href="../media/apple-touch-icon-default.png" />
+    <link
+      rel="shortcut icon"
+      href="../media/favicon-default.ico"
+      type="image/x-icon"
+    />
+    <title>EasyEyes | Threshold</title>
 
-  <style>
-    .option-block {
-      margin-bottom: 2rem;
-    }
+    <style>
+      .option-block {
+        margin-bottom: 2rem;
+      }
 
-    .option-block * {
-      font-size: 1.2rem !important;
-      color: #333;
-    }
+      .option-block * {
+        font-size: 1.2rem !important;
+        color: #333;
+      }
 
-    #header {
-      margin-bottom: 2rem;
-    }
-  </style>
-</head>
+      #header {
+        margin-bottom: 2rem;
+      }
+    </style>
+  </head>
 
-<body>
-<nav class="navbar navbar-expand-md navbar-light bg-white">
-  <a class="navbar-brand" href="."
-  ><img
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light bg-white">
+      <a class="navbar-brand" href="."
+        ><img
           class="easyeyes-logo"
           src="../media/easyeyes-default.svg"
           alt="EasyEyes"
           width="80px"
           height="80px"
-  /></a>
-  <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-  >
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link" href="../">Home</a>
-      </li>
-      <li class="nav-item active">
-        <a class="nav-link active" href="../threshold/">Threshold</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="../remote-calibrator/">Calibrator</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="../virtual-keypad/">Keypad</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="../acknowledgements.html"
-        >Acknowledgements</a
-        >
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="../privacy.html">Privacy</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="../references.html">References</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="https://github.com/EasyEyes">GitHub</a>
-      </li>
-    </ul>
-  </div>
-</nav>
-
-<main>
-  <div id="header">
-    <div style="display: flex; justify-content: space-between">
-      <h1>Threshold</h1>
-      <h4 id="gitlab-user-info"></h4>
-    </div>
-    <p class="description">
-      A PsychoJS-based experiment generator for measuring psychometric
-      thresholds.
-    </p>
-  </div>
-
-  <div class="option-block">
-    <!-- <p>Upload your experiment, font, and consent form files.</p>
-    <input type="file" multiple id="fileInput" /><br /> -->
-    <form action="/" class="dropzone" id="file-dropzone">
-      <div class="dz-message" data-dz-message>
-            <span>
-              Drop files here, or click to browse for them. <br/>
-              Preprocess your experiment file first, and then upload any
-              needed consent form, font files along with processed files.
-            </span
+      /></a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="../">Home</a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link active" href="../threshold/">Threshold</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../remote-calibrator/">Calibrator</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../virtual-keypad/">Keypad</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../acknowledgements.html"
+              >Acknowledgements</a
             >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../privacy.html">Privacy</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../references.html">References</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/EasyEyes">GitHub</a>
+          </li>
+        </ul>
       </div>
-    </form>
-    <!--<form action="/" class="dropzone" id="gitlab-uploader-dropzone">
+    </nav>
+
+    <main>
+      <div id="header">
+        <div style="display: flex; justify-content: space-between">
+          <h1>Threshold</h1>
+          <h4 id="gitlab-user-info"></h4>
+        </div>
+        <p class="description">
+          A PsychoJS-based experiment generator for measuring psychometric
+          thresholds.
+        </p>
+      </div>
+
+      <div class="option-block">
+        <!-- <p>Upload your experiment, font, and consent form files.</p>
+    <input type="file" multiple id="fileInput" /><br /> -->
+        <form action="/" class="dropzone" id="file-dropzone">
+          <div class="dz-message" data-dz-message>
+            <span>
+              Drop files here, or click to browse for them. <br />First, provide
+              any needed consent form and font files that are not already in
+              your Pavlovia account. Then provide your experiment table, which
+              will be immediately checked for errors.
+            </span>
+          </div>
+        </form>
+        <!--<form action="/" class="dropzone" id="gitlab-uploader-dropzone">
       <div class="dz-message" data-dz-message>
         <span
         >Drop files here, or click to browse for them.<br />Provide any
@@ -182,10 +182,10 @@
         >
       </div>
     </form>-->
-  </div>
+      </div>
 
-  <div class="option-block">
-    <!--<p>
+      <div class="option-block">
+        <!--<p>
       Do you want to connect your
       <a
         href="http://pavlovia.org"
@@ -203,10 +203,10 @@
     <label for="noPav"
       >Continue without Pavlovia. Can't run the experiment.</label
     >-->
-  </div>
+      </div>
 
-  <div class="option-block">
-    <!--<p>
+      <div class="option-block">
+        <!--<p>
       Do you want to sync the files automatically with the Pavlovia
       repository? (not working)
     </p>
@@ -214,70 +214,107 @@
     <label for="sync">Yes</label><br />
     <input type="radio" id="noSync" name="syncPav" value="0" />
     <label for="noSync">No</label>-->
-  </div>
+      </div>
 
-  <!--<div class="option-block">
+      <!--<div class="option-block">
     <input id="file-submit" type="submit" value=" OK " />
   </div>-->
-  <div class="option-block" style="display: flex; justify-content: space-around;">
-    <btn class="btn btn-outline-secondary" id="preprocess-file-submit">Preprocess Files</btn>
-    <div class="input-group" style="width: auto;">
-      <input id="new-gitlab-repo-name" type="text" class="form-control" placeholder="Name of new Repository"
-             aria-label="Recipient's username" aria-describedby="gitlab-file-submit">
-      <button class="btn btn-outline-secondary disabled" type="button" id="gitlab-file-submit">Upload Files to
-        GITLAB
-      </button>
-    </div>
-    <!--<btn class="btn btn-outline-secondary disabled" id="gitlab-file-submit"> Upload Files to GITLAB</btn>-->
+      <div
+        class="option-block"
+        style="display: flex; justify-content: space-around"
+      >
+        <!--<btn class="btn btn-outline-secondary" id="preprocess-file-submit">Preprocess Files</btn>-->
+        <div class="input-group" style="width: auto">
+          <input
+            id="new-gitlab-repo-name"
+            type="text"
+            class="form-control"
+            placeholder="Name of new Repository"
+            aria-label="Recipient's username"
+            aria-describedby="gitlab-file-submit"
+          />
+          <button
+            class="btn btn-outline-secondary disabled"
+            type="button"
+            id="gitlab-file-submit"
+          >
+            Upload Files to GITLAB
+          </button>
+        </div>
+        <!--<btn class="btn btn-outline-secondary disabled" id="gitlab-file-submit"> Upload Files to GITLAB</btn>-->
+      </div>
+      <div class="option-block" style="display: flex; justify-content: center">
+        <button
+          id="gitlab-connect-btn"
+          class="btn btn-outline-secondary"
+          style="align-content: center"
+          onclick="redirectToOauth2()"
+        >
+          Connect with your Pavlovia account to upload files.
+        </button>
+      </div>
+      <div
+        id="pavlovia-div"
+        class="option-block"
+        style="
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          visibility: hidden;
+        "
+      >
+        <button
+          id="activate-experiment-btn"
+          class="btn btn-outline-success"
+          style="align-content: center"
+          onclick="redirectToPalvoliaActivation()"
+        >
+          Activate Experiment
+        </button>
+        <a
+          id="palvolia-experiment-link"
+          href="#"
+          target="_blank"
+          class="link-success"
+        ></a>
+      </div>
+      <div
+        id="waiting-div"
+        style="
+          height: 80vh;
+          width: 80vh;
+          display: flex;
+          padding: 20vh;
+          position: absolute;
+          top: 10vh;
+          left: 50vh;
+          font-size: xxx-large;
+          background-color: darkgrey;
+          z-index: 99999;
+          visibility: hidden;
+        "
+      >
+        Please wait while project is being initiated.
+      </div>
+    </main>
 
-  </div>
-  <div class="option-block" style="display: flex; justify-content: center">
-    <button id="gitlab-connect-btn" class="btn btn-outline-secondary" style="align-content: center" onclick=redirectToOauth2()>
-      Connect with Pavlovia account in order to run experiment
-    </button>
-  </div>
-  <div id="pavlovia-div" class="option-block" style="display: flex;
-    justify-content: center;
-    align-items: center;
-    visibility: hidden">
-    <button id="activate-experiment-btn" class="btn btn-outline-success" style="align-content: center"
-            onclick=redirectToPalvoliaActivation()>
-      Activate Experiment
-    </button>
-    <a id="palvolia-experiment-link" href="#" target="_blank" class="link-success"></a>
-  </div>
-  <div id="waiting-div" style="height: 80vh;
-    width: 80vh;
-    display: flex;
-    padding: 20vh;
-    position: absolute;
-    top: 10vh;
-    left: 50vh;
-    font-size: xxx-large;
-    background-color: darkgrey;
-    z-index: 99999;
-    visibility: hidden">
-    Please wait while project is being initiated.
-  </div>
-</main>
+    <script src="preprocessor.js"></script>
+    <script src="components/dropzoneHandler.js"></script>
+    <script src="components/user.js"></script>
+    <script src="components/gitlabUtility.js"></script>
 
-<script src="preprocessor.js"></script>
-<script src="components/dropzoneHandler.js"></script>
-<script src="components/user.js"></script>
-<script src="components/gitlabUtility.js"></script>
-
-<footer>
-  <a href="https://github.com/EasyEyes/threshold/stargazers"
-  ><img
+    <footer>
+      <a href="https://github.com/EasyEyes/threshold/stargazers"
+        ><img
           alt="GitHub stars"
           src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square"
-  /></a>
-  <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE"
-  ><img
+      /></a>
+      <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE"
+        ><img
           alt="GitHub license"
           src="https://img.shields.io/github/license/EasyEyes/threshold?style=flat-square"
-  /></a>
-  <p>EasyEyes Team 2021</p>
-</footer>
-</body>
+      /></a>
+      <p>EasyEyes Team 2021</p>
+    </footer>
+  </body>
 </html>
