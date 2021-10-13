@@ -136,7 +136,7 @@ const commitFilesToGitlabFromGithubAndEasyEyes = async (gitlabRepo, files) => {
     "https://api.github.com/repos/EasyEyes/threshold/contents",
     {
       headers: {
-        Authorization: "token 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",
+        Authorization: "token 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",
       },
     }
   );
@@ -177,7 +177,7 @@ const populateCommitBody = async (rootContent, externalFiles) => {
         currentFile.git_url.split("/git")[0] + "/contents/" + currentFile.path,
         {
           headers: {
-            Authorization: "token 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",
+            Authorization: "token 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",
           },
         }
       );
@@ -191,7 +191,7 @@ const populateCommitBody = async (rootContent, externalFiles) => {
           currentFile.git_url.split("/git")[0] + "/contents/",
           {
             headers: {
-              Authorization: "token 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",
+              Authorization: "token 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",
             },
           }
         );
@@ -207,7 +207,7 @@ const populateCommitBody = async (rootContent, externalFiles) => {
             currentFile.path,
           {
             headers: {
-              Authorization: "token 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",
+              Authorization: "token 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",
             },
           }
         );
