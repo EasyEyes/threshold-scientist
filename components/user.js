@@ -1,4 +1,5 @@
 const user = {};
+const env = getEnvironment();
 
 const populateUserInfo = async () => {
   user.accessToken = window.location.hash.split("&")[0].split("=")[1];
@@ -54,8 +55,9 @@ const redirectToOauth2 = async () => {
   // TODO switch this for production
 //   location.href =
 //     "https://gitlab.pavlovia.org//oauth/authorize?client_id=f43ec84eac32326bd40b28f79728bfb5ba32cace89d580662cdb46da3b7dcc8d&redirect_uri=http%3A%2F%2Flocalhost%3A63342%2Fwebsite%2Fdocs%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=1587kx42hje";
-  location.href =
-        'https://gitlab.pavlovia.org//oauth/authorize?client_id=914cc931ddf67ab1b9ad8366e29c3a33a89348e09d80fe9c4bbacaa199fa2ce1&redirect_uri=http%3A%2F%2Flocalhost%3A63342%2Fwebsite%2Fdocs%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=0wo5oj2oubc';
+  console.log('weee')
+  location.href = env.GITLAB_REDIRECT_URL;
+        
 };
 
 const redirectToPalvoliaActivation = async () => {
