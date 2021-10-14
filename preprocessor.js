@@ -1,3 +1,5 @@
+const { EXPERIMENT_FILE_NOT_FOUND } = require("./components/errorMessages");
+
 let externalCallback;
 
 /**
@@ -11,7 +13,6 @@ let externalCallback;
  * -> Check the experiment file itself (validateExperimentFile())
  * -> Display all the errors found along the way, or actually preprocess the files
  */
-
 const processFiles = (fileList, callback) => {
   // init callback for returning values
   externalCallback = callback;
@@ -72,152 +73,6 @@ const futurePreprocessor = () => {
   ];
 };
 
-const GLOSSARY = [
-  {
-    parameter: "conditionName",
-    supported: true,
-  },
-  {
-    parameter: "conditionTrials",
-    supported: true,
-  },
-  {
-    parameter: "easyEyesTrackGazeBool",
-  },
-  {
-    parameter: "easyEyesTrackHeadBool",
-  },
-  {
-    parameter: "fixationLocationStrategy",
-  },
-  {
-    parameter: "fixationToleranceDeg",
-  },
-  {
-    parameter: "instructionFont",
-  },
-  {
-    parameter: "keyEscapeEnable",
-  },
-  {
-    parameter: "markingOffsetBeforeTargetOnsetSecs",
-  },
-  {
-    parameter: "markingOnsetAfterTargetOffsetSecs",
-  },
-  {
-    parameter: "markTheFixationBool",
-  },
-  {
-    parameter: "notes",
-  },
-  {
-    parameter: "playNegativeFeedbackBeepBool",
-  },
-  {
-    parameter: "playPositiveFeedbackBeepBool",
-  },
-  {
-    parameter: "playPurrWhenReadyBool",
-  },
-  {
-    parameter: "responseByClickingAlphabetBool",
-  },
-  {
-    parameter: "responseByKeyboardBool",
-  },
-  {
-    parameter: "showAlphabetWhere",
-  },
-  {
-    parameter: "showCounterWhere",
-  },
-  {
-    parameter: "showInstructionsWhere",
-  },
-  {
-    parameter: "spacingDeg",
-  },
-  {
-    parameter: "spacingDirection",
-  },
-  {
-    parameter: "spacingOverSizeRatio",
-  },
-  {
-    parameter: "spacingRelationToSize",
-  },
-  {
-    parameter: "targetAlphabet",
-  },
-  {
-    parameter: "targetBoundingBoxHorizontalAlignment",
-  },
-  {
-    parameter: "targetDurationSec",
-  },
-  {
-    parameter: "targetEccentricityXDeg",
-  },
-  {
-    parameter: "targetEccentricityYDeg",
-  },
-  {
-    parameter: "targetFont",
-  },
-  {
-    parameter: "targetFontStyle",
-  },
-  {
-    parameter: "targetFontVariationSettings",
-  },
-  {
-    parameter: "targetFontWeight",
-  },
-  {
-    parameter: "targetKind",
-  },
-  {
-    parameter: "targetMinimumPix",
-  },
-  {
-    parameter: "targetSizeDeg",
-  },
-  {
-    parameter: "targetSizeIsHeightBool",
-  },
-  {
-    parameter: "targetTask",
-  },
-  {
-    parameter: "thresholdBeta",
-  },
-  {
-    parameter: "thresholdDelta",
-  },
-  {
-    parameter: "thresholdGuess",
-  },
-  {
-    parameter: "thresholdGuessLogSd",
-  },
-  {
-    parameter: "thresholdParameter",
-  },
-  {
-    parameter: "thresholdProcedure",
-  },
-  {
-    parameter: "thresholdProportionCorrect",
-  },
-  {
-    parameter: "viewingDistanceDesiredCm",
-  },
-  {
-    parameter: "wirelessKeyboardNeededBool",
-  },
-];
-
 /**
  * Checks that the necessary files, eg an experiment.csv file, have been provided.
  * @param {File[]} filesProvided List of files offered by the user, ie put into the Dropzone
@@ -228,57 +83,12 @@ const validateFileList = (filesProvided) => {
   const [experimentFilePresent, experimentFile, identifyExperimentFileError] =
     identifyExperimentFile(filesProvided);
   if (!experimentFilePresent) {
-    errors.push({
-      name: "Unable to identify experiment file",
-      context: `As determined by 'identifyExperimentFile' within 'validateFileList', given the files: ${filesProvided}`,
-      message:
-        "Sorry, I wasn't able to find an csv file, eg 'experiment.csv', in the files that you provided. This file is defines your entire experiment -- I'm afraid I can't make your movie if you don't provide a screenplay.",
-      hint: "Make sure you include exactly one '.csv' file among the files you upload. This file should be in row-major order, ie one row representing each parameter, and should follow the specification laid out in the EasyEyes Threshold Glossary.",
-    });
+    errors.push(EXPERIMENT_FILE_NOT_FOUND);
     errors.push(identifyExperimentFileError);
   }
   return { errors: errors, experimentFile: experimentFile };
 };
 
-/**
- * Determines whether a single .csv file (to be used as the experiment specification table) is present;
- * returns it, or an error explaining why it couldn't be identified, e.g. there were no candidates or it was ambiguous.
- * @assumes .csv files are only used to specify the 'experiment.csv' file, aka the experiment specification
- * @param {File[]} filesProvided Set of files that the user has provided
- * @returns {[Boolean, File, Object]} [isAnIdentifiableExperimentFilePresent, thatExperimentFileIfSo, anErrorExplainingIfNot]
- */
-const identifyExperimentFile = (filesProvided) => {
-  const isCsvFile = (file) => file.type == "text/csv";
-  // Find how many .csv files are provided
-  const numberOfCsvFiles = fileList.filter(isCsvFile).length;
-  if (numberOfCsvFiles < 1)
-    return [
-      false,
-      undefined,
-      {
-        name: "No CSV files provided.",
-        context: `Within identifyExperimentFile, give the files: ${filesProvided}`,
-        message:
-          "When looking for an experiment file, I couldn't even find one .csv file as a candidate.",
-        hint: "Make sure you provide a file with the '.csv' extension amongst your files -- this file will be used as your experiment specification.",
-      },
-    ];
-  if (numberOfCsvFiles > 1)
-    return [
-      false,
-      undefined,
-      {
-        name: "Multiple CSV files provided.",
-        context: `Within identifyExperimentFile, give the files: ${filesProvided}, I found the following .csv files: ${fileList.fileter(
-          isCsvFile
-        )}`,
-        message:
-          "When looking for an experiment file, I found more than one .csv file, and I don't know which one to pick!",
-        hint: "Make sure you provide a file with the '.csv' extension amongst your files -- this file will be used as your experiment specification.",
-      },
-    ];
-  return [true, fileList.filter(isCsvFile)[0], {}];
-};
 /**
  * Helper function for validateExperimentContent(), which checks the validity of the experiment file
  * provided against a number of different checks.
@@ -292,75 +102,8 @@ const validateExperimentFile = (experimentFile) => {
     complete: validateExperimentContent,
   });
 };
-/**
- * # Check correctness of the experiment file
- * ## Alphabetical parameters
- * ## All necessary parameters are provided
- * ## All parameters are recognized
- * ## All parameters present are implemented
- * ## Necessary checks for each parameter, eg
- * ### check font files according to 'targetFontSelection'
- * ### check consent file according to '_consentForm'
- */
-const validateExperimentContent = (parsedExperimentContent) => {
-  const df = dataframeFromPapaParsed(parsedContent);
-
-  areParametersAlphabetical(df);
-  areRequiredParametersPresent(df);
-  /* 
-  For each parameter in the file, compare to a reference of 
-  */
-  areAllPresentParametersRecognized(df);
-  areAllPresentParametersSupported(df);
-};
 
 // ------------------------- Utilities -------------------------------------------------
-// Initialize dataframe-js module
-var DataFrame = dfjs.DataFrame;
-
-/**
- * Return a transposed copy of a 2D table.
- * CREDIT https://stackoverflow.com/questions/17428587/transposing-a-2d-array-in-javascript
- * @param {*[][]} nestedArray A 2D array (array of arrays of primitives)
- * @returns {*[][]} transposed Transposed transformation of nestedArray
- */
-const transpose = (nestedArray) => {
-  const transposed = nestedArray[0].map((_, colIndex) =>
-    nestedArray.map((row) => row[colIndex])
-  );
-  return transposed;
-};
-
-/**
- * Check whether an array of file objects contains one with the name of the value of targetFileName
- * @param {File[]} fileList
- * @param {String} targetFileName
- * @returns {Boolean}
- */
-const fileListContainsFileOfName = (fileList, targetFileName) => {
-  const isFileOfTargetName = (candidateFile) =>
-    candidateFile.name == targetFileName;
-  return fileList.filter(isFileOfTargetName).length > 0;
-};
-
-/**
- * Given the content returned by PapaParse on our csv file, provide a dfjs Dataframe
- * @param {Object} parsedContent .csv file as parsed by PapaParse
- * @returns {dfjs.DataFrame}
- */
-const dataframeFromPapaParsed = (parsedContent) => {
-  const parsedData = parsedContent.data;
-  // Transpose, to get from Denis's row-major convention to the usual column-major
-  const transposed = parsedData[0].map((_, colIndex) =>
-    parsedData.map((row) => row[colIndex])
-  );
-  // Separate out the column names from rows of values
-  const data = transposed.slice(1); // Rows
-  const columns = transposed[0]; // Header
-  // Create and return the DataFrame
-  return new DataFrame(data, columns);
-};
-
 /**
  * Given the parsed experiment csv from PapaParse, create PsychoJS readable files.
  * @param {Object} parsedContent Returned value from Papa.parse
