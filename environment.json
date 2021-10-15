@@ -1,4 +1,4 @@
 {
   "GITLAB_REDIRECT_URL": "https://gitlab.pavlovia.org//oauth/authorize?client_id=b89e397bb4341bcf747543ce7e3e8f9e7a4352640884c4c97904f2afda2f2bca&redirect_uri=https%3A%2F%2Foauth-branch--easyeyes.netlify.app%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=7q8xeko7jie",
-  "GITHUB_PAT": "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"
+  "GITHUB_PAT": "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"
 }
