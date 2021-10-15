@@ -4,7 +4,7 @@ const EasyEyesResources = {
 };
 
 let currentTabId = 'fonts';
-openTab('fonts')
+
 
 const openTab = (evt, tabId) => {
   currentTabId = tabId;
