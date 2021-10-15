@@ -138,7 +138,7 @@ Dropzone.options.fileDropzone = {
 
       // update info
       for (let fi = 0; fi<resourcesList.length; fi++) {
-        const file = resourcesList[i];
+        const file = resourcesList[fi];
         const ext = getFileExtension(file);
         if (acceptableExtensions.fonts.includes(ext)) {
           if (EasyEyesResources.fonts.indexOf(file.name) == -1)
