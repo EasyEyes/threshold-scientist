@@ -1,5 +1,10 @@
 const user = {};
-const env = getEnvironment();
+let env;
+
+document.onreadystatechange = async () => {
+  env = await getEnvironment()
+  console.log('env', env)
+}
 
 const populateUserInfo = async () => {
   user.accessToken = window.location.hash.split("&")[0].split("=")[1];
@@ -55,7 +60,6 @@ const redirectToOauth2 = async () => {
   // TODO switch this for production
 //   location.href =
 //     "https://gitlab.pavlovia.org//oauth/authorize?client_id=f43ec84eac32326bd40b28f79728bfb5ba32cace89d580662cdb46da3b7dcc8d&redirect_uri=http%3A%2F%2Flocalhost%3A63342%2Fwebsite%2Fdocs%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=1587kx42hje";
-  console.log('weee')
   location.href = env.GITLAB_REDIRECT_URL;
         
 };
