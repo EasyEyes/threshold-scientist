@@ -1,7 +1,12 @@
 const droppedFiles = [];
 const droppedFileNames = new Set();
 
-const acceptableFileExt = ['md', 'pdf', 'csv', 'xlsx', 'woff', 'woff2', 'otf', 'ttf', 'eot', 'svg'];
+const acceptableExtensions = {
+  experiments: ['csv', 'xlsx'],
+  fonts: ['woff', 'woff2', 'otf', 'ttf', 'eot', 'svg'],
+  forms: ['md', 'pdf']
+}
+const acceptableFileExt = [...acceptableExtensions.experiments, ...acceptableExtensions.fonts, ...acceptableExtensions.forms];
 const isUserLoggedIn = () => {
   return (user.userData && user.userData.id);
 };
