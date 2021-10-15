@@ -208,6 +208,11 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
     var consentFormm = formList[i];
     const resourcesRepoFilePath = encodeGitlabFilePath(`forms/${consentFormm}`);
     var consentFormContent = await getFileRawFromGitlab(gitlabRepo.id, resourcesRepoFilePath, user.accessToken)
+    
+    // ignore 404s
+    if (consentFormContent.trim().indexOf(`{"message":"404 File Not Found"}`)!=-1)
+      continue;
+
     let actionValue = curFormList.includes(consentFormm) ? "update" : "create";
     
     // update global inventory
@@ -228,11 +233,16 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
     var content = '';
     const resourcesRepoFilePath = encodeGitlabFilePath(`fonts/${userFont}`);
     var content = await getFileRawFromGitlab(gitlabRepo.id, resourcesRepoFilePath, user.accessToken)
+    
+    // ignore 404s
+    if (content.trim().indexOf(`{"message":"404 File Not Found"}`)!=-1)
+      continue;
+
     let actionValue = curFontList.includes(userFont) ? "update" : "create";
     
     // update global inventory
     if (actionValue == 'create')
-      EasyEyesResources.fonts.push(consentFormm);
+      EasyEyesResources.fonts.push(userFont);
 
     // update gitlab commit
     jsonFiles.push({
