@@ -3,7 +3,6 @@ let env;
 
 document.onreadystatechange = async () => {
   env = await getEnvironment()
-  console.log('env', env)
 }
 
 const populateUserInfo = async () => {
