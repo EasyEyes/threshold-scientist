@@ -516,7 +516,7 @@ const convertFilesToGitlabObjects = async (externalFiles) => {
       });
     } 
     
-    // font files (or any other)
+    // font files
     else {
       var fileData = await externalFile.text();
       jsonFiles.push({
@@ -541,11 +541,28 @@ const getFileRawFromGitlab = async (repoID, filePath, accessToken) => {
       redirect: 'follow'
     };
 
-    let response = await fetch(`https://gitlab.pavlovia.org/api/v4/projects/${repoID}/repository/files/${filePath}/raw?ref=master`, requestOptions)
+    const encodedFilePath = encodeGitlabFilePath(filePath);
+    let response = await fetch(`https://gitlab.pavlovia.org/api/v4/projects/${repoID}/repository/files/${encodedFilePath}/raw?ref=master`, requestOptions)
       .then(response => { return response.text() })
       .then(result => { return result })
       .catch(error => { return error });
     
+      console.log('getFileFromGitlab', filePath, response)
     resolve(response)
   })
+}
+
+const encodeGitlabFilePath = (filePath) => {
+  let res = '';
+  for (let i=0; i<filePath; i++) {
+    const c = filePath[i];
+    if (c == '/')
+      res = res + '%2F';
+    else if (c == '.')
+      res = res + '%2E';
+    else
+      res = res + c;
+  }
+
+  return res;
 }
