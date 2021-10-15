@@ -152,10 +152,8 @@ Dropzone.options.fileDropzone = {
       }
 
       // update info UI
-      setTab('font-tab', EasyEyesResources.fonts.length, 'Fonts');
-      setTab('form-tab', EasyEyesResources.forms.length, 'Consent Forms');
-      const tabEl = document.getElementById(currentTabId);
-      openTab(tabEl, 'fonts')
+      setTabList('fonts', EasyEyesResources.fonts)
+      setTabList('forms', EasyEyesResources.forms)
 
       hideDialogBox();
       myDropzone.removeAllFiles();
