@@ -35,10 +35,12 @@ const populateUserInfo = async () => {
 
   
   // get initial resources info
+  showDialogBox('Initializing', 'Please while we fetch your existing resources.', false);
   var easyEyesResourcesRepo = user.userData.projects.find(
     (i) => i.name == "EasyEyesResources"
   );
   const resourcesList = await getResourcesListFromRepository(easyEyesResourcesRepo.id, user.accessToken);
+  hideDialogBox();
   EasyEyesResources.forms = resourcesList.forms;
   EasyEyesResources.fonts = resourcesList.fonts;
   console.log('EasyEyesResources', EasyEyesResources)
