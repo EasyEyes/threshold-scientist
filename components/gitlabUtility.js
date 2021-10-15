@@ -583,15 +583,15 @@ const getFileRawFromGitlab = async (repoID, filePath, accessToken) => {
 
 const encodeGitlabFilePath = (filePath) => {
   let res = '';
-  for (let i=0; i<filePath; i++) {
-    const c = filePath[i];
+  for (let i=0; i<filePath.length; i++) {
+    let c = filePath[i];
     if (c == '/')
-      res = res + '%2F';
+      c = '%2F';
     else if (c == '.')
-      res = res + '%2E';
-    else
-      res = res + c;
+      c = '%2E';
+    res = res + c;
   }
 
   return res;
 }
+

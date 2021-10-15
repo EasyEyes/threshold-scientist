@@ -66,6 +66,7 @@
 
     <link rel="stylesheet" href="../uni.css" />
     <link rel="stylesheet" href="builder.css" />
+    <link rel="stylesheet" href="easyeyes-custom.css" />
 
     <meta
       name="author"
@@ -296,12 +297,39 @@
       >
         Please wait while project is being initiated.
       </div>
+
+      <!-- Dialog box -->
+      <div id="dialog-box">
+        <div class="dialog-title">Title</div>
+        <div class="dialog-body">Body</div>
+        <div class="dialog-button">OK</div>
+      </div>
+
+      <!-- Font List -->
+      <div class="tab">
+        <button id="font-tab" class="tablinks" onclick="openTab(event, 'fonts')">Fonts</button>
+        <button id="form-tab" class="tablinks" onclick="openTab(event, 'forms')">Forms</button>
+      </div>
+      <div id="fonts" class="tabcontent">
+        <h3>Fonts</h3>
+        <ol>
+        </ol>
+      </div>
+      <div id="forms" class="tabcontent">
+        <h3>Forms</h3>
+        <ol>
+        </ol>
+      </div>
+
     </main>
 
+    
+
     <script src="components/env.js"></script>
+    <script src="components/tab.js"></script>
     <script src="preprocessor.js"></script>
-    <script src="components/dropzoneHandler.js"></script>
     <script src="components/user.js"></script>
+    <script src="components/dropzoneHandler.js"></script>
     <script src="components/gitlabUtility.js"></script>
 
     <footer>
