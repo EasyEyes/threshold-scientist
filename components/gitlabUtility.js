@@ -541,7 +541,8 @@ const getFileRawFromGitlab = async (repoID, filePath, accessToken) => {
       redirect: 'follow'
     };
 
-    let response = await fetch(`https://gitlab.pavlovia.org/api/v4/projects/${repoID}/repository/files/${filePath}/raw?ref=master`, requestOptions)
+    const encodedFilePath = encodeGitlabFilePath(filePath);
+    let response = await fetch(`https://gitlab.pavlovia.org/api/v4/projects/${repoID}/repository/files/${encodedFilePath}/raw?ref=master`, requestOptions)
       .then(response => { return response.text() })
       .then(result => { return result })
       .catch(error => { return error });
@@ -549,3 +550,18 @@ const getFileRawFromGitlab = async (repoID, filePath, accessToken) => {
     resolve(response)
   })
 }
+
+const encodeGitlabFilePath = (filePath) => {
+  let res = '';
+  for (let i=0; i<filePath.length; i++) {
+    let c = filePath[i];
+    if (c == '/')
+      c = '%2F';
+    else if (c == '.')
+      c = '%2E';
+    res = res + c;
+  }
+
+  return res;
+}
+
