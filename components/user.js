@@ -11,6 +11,8 @@ const populateUserInfo = async () => {
     "https://gitlab.pavlovia.org/api/v4/user?access_token=" +
       window.location.hash.split("&")[0].split("=")[1]
   );
+  showDialogBox('Initializing', 'Please while we fetch your existing resources.', false);
+
   userData = await userData.json();
   user.userData = userData;
   var projectData = await fetch(
@@ -34,7 +36,6 @@ const populateUserInfo = async () => {
 
   
   // get initial resources info
-  showDialogBox('Initializing', 'Please while we fetch your existing resources.', false);
   var easyEyesResourcesRepo = user.userData.projects.find(
     (i) => i.name == "EasyEyesResources"
   );
@@ -46,7 +47,7 @@ const populateUserInfo = async () => {
 
   // display inital resources info
   setTab('font-tab', EasyEyesResources.fonts.length, 'Fonts');
-  setTab('form-tab', EasyEyesResources.forms.length, 'Fonts');
+  setTab('form-tab', EasyEyesResources.forms.length, 'Forms');
 };
 
 if (window.location.hash == "") {

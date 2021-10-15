@@ -119,14 +119,16 @@ Dropzone.options.fileDropzone = {
 
   // instant upload when files have been dropped
   addedfiles: async (fileList) => {
+    console.log('fileList', fileList)
     // filter out resources
     let resourcesList = [];
-    fileList.map((file) => {
+    for(let fi = 0; fi<fileList.length; fi++) {
+      const file = fileList[fi];
       const ext = getFileExtension(file);
       if (acceptableExtensions.fonts.includes(ext) || acceptableExtensions.forms.includes(ext)) {
         resourcesList.push(file);
       }
-    });
+    }
 
     if (resourcesList.length > 0) {
       showDialogBox('Uploading files', 'Please wait while your files are being uploaded. This box will hide when upload is complete.', false);

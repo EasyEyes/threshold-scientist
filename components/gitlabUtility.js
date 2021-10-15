@@ -40,7 +40,7 @@ const gitlabRoutine = async (files) => {
 
     // update resources info
     setTab('font-tab', EasyEyesResources.fonts.length, 'Fonts');
-    setTab('form-tab', EasyEyesResources.forms.length, 'Fonts');
+    setTab('form-tab', EasyEyesResources.forms.length, 'Forms');
 
     // window.alert(
     //   "New Repo " + newRepoName + " has been successfully initiated"
@@ -200,13 +200,14 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   var jsonFiles = [];
 
   // update global inventory
-  EasyEyesResources.fonts = curFormList;
+  EasyEyesResources.fonts = curFontList;
   EasyEyesResources.forms = curFormList;
 
   // generate Gitlab API body to commit form files
   for (var i = 0; i < formList.length; i++) {
     var consentFormm = formList[i];
-    var consentFormContent = await getFileRawFromGitlab(gitlabRepo.id, consentFormm, user.accessToken)
+    const resourcesRepoFilePath = encodeGitlabFilePath(`forms/${consentFormm}`);
+    var consentFormContent = await getFileRawFromGitlab(gitlabRepo.id, resourcesRepoFilePath, user.accessToken)
     let actionValue = curFormList.includes(consentFormm) ? "update" : "create";
     
     // update global inventory
@@ -221,11 +222,12 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
     });
   }
 
-  // generate Gitlab API body to commit form files
+  // generate Gitlab API body to commit font files
   for (var i = 0; i < fontList.length; i++) {
     var userFont = fontList[i];
     var content = '';
-    var content = await getFileRawFromGitlab(gitlabRepo.id, userFont, user.accessToken)
+    const resourcesRepoFilePath = encodeGitlabFilePath(`fonts/${userFont}`);
+    var content = await getFileRawFromGitlab(gitlabRepo.id, resourcesRepoFilePath, user.accessToken)
     let actionValue = curFontList.includes(userFont) ? "update" : "create";
     
     // update global inventory
@@ -235,7 +237,7 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
     // update gitlab commit
     jsonFiles.push({
       action: actionValue,
-      file_path: "fonts/" + userFont.name,
+      file_path: "fonts/" + userFont,
       content: content,
     });
   }
@@ -518,7 +520,7 @@ const convertFilesToGitlabObjects = async (externalFiles) => {
   for (var i = 0; i < externalFiles.length; i++) {
     var externalFile = externalFiles[i];
 
-    const ext = getFileExtension(externalFile.name);
+    const ext = getFileExtension(externalFile);
 
     // experiment files
     if (acceptableExtensions.experiments.includes(ext)) {
@@ -572,8 +574,7 @@ const getFileRawFromGitlab = async (repoID, filePath, accessToken) => {
       .catch(error => { return error });
     
     
-    console.log('getFileFromGitlab', filePath, response)
-    resolve(JSON.parse(response).content)
+    resolve(response)
   })
 }
 
