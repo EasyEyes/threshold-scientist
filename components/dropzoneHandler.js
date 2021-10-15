@@ -156,7 +156,7 @@ Dropzone.options.fileDropzone = {
       setTabList('forms', EasyEyesResources.forms)
 
       hideDialogBox();
-      myDropzone.removeAllFiles();
+      myDropzone.myDropzone.removeAllFiles();
     }
 
   }
@@ -169,5 +169,5 @@ document
     await gitlabRoutine(droppedFiles);
 
     // clear dropzone
-    myDropzone.removeAllFiles();
+    myDropzone.myDropzone.removeAllFiles();
   });
