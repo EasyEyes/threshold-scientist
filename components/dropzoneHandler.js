@@ -61,6 +61,8 @@ Dropzone.options.fileDropzone = {
   //   console.log(file);
   // },
   autoProcessQueue: false,
+  
+  // file type verification
   accept: (file, done) => {
     // authentication check
     if (!isUserLoggedIn()) {
@@ -75,8 +77,6 @@ Dropzone.options.fileDropzone = {
       return;
     }
 
-    // Since we want the user to see instantenous uploads, we will accept the file here, store it in a json and delete it from dz
-    console.log("New file dropped!");
 
     // if dropped file is an experiment file, ie a csv extension, preprocess it immediately, and upon successful processing, add to droppedFiles array
     // and names to droppedFileNames set to avoid duplicates
@@ -84,12 +84,20 @@ Dropzone.options.fileDropzone = {
       // call preprocessor here
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed easyeyes table
     } else if (!droppedFileNames.has(file.name)) {
-      console.log(`${file.name} is ready to be uploaded.`);
-      droppedFiles.push(file);
-      droppedFileNames.add(file.name);
+
+      // store experiment files only as resource files are uploaded instantaneously
+      if (!acceptableExtensions.fonts.includes(ext) && !acceptableExtensions.forms.includes(ext)) {
+        droppedFiles.push(file);
+        droppedFileNames.add(file.name);
+        console.log(`${file.name} is ready to be uploaded.`);
+      }
     }
-    console.log(file);
-    myDropzone.myDropzone.removeFile(file);
+
+    // console.log(file);
+    // hide default progress bar UI
+    const progressElementsList = document.getElementsByClassName('dz-progress');
+    for(let i=0; i<progressElementsList.length; i++) progressElementsList[i].style.display = 'none';
+    // myDropzone.myDropzone.removeFile(file);
   },
   init: function () {
     myDropzone.myDropzone = this;
@@ -106,6 +114,25 @@ Dropzone.options.fileDropzone = {
         });
       });
   },
+
+  // instant upload when files have been dropped
+  addedfiles: async (fileList) => {
+    // filter out resources
+    let resourcesList = [];
+    fileList.map((file) => {
+      const ext = getFileExtension(file);
+      if (acceptableExtensions.fonts.includes(ext) || acceptableExtensions.forms.includes(ext)) {
+        resourcesList.push(file);
+      }
+    });
+
+    showDialogBox('Uploading files', 'Please wait while your files are being uploaded. This box will hide when upload is complete.', false);
+
+    // upload resources instantly
+    await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(resourcesList);
+
+    hideDialogBox();
+  }
 };
 
 document

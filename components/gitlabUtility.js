@@ -15,7 +15,7 @@ const gitlabRoutine = async (files) => {
   if (isRepoValid) {
     // upload fonts and forms to EasyEyesResources repo
     await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(
-      files
+      droppedFiles
     );
 
     // create new experiment repo
@@ -122,21 +122,17 @@ const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
   var jsonFiles = [];
 
   // filter and get all font files
-  var fonts = droppedFiles.filter((i) => {
+  var fonts = files.filter((i) => {
     var extension = i.name.split(".");
     extension = extension[extension.length - 1];
-    return (
-      extension.includes("otf") ||
-      extension.includes("ttf") ||
-      extension.includes("woff")
-    );
+    return acceptableExtensions.fonts.includes(extension)
   });
 
   // filter and get all form files
-  var consentForms = droppedFiles.filter((i) => {
+  var consentForms = files.filter((i) => {
     var extension = i.name.split(".");
     extension = extension[extension.length - 1];
-    return extension.includes("pdf") || extension.includes("md");
+    return acceptableExtensions.forms.includes(extension);
   });
 
   // generate Gitlab API body to commit form files

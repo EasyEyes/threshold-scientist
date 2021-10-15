@@ -1,9 +1,10 @@
 const user = {};
 let env;
 
-document.onreadystatechange = async () => {
+(async function() {
   env = await getEnvironment()
-}
+
+})();
 
 const populateUserInfo = async () => {
   user.accessToken = window.location.hash.split("&")[0].split("=")[1];
@@ -31,6 +32,20 @@ const populateUserInfo = async () => {
   }
   document.getElementById("gitlab-user-info").textContent =
     "Account : " + user.userData.name + "(" + user.userData.username + ")";
+
+  
+  // get initial resources info
+  var easyEyesResourcesRepo = user.userData.projects.find(
+    (i) => i.name == "EasyEyesResources"
+  );
+  const resourcesList = await getResourcesListFromRepository(easyEyesResourcesRepo.id, user.accessToken);
+  EasyEyesResources.forms = resourcesList.forms;
+  EasyEyesResources.fonts = resourcesList.fonts;
+  console.log('EasyEyesResources', EasyEyesResources)
+
+  // display inital resources info
+  setTab('font-tab', EasyEyesResources.fonts.length, 'Fonts');
+  setTab('form-tab', EasyEyesResources.forms.length, 'Fonts');
 };
 
 if (window.location.hash == "") {
