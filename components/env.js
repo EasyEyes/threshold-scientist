@@ -7,5 +7,5 @@ const getEnvironment = async () => {
   
   response = JSON.parse(response);
   response['GITHUB_PAT'] = `${response.GITHUB_PAT1}${response.GITHUB_PAT2}`
-  return JSON.parse(response)
+  return response
 }
