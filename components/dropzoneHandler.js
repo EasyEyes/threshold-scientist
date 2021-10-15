@@ -1,6 +1,7 @@
 const droppedFiles = [];
 const droppedFileNames = new Set();
 
+const acceptableFileExt = ['md', 'pdf', 'csv', 'xlsx', 'woff', 'woff2', 'otf', 'ttf', 'eot', 'svg'];
 const isUserLoggedIn = () => {
   return (user.userData && user.userData.id);
 };
@@ -38,6 +39,15 @@ const hideDialogBox = () => {
   el.style.display = 'none';
 }
 
+const getFileExtension = (file) => {
+  let splitExt = file.name.split('.')
+  return splitExt[splitExt.length-1].toLowerCase();
+}
+
+const isAcceptableExtension = (ext) => {
+  return acceptableFileExt.includes(ext);
+}
+
 const myDropzone = { myDropzone: null };
 Dropzone.options.fileDropzone = {
   paramName: "file",
@@ -50,7 +60,13 @@ Dropzone.options.fileDropzone = {
     // authentication check
     if (!isUserLoggedIn()) {
       showDialogBox('Error', 'Not connected to Pavlovia, so nothing can be uploaded.', true)
-      console.log('FAIL: user not logged in');
+      return;
+    }
+
+    // check file type
+    const ext = getFileExtension(file);
+    if (!isAcceptableExtension(ext)) {
+      showDialogBox(`${file.name} was discarded.`, `Sorry, cannot accept any file with extension '.${ext}'`, true);
       return;
     }
 
