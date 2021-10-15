@@ -85,12 +85,14 @@ Dropzone.options.fileDropzone = {
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed easyeyes table
     } else if (!droppedFileNames.has(file.name)) {
 
-      // store experiment files only as resource files are uploaded instantaneously
-      if (!acceptableExtensions.fonts.includes(ext) && !acceptableExtensions.forms.includes(ext)) {
-        droppedFiles.push(file);
-        droppedFileNames.add(file.name);
-        console.log(`${file.name} is ready to be uploaded.`);
-      }
+      
+    }
+
+    // store experiment files only as resource files are uploaded instantaneously
+    if (!droppedFileNames.has(file.name) && !acceptableExtensions.fonts.includes(ext) && !acceptableExtensions.forms.includes(ext)) {
+      droppedFiles.push(file);
+      droppedFileNames.add(file.name);
+      console.log(`${file.name} is ready to be uploaded.`);
     }
 
     // console.log(file);
@@ -126,12 +128,15 @@ Dropzone.options.fileDropzone = {
       }
     });
 
-    showDialogBox('Uploading files', 'Please wait while your files are being uploaded. This box will hide when upload is complete.', false);
+    if (resourcesList.length > 0) {
+      showDialogBox('Uploading files', 'Please wait while your files are being uploaded. This box will hide when upload is complete.', false);
 
-    // upload resources instantly
-    await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(resourcesList);
+      // upload resources instantly
+      await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(resourcesList);
 
-    hideDialogBox();
+      hideDialogBox();
+    }
+
   }
 };
 
