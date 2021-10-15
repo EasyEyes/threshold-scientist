@@ -3,7 +3,12 @@ const EasyEyesResources = {
   forms: ['']
 };
 
+let currentTabId = 'fonts';
+openTab('fonts')
+
 const openTab = (evt, tabId) => {
+  currentTabId = tabId;
+
   var i, tabcontent, tablinks;
   tabcontent = document.getElementsByClassName("tabcontent");
   for (i = 0; i < tabcontent.length; i++) {

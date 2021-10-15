@@ -40,7 +40,7 @@ const gitlabRoutine = async (files) => {
 
     // update resources info
     setTab('font-tab', EasyEyesResources.fonts.length, 'Fonts');
-    setTab('form-tab', EasyEyesResources.forms.length, 'Forms');
+    setTab('form-tab', EasyEyesResources.forms.length, 'Consent Forms');
 
     // window.alert(
     //   "New Repo " + newRepoName + " has been successfully initiated"

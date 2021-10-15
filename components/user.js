@@ -47,7 +47,7 @@ const populateUserInfo = async () => {
 
   // display inital resources info
   setTab('font-tab', EasyEyesResources.fonts.length, 'Fonts');
-  setTab('form-tab', EasyEyesResources.forms.length, 'Forms');
+  setTab('form-tab', EasyEyesResources.forms.length, 'Consent Forms');
 };
 
 if (window.location.hash == "") {

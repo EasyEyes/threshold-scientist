@@ -136,7 +136,29 @@ Dropzone.options.fileDropzone = {
       // upload resources instantly
       await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(resourcesList);
 
+      // update info
+      for (let fi = 0; fi<resourcesList.length; fi++) {
+        const file = resourcesList[i];
+        const ext = getFileExtension(file);
+        if (acceptableExtensions.fonts.includes(ext)) {
+          if (EasyEyesResources.fonts.indexOf(file.name) == -1)
+            EasyEyesResources.fonts.push(file.name);
+        }
+
+        if (acceptableExtensions.forms.includes(ext)) {
+          if (EasyEyesResources.forms.indexOf(file.name) == -1)
+            EasyEyesResources.forms.push(file.name);
+        }
+      }
+
+      // update info UI
+      setTab('font-tab', EasyEyesResources.fonts.length, 'Fonts');
+      setTab('form-tab', EasyEyesResources.forms.length, 'Consent Forms');
+      const tabEl = document.getElementById(id);
+      tabEl.className += "active";
+
       hideDialogBox();
+      myDropzone.removeAllFiles();
     }
 
   }
@@ -147,4 +169,7 @@ document
   .addEventListener("click", async (e) => {
     // call gitlab routine
     await gitlabRoutine(droppedFiles);
+
+    // clear dropzone
+    myDropzone.removeAllFiles();
   });
