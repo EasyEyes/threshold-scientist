@@ -3,7 +3,6 @@ let env;
 
 (async function() {
   env = await getEnvironment()
-
 })();
 
 const populateUserInfo = async () => {
