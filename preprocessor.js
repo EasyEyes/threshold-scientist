@@ -1,3 +1,5 @@
+let externalCallback;
+
 /**
  * @file Client-side (ie browser) processing of declarative table experiment.csv file.
  *
@@ -10,14 +12,19 @@
  * -> Display all the errors found along the way, or actually preprocess the files
  */
 
-const processFiles = (fileList) => {
+const processFiles = (fileList, callback) => {
+  // init callback for returning values
+  externalCallback = callback;
+
   // Assume a <input> element of type 'file', multiple, #fileInput
   // const fileList = [...document.getElementById("fileInput").files];
   // TEMP just checks for experiment file; should also check for necessary font files
-  const experimentFileProvided = containsNecessaryFiles(fileList);
+  // const experimentFileProvided = containsNecessaryFiles(fileList);
   // Look through the files and handle appropriately
   fileList.forEach((file) => {
+    console.log('> checking file type', file.type)
     switch (file.type) {
+      case "application/vnd.ms-excel":
       case "text/csv":
         Papa.parse(file, {
           dynamicTyping: true, // check out index 23; make sure null values preserve
@@ -389,6 +396,8 @@ const prepareExperimentFileForThreshold = (parsedContent) => {
  * @param {Object} df Dataframe (from data-frame.js) of correctly specified parameters for the experiment.
  */
 const splitIntoBlockFilesAndDownload = (df) => {
+  const resultFileList = [];
+
   // Initialize the set of files to be downloaded as a zip file.
   // September 2021: Instead we plan to upload to the scientist's Pavlovia account. Might skip zipping.
   const zip = new JSZip();
@@ -407,28 +416,46 @@ const splitIntoBlockFilesAndDownload = (df) => {
       // ... and use them to create a csv file for this block.
       const blockCSVString = Papa.unparse({ fields: columns, data: data });
       const blockFileName = "block_" + String(blockId) + ".csv";
+      
+      // store block file
+      const csvBlob = new Blob([blockCSVString], {type: 'text/csv'});
+      const csvFile = new File([csvBlob], blockFileName, {type: 'text/csv'});
+      resultFileList.push(csvFile);
+
       // Add this block file to the output zip
-      zip.file(blockFileName, blockCSVString);
+      // zip.file(blockFileName, blockCSVString);
     });
+
   // Create a "blockCount" file, just one column with the the indices of the blocks
   const blockCountCSVString = Papa.unparse({
     fields: ["block"],
     data: blockIndices.block.map((x) => [x]),
   });
   const blockCountFileName = "blockCount.csv";
-  // Add blockCount file to output zip
-  zip.file(blockCountFileName, blockCountCSVString);
-  // Download the zip of files to the user's computer
-  zip.generateAsync({ type: "base64" }).then((base64) => {
-    const link = document.createElement("a");
-    link.href = "data:application/zip;base64," + base64;
-    link.download = "blocks.zip"; // !
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 
-    // location.href = "data:application/zip;base64," + base64;
-  });
+  // store blockCount file
+  const blockCountBlob = new Blob([blockCountCSVString], {type: 'text/csv'});
+  const blockCountFile = new File([blockCountBlob], blockCountFileName, {type: 'text/csv'});
+  resultFileList.push(blockCountFile);
+
+  // it is expected that the externalCallback function has been initialized.
+  if (externalCallback)
+    externalCallback(resultFileList);
+
+  // Add blockCount file to output zip
+  // zip.file(blockCountFileName, blockCountCSVString);
+  
+  // Download the zip of files to the user's computer
+  // zip.generateAsync({ type: "base64" }).then((base64) => {
+  //   const link = document.createElement("a");
+  //   link.href = "data:application/zip;base64," + base64;
+  //   link.download = "blocks.zip"; // !
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+
+  //   // location.href = "data:application/zip;base64," + base64;
+  // });
 };
 
 // ------------------------- Example error messages -------------------------------------------------

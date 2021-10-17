@@ -1,6 +1,6 @@
-const gitlabRoutine = async (files) => {
+const gitlabRoutine = async (uploadedFiles) => {
   // empty file list check
-  if (files == null || files == undefined || files.length == 0) {
+  if (uploadedFiles.others == null || uploadedFiles.others == undefined || uploadedFiles.others.length == 0) {
     window.alert("Please upload required files.");
     return;
   }
@@ -14,9 +14,7 @@ const gitlabRoutine = async (files) => {
   // if repo is valid
   if (isRepoValid) {
     // upload fonts and forms to EasyEyesResources repo
-    await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(
-      droppedFiles
-    );
+    await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(uploadedFiles.others);
 
     // create new experiment repo
     const gitlabRepo = await createRepo(newRepoName);
@@ -32,7 +30,7 @@ const gitlabRoutine = async (files) => {
     // });
     
     // await commitNewFilesToGitlab(gitlabRepo, files)
-    await commitNewFilesToGitlab(gitlabRepo, files)
+    await commitNewFilesToGitlab(gitlabRepo, uploadedFiles)
     // await commitFilesToGitlabFromGithubAndEasyEyes(gitlabRepo, files);
 
     // download all consent forms and fonts from resources repo, and commit to new expeiment repo in 2nd commit
@@ -388,9 +386,9 @@ const populateThresholdRepoOnExperiment = async (gitlabRepo) => {
   //alert('Repo has been successfully initiated. Please add your easy eyes table to add your experiment');
 };
 
-const commitNewFilesToGitlab = async (gitlabRepo, externalFiles) => {
+const commitNewFilesToGitlab = async (gitlabRepo, uploadedFiles) => {
   // get Gitlab API format data for files
-  var jsonBody = await convertFilesToGitlabObjects(externalFiles);
+  var jsonBody = await convertFilesToGitlabObjects(uploadedFiles);
 
   // create single commit payload for multiple files
   var commitBody = {
@@ -523,12 +521,12 @@ const populateCommitBody = async (rootContent, externalFiles) => {
   return jsonFiles;
 };
 
-const convertFilesToGitlabObjects = async (externalFiles) => {
+const convertFilesToGitlabObjects = async (uploadedFiles) => {
   const jsonFiles = [];
 
   // convert texternal files to Gitlab API data format
-  for (var i = 0; i < externalFiles.length; i++) {
-    var externalFile = externalFiles[i];
+  for (var i = 0; i < uploadedFiles.others.length; i++) {
+    var externalFile = uploadedFiles.others[i];
 
     const ext = getFileExtension(externalFile);
 
@@ -562,6 +560,19 @@ const convertFilesToGitlabObjects = async (externalFiles) => {
       });
     }
   }
+
+  // convert experiment file
+  var fileData = await uploadedFiles.experimentFile.text();
+  jsonFiles.push({
+    action: "create",
+    file_path: uploadedFiles.experimentFile,
+    content: fileData
+  });
+  jsonFiles.push({
+    action: "update",
+    file_path: uploadedFiles.experimentFile,
+    content: fileData
+  });
 
   return jsonFiles;
 };

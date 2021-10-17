@@ -1,3 +1,8 @@
+const uploadedFiles = {
+  experimentFile: {},
+  others: []
+};
+
 const droppedFiles = [];
 const droppedFileNames = new Set();
 
@@ -5,7 +10,8 @@ const acceptableExtensions = {
   experiments: ['csv', 'xlsx'],
   fonts: ['woff', 'woff2', 'otf', 'ttf', 'eot', 'svg'],
   forms: ['md', 'pdf']
-}
+};
+
 const acceptableFileExt = [...acceptableExtensions.experiments, ...acceptableExtensions.fonts, ...acceptableExtensions.forms];
 const isUserLoggedIn = () => {
   return (user.userData && user.userData.id);
@@ -77,29 +83,35 @@ Dropzone.options.fileDropzone = {
       return;
     }
 
-
     // if dropped file is an experiment file, ie a csv extension, preprocess it immediately, and upon successful processing, add to droppedFiles array
     // and names to droppedFileNames set to avoid duplicates
     if (file.name.split(".")[1] == "csv" || file.type == "text/csv") {
       // call preprocessor here
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed easyeyes table
-    } else if (!droppedFileNames.has(file.name)) {
 
-      
+      // preprocess experiment files
+      showDialogBox(`Processing`, `Please while we process ${file.name}. This box will disappear when it has been completed.`, false);
+      processFiles([file], (fileList) => {
+        for (let fi = 0; fi<fileList.length; fi++) {
+          droppedFileNames.push(fileList[fi].name);
+          uploadedFiles.others.push(fileList[fi]);
+        }
+      });
+      hideDialogBox();
+
+      experimentFile = file;
     }
 
     // store experiment files only as resource files are uploaded instantaneously
     if (!droppedFileNames.has(file.name) && !acceptableExtensions.fonts.includes(ext) && !acceptableExtensions.forms.includes(ext)) {
-      droppedFiles.push(file);
       droppedFileNames.add(file.name);
-      console.log(`${file.name} is ready to be uploaded.`);
+      uploadedFiles.others.push(fileList[fi]);
     }
 
-    // console.log(file);
     // hide default progress bar UI
     const progressElementsList = document.getElementsByClassName('dz-progress');
-    for(let i=0; i<progressElementsList.length; i++) progressElementsList[i].style.display = 'none';
-    // myDropzone.myDropzone.removeFile(file);
+    for(let i=0; i<progressElementsList.length; i++) 
+      progressElementsList[i].style.display = 'none';
   },
   init: function () {
     myDropzone.myDropzone = this;
@@ -166,7 +178,7 @@ document
   .querySelector("#gitlab-file-submit")
   .addEventListener("click", async (e) => {
     // call gitlab routine
-    await gitlabRoutine(droppedFiles);
+    await gitlabRoutine(uploadedFiles);
 
     // clear dropzone
     myDropzone.myDropzone.removeAllFiles();
