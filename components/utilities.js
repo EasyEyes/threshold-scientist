@@ -45,6 +45,23 @@ export const dataframeFromPapaParsed = (parsedContent) => {
 };
 
 /**
+ * Robust check for whether a file is a CSV file
+ * https://developer.mozilla.org/en-US/docs/Web/API/File
+ * @param {File} file File object to be checked
+ * @returns {Boolean}
+ */
+export const isCsvFile = (file) => {
+  // https://stackoverflow.com/questions/11832930/html-input-file-accept-attribute-file-type-csv
+  // https://stackoverflow.com/questions/190852/how-can-i-get-file-extensions-with-javascript/1203361#1203361
+  return (
+    file.type === "text/csv" ||
+    file.type === "application/csv" ||
+    file.type === "application/vnd.ms-excel" ||
+    file.name.split(".").pop() === "csv"
+  );
+};
+
+/**
  * Damerau–Levenshtein of two strings
  * @see https://stackoverflow.com/questions/11919065/sort-an-array-by-the-levenshtein-distance-with-best-performance-in-javascript
  * @author James Westgate (https://stackoverflow.com/users/305319/james-westgate)
