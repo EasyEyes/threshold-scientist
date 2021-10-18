@@ -53,13 +53,13 @@ const gitlabRoutine = async (uploadedFiles) => {
       "https://run.pavlovia.org/" +
       user.userData.username +
       "/" +
-      newRepoName +
+      newRepoName.toLowerCase() +
       "/";
     document.getElementById("palvolia-experiment-link").text =
       "https://run.pavlovia.org/" +
       user.userData.username +
       "/" +
-      newRepoName +
+      newRepoName.toLowerCase() +
       "/";
 
     // document.getElementById("activate-experiment-btn");
