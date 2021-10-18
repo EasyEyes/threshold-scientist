@@ -160,7 +160,7 @@ const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
   // commit files to EasyEyesResources repository
   var commitBody = {
     branch: "master",
-    commit_message: "Easy Eyes to Gitlab INIT",
+    commit_message: "Update EasyEyes Resources",
     actions: [...jsonFiles],
   };
   var commitFile = await fetch(
@@ -253,7 +253,7 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   // commit files to EasyEyesResources repository
   var commitBody = {
     branch: "master",
-    commit_message: "Easy Eyes to Gitlab INIT",
+    commit_message: "Add EasyEyes Resources",
     actions: [...jsonFiles],
   };
   var commitFile = await fetch(
@@ -330,7 +330,7 @@ const commitFilesToGitlabFromGithubAndEasyEyes = async (gitlabRepo, files) => {
   // create single commit payload for multiple files
   var commitBody = {
     branch: "master",
-    commit_message: "Easy Eyes to Gitlab INIT",
+    commit_message: "Add experiment and threshold files",
     actions: [...jsonBody],
   };
   var commitFile = await fetch(
@@ -526,20 +526,15 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
 
   // convert texternal files to Gitlab API data format
   for (var i = 0; i < uploadedFiles.others.length; i++) {
-    var externalFile = uploadedFiles.others[i];
+    const externalFile = uploadedFiles.others[i];
 
     const ext = getFileExtension(externalFile);
 
     // experiment files
     if (acceptableExtensions.experiments.includes(ext)) {
-      var fileData = await externalFile.text();
+      const fileData = await externalFile.text();
       jsonFiles.push({
         action: "create",
-        file_path: "blocks/" + externalFile.name,
-        content: fileData,
-      });
-      jsonFiles.push({
-        action: "update",
         file_path: "blocks/" + externalFile.name,
         content: fileData,
       });
@@ -547,7 +542,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
 
     // fonts
     else if (acceptableExtensions.fonts.includes(ext)) {
-      var fileData = await externalFile.text();
+      const fileData = await externalFile.text();
       jsonFiles.push({
         action: "create",
         file_path: "fonts/" + externalFile.name,
@@ -562,30 +557,25 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
 
     // forms
     else if (acceptableExtensions.forms.includes(ext)) {
-      var fileData = await externalFile.text();
+      const fileData = await externalFile.text();
       jsonFiles.push({
         action: "create",
-        file_path: "form/" + externalFile.name,
+        file_path: "forms/" + externalFile.name,
         content: fileData,
       });
       jsonFiles.push({
         action: "update",
-        file_path: "form/" + externalFile.name,
+        file_path: "forms/" + externalFile.name,
         content: fileData,
       });
     }
   }
 
   // experiment file
-  var fileData = await uploadedFiles.experimentFile.text();
-  jsonFiles.push({
-    action: "create",
-    file_path: uploadedFiles.experimentFile,
-    content: fileData
-  });
+  const fileData = await uploadedFiles.experimentFile.text();
   jsonFiles.push({
     action: "update",
-    file_path: uploadedFiles.experimentFile,
+    file_path: uploadedFiles.experimentFile.name,
     content: fileData
   });
 
