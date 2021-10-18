@@ -145,7 +145,7 @@ const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
     });
   }
 
-  // generate Gitlab API body to commit form files
+  // generate Gitlab API body to commit font files
   for (var i = 0; i < fonts.length; i++) {
     var userFont = fonts[i];
     var content = await userFont.text();
@@ -538,6 +538,11 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
         file_path: "blocks/" + externalFile.name,
         content: fileData,
       });
+      jsonFiles.push({
+        action: "update",
+        file_path: "blocks/" + externalFile.name,
+        content: fileData,
+      });
     } 
 
     // fonts
@@ -545,6 +550,11 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
       var fileData = await externalFile.text();
       jsonFiles.push({
         action: "create",
+        file_path: "fonts/" + externalFile.name,
+        content: fileData,
+      });
+      jsonFiles.push({
+        action: "update",
         file_path: "fonts/" + externalFile.name,
         content: fileData,
       });
@@ -558,10 +568,15 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
         file_path: "form/" + externalFile.name,
         content: fileData,
       });
+      jsonFiles.push({
+        action: "update",
+        file_path: "form/" + externalFile.name,
+        content: fileData,
+      });
     }
   }
 
-  // convert experiment file
+  // experiment file
   var fileData = await uploadedFiles.experimentFile.text();
   jsonFiles.push({
     action: "create",

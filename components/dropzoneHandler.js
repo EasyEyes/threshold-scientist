@@ -93,19 +93,19 @@ Dropzone.options.fileDropzone = {
       showDialogBox(`Processing`, `Please while we process ${file.name}. This box will disappear when it has been completed.`, false);
       processFiles([file], (fileList) => {
         for (let fi = 0; fi<fileList.length; fi++) {
-          droppedFileNames.push(fileList[fi].name);
+          droppedFileNames.add(fileList[fi].name);
           uploadedFiles.others.push(fileList[fi]);
         }
       });
       hideDialogBox();
 
-      experimentFile = file;
+      uploadedFiles.experimentFile = file;
     }
 
     // store experiment files only as resource files are uploaded instantaneously
-    if (!droppedFileNames.has(file.name) && !acceptableExtensions.fonts.includes(ext) && !acceptableExtensions.forms.includes(ext)) {
+    else if (!droppedFileNames.has(file.name) && !acceptableExtensions.fonts.includes(ext) && !acceptableExtensions.forms.includes(ext)) {
       droppedFileNames.add(file.name);
-      uploadedFiles.others.push(fileList[fi]);
+      uploadedFiles.others.push(file);
     }
 
     // hide default progress bar UI
@@ -118,7 +118,6 @@ Dropzone.options.fileDropzone = {
     document
       .querySelector("#preprocess-file-submit")
       .addEventListener("click", (e) => {
-        console.log(myDropzone.files);
         //processFiles(myDropzone.files);
         prepareExperimentFileForThreshold(myDropzone);
         // myDropzone.processQueue()
@@ -131,7 +130,6 @@ Dropzone.options.fileDropzone = {
 
   // instant upload when files have been dropped
   addedfiles: async (fileList) => {
-    console.log('fileList', fileList)
     // filter out resources
     let resourcesList = [];
     for(let fi = 0; fi<fileList.length; fi++) {

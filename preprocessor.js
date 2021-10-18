@@ -369,7 +369,7 @@ const dataframeFromPapaParsed = (parsedContent) => {
  */
 const prepareExperimentFileForThreshold = (parsedContent) => {
   // Create a dataframe for easy data manipulation.
-  const df = dataframeFromPapaParsed(parsedContent);
+  let df = dataframeFromPapaParsed(parsedContent);
   // Change some names to the ones that PsychoJS expects.
   const nameChanges = {
     conditionName: "label",
@@ -378,7 +378,7 @@ const prepareExperimentFileForThreshold = (parsedContent) => {
     thresholdProbability: "pThreshold",
   };
   //// https://stackoverflow.com/questions/5915789/how-to-replace-item-in-array
-  let preparedNames = transposed[0].map((oldName) =>
+  let preparedNames = df.listColumns().map((oldName) =>
     nameChanges.hasOwnProperty(oldName) ? nameChanges[oldName] : oldName
   );
   df = df.renameAll(preparedNames);
@@ -403,13 +403,13 @@ const splitIntoBlockFilesAndDownload = (df) => {
   const zip = new JSZip();
   // Split up into block files
   const blockIndices = { block: [] };
-  df.unique("blockOrder")
+  df.unique("block")
     .toDict()
-    ["blockOrder"].forEach((blockId, index) => {
+    ["block"].forEach((blockId, index) => {
       // Add an index to our blockCount file (see below) for this block
       blockIndices["block"].push(index);
       // Get the parameters from just this block...
-      const blockDf = df.filter((row) => row.get("blockOrder") === blockId);
+      const blockDf = df.filter((row) => row.get("block") === blockId);
       const blockDict = blockDf.toDict();
       const columns = Object.keys(blockDict);
       const data = transpose(columns.map((column) => blockDict[column]));
@@ -439,7 +439,7 @@ const splitIntoBlockFilesAndDownload = (df) => {
   resultFileList.push(blockCountFile);
 
   // it is expected that the externalCallback function has been initialized.
-  if (externalCallback)
+  if (externalCallback && resultFileList.length>0)
     externalCallback(resultFileList);
 
   // Add blockCount file to output zip
