@@ -14,12 +14,15 @@ const gitlabRoutine = async (uploadedFiles) => {
   // if repo is valid
   if (isRepoValid) {
     // upload fonts and forms to EasyEyesResources repo
+    console.log('creating resources')
     await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(uploadedFiles.others);
 
     // create new experiment repo
+    console.log('creating experiment-repo')
     const gitlabRepo = await createRepo(newRepoName);
     user.newRepo = newRepoName;
 
+    console.log('initializing threshold')
     await populateThresholdRepoOnExperiment(gitlabRepo)
     
     // filter and get all .csv files
@@ -30,10 +33,12 @@ const gitlabRoutine = async (uploadedFiles) => {
     // });
     
     // await commitNewFilesToGitlab(gitlabRepo, files)
+    console.log('uploading experiment files')
     await commitNewFilesToGitlab(gitlabRepo, uploadedFiles)
     // await commitFilesToGitlabFromGithubAndEasyEyes(gitlabRepo, files);
 
     // download all consent forms and fonts from resources repo, and commit to new expeiment repo in 2nd commit
+    console.log('syncing resources')
     await populateResourcesOnExperiment(gitlabRepo)
 
     // update resources info
@@ -157,6 +162,7 @@ const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
     });
   }
 
+  console.log('resources: ', jsonFiles);
   // commit files to EasyEyesResources repository
   var commitBody = {
     branch: "master",
@@ -251,6 +257,7 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   }
 
   // commit files to EasyEyesResources repository
+  console.log('resources-sync', jsonFiles)
   var commitBody = {
     branch: "master",
     commit_message: "Add EasyEyes Resources",
@@ -351,39 +358,33 @@ const commitFilesToGitlabFromGithubAndEasyEyes = async (gitlabRepo, files) => {
 };
 
 const populateThresholdRepoOnExperiment = async (gitlabRepo) => {
-  // get threshold files from Github: EasyEyes/threshold
-  var rootContent = await fetch(
-    "https://api.github.com/repos/EasyEyes/threshold/contents",
-    {
-      headers: {
-        Authorization: `token ${env.GITHUB_PAT}`,
-      },
-    }
-  );
-  rootContent = await rootContent.json();
-  var jsonBody = await populateCommitBody(rootContent, []);
+  const promiseList = [];
+  for (let i=0; i<pathList.length; i+=20) {
+    let startIdx = i;
+    let endIdx = Math.min(i+20-1, pathList.length-1);
+    const rootContent = await getGitlabBodyForThreshold(startIdx, endIdx);
+    const commitBody = {
+      branch: "master",
+      commit_message: "Initialise repository with threshold",
+      actions: rootContent
+    };
 
-  // create single commit payload for multiple files
-  var commitBody = {
-    branch: "master",
-    commit_message: "Initialise repository with threshold",
-    actions: [...jsonBody],
-  };
-  var commitFile = await fetch(
-    "https://gitlab.pavlovia.org/api/v4/projects/" +
-      gitlabRepo.id +
-      "/repository/commits?access_token=" +
-      user.accessToken,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(commitBody),
-    }
-  );
-  await commitFile.json();
-  //alert('Repo has been successfully initiated. Please add your easy eyes table to add your experiment');
+    const commitFile = await fetch(
+      "https://gitlab.pavlovia.org/api/v4/projects/" +
+        gitlabRepo.id +
+        "/repository/commits?access_token=" +
+        user.accessToken,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(commitBody),
+      }
+    );
+    promiseList.push(commitFile);
+  }
+  await Promise.all(promiseList);
 };
 
 const commitNewFilesToGitlab = async (gitlabRepo, uploadedFiles) => {
@@ -574,7 +575,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
   // experiment file
   const fileData = await uploadedFiles.experimentFile.text();
   jsonFiles.push({
-    action: "update",
+    action: "create",
     file_path: uploadedFiles.experimentFile.name,
     content: fileData
   });

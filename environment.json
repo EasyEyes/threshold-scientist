@@ -1,5 +1,3 @@
 {
-  "GITLAB_REDIRECT_URL": "https://gitlab.pavlovia.org//oauth/authorize?client_id=b89e397bb4341bcf747543ce7e3e8f9e7a4352640884c4c97904f2afda2f2bca&redirect_uri=https%3A%2F%2Foauth-branch--easyeyes.netlify.app%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=7q8xeko7jie",
-  "GITHUB_PAT1": "ghp_3TSgseWS16",
-  "GITHUB_PAT2": "ujHzpU5aJgUPfWLP1vAo0HmX0l"
+  "GITLAB_REDIRECT_URL": "https://gitlab.pavlovia.org//oauth/authorize?client_id=b89e397bb4341bcf747543ce7e3e8f9e7a4352640884c4c97904f2afda2f2bca&redirect_uri=https%3A%2F%2Foauth-branch--easyeyes.netlify.app%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=7q8xeko7jie"
 }

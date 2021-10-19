@@ -3,6 +3,8 @@ let env;
 
 (async function() {
   env = await getEnvironment()
+  populateUserInfo();
+
 })();
 
 const populateUserInfo = async () => {
@@ -11,7 +13,8 @@ const populateUserInfo = async () => {
     "https://gitlab.pavlovia.org/api/v4/user?access_token=" +
       window.location.hash.split("&")[0].split("=")[1]
   );
-  showDialogBox('Initializing', 'Please while we fetch your existing resources.', false);
+  if (user.accessToken)
+    showDialogBox('Initializing', 'Please while we fetch your existing resources.', false);
 
   userData = await userData.json();
   user.userData = userData;
@@ -69,7 +72,6 @@ if (window.location.hash == "") {
     document.getElementById('old-content').style.visibility = 'hidden';
     document.getElementById('gitlab-stuff').style.visibility = '';*/
 
-  populateUserInfo();
 }
 
 const redirectToOauth2 = async () => {
