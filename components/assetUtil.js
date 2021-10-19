@@ -220,7 +220,7 @@ const pathList = [
 ];
 
 const getEnvironment = async () => {
-  let response = await getAssetFileContent('/website/docs/threshold/environment.json');
+  let response = await getAssetFileContent('/threshold/environment.json');
   response = JSON.parse(response);
   return response
 };
