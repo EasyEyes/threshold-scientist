@@ -2,7 +2,6 @@ const pathList = [
   '/threshold/threshold/.gitignore',
   '/threshold/threshold/.gitmodules',
   '/threshold/threshold/.prettierignore',
-  '/threshold/threshold/experiment.csv',
   '/threshold/threshold/index.html',
   '/threshold/threshold/LICENSE',
   '/threshold/threshold/netlify.toml',
