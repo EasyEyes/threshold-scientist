@@ -199,8 +199,8 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   var jsonFiles = [];
 
   // update global inventory
-  EasyEyesResources.fonts = curFontList;
-  EasyEyesResources.forms = curFormList;
+  EasyEyesResources.fonts = fontList;
+  EasyEyesResources.forms = formList;
 
   // generate Gitlab API body to commit form files
   for (var i = 0; i < formList.length; i++) {
@@ -260,7 +260,7 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   };
   var commitFile = await fetch(
     "https://gitlab.pavlovia.org/api/v4/projects/" +
-      easyEyesResourcesRepo.id +
+      gitlabRepo.id +
       "/repository/commits?access_token=" +
       user.accessToken,
     {
