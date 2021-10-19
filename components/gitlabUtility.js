@@ -196,11 +196,6 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   const formList = resourcesList.forms;
   const fontList = resourcesList.fonts;
 
-  // get current forms and folders
-  const currentResourcesList = await getResourcesListFromRepository(gitlabRepo.id, user.accessToken);
-  const curFormList = currentResourcesList.forms;
-  const curFontList = currentResourcesList.fonts;
-
   var jsonFiles = [];
 
   // update global inventory
@@ -211,7 +206,7 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   for (var i = 0; i < formList.length; i++) {
     var consentFormm = formList[i];
     const resourcesRepoFilePath = encodeGitlabFilePath(`forms/${consentFormm}`);
-    var consentFormContent = await getFileRawFromGitlab(gitlabRepo.id, resourcesRepoFilePath, user.accessToken)
+    var consentFormContent = await getFileRawFromGitlab(easyEyesResourcesRepo.id, resourcesRepoFilePath, user.accessToken)
     
     // ignore 404s
     if (consentFormContent.trim().indexOf(`{"message":"404 File Not Found"}`)!=-1)
@@ -236,7 +231,7 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
     var userFont = fontList[i];
     var content = '';
     const resourcesRepoFilePath = encodeGitlabFilePath(`fonts/${userFont}`);
-    var content = await getFileRawFromGitlab(gitlabRepo.id, resourcesRepoFilePath, user.accessToken)
+    var content = await getFileRawFromGitlab(easyEyesResourcesRepo.id, resourcesRepoFilePath, user.accessToken)
     
     // ignore 404s
     if (content.trim().indexOf(`{"message":"404 File Not Found"}`)!=-1)
