@@ -227,7 +227,7 @@ const getGitlabBodyForThreshold = async (startIndex, endIndex) => {
     const content = await getAssetFileContent(path);
     res.push({
       action: "create",
-      file_path: path.substring(25), 
+      file_path: path.substring(20), 
       content
     });
   }
