@@ -212,15 +212,9 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
     if (consentFormContent.trim().indexOf(`{"message":"404 File Not Found"}`)!=-1)
       continue;
 
-    let actionValue = curFormList.includes(consentFormm) ? "update" : "create";
-    
-    // update global inventory
-    if (actionValue == 'create')
-      EasyEyesResources.forms.push(consentFormm);
-
     // update gitlab commit
     jsonFiles.push({
-      action: actionValue,
+      action: 'create',
       file_path: "forms/" + consentFormm,
       content: consentFormContent,
     });
@@ -237,15 +231,9 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
     if (content.trim().indexOf(`{"message":"404 File Not Found"}`)!=-1)
       continue;
 
-    let actionValue = curFontList.includes(userFont) ? "update" : "create";
-    
-    // update global inventory
-    if (actionValue == 'create')
-      EasyEyesResources.fonts.push(userFont);
-
     // update gitlab commit
     jsonFiles.push({
-      action: actionValue,
+      action: 'create',
       file_path: "fonts/" + userFont,
       content: content,
     });
