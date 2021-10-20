@@ -663,3 +663,16 @@ const encodeGitlabFilePath = (filePath) => {
 
   return res;
 };
+
+const handleParticipantRecruitmentUrl = async () => {
+  // check if service is Prolific
+  // if Prolific, expose
+};
+
+const copyUrl = () => {
+  const cb = navigator.clipboard;
+  const paragraph = document.querySelector("#pavlovia-experiment-url");
+  cb.writeText(paragraph.value).then(() =>
+    alert("URL has been copied to clipboard")
+  );
+};
