@@ -66,7 +66,7 @@ const gitlabRoutine = async (uploadedFiles) => {
       .getElementById("new-gitlab-repo-name")
       .setAttribute("disabled", "disabled");
     document.getElementById("gitlab-file-submit").className =
-      document.getElementById("gitlab-file-submit").className + " disabled";
+      "btn btn-success disabled";
     document.getElementById("gitlab-file-submit").innerText =
       "Files have been uploaded.";
     document.getElementById("waiting-div").style.visibility = "hidden";
