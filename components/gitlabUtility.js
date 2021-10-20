@@ -536,7 +536,8 @@ const populateCommitBody = async (rootContent, externalFiles) => {
       var fileData = await externalFile.text();
       jsonFiles.push({
         action: "create",
-        file_path: "blocks/" + externalFile.name,
+        // change to blocks after threshold is modified
+        file_path: "conditions/" + externalFile.name,
         content: fileData,
       });
     }
