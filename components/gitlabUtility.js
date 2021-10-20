@@ -1,12 +1,20 @@
 const gitlabRoutine = async (uploadedFiles) => {
   // empty file list check
-  if (uploadedFiles.others == null || uploadedFiles.others == undefined || uploadedFiles.others.length == 0) {
+  if (
+    uploadedFiles.others == null ||
+    uploadedFiles.others == undefined ||
+    uploadedFiles.others.length == 0
+  ) {
     window.alert("Please upload required files.");
     return;
   }
 
   // document.getElementById("waiting-div").style.visibility = "";
-  showDialogBox(`Uploading files...`, `Please wait while your experiment is being created.`, false);
+  showDialogBox(
+    `Uploading files...`,
+    `Please wait while your experiment is being created.`,
+    false
+  );
 
   const newRepoName = document.getElementById("new-gitlab-repo-name").value;
   var isRepoValid = await validateRepoName(newRepoName);
@@ -14,36 +22,38 @@ const gitlabRoutine = async (uploadedFiles) => {
   // if repo is valid
   if (isRepoValid) {
     // upload fonts and forms to EasyEyesResources repo
-    console.log('creating resources')
-    await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(uploadedFiles.others);
+    console.log("creating resources");
+    await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(
+      uploadedFiles.others
+    );
 
     // create new experiment repo
-    console.log('creating experiment-repo')
+    console.log("creating experiment-repo");
     const gitlabRepo = await createRepo(newRepoName);
     user.newRepo = newRepoName;
 
-    console.log('initializing threshold')
-    await populateThresholdRepoOnExperiment(gitlabRepo)
-    
+    console.log("initializing threshold");
+    await populateThresholdRepoOnExperiment(gitlabRepo);
+
     // filter and get all .csv files
     // var blockFiles = files.filter( f => {
     //   var extension = f.name.split('.');
     //   extension = extension[extension.length - 1];
     //   return extension.includes('csv');
     // });
-    
+
     // await commitNewFilesToGitlab(gitlabRepo, files)
-    console.log('uploading experiment files')
-    await commitNewFilesToGitlab(gitlabRepo, uploadedFiles)
+    console.log("uploading experiment files");
+    await commitNewFilesToGitlab(gitlabRepo, uploadedFiles);
     // await commitFilesToGitlabFromGithubAndEasyEyes(gitlabRepo, files);
 
     // download all consent forms and fonts from resources repo, and commit to new expeiment repo in 2nd commit
-    console.log('syncing resources')
-    await populateResourcesOnExperiment(gitlabRepo)
+    console.log("syncing resources");
+    await populateResourcesOnExperiment(gitlabRepo);
 
     // update resources info
-    setTab('font-tab', EasyEyesResources.fonts.length, 'Fonts');
-    setTab('form-tab', EasyEyesResources.forms.length, 'Consent Forms');
+    setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
+    setTab("form-tab", EasyEyesResources.forms.length, "Consent Forms");
 
     // window.alert(
     //   "New Repo " + newRepoName + " has been successfully initiated"
@@ -51,6 +61,14 @@ const gitlabRoutine = async (uploadedFiles) => {
     hideDialogBox();
     showDialogBox(`Sucess!`, `${newRepoName} has been created.`, true);
 
+    // update repo name input field and btn
+    document
+      .getElementById("new-gitlab-repo-name")
+      .setAttribute("disabled", "disabled");
+    document.getElementById("gitlab-file-submit").className =
+      document.getElementById("gitlab-file-submit").className + " disabled";
+    document.getElementById("gitlab-file-submit").innerText =
+      "Files have been uploaded.";
     document.getElementById("waiting-div").style.visibility = "hidden";
 
     // display "run" experiement link
@@ -70,7 +88,7 @@ const gitlabRoutine = async (uploadedFiles) => {
     // document.getElementById("activate-experiment-btn");
 
     document.getElementById("pavlovia-div").style.visibility = "";
-  } 
+  }
 
   // else if repo name is invalid, display response
   else {
@@ -107,7 +125,6 @@ const createRepo = async (repoName) => {
   return newRepo;
 };
 
-
 const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
   files
 ) => {
@@ -115,10 +132,13 @@ const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
   var easyEyesResourcesRepo = user.userData.projects.find(
     (i) => i.name == "EasyEyesResources"
   );
-  user.easyEyesResourcesRepo = easyEyesResourcesRepo
+  user.easyEyesResourcesRepo = easyEyesResourcesRepo;
 
   // get pre-existing resources list
-  const resourcesList = await getResourcesListFromRepository(easyEyesResourcesRepo.id, user.accessToken);
+  const resourcesList = await getResourcesListFromRepository(
+    easyEyesResourcesRepo.id,
+    user.accessToken
+  );
   const prevFormList = resourcesList.forms;
   const prevFontList = resourcesList.fonts;
 
@@ -128,7 +148,7 @@ const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
   var fonts = files.filter((i) => {
     var extension = i.name.split(".");
     extension = extension[extension.length - 1];
-    return acceptableExtensions.fonts.includes(extension)
+    return acceptableExtensions.fonts.includes(extension);
   });
 
   // filter and get all form files
@@ -142,7 +162,9 @@ const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
   for (var i = 0; i < consentForms.length; i++) {
     var consentFormm = consentForms[i];
     var content = await consentFormm.text();
-    let actionValue = prevFormList.includes(consentFormm.name) ? "update" : "create";
+    let actionValue = prevFormList.includes(consentFormm.name)
+      ? "update"
+      : "create";
     jsonFiles.push({
       action: actionValue,
       file_path: "forms/" + consentFormm.name,
@@ -154,7 +176,9 @@ const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
   for (var i = 0; i < fonts.length; i++) {
     var userFont = fonts[i];
     var content = await userFont.text();
-    let actionValue = prevFontList.includes(userFont.name) ? "update" : "create";
+    let actionValue = prevFontList.includes(userFont.name)
+      ? "update"
+      : "create";
     jsonFiles.push({
       action: actionValue,
       file_path: "fonts/" + userFont.name,
@@ -162,7 +186,7 @@ const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment = async (
     });
   }
 
-  console.log('resources: ', jsonFiles);
+  console.log("resources: ", jsonFiles);
   // commit files to EasyEyesResources repository
   var commitBody = {
     branch: "master",
@@ -192,7 +216,10 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   );
 
   // get shared resources list
-  const resourcesList = await getResourcesListFromRepository(easyEyesResourcesRepo.id, user.accessToken);
+  const resourcesList = await getResourcesListFromRepository(
+    easyEyesResourcesRepo.id,
+    user.accessToken
+  );
   const formList = resourcesList.forms;
   const fontList = resourcesList.fonts;
 
@@ -206,15 +233,22 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   for (var i = 0; i < formList.length; i++) {
     var consentFormm = formList[i];
     const resourcesRepoFilePath = encodeGitlabFilePath(`forms/${consentFormm}`);
-    var consentFormContent = await getFileRawFromGitlab(easyEyesResourcesRepo.id, resourcesRepoFilePath, user.accessToken)
-    
+    var consentFormContent = await getFileRawFromGitlab(
+      easyEyesResourcesRepo.id,
+      resourcesRepoFilePath,
+      user.accessToken
+    );
+
     // ignore 404s
-    if (consentFormContent.trim().indexOf(`{"message":"404 File Not Found"}`)!=-1)
+    if (
+      consentFormContent.trim().indexOf(`{"message":"404 File Not Found"}`) !=
+      -1
+    )
       continue;
 
     // update gitlab commit
     jsonFiles.push({
-      action: 'create',
+      action: "create",
       file_path: "forms/" + consentFormm,
       content: consentFormContent,
     });
@@ -223,24 +257,28 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   // generate Gitlab API body to commit font files
   for (var i = 0; i < fontList.length; i++) {
     var userFont = fontList[i];
-    var content = '';
+    var content = "";
     const resourcesRepoFilePath = encodeGitlabFilePath(`fonts/${userFont}`);
-    var content = await getFileRawFromGitlab(easyEyesResourcesRepo.id, resourcesRepoFilePath, user.accessToken)
-    
+    var content = await getFileRawFromGitlab(
+      easyEyesResourcesRepo.id,
+      resourcesRepoFilePath,
+      user.accessToken
+    );
+
     // ignore 404s
-    if (content.trim().indexOf(`{"message":"404 File Not Found"}`)!=-1)
+    if (content.trim().indexOf(`{"message":"404 File Not Found"}`) != -1)
       continue;
 
     // update gitlab commit
     jsonFiles.push({
-      action: 'create',
+      action: "create",
       file_path: "fonts/" + userFont,
       content: content,
     });
   }
 
   // commit files to EasyEyesResources repository
-  console.log('resources-sync', jsonFiles)
+  console.log("resources-sync", jsonFiles);
   var commitBody = {
     branch: "master",
     commit_message: "Add EasyEyes Resources",
@@ -260,7 +298,7 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
     }
   );
   await commitFile.json();
-}
+};
 
 const getResourcesListFromRepository = async (repoId, accessToken) => {
   // get list of fonts and forms
@@ -268,39 +306,56 @@ const getResourcesListFromRepository = async (repoId, accessToken) => {
   gitlabHeaders.append("Authorization", `bearer ${accessToken}`);
 
   var gitlabRequestOptions = {
-    method: 'GET',
+    method: "GET",
     headers: gitlabHeaders,
-    redirect: 'follow'
+    redirect: "follow",
   };
 
   // get font list
-  let prevFontListResponse = await fetch(`https://gitlab.pavlovia.org/api/v4/projects/${repoId}/repository/tree/?path=fonts`, gitlabRequestOptions)
-    .then(response =>  {return response.text()})
-    .then(result => {return result})
-    .catch(error => {return console.log('error', error)});
+  let prevFontListResponse = await fetch(
+    `https://gitlab.pavlovia.org/api/v4/projects/${repoId}/repository/tree/?path=fonts`,
+    gitlabRequestOptions
+  )
+    .then((response) => {
+      return response.text();
+    })
+    .then((result) => {
+      return result;
+    })
+    .catch((error) => {
+      return console.log("error", error);
+    });
   prevFontListResponse = JSON.parse(prevFontListResponse);
   let prevFontList = [];
-  for(let i=0;i<prevFontListResponse.length; i++) {
-    prevFontList.push(prevFontListResponse[i].name)    
+  for (let i = 0; i < prevFontListResponse.length; i++) {
+    prevFontList.push(prevFontListResponse[i].name);
   }
 
   // get form list
-  let prevFormListResponse = await fetch(`https://gitlab.pavlovia.org/api/v4/projects/${repoId}/repository/tree/?path=forms`, gitlabRequestOptions)
-    .then(response =>  {return response.text()})
-    .then(result => {return result})
-    .catch(error => {return console.log('error', error)});
-    prevFormListResponse = JSON.parse(prevFormListResponse);
+  let prevFormListResponse = await fetch(
+    `https://gitlab.pavlovia.org/api/v4/projects/${repoId}/repository/tree/?path=forms`,
+    gitlabRequestOptions
+  )
+    .then((response) => {
+      return response.text();
+    })
+    .then((result) => {
+      return result;
+    })
+    .catch((error) => {
+      return console.log("error", error);
+    });
+  prevFormListResponse = JSON.parse(prevFormListResponse);
   let prevFormList = [];
-  for(let i=0;i<prevFormListResponse.length; i++) {
-    prevFormList.push(prevFormListResponse[i].name)    
+  for (let i = 0; i < prevFormListResponse.length; i++) {
+    prevFormList.push(prevFormListResponse[i].name);
   }
 
   return {
     fonts: prevFontList,
-    forms: prevFormList
+    forms: prevFormList,
   };
-}
-
+};
 
 const commitFilesToGitlabFromGithubAndEasyEyes = async (gitlabRepo, files) => {
   // get threshold files from Github: EasyEyes/threshold
@@ -342,14 +397,14 @@ const commitFilesToGitlabFromGithubAndEasyEyes = async (gitlabRepo, files) => {
 
 const populateThresholdRepoOnExperiment = async (gitlabRepo) => {
   const promiseList = [];
-  for (let i=0; i<pathList.length; i+=20) {
+  for (let i = 0; i < pathList.length; i += 20) {
     let startIdx = i;
-    let endIdx = Math.min(i+20-1, pathList.length-1);
+    let endIdx = Math.min(i + 20 - 1, pathList.length - 1);
     const rootContent = await getGitlabBodyForThreshold(startIdx, endIdx);
     const commitBody = {
       branch: "master",
       commit_message: "Initialise repository with threshold",
-      actions: rootContent
+      actions: rootContent,
     };
 
     const commitFile = await fetch(
@@ -395,7 +450,7 @@ const commitNewFilesToGitlab = async (gitlabRepo, uploadedFiles) => {
   );
   await commitFile.json();
   //alert('Repo has been successfully initiated. Please add your easy eyes table to add your experiment');
-}
+};
 
 const populateCommitBody = async (rootContent, externalFiles) => {
   var jsonFiles = [];
@@ -420,8 +475,8 @@ const populateCommitBody = async (rootContent, externalFiles) => {
 
       // update files list
       files.push(...innerFiles);
-    } 
-    
+    }
+
     // else if current object is a "File", get inner content
     else if (currentFile.type == "file") {
       // possibility of inner folders being linked to other github projects
@@ -439,14 +494,14 @@ const populateCommitBody = async (rootContent, externalFiles) => {
 
         // update files list
         files.push(...innerFiles);
-      } 
+      }
 
       // ignore control-panel
       else if (currentFile.name == "control-panel") {
         // we don't need control-panel code in gitlab
         continue;
-      } 
-      
+      }
+
       // create Gitlab API data for file
       else {
         var fileData = await fetch(
@@ -473,7 +528,7 @@ const populateCommitBody = async (rootContent, externalFiles) => {
       }
     }
   }
-  
+
   // convert texternal files to Gitlab API data format
   for (var i = 0; i < externalFiles.length; i++) {
     var externalFile = externalFiles[i];
@@ -522,7 +577,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
         file_path: "blocks/" + externalFile.name,
         content: fileData,
       });
-    } 
+    }
 
     // fonts
     else if (acceptableExtensions.fonts.includes(ext)) {
@@ -560,45 +615,50 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
   jsonFiles.push({
     action: "create",
     file_path: uploadedFiles.experimentFile.name,
-    content: fileData
+    content: fileData,
   });
 
   return jsonFiles;
 };
 
 const getFileRawFromGitlab = async (repoID, filePath, accessToken) => {
-  return new Promise(async resolve => {
+  return new Promise(async (resolve) => {
     var myHeaders = new Headers();
     myHeaders.append("Authorization", `bearer ${accessToken}`);
 
     var requestOptions = {
-      method: 'GET',
+      method: "GET",
       headers: myHeaders,
-      redirect: 'follow'
+      redirect: "follow",
     };
 
     const encodedFilePath = encodeGitlabFilePath(filePath);
-    let response = await fetch(`https://gitlab.pavlovia.org/api/v4/projects/${repoID}/repository/files/${encodedFilePath}/raw?ref=master`, requestOptions)
-      .then(response => { return response.text() })
-      .then(result => { return result })
-      .catch(error => { return error });
-    
-    
-    resolve(response)
-  })
-}
+    let response = await fetch(
+      `https://gitlab.pavlovia.org/api/v4/projects/${repoID}/repository/files/${encodedFilePath}/raw?ref=master`,
+      requestOptions
+    )
+      .then((response) => {
+        return response.text();
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        return error;
+      });
+
+    resolve(response);
+  });
+};
 
 const encodeGitlabFilePath = (filePath) => {
-  let res = '';
-  for (let i=0; i<filePath.length; i++) {
+  let res = "";
+  for (let i = 0; i < filePath.length; i++) {
     let c = filePath[i];
-    if (c == '/')
-      c = '%2F';
-    else if (c == '.')
-      c = '%2E';
+    if (c == "/") c = "%2F";
+    else if (c == ".") c = "%2E";
     res = res + c;
   }
 
   return res;
-}
-
+};
