@@ -1,10 +1,9 @@
 const EasyEyesResources = {
-  fonts: [''],
-  forms: ['']
+  fonts: [""],
+  forms: [""],
 };
 
-let currentTabId = 'fonts';
-
+let currentTabId = "fonts";
 
 const openTab = (evt, tabId) => {
   currentTabId = tabId;
@@ -23,18 +22,18 @@ const openTab = (evt, tabId) => {
 
   // display list
   setTabList(tabId, EasyEyesResources[tabId]);
-}
+};
 
 const setTab = (id, count, label) => {
   const el = document.getElementById(id);
   el.innerHTML = `${count} ${label}`;
-}
+};
 
 const setTabList = (tabId, list) => {
   const listEl = document.querySelector(`#${tabId} ol`);
-  htmlContent = '';
+  htmlContent = "";
   list.map((name) => {
-    htmlContent += `<li>${name}</li>\n`
+    htmlContent += `<li>${name}</li>\n`;
   });
   listEl.innerHTML = htmlContent;
-}
+};

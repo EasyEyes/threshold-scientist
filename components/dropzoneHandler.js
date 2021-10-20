@@ -1,63 +1,66 @@
 const uploadedFiles = {
   experimentFile: {},
-  others: []
+  others: [],
 };
 
 const droppedFiles = [];
 const droppedFileNames = new Set();
 
 const acceptableExtensions = {
-  experiments: ['csv', 'xlsx'],
-  fonts: ['woff', 'woff2', 'otf', 'ttf', 'eot', 'svg'],
-  forms: ['md', 'pdf']
+  experiments: ["csv", "xlsx"],
+  fonts: ["woff", "woff2", "otf", "ttf", "eot", "svg"],
+  forms: ["md", "pdf"],
 };
 
-const acceptableFileExt = [...acceptableExtensions.experiments, ...acceptableExtensions.fonts, ...acceptableExtensions.forms];
+const acceptableFileExt = [
+  ...acceptableExtensions.experiments,
+  ...acceptableExtensions.fonts,
+  ...acceptableExtensions.forms,
+];
 const isUserLoggedIn = () => {
-  return (user.userData && user.userData.id);
+  return user.userData && user.userData.id;
 };
 
 const showDialogBox = (title, body, exitOnOk) => {
   // show dialog box
-  let el = document.getElementById('dialog-box');
-  el.style.display = 'block';
+  let el = document.getElementById("dialog-box");
+  el.style.display = "block";
 
   // set title
-  el = document.getElementsByClassName('dialog-title')[0];
+  el = document.getElementsByClassName("dialog-title")[0];
   el.innerText = title;
 
   // set body
-  el = document.getElementsByClassName('dialog-body')[0];
+  el = document.getElementsByClassName("dialog-body")[0];
   el.innerText = body;
 
   // toggle "OK" button
   if (exitOnOk) {
-    el = document.getElementsByClassName('dialog-button')[0];
-    el.style.display = 'block';
+    el = document.getElementsByClassName("dialog-button")[0];
+    el.style.display = "block";
     el.onclick = () => {
       hideDialogBox();
-    }
+    };
   } else {
-    el = document.getElementsByClassName('dialog-button')[0];
-    el.style.display = 'none';
+    el = document.getElementsByClassName("dialog-button")[0];
+    el.style.display = "none";
   }
-  
 };
 
 const hideDialogBox = () => {
   // hide dialog box
-  let el = document.getElementById('dialog-box');
-  el.style.display = 'none';
-}
+  let el = document.getElementById("dialog-box");
+  el.style.display = "none";
+};
 
 const getFileExtension = (file) => {
-  let splitExt = file.name.split('.')
-  return splitExt[splitExt.length-1].toLowerCase();
-}
+  let splitExt = file.name.split(".");
+  return splitExt[splitExt.length - 1].toLowerCase();
+};
 
 const isAcceptableExtension = (ext) => {
   return acceptableFileExt.includes(ext);
-}
+};
 
 const myDropzone = { myDropzone: null };
 Dropzone.options.fileDropzone = {
@@ -67,19 +70,27 @@ Dropzone.options.fileDropzone = {
   //   console.log(file);
   // },
   autoProcessQueue: false,
-  
+
   // file type verification
   accept: (file, done) => {
     // authentication check
     if (!isUserLoggedIn()) {
-      showDialogBox('Error', 'Not connected to Pavlovia, so nothing can be uploaded.', true)
+      showDialogBox(
+        "Error",
+        "Not connected to Pavlovia, so nothing can be uploaded.",
+        true
+      );
       return;
     }
 
     // check file type
     const ext = getFileExtension(file);
     if (!isAcceptableExtension(ext)) {
-      showDialogBox(`${file.name} was discarded.`, `Sorry, cannot accept any file with extension '.${ext}'`, true);
+      showDialogBox(
+        `${file.name} was discarded.`,
+        `Sorry, cannot accept any file with extension '.${ext}'`,
+        true
+      );
       return;
     }
 
@@ -90,9 +101,13 @@ Dropzone.options.fileDropzone = {
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed easyeyes table
 
       // preprocess experiment files
-      showDialogBox(`Processing`, `Please while we process ${file.name}. This box will disappear when it has been completed.`, false);
+      showDialogBox(
+        `Processing`,
+        `Please while we process ${file.name}. This box will disappear when it has been completed.`,
+        false
+      );
       processFiles([file], (fileList) => {
-        for (let fi = 0; fi<fileList.length; fi++) {
+        for (let fi = 0; fi < fileList.length; fi++) {
           droppedFileNames.add(fileList[fi].name);
           uploadedFiles.others.push(fileList[fi]);
         }
@@ -103,15 +118,19 @@ Dropzone.options.fileDropzone = {
     }
 
     // store experiment files only as resource files are uploaded instantaneously
-    else if (!droppedFileNames.has(file.name) && !acceptableExtensions.fonts.includes(ext) && !acceptableExtensions.forms.includes(ext)) {
+    else if (
+      !droppedFileNames.has(file.name) &&
+      !acceptableExtensions.fonts.includes(ext) &&
+      !acceptableExtensions.forms.includes(ext)
+    ) {
       droppedFileNames.add(file.name);
       uploadedFiles.others.push(file);
     }
 
     // hide default progress bar UI
-    const progressElementsList = document.getElementsByClassName('dz-progress');
-    for(let i=0; i<progressElementsList.length; i++) 
-      progressElementsList[i].style.display = 'none';
+    const progressElementsList = document.getElementsByClassName("dz-progress");
+    for (let i = 0; i < progressElementsList.length; i++)
+      progressElementsList[i].style.display = "none";
   },
   init: function () {
     myDropzone.myDropzone = this;
@@ -132,22 +151,31 @@ Dropzone.options.fileDropzone = {
   addedfiles: async (fileList) => {
     // filter out resources
     let resourcesList = [];
-    for(let fi = 0; fi<fileList.length; fi++) {
+    for (let fi = 0; fi < fileList.length; fi++) {
       const file = fileList[fi];
       const ext = getFileExtension(file);
-      if (acceptableExtensions.fonts.includes(ext) || acceptableExtensions.forms.includes(ext)) {
+      if (
+        acceptableExtensions.fonts.includes(ext) ||
+        acceptableExtensions.forms.includes(ext)
+      ) {
         resourcesList.push(file);
       }
     }
 
     if (resourcesList.length > 0) {
-      showDialogBox('Uploading files', 'Please wait while your files are being uploaded. This box will hide when upload is complete.', false);
+      showDialogBox(
+        "Uploading files",
+        "Please wait while your files are being uploaded. This box will hide when upload is complete.",
+        false
+      );
 
       // upload resources instantly
-      await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(resourcesList);
+      await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(
+        resourcesList
+      );
 
       // update info
-      for (let fi = 0; fi<resourcesList.length; fi++) {
+      for (let fi = 0; fi < resourcesList.length; fi++) {
         const file = resourcesList[fi];
         const ext = getFileExtension(file);
         if (acceptableExtensions.fonts.includes(ext)) {
@@ -162,14 +190,13 @@ Dropzone.options.fileDropzone = {
       }
 
       // update info UI
-      setTabList('fonts', EasyEyesResources.fonts)
-      setTabList('forms', EasyEyesResources.forms)
+      setTabList("fonts", EasyEyesResources.fonts);
+      setTabList("forms", EasyEyesResources.forms);
 
       hideDialogBox();
       myDropzone.myDropzone.removeAllFiles();
     }
-
-  }
+  },
 };
 
 document
