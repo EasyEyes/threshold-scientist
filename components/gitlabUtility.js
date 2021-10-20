@@ -536,6 +536,7 @@ const populateCommitBody = async (rootContent, externalFiles) => {
       var fileData = await externalFile.text();
       jsonFiles.push({
         action: "create",
+        // change to blocks after threshold is modified
         file_path: "conditions/" + externalFile.name,
         content: fileData,
       });
@@ -661,4 +662,17 @@ const encodeGitlabFilePath = (filePath) => {
   }
 
   return res;
+};
+
+const handleParticipantRecruitmentUrl = async () => {
+  // check if service is Prolific
+  // if Prolific, expose
+};
+
+const copyUrl = () => {
+  const cb = navigator.clipboard;
+  const paragraph = document.querySelector("#pavlovia-experiment-url");
+  cb.writeText(paragraph.value).then(() =>
+    alert("URL has been copied to clipboard")
+  );
 };

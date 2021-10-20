@@ -22,7 +22,7 @@ const processFiles = (fileList, callback) => {
   // const experimentFileProvided = containsNecessaryFiles(fileList);
   // Look through the files and handle appropriately
   fileList.forEach((file) => {
-    console.log('> checking file type', file.type)
+    console.log("> checking file type", file.type);
     switch (file.type) {
       case "application/vnd.ms-excel":
       case "text/csv":
@@ -49,7 +49,6 @@ const processFiles = (fileList, callback) => {
   });
 };
 
-
 // ------------------------- FUTURE, COMPLETE PREPROCESSING -------------------
 
 /**
@@ -71,7 +70,6 @@ const futurePreprocessor = () => {
     ...fileListValidity.errors,
     ...experimentFileValidity.errors,
   ];
-
 };
 
 const GLOSSARY = [
@@ -369,6 +367,16 @@ const dataframeFromPapaParsed = (parsedContent) => {
  */
 const prepareExperimentFileForThreshold = (parsedContent) => {
   // Create a dataframe for easy data manipulation.
+  // extract participant recruitement service name
+  if (
+    parsedContent.data.find((i) => i[0] == "_participantRecruitmentService")
+  ) {
+    user.currentExperiment.participantRecruitmentServiceName =
+      parsedContent.data.find(
+        (i) => i[0] == "_participantRecruitmentService"
+      )[1];
+  }
+
   let df = dataframeFromPapaParsed(parsedContent);
   // Change some names to the ones that PsychoJS expects.
   const nameChanges = {
@@ -378,9 +386,11 @@ const prepareExperimentFileForThreshold = (parsedContent) => {
     thresholdProbability: "pThreshold",
   };
   //// https://stackoverflow.com/questions/5915789/how-to-replace-item-in-array
-  let preparedNames = df.listColumns().map((oldName) =>
-    nameChanges.hasOwnProperty(oldName) ? nameChanges[oldName] : oldName
-  );
+  let preparedNames = df
+    .listColumns()
+    .map((oldName) =>
+      nameChanges.hasOwnProperty(oldName) ? nameChanges[oldName] : oldName
+    );
   df = df.renameAll(preparedNames);
   // VERIFY correctness
   if ("thresholdGuessLogSd" in df.toDict()) {
@@ -416,10 +426,10 @@ const splitIntoBlockFilesAndDownload = (df) => {
       // ... and use them to create a csv file for this block.
       const blockCSVString = Papa.unparse({ fields: columns, data: data });
       const blockFileName = "block_" + String(blockId) + ".csv";
-      
+
       // store block file
-      const csvBlob = new Blob([blockCSVString], {type: 'text/csv'});
-      const csvFile = new File([csvBlob], blockFileName, {type: 'text/csv'});
+      const csvBlob = new Blob([blockCSVString], { type: "text/csv" });
+      const csvFile = new File([csvBlob], blockFileName, { type: "text/csv" });
       resultFileList.push(csvFile);
 
       // Add this block file to the output zip
@@ -434,17 +444,19 @@ const splitIntoBlockFilesAndDownload = (df) => {
   const blockCountFileName = "blockCount.csv";
 
   // store blockCount file
-  const blockCountBlob = new Blob([blockCountCSVString], {type: 'text/csv'});
-  const blockCountFile = new File([blockCountBlob], blockCountFileName, {type: 'text/csv'});
+  const blockCountBlob = new Blob([blockCountCSVString], { type: "text/csv" });
+  const blockCountFile = new File([blockCountBlob], blockCountFileName, {
+    type: "text/csv",
+  });
   resultFileList.push(blockCountFile);
 
   // it is expected that the externalCallback function has been initialized.
-  if (externalCallback && resultFileList.length>0)
+  if (externalCallback && resultFileList.length > 0)
     externalCallback(resultFileList);
 
   // Add blockCount file to output zip
   // zip.file(blockCountFileName, blockCountCSVString);
-  
+
   // Download the zip of files to the user's computer
   // zip.generateAsync({ type: "base64" }).then((base64) => {
   //   const link = document.createElement("a");
