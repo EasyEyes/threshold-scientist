@@ -1,10 +1,15 @@
-const user = {};
+const user = {
+  currentExperiment: {
+    participantRecruitmentServiceName: null,
+    participantRecruitmentServiceUrl: null,
+    participantRecruitmentServiceCode: null,
+  },
+};
 let env;
 
-(async function() {
-  env = await getEnvironment()
+(async function () {
+  env = await getEnvironment();
   populateUserInfo();
-
 })();
 
 const populateUserInfo = async () => {
@@ -14,7 +19,11 @@ const populateUserInfo = async () => {
       window.location.hash.split("&")[0].split("=")[1]
   );
   if (user.accessToken)
-    showDialogBox('Initializing', 'Please while we fetch your existing resources.', false);
+    showDialogBox(
+      "Initializing",
+      "Please while we fetch your existing resources.",
+      false
+    );
 
   userData = await userData.json();
   user.userData = userData;
@@ -37,20 +46,22 @@ const populateUserInfo = async () => {
   document.getElementById("gitlab-user-info").textContent =
     "Account : " + user.userData.name + "(" + user.userData.username + ")";
 
-  
   // get initial resources info
   var easyEyesResourcesRepo = user.userData.projects.find(
     (i) => i.name == "EasyEyesResources"
   );
-  const resourcesList = await getResourcesListFromRepository(easyEyesResourcesRepo.id, user.accessToken);
+  const resourcesList = await getResourcesListFromRepository(
+    easyEyesResourcesRepo.id,
+    user.accessToken
+  );
   hideDialogBox();
   EasyEyesResources.forms = resourcesList.forms;
   EasyEyesResources.fonts = resourcesList.fonts;
-  console.log('EasyEyesResources', EasyEyesResources)
+  console.log("EasyEyesResources", EasyEyesResources);
 
   // display inital resources info
-  setTab('font-tab', EasyEyesResources.fonts.length, 'Fonts');
-  setTab('form-tab', EasyEyesResources.forms.length, 'Consent Forms');
+  setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
+  setTab("form-tab", EasyEyesResources.forms.length, "Consent Forms");
 };
 
 if (window.location.hash == "") {
@@ -71,15 +82,13 @@ if (window.location.hash == "") {
     document.getElementById("gitlab-login-div").style.visibility = 'hidden';
     document.getElementById('old-content').style.visibility = 'hidden';
     document.getElementById('gitlab-stuff').style.visibility = '';*/
-
 }
 
 const redirectToOauth2 = async () => {
   // TODO switch this for production
-//   location.href =
-//     "https://gitlab.pavlovia.org//oauth/authorize?client_id=f43ec84eac32326bd40b28f79728bfb5ba32cace89d580662cdb46da3b7dcc8d&redirect_uri=http%3A%2F%2Flocalhost%3A63342%2Fwebsite%2Fdocs%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=1587kx42hje";
+  //   location.href =
+  //     "https://gitlab.pavlovia.org//oauth/authorize?client_id=f43ec84eac32326bd40b28f79728bfb5ba32cace89d580662cdb46da3b7dcc8d&redirect_uri=http%3A%2F%2Flocalhost%3A63342%2Fwebsite%2Fdocs%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=1587kx42hje";
   location.href = env.GITLAB_REDIRECT_URL;
-        
 };
 
 const redirectToPalvoliaActivation = async () => {
