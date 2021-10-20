@@ -575,7 +575,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles) => {
       const fileData = await externalFile.text();
       jsonFiles.push({
         action: "create",
-        file_path: "blocks/" + externalFile.name,
+        file_path: "conditions/" + externalFile.name,
         content: fileData,
       });
     }
