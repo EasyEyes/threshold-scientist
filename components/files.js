@@ -6,6 +6,7 @@ const _loadDir = "/threshold/threshold/";
 const _loadFiles = [
   "LICENSE",
   "README.md",
+  "i18n/fetch-languages-sheets.js",
   "index.html",
   "js/threshold.min.js",
   "js/threshold.min.js.LICENSE.txt",

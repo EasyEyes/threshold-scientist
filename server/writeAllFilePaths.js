@@ -28,6 +28,7 @@ const ignorePattern = [
   "package",
   "webpack",
   "experiment",
+  "i18n",
 ];
 
 const inIgnore = (f) => {
