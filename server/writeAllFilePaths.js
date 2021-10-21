@@ -12,7 +12,6 @@ const ignorePattern = [
   "forms",
   "components",
   "addons",
-  "css/",
   "legacy",
   "psychojs/src",
   "psychojs/docs",
