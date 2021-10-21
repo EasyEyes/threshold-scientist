@@ -163,11 +163,7 @@ Dropzone.options.fileDropzone = {
     }
 
     if (resourcesList.length > 0) {
-      showDialogBox(
-        "Uploading files",
-        "Please wait while your files are being uploaded. This box will hide when upload is complete.",
-        false
-      );
+      showDialogBox("Now uploading files ...", "", false);
 
       // upload resources instantly
       await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(

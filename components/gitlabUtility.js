@@ -9,12 +9,7 @@ const gitlabRoutine = async (uploadedFiles) => {
     return;
   }
 
-  // document.getElementById("waiting-div").style.visibility = "";
-  showDialogBox(
-    `Uploading files...`,
-    `Please wait while your experiment is being created.`,
-    false
-  );
+  showDialogBox(`Now uploading files to create your experiment ...`, ``, false);
 
   const newRepoName = document.getElementById("new-gitlab-repo-name").value;
   var isRepoValid = await validateRepoName(newRepoName);
