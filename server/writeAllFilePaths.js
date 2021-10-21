@@ -7,12 +7,26 @@ const fetchDir = "threshold/";
 const ignorePattern = [
   ".git",
   ".husky",
+  ".prettierignore",
   "fonts",
   "forms",
+  "components",
+  "addons",
+  "css/",
   "legacy",
   "psychojs/src",
   "psychojs/docs",
   "psychojs/scripts",
+  "psychojs/.dprint.json",
+  "psychojs/.editorconfig",
+  "psychojs/.eslintrc.cjs",
+  "psychojs/CHANGELOG.md",
+  "psychojs/CONTRIBUTING.md",
+  "psychojs/README.md",
+  "psychojs/code-of-conduct.md",
+  "netlify",
+  "package",
+  "webpack",
 ];
 
 const inIgnore = (f) => {
