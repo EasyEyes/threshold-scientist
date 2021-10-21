@@ -27,6 +27,7 @@ const ignorePattern = [
   "netlify",
   "package",
   "webpack",
+  "experiment",
 ];
 
 const inIgnore = (f) => {
