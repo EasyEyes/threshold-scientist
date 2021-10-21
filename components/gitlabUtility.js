@@ -1,4 +1,5 @@
 const gitlabRoutine = async (uploadedFiles) => {
+  console.log(uploadedFiles);
   // empty file list check
   if (
     uploadedFiles.others == null ||
@@ -9,12 +10,7 @@ const gitlabRoutine = async (uploadedFiles) => {
     return;
   }
 
-  // document.getElementById("waiting-div").style.visibility = "";
-  showDialogBox(
-    `Uploading files...`,
-    `Please wait while your experiment is being created.`,
-    false
-  );
+  showDialogBox(`Now uploading files to create your experiment ...`, ``, false);
 
   const newRepoName = document.getElementById("new-gitlab-repo-name").value;
   var isRepoValid = await validateRepoName(newRepoName);
@@ -395,9 +391,9 @@ const commitFilesToGitlabFromGithubAndEasyEyes = async (gitlabRepo, files) => {
 
 const populateThresholdRepoOnExperiment = async (gitlabRepo) => {
   const promiseList = [];
-  for (let i = 0; i < pathList.length; i += 20) {
+  for (let i = 0; i < _loadFiles.length; i += 20) {
     let startIdx = i;
-    let endIdx = Math.min(i + 20 - 1, pathList.length - 1);
+    let endIdx = Math.min(i + 20 - 1, _loadFiles.length - 1);
     const rootContent = await getGitlabBodyForThreshold(startIdx, endIdx);
     const commitBody = {
       branch: "master",
@@ -426,6 +422,7 @@ const populateThresholdRepoOnExperiment = async (gitlabRepo) => {
 const commitNewFilesToGitlab = async (gitlabRepo, uploadedFiles) => {
   // get Gitlab API format data for files
   var jsonBody = await convertFilesToGitlabObjects(uploadedFiles);
+  console.log(jsonBody);
 
   // create single commit payload for multiple files
   var commitBody = {
@@ -433,6 +430,12 @@ const commitNewFilesToGitlab = async (gitlabRepo, uploadedFiles) => {
     commit_message: "Easy Eyes to Gitlab INIT",
     actions: [...jsonBody],
   };
+  console.log(
+    "https://gitlab.pavlovia.org/api/v4/projects/" +
+      gitlabRepo.id +
+      "/repository/commits?access_token=" +
+      user.accessToken
+  );
   var commitFile = await fetch(
     "https://gitlab.pavlovia.org/api/v4/projects/" +
       gitlabRepo.id +
