@@ -7,7 +7,7 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,json,md,html,css,scss}\"",
     "prepare": "husky install",
-    "setup:files": "node server/writeAllFilePaths.js && prettier components/files.js --write"
+    "files": "node server/writeAllFilePaths.js && prettier components/files.js --write"
   },
   "keywords": [],
   "author": "",
