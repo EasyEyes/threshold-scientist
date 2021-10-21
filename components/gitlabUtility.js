@@ -424,6 +424,7 @@ const populateThresholdRepoOnExperiment = async (gitlabRepo) => {
 const commitNewFilesToGitlab = async (gitlabRepo, uploadedFiles) => {
   // get Gitlab API format data for files
   var jsonBody = await convertFilesToGitlabObjects(uploadedFiles);
+  console.log(jsonBody);
 
   // create single commit payload for multiple files
   var commitBody = {
@@ -431,6 +432,12 @@ const commitNewFilesToGitlab = async (gitlabRepo, uploadedFiles) => {
     commit_message: "Easy Eyes to Gitlab INIT",
     actions: [...jsonBody],
   };
+  console.log(
+    "https://gitlab.pavlovia.org/api/v4/projects/" +
+      gitlabRepo.id +
+      "/repository/commits?access_token=" +
+      user.accessToken
+  );
   var commitFile = await fetch(
     "https://gitlab.pavlovia.org/api/v4/projects/" +
       gitlabRepo.id +
