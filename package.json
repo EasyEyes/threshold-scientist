@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "format": "prettier --write \"**/*.{js,json,md,html,css,scss}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "setup:files": "node server/writeAllFilePaths.js && prettier components/files.js --write"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +17,7 @@
   },
   "devDependencies": {
     "husky": "^7.0.2",
-    "lint-staged": "^11.1.2",
+    "lint-staged": "^11.2.3",
     "prettier": "^2.4.1"
   },
   "lint-staged": {
