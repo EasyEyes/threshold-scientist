@@ -7,7 +7,7 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,json,md,html,css,scss}\"",
     "prepare": "husky install",
-    "files": "node server/writeAllFilePaths.js && prettier components/files.js --write",
+    "files": "node server/writeAllFilePaths.js && prettier components/files.js --write && git add components/files.js",
     "update:git": "git add -A && git commit -m 'update' && git push"
   },
   "keywords": [],
