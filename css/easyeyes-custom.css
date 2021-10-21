@@ -72,3 +72,10 @@
   border: 1px solid #ccc;
   border-top: none;
 }
+
+.pavlovia-header {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-between;
+}
