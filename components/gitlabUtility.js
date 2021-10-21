@@ -392,9 +392,9 @@ const commitFilesToGitlabFromGithubAndEasyEyes = async (gitlabRepo, files) => {
 
 const populateThresholdRepoOnExperiment = async (gitlabRepo) => {
   const promiseList = [];
-  for (let i = 0; i < pathList.length; i += 20) {
+  for (let i = 0; i < _loadFiles.length; i += 20) {
     let startIdx = i;
-    let endIdx = Math.min(i + 20 - 1, pathList.length - 1);
+    let endIdx = Math.min(i + 20 - 1, _loadFiles.length - 1);
     const rootContent = await getGitlabBodyForThreshold(startIdx, endIdx);
     const commitBody = {
       branch: "master",
