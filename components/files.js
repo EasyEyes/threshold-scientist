@@ -6,7 +6,6 @@ const _loadDir = "/threshold/threshold/";
 const _loadFiles = [
   "LICENSE",
   "README.md",
-  "experiment.csv",
   "index.html",
   "js/threshold.min.js",
   "js/threshold.min.js.LICENSE.txt",
