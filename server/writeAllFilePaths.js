@@ -29,6 +29,7 @@ const ignorePattern = [
   "webpack",
   "experiment",
   "i18n",
+  "node_modules",
 ];
 
 const inIgnore = (f) => {
