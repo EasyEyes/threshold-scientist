@@ -10,7 +10,7 @@ const gitlabRoutine = async (uploadedFiles) => {
     return;
   }
 
-  showDialogBox(`Now uploading files to create your experiment ...`, ``, false);
+  showDialogBox(`Creating Experiment`, `Now uploading files to create your experiment ...`, false);
 
   const newRepoName = document.getElementById("new-gitlab-repo-name").value;
   var isRepoValid = await validateRepoName(newRepoName);
@@ -18,17 +18,14 @@ const gitlabRoutine = async (uploadedFiles) => {
   // if repo is valid
   if (isRepoValid) {
     // upload fonts and forms to EasyEyesResources repo
-    console.log("creating resources");
     await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(
       uploadedFiles.others
     );
 
     // create new experiment repo
-    console.log("creating experiment-repo");
     const gitlabRepo = await createRepo(newRepoName);
     user.newRepo = newRepoName;
 
-    console.log("initializing threshold");
     await populateThresholdRepoOnExperiment(gitlabRepo);
 
     // filter and get all .csv files
@@ -39,12 +36,10 @@ const gitlabRoutine = async (uploadedFiles) => {
     // });
 
     // await commitNewFilesToGitlab(gitlabRepo, files)
-    console.log("uploading experiment files");
     await commitNewFilesToGitlab(gitlabRepo, uploadedFiles);
     // await commitFilesToGitlabFromGithubAndEasyEyes(gitlabRepo, files);
 
     // download all consent forms and fonts from resources repo, and commit to new expeiment repo in 2nd commit
-    console.log("syncing resources");
     await populateResourcesOnExperiment(gitlabRepo);
 
     // update resources info
@@ -272,7 +267,6 @@ const populateResourcesOnExperiment = async (gitlabRepo) => {
   }
 
   // commit files to EasyEyesResources repository
-  console.log("resources-sync", jsonFiles);
   var commitBody = {
     branch: "master",
     commit_message: "Add EasyEyes Resources",
@@ -391,30 +385,45 @@ const commitFilesToGitlabFromGithubAndEasyEyes = async (gitlabRepo, files) => {
 
 const populateThresholdRepoOnExperiment = async (gitlabRepo) => {
   const promiseList = [];
-  for (let i = 0; i < _loadFiles.length; i += 20) {
-    let startIdx = i;
-    let endIdx = Math.min(i + 20 - 1, _loadFiles.length - 1);
-    const rootContent = await getGitlabBodyForThreshold(startIdx, endIdx);
-    const commitBody = {
-      branch: "master",
-      commit_message: "Initialise repository with threshold",
-      actions: rootContent,
-    };
+  let progress = 0;
+  const batchSize = 10;
 
-    const commitFile = await fetch(
-      "https://gitlab.pavlovia.org/api/v4/projects/" +
-        gitlabRepo.id +
-        "/repository/commits?access_token=" +
-        user.accessToken,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(commitBody),
-      }
-    );
-    promiseList.push(commitFile);
+  for (let i = 0; i < _loadFiles.length; i += batchSize) {
+    let startIdx = i;
+    let endIdx = Math.min(i + batchSize - 1, _loadFiles.length - 1);
+
+    const promise = new Promise(async (resolve) => {
+      const rootContent = await getGitlabBodyForThreshold(startIdx, endIdx);
+      const commitBody = {
+        branch: "master",
+        commit_message: "Initialise repository with threshold",
+        actions: rootContent,
+      };
+
+      const commitFile = fetch(
+        "https://gitlab.pavlovia.org/api/v4/projects/" +
+          gitlabRepo.id +
+          "/repository/commits?access_token=" +
+          user.accessToken,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(commitBody),
+        }
+      );
+
+      commitFile.then((commitResponse) => {
+        progress += endIdx-startIdx;
+        const progressPercent = Math.round((progress/_loadFiles.length) * 100);
+        showDialogBox('Creating Experiment', `Initializing experiment files: ${progressPercent}%`, false);
+
+        resolve(commitResponse);
+      });
+    });
+
+    promiseList.push(promise);
   }
   await Promise.all(promiseList);
 };
