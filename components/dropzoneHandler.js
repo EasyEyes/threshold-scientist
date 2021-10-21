@@ -1,5 +1,5 @@
 const uploadedFiles = {
-  experimentFile: {},
+  experimentFile: null,
   others: [],
 };
 
@@ -101,11 +101,7 @@ Dropzone.options.fileDropzone = {
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed easyeyes table
 
       // preprocess experiment files
-      showDialogBox(
-        `Processing`,
-        `Please while we process ${file.name}. This box will disappear when it has been completed.`,
-        false
-      );
+      showDialogBox(`The file ${file.name} is being processed ...`, ``, false);
       processFiles([file], (fileList) => {
         for (let fi = 0; fi < fileList.length; fi++) {
           droppedFileNames.add(fileList[fi].name);

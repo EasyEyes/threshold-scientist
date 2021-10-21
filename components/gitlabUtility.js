@@ -1,4 +1,5 @@
 const gitlabRoutine = async (uploadedFiles) => {
+  console.log(uploadedFiles);
   // empty file list check
   if (
     uploadedFiles.others == null ||
