@@ -10,7 +10,11 @@ const gitlabRoutine = async (uploadedFiles) => {
     return;
   }
 
-  showDialogBox(`Creating Experiment`, `Now uploading files to create your experiment ...`, false);
+  showDialogBox(
+    `Creating Experiment`,
+    `Now uploading files to create your experiment ...`,
+    false
+  );
 
   const newRepoName = document.getElementById("new-gitlab-repo-name").value;
   var isRepoValid = await validateRepoName(newRepoName);
@@ -83,7 +87,11 @@ const gitlabRoutine = async (uploadedFiles) => {
 
   // else if repo name is invalid, display response
   else {
-    showDialogBox('Duplicate Repository Name', "Please enter a new repository name.", true);
+    showDialogBox(
+      "Duplicate Repository Name",
+      "Please enter a new repository name.",
+      true
+    );
     document.getElementById("waiting-div").style.visibility = "hidden";
   }
 };
@@ -415,9 +423,15 @@ const populateThresholdRepoOnExperiment = async (gitlabRepo) => {
       );
 
       commitFile.then((commitResponse) => {
-        progress += endIdx-startIdx;
-        const progressPercent = Math.round((progress/_loadFiles.length) * 100);
-        showDialogBox('Creating Experiment', `Initializing experiment files: ${progressPercent}%`, false);
+        progress += endIdx - startIdx;
+        const progressPercent = Math.round(
+          (progress / _loadFiles.length) * 100
+        );
+        showDialogBox(
+          "Creating Experiment",
+          `Initializing experiment files: ${progressPercent}%`,
+          false
+        );
 
         resolve(commitResponse);
       });
