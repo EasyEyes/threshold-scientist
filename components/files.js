@@ -17,10 +17,5 @@ const _loadFiles = [
   "js/threshold.min.js.map",
   "psychojs/LICENSE.md",
   "psychojs/out/psychojs-2021.3.0.css",
-  "psychojs/out/psychojs-2021.3.0.iife.js",
-  "psychojs/out/psychojs-2021.3.0.iife.js.map",
-  "psychojs/out/psychojs-2021.3.0.js",
-  "psychojs/out/psychojs-2021.3.0.js.LEGAL.txt",
-  "psychojs/out/psychojs-2021.3.0.js.map",
   "threshold.js",
 ];

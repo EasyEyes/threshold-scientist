@@ -3,6 +3,7 @@ const fs = require("fs");
 const process = require("process");
 
 const fetchDir = "threshold/";
+const psychoJSVersion = "2021.3.0";
 
 const ignorePattern = [
   ".git",
@@ -23,6 +24,10 @@ const ignorePattern = [
   "psychojs/CONTRIBUTING.md",
   "psychojs/README.md",
   "psychojs/code-of-conduct.md",
+  `psychojs/out/psychojs-${psychoJSVersion}.iife.js`,
+  `psychojs/out/psychojs-${psychoJSVersion}.iife.js.map`,
+  `psychojs/out/psychojs-${psychoJSVersion}.js`,
+  `psychojs/out/psychojs-${psychoJSVersion}.js.map`,
   "netlify",
   "package",
   "webpack",
