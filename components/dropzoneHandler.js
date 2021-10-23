@@ -1,3 +1,6 @@
+import { processFiles } from "../preprocessor.js";
+import { isCsvFile } from "./utilities.js";
+
 const uploadedFiles = {
   experimentFile: null,
   others: [],
@@ -96,7 +99,8 @@ Dropzone.options.fileDropzone = {
 
     // if dropped file is an experiment file, ie a csv extension, preprocess it immediately, and upon successful processing, add to droppedFiles array
     // and names to droppedFileNames set to avoid duplicates
-    if (file.name.split(".")[1] == "csv" || file.type == "text/csv") {
+    // if (file.name.split(".")[1] == "csv" || file.type == "text/csv") {
+    if (isCsvFile(file)) {
       // call preprocessor here
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed easyeyes table
 
@@ -130,17 +134,18 @@ Dropzone.options.fileDropzone = {
   },
   init: function () {
     myDropzone.myDropzone = this;
-    document
-      .querySelector("#preprocess-file-submit")
-      .addEventListener("click", (e) => {
-        //processFiles(myDropzone.files);
-        prepareExperimentFileForThreshold(myDropzone);
-        // myDropzone.processQueue()
-        // TODO make elegant
-        myDropzone.files.forEach((f) => {
-          myDropzone.removeFile(f);
-        });
-      });
+    // document
+    // .querySelector("#preprocess-file-submit")
+    // .querySelector("#file-dropzone")
+    // .addEventListener("click", (e) => {
+    //   processFiles(myDropzone.files);
+    //   // prepareExperimentFileForThreshold(myDropzone);
+    //   // myDropzone.processQueue()
+    //   // TODO make elegant
+    //   myDropzone.files.forEach((f) => {
+    //     myDropzone.removeFile(f);
+    //   });
+    // });
   },
 
   // instant upload when files have been dropped

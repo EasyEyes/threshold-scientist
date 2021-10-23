@@ -14,13 +14,13 @@ import {
 import { GLOSSARY } from "./glossary.js";
 import { dataframeFromPapaParsed, levDist } from "./utilities.js";
 
+var parametersToCheck = [];
 /**
  * Check that the experiment file is correctly structured; provide errors for any problems
  * @param {DateFrame} experimentDf dataframe-js dataframe of the experiment file content
  * @returns {Object[]} Array of all errors found with the experiment file
  */
 export const validateExperimentDf = (experimentDf) => {
-  const experimentDf = dataframeFromPapaParsed(parsedContent);
   const parameters = experimentDf.listColumns();
   const errors = [];
 
@@ -29,13 +29,13 @@ export const validateExperimentDf = (experimentDf) => {
 
   // Alphabetize experimentDf
   experimentDf = experimentDf.restructure(experimentDf.listColumns().sort());
-  let parameters = experimentDf.listColumns();
+  parametersToCheck.push(...experimentDf.listColumns());
 
-  errors.push(areParametersDuplicated(parameters));
-  errors.push(areAllPresentParametersRecognized(parameters));
-  errors.push(areAllPresentParametersCurrentlySupported(parameters));
+  errors.push(...areParametersDuplicated(parametersToCheck));
+  errors.push(...areAllPresentParametersRecognized(parametersToCheck));
+  errors.push(...areAllPresentParametersCurrentlySupported(parametersToCheck));
 
-  return errors;
+  return errors.filter((error) => error);
 };
 
 /**
@@ -62,6 +62,7 @@ const areParametersDuplicated = (parameters) => {
       duplicatesErrors.push(DUPLICATE_PARAMETER(parameter));
     seenParameters.add(parameter);
   }
+  parametersToCheck = [...seenParameters];
   return duplicatesErrors;
 };
 
@@ -74,12 +75,15 @@ const areParametersDuplicated = (parameters) => {
  */
 const areAllPresentParametersRecognized = (parameters) => {
   const unrecognized = [];
+  parametersToCheck = [];
   const checkIfRecognized = (parameter) => {
     if (!GLOSSARY.hasOwnProperty(parameter)) {
       unrecognized.push({
         name: parameter,
-        closest: similarlySpelledCandidates(parameter, GLOSSARY.keys()),
+        closest: similarlySpelledCandidates(parameter, Object.keys(GLOSSARY)),
       });
+    } else {
+      parametersToCheck.push(parameter);
     }
   };
   parameters.forEach(checkIfRecognized);
@@ -87,6 +91,9 @@ const areAllPresentParametersRecognized = (parameters) => {
 };
 
 const areAllPresentParametersCurrentlySupported = (parameters) => {
+  parametersToCheck = parameters.filter(
+    (parameter) => GLOSSARY[parameter]["availability"] === "now"
+  );
   const notYetSupported = parameters.filter(
     (parameter) => GLOSSARY[parameter]["availability"] !== "now"
   );

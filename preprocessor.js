@@ -1,4 +1,7 @@
-const { EXPERIMENT_FILE_NOT_FOUND } = require("./components/errorMessages");
+// const { EXPERIMENT_FILE_NOT_FOUND } = require("./components/errorMessages");
+import { EXPERIMENT_FILE_NOT_FOUND } from "./components/errorMessages.js";
+import { validateExperimentDf } from "./components/experimentFileChecks.js";
+import { dataframeFromPapaParsed, transpose } from "./components/utilities.js";
 
 let externalCallback;
 
@@ -13,64 +16,16 @@ let externalCallback;
  * -> Check the experiment file itself (validateExperimentFile())
  * -> Display all the errors found along the way, or actually preprocess the files
  */
-const processFiles = (fileList, callback) => {
+export const processFiles = (fileList, callback) => {
   // init callback for returning values
   externalCallback = callback;
 
-  // Assume a <input> element of type 'file', multiple, #fileInput
-  // const fileList = [...document.getElementById("fileInput").files];
-  // TEMP just checks for experiment file; should also check for necessary font files
-  // const experimentFileProvided = containsNecessaryFiles(fileList);
-  // Look through the files and handle appropriately
-  fileList.forEach((file) => {
-    console.log("> checking file type", file.type);
-    switch (file.type) {
-      case "application/vnd.ms-excel":
-      case "text/csv":
-        Papa.parse(file, {
-          dynamicTyping: true, // check out index 23; make sure null values preserve
-          complete: prepareExperimentFileForThreshold,
-        });
-        break;
-      case "font/woff":
-        // TODO handle uploading font files
-        console.error("TODO uploading fonts now yet supported");
-        break;
-      case "font/woff2":
-        // TODO handle uploading font files
-        console.error("TODO uploading fonts now yet supported");
-        break;
-      default:
-        console.log(
-          "Huh, I don't recognize the type of file that " +
-            String(file) +
-            " is."
-        );
-    }
-  });
-};
-
-// ------------------------- FUTURE, COMPLETE PREPROCESSING -------------------
-
-/**
- * @todo complete Denis' compiler vision
- */
-const futurePreprocessor = () => {
-  // Get all the files
-  const filesFromDropzone = []; // TODO actually get files
-  // Check everything
-  const fileListValidity = validateFilesList(filesFromDropzone);
-  if (fileListValidity.errors.length === 0) {
-    // ie no errors in find finding files
-    const experimentFileValidity = validateExperimentFile(
-      fileListValidity.experimentFile
-    );
-  }
-  // TODO nicely communicate the errors to the experimenter
-  const errorsToDisplay = [
-    ...fileListValidity.errors,
-    ...experimentFileValidity.errors,
-  ];
+  fileList.forEach((file) =>
+    Papa.parse(file, {
+      dynamicTyping: false, // check out index 23; make sure null values preserve
+      complete: prepareExperimentFileForThreshold,
+    })
+  );
 };
 
 /**
@@ -83,7 +38,7 @@ const validateFileList = (filesProvided) => {
   const [experimentFilePresent, experimentFile, identifyExperimentFileError] =
     identifyExperimentFile(filesProvided);
   if (!experimentFilePresent) {
-    errors.push(EXPERIMENT_FILE_NOT_FOUND);
+    errors.push(EXPERIMENT_FILE_NOT_FOUND(filesProvided));
     errors.push(identifyExperimentFileError);
   }
   return { errors: errors, experimentFile: experimentFile };
@@ -121,6 +76,8 @@ const prepareExperimentFileForThreshold = (parsedContent) => {
   }
 
   let df = dataframeFromPapaParsed(parsedContent);
+  const validationErrors = validateExperimentDf(df);
+  console.log("Parsing Errors: ", validationErrors);
   // Change some names to the ones that PsychoJS expects.
   const nameChanges = {
     conditionName: "label",
@@ -212,22 +169,6 @@ const splitIntoBlockFilesAndDownload = (df) => {
   //   // location.href = "data:application/zip;base64," + base64;
   // });
 };
-
-// ------------------------- Example error messages -------------------------------------------------
-
-//   errors.push({
-//     name: "Missing consent page",
-//     context: `As determined by 'checkForConsentPage', within 'validateFileList', looking for the page ${experiment._consentForm} within the files ${filesProvided}.`,
-//     message:  "Uh oh, I can't find the consent page to be displayed for the participant to evaluate. A consent page is a mandatory component of any EasyEyes experiment.",
-//     hint: `You will need to provide a .txt or .pdf file displaying your consent information; the name should match the value you provided for the '_consentForm' parameter of the experiment.csv file; currently that value is: '${experiment._consentForm}.`,
-//   });
-
-//   errors.push({
-//     name: "Experiment File isn't valid.",
-//     context: `As determined by 'validateExperimentFile' for experiment file ${experimentFile.name}`,
-//     message: "Uh oh, there seems to be something wrong with your experiment file. Don't worry, I'll go ahead and let you know exactly what isn't right with other errors.",
-//     hint: "Looks like you're going to have to edit your experiment file, and try uploading your files again. Make sure to go through and addess each complain that I lay out here -- I'm a bit of a stickler for the rules, ya'know.",
-//   })
 
 // ------------------------- Potentially useful legacy code -------------------------------------------------
 /**
