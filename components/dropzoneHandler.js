@@ -24,7 +24,7 @@ const isUserLoggedIn = () => {
   return user.userData && user.userData.id;
 };
 
-const showDialogBox = (title, body, exitOnOk) => {
+export const showDialogBox = (title, body, exitOnOk) => {
   // show dialog box
   let el = document.getElementById("dialog-box");
   el.style.display = "block";

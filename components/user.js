@@ -1,3 +1,5 @@
+import { showDialogBox } from "./dropzoneHandler";
+
 const user = {
   currentExperiment: {
     participantRecruitmentServiceName: null,
