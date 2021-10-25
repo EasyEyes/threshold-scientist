@@ -5,3 +5,6 @@ package-lock.json
 threshold/
 static/
 lib/
+
+dist/
+main.js
