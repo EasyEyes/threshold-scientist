@@ -11,7 +11,8 @@
     "update:git": "git add -A && git commit -m 'update' && git push",
     "glossary": "node server/prepareGlossary.js && git add components/glossary.js",
     "start": "webpack --env=development",
-    "build": "webpack --env=production"
+    "build": "webpack --env=production",
+    "netlify": "npm run build"
   },
   "keywords": [],
   "author": "",
