@@ -12,14 +12,13 @@
     "glossary": "node server/prepareGlossary.js && git add components/glossary.js",
     "start": "webpack --env=development",
     "build": "webpack --env=production",
-    "netlify": "npm run build"
+    "netlify": "npm i && npm run build"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@types/dropzone": "^5.7.4",
-    "@types/jszip": "^3.4.1",
     "@types/papaparse": "^5.3.1",
     "dataframe-js": "^1.4.4",
     "dropzone": "^6.0.0-beta.1",
