@@ -1,9 +1,8 @@
 {
-  "name": "control-panel",
+  "name": "threshold-scientist",
   "private": "true",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Experimenter-facing web-app, used to generate the necessary files for an online experiment from a single CSV file, all from and within the browser.",
   "scripts": {
     "format": "prettier --write \"**/*.{js,json,md,html,css,scss,ts}\"",
     "prepare": "husky install",
