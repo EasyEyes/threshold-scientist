@@ -12,7 +12,7 @@
     "glossary": "node server/prepareGlossary.js && git add components/glossary.js",
     "start": "webpack --env=development",
     "build": "webpack --env=production",
-    "netlify": "npm i && npm run build"
+    "netlify": "npm ci && npm run build && rm -r node_modules"
   },
   "keywords": [],
   "author": "",
