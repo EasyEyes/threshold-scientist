@@ -63,12 +63,12 @@ export const EasyEyesResources: any = {
 export let currentTabId = "fonts";
 export const setCurrentTabId = (newId: string) => {
   currentTabId = newId;
-}
+};
 
 // ----------------------------------------
 // file upload constants
 // ----------------------------------------
-export const uploadedFiles = {
+export const uploadedFiles: any = {
   experimentFile: null,
   others: [],
 };
