@@ -1,7 +1,16 @@
 // ----------------------------------------
 // configs
 // ----------------------------------------
-let env;
+export const env = {
+  DEVELOPMENT: {
+    GITLAB_REDIRECT_URL:
+      "https://gitlab.pavlovia.org//oauth/authorize?client_id=f43ec84eac32326bd40b28f79728bfb5ba32cace89d580662cdb46da3b7dcc8d&redirect_uri=http%3A%2F%2Flocalhost%3A63342%2Fwebsite%2Fdocs%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=1587kx42hje",
+  },
+  PRODUCTION: {
+    GITLAB_REDIRECT_URL:
+      "https://gitlab.pavlovia.org//oauth/authorize?client_id=7ad8f608b1706c035a47c22e36e53f14e8f137a28d0b922c30b3bbd8496da190&redirect_uri=https%3A%2F%2Foauth--easyeyes.netlify.app%2Fthreshold%2F&scope=api&response_type=token&response_mode=query&nonce=6og9rq7bn6u",
+  },
+};
 export const acceptableExtensions = {
   experiments: ["csv", "xlsx"],
   fonts: ["woff", "woff2", "otf", "ttf", "eot", "svg"],
