@@ -30,7 +30,7 @@ export const setTab = (id: string, count: number, label: string) => {
     el.innerHTML = `${count} ${label}`;
 };
 
-const setTabList = (tabId: string, list: string[]) => {
+export const setTabList = (tabId: string, list: string[]) => {
   const listEl = document.querySelector(`#${tabId} ol`);
   let htmlContent = "";
   list.map((name: string) => {
