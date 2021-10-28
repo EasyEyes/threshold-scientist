@@ -2,8 +2,9 @@
   "compilerOptions": {
     "outDir": "./dist/",
     "noImplicitAny": true,
-    "module": "es6",
+    "module": "amd",
     "lib": ["dom", "es2015", "es5", "es6" ],
+    "outFile": "./dist/main.js",
     "downlevelIteration": true,
     "target": "es5",
     "strict": true,
