@@ -3,6 +3,8 @@
     "outDir": "./dist/",
     "noImplicitAny": true,
     "module": "es6",
+    "lib": ["dom", "es2015", "es5", "es6" ],
+    "downlevelIteration": true,
     "target": "es5",
     "strict": true,
     "allowJs": false,
