@@ -1,18 +1,16 @@
 import { EasyEyesResources, env, user } from "./CONSTANTS";
 import { setTab } from "./tab";
 
-(async function () {
-  await populateUserInfo();
-})();
-
 if (window.location.hash != "") {
-  document.getElementById("gitlab-connect-btn").className =
-    "btn btn-success disabled";
-  document.getElementById("gitlab-connect-btn").innerText =
-    "Connected to Pavlovia. Ready to upload.";
-  document.getElementById("gitlab-file-submit").className = document
-    .getElementById("gitlab-file-submit")
-    .className.replace("disabled", "");
+  const gitlabConnBtn = document.getElementById("gitlab-connect-btn");
+  const gitlabFileBtn = document.getElementById("gitlab-file-submit")
+  if (gitlabConnBtn) {
+    gitlabConnBtn.className = "btn btn-success disabled";
+    gitlabConnBtn.innerText = "Connected to Pavlovia. Ready to upload.";
+  }
+
+  if (gitlabFileBtn)
+    gitlabFileBtn.className = gitlabFileBtn.className.replace("disabled", "");
   /*document.getElementById("threshold-content").style.visibility = '';
     document.getElementById("gitlab-login-div").style.visibility = 'hidden';
     document.getElementById('old-content').style.visibility = 'hidden';
@@ -53,8 +51,9 @@ const populateUserInfo = async () => {
     var easyEyesResourcesRepo = null; //TODO : await createRepo("EasyEyesResources");
     user.userData.projects.push(easyEyesResourcesRepo);
   }
-  document.getElementById("gitlab-user-info").textContent =
-    "Account : " + user.userData.name + "(" + user.userData.username + ")";
+  const gitlabUserInfoEl = document.getElementById("gitlab-user-info")
+  if (gitlabUserInfoEl)
+    gitlabUserInfoEl.textContent = "Account : " + user.userData.name + "(" + user.userData.username + ")";
 
   // get initial resources info
   var easyEyesResourcesRepo = user.userData.projects.find(
@@ -87,3 +86,7 @@ export const redirectToPalvoliaActivation = async () => {
     "_blank"
   );
 };
+
+(async function () {
+  await populateUserInfo();
+})();
