@@ -52,7 +52,7 @@ export const user: any = {
 // ----------------------------------------
 // resources repository
 // ----------------------------------------
-export const EasyEyesResources = {
+export const EasyEyesResources: any = {
   fonts: [],
   forms: [],
 };
@@ -60,7 +60,10 @@ export const EasyEyesResources = {
 // ----------------------------------------
 // UI
 // ----------------------------------------
-let currentTabId = "fonts";
+export let currentTabId = "fonts";
+export const setCurrentTabId = (newId: string) => {
+  currentTabId = newId;
+}
 
 // ----------------------------------------
 // file upload constants
