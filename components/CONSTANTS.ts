@@ -1,13 +1,13 @@
 // ----------------------------------------
-// configs 
+// configs
 // ----------------------------------------
 let env;
-const acceptableExtensions = {
+export const acceptableExtensions = {
   experiments: ["csv", "xlsx"],
   fonts: ["woff", "woff2", "otf", "ttf", "eot", "svg"],
   forms: ["md", "pdf"],
 };
-const acceptableFileExt = [
+export const acceptableFileExt = [
   ...acceptableExtensions.experiments,
   ...acceptableExtensions.fonts,
   ...acceptableExtensions.forms,
@@ -29,16 +29,16 @@ export const user: any = {
   userData: {
     id: undefined,
     username: undefined,
-    projects: []
+    projects: [],
   },
 
-  easyEyesResourcesRepo: undefined
+  easyEyesResourcesRepo: undefined,
 };
 
 // ----------------------------------------
-// resources repository 
+// resources repository
 // ----------------------------------------
-const EasyEyesResources = {
+export const EasyEyesResources = {
   fonts: [],
   forms: [],
 };
@@ -51,9 +51,9 @@ let currentTabId = "fonts";
 // ----------------------------------------
 // file upload constants
 // ----------------------------------------
-const uploadedFiles = {
+export const uploadedFiles = {
   experimentFile: null,
-  others: []
+  others: [],
 };
 
 // ----------------------------------------
@@ -61,8 +61,8 @@ const uploadedFiles = {
 // project to generate a new /docs/threshold/components/files.js file
 // and copy that content here.
 // ----------------------------------------
-const _loadDir = "/threshold/threshold/";
-const _loadFiles = [
+export const _loadDir = "/threshold/threshold/";
+export const _loadFiles = [
   "LICENSE",
   "README.md",
   "css/consent.css",
@@ -78,5 +78,3 @@ const _loadFiles = [
   "psychojs/out/psychojs-2021.3.0.css",
   "threshold.js",
 ];
-
-
