@@ -3,7 +3,7 @@ import { setTab } from "./tab";
 
 if (window.location.hash != "") {
   const gitlabConnBtn = document.getElementById("gitlab-connect-btn");
-  const gitlabFileBtn = document.getElementById("gitlab-file-submit")
+  const gitlabFileBtn = document.getElementById("gitlab-file-submit");
   if (gitlabConnBtn) {
     gitlabConnBtn.className = "btn btn-success disabled";
     gitlabConnBtn.innerText = "Connected to Pavlovia. Ready to upload.";
@@ -51,9 +51,10 @@ const populateUserInfo = async () => {
     var easyEyesResourcesRepo = null; //TODO : await createRepo("EasyEyesResources");
     user.userData.projects.push(easyEyesResourcesRepo);
   }
-  const gitlabUserInfoEl = document.getElementById("gitlab-user-info")
+  const gitlabUserInfoEl = document.getElementById("gitlab-user-info");
   if (gitlabUserInfoEl)
-    gitlabUserInfoEl.textContent = "Account : " + user.userData.name + "(" + user.userData.username + ")";
+    gitlabUserInfoEl.textContent =
+      "Account : " + user.userData.name + "(" + user.userData.username + ")";
 
   // get initial resources info
   var easyEyesResourcesRepo = user.userData.projects.find(
@@ -74,7 +75,7 @@ const populateUserInfo = async () => {
   setTab("form-tab", EasyEyesResources.forms.length, "Consent Forms");
 };
 
-export const redirectToOauth2 = async () => {
+export const redirectToOauth2 = () => {
   // TODO switch this for production
   //location.href = env.PRODUCTION;
   location.href = env.DEVELOPMENT;
