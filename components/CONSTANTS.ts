@@ -78,7 +78,7 @@ export const uploadedFiles: any = {
 // project to generate a new /docs/threshold/components/files.js file
 // and copy that content here.
 // ----------------------------------------
-export const _loadDir = "/website/docs/threshold/threshold/threshold/";
+export const _loadDir = "/threshold/threshold/";
 export const _loadFiles = [
   "LICENSE",
   "README.md",
