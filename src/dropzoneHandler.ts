@@ -7,7 +7,7 @@ import {
 import { isCsvFile } from "./utilities";
 import Dropzone from "dropzone";
 import { setTabList } from "./tab";
-import { processFiles } from "../preprocessor";
+import { processFiles } from "./preprocessor";
 import { populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment } from "./gitlabUtility";
 
 export const droppedFiles = [];

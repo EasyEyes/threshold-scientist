@@ -1,10 +1,11 @@
-// const { EXPERIMENT_FILE_NOT_FOUND } = require("./components/errorMessages");
-import { EXPERIMENT_FILE_NOT_FOUND } from "./components/errorMessages";
-import { validateExperimentDf } from "./components/experimentFileChecks";
-import { dataframeFromPapaParsed, transpose } from "./components/utilities";
 import Papa from "papaparse";
 import JSZip from "jszip";
-import { user } from "./components/CONSTANTS";
+
+// const { EXPERIMENT_FILE_NOT_FOUND } = require("./errorMessages");
+import { EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
+import { validateExperimentDf } from "./experimentFileChecks";
+import { dataframeFromPapaParsed, transpose } from "./utilities";
+import { user } from "./CONSTANTS";
 
 let externalCallback: any;
 

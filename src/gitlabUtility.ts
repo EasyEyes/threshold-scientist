@@ -4,13 +4,13 @@ import {
   EasyEyesResources,
   env,
   user,
-  _loadFiles,
 } from "./CONSTANTS";
 import {
   getFileExtension,
   hideDialogBox,
   showDialogBox,
 } from "./dropzoneHandler";
+import { _loadFiles } from "./files";
 import { setTab } from "./tab";
 
 export const gitlabRoutine = async (uploadedFiles: any) => {
