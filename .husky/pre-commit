@@ -1,4 +1,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npm run files && npx lint-staged
+npm run prepare:commit && npx lint-staged

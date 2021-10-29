@@ -8,3 +8,5 @@ lib/
 
 dist/
 main.js
+
+glossary.ts

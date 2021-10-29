@@ -6,7 +6,7 @@
  * ## All parameters present are implemented
  */
 
- import {
+import {
   PARAMETERS_NOT_ALPHABETICAL,
   UNRECOGNIZED_PARAMETER,
   NOT_YET_SUPPORTED_PARAMETER,
@@ -114,7 +114,8 @@ const similarlySpelledCandidates = (
   numberOfCandidatesToReturn = 4
 ) => {
   const closest = parameters.sort(
-    (a: any, b: any) => levDist(proposedParameter, a) - levDist(proposedParameter, b)
+    (a: any, b: any) =>
+      levDist(proposedParameter, a) - levDist(proposedParameter, b)
   );
   return closest.slice(0, numberOfCandidatesToReturn - 1);
 };

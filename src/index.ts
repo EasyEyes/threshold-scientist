@@ -1,12 +1,12 @@
-import { openTab } from "../components/tab";
+import { openTab } from "./tab";
 import {
   populateUserInfo,
   redirectToOauth2,
   redirectToPalvoliaActivation,
-} from "../components/user";
-import { clearDropzone } from "../components/dropzoneHandler";
-import { gitlabRoutine } from "../components/gitlabUtility";
-import { uploadedFiles } from "../components/CONSTANTS";
+} from "./user";
+import { clearDropzone } from "./dropzoneHandler";
+import { gitlabRoutine } from "./gitlabUtility";
+import { uploadedFiles } from "./CONSTANTS";
 
 const addOnClickToEl = (elementId: string, handler: any) => {
   const el = document.getElementById(elementId);

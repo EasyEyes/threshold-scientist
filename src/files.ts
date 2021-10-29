@@ -2,8 +2,8 @@
   Do not modify this file! Run npm `npm run files` at ROOT of this project to update
 */
 
-const _loadDir = "/threshold/threshold/";
-const _loadFiles = [
+export const _loadDir: string = "/threshold/threshold/";
+export const _loadFiles: string[] = [
   "LICENSE",
   "README.md",
   "css/consent.css",

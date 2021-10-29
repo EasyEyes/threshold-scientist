@@ -57,10 +57,10 @@ async function processLanguageSheet() {
   Do not modify this file! Run npm \`npm run glossary\` at ROOT of this project to fetch from the Google Sheets.
   https://docs.google.com/spreadsheets/d/1x65NjykMm-XUOz98Eu_oo6ON2xspm_h0Q0M2u6UGtug/edit#gid=1287694458 
 */\n\n`;
-  const exportHandle = `export const GLOSSARY = `;
+  const exportHandle = `export const GLOSSARY: any =`;
 
   fs.writeFile(
-    `${process.cwd()}/components/glossary.js`,
+    `${process.cwd()}/src/glossary.ts`,
     exportWarning + exportHandle + JSON.stringify(data) + "\n",
     (error) => {
       if (error) {

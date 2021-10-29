@@ -6,11 +6,12 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,json,md,html,css,scss,ts}\"",
     "prepare": "husky install",
-    "files": "node server/writeAllFilePaths.js && prettier components/files.js --write && git add components/files.js",
+    "files": "node server/writeAllFilePaths.js && prettier src/files.ts --write && git add src/files.ts",
     "update:git": "git add -A && git commit -m 'update' && git push",
-    "glossary": "node server/prepareGlossary.js && git add components/glossary.js",
+    "glossary": "node server/prepareGlossary.js && git add src/glossary.ts",
     "start": "webpack --env=development",
     "build": "webpack --env=production",
+    "prepare:commit": "npm run glossary && npm run files",
     "netlify": "npm ci && npm run build && rm -r node_modules"
   },
   "keywords": [],

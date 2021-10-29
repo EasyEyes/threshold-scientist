@@ -1,11 +1,11 @@
-// will compensate for getEnviroment through CONSTANTS now
-/*const getEnvironment = async () => {
-    let response = await getAssetFileContent("/threshold/environment.json");
-    response = JSON.parse(response);
-    return response;
-};*/
+// will compensate for getEnvironment through CONSTANTS now
+// const getEnvironment = async () => {
+//     let response = await getAssetFileContent("/threshold/environment.json");
+//     response = JSON.parse(response);
+//     return response;
+// };
 
-import { _loadDir, _loadFiles } from "./CONSTANTS";
+import { _loadDir, _loadFiles } from "./files";
 
 export const getGitlabBodyForThreshold = async (
   startIndex: number,
