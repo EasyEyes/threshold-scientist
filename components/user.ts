@@ -17,22 +17,24 @@ if (window.location.hash != "") {
     document.getElementById('gitlab-stuff').style.visibility = '';*/
 }
 
-const populateUserInfo = async () => {
+export const populateUserInfo = async () => {
   user.accessToken = window.location.hash.split("&")[0].split("=")[1];
   var userData = await fetch(
     "https://gitlab.pavlovia.org/api/v4/user?access_token=" +
       window.location.hash.split("&")[0].split("=")[1]
   );
-  if (user.accessToken)
+  if (user.accessToken) {
     //TODO after dropzone conversion
     /*showDialogBox(
         "Initializing",
         "Please while we fetch your existing resources.",
         false
     );*/
-
     userData = await userData.json();
-  user.userData = userData;
+  } else {
+    return;
+  }
+
   var projectData = await fetch(
     "https://gitlab.pavlovia.org/api/v4/users/" +
       user.userData.id +
@@ -78,7 +80,7 @@ const populateUserInfo = async () => {
 export const redirectToOauth2 = () => {
   // TODO switch this for production
   //location.href = env.PRODUCTION;
-  location.href = env.DEVELOPMENT;
+  location.href = env.DEVELOPMENT.GITLAB_REDIRECT_URL;
 };
 
 export const redirectToPalvoliaActivation = async () => {
@@ -87,7 +89,3 @@ export const redirectToPalvoliaActivation = async () => {
     "_blank"
   );
 };
-
-(async function () {
-  await populateUserInfo();
-})();

@@ -7,7 +7,7 @@
 
 import { _loadDir, _loadFiles } from "./CONSTANTS";
 
-const getGitlabBodyForThreshold = async (
+export const getGitlabBodyForThreshold = async (
   startIndex: number,
   endIndex: number
 ) => {
@@ -25,7 +25,7 @@ const getGitlabBodyForThreshold = async (
   return res;
 };
 
-const getAssetFileContent = async (filePath: string) => {
+export const getAssetFileContent = async (filePath: string) => {
   return await fetch(filePath)
     .then((response) => {
       return response.text();

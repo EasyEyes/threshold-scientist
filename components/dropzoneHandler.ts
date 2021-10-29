@@ -5,12 +5,14 @@ import {
   user,
 } from "./CONSTANTS";
 import { isCsvFile } from "./utilities";
-import * as Dropzone from "dropzone";
+import Dropzone from "dropzone";
 import { setTabList } from "./tab";
+import { processFiles } from "../preprocessor";
+import { populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment } from "./gitlabUtility";
 
-const droppedFiles = [];
-const droppedFileNames = new Set();
-const acceptableFileExt = [
+export const droppedFiles = [];
+export const droppedFileNames = new Set();
+export const acceptableFileExt = [
   ...acceptableExtensions.experiments,
   ...acceptableExtensions.fonts,
   ...acceptableExtensions.forms,
@@ -52,7 +54,7 @@ export const showDialogBox = (
   }
 };
 
-const hideDialogBox = () => {
+export const hideDialogBox = () => {
   // hide dialog box
   let el = document.getElementById("dialog-box");
   if (el != null) {
@@ -60,23 +62,41 @@ const hideDialogBox = () => {
   }
 };
 
-const getFileExtension = (file: any) => {
+export const getFileExtension = (file: any) => {
   let splitExt = file.name.split(".");
   return splitExt[splitExt.length - 1].toLowerCase();
 };
 
-const isAcceptableExtension = (ext: any) => {
+export const isAcceptableExtension = (ext: any) => {
   return acceptableFileExt.includes(ext);
 };
 
-const myDropzone = { myDropzone: null };
-Dropzone.options.fileDropzone = {
+// const myDropzone = { myDropzone: null };
+const newDz = new Dropzone("#file-dropzone", {
   paramName: "file",
   maxFilesize: 2,
-  // addedfile: (file) => {
-  //   console.log(file);
-  // },
   autoProcessQueue: false,
+
+  init: function () {
+    console.log("dropzone init");
+    // TODO look for better refactoring here for myThis
+    // let myThis: any = this;
+    // if (myThis != null) {
+    //   myDropzone.myDropzone = myThis;
+    // document
+    // .querySelector("#preprocess-file-submit")
+    // .querySelector("#file-dropzone")
+    // .addEventListener("click", (e) => {
+    //   processFiles(myDropzone.files);
+    //   // prepareExperimentFileForThreshold(myDropzone);
+    //   // myDropzone.processQueue()
+    //   // TODO make elegant
+    //   myDropzone.files.forEach((f) => {
+    //     myDropzone.removeFile(f);
+    //   });
+    // });
+    // }
+  },
 
   // file type verification
   accept: (file, done) => {
@@ -110,12 +130,12 @@ Dropzone.options.fileDropzone = {
 
       // preprocess experiment files
       showDialogBox(`The file ${file.name} is being processed ...`, ``, false);
-      /* TODO processFiles([file], (fileList) => {
-                for (let fi = 0; fi < fileList.length; fi++) {
-                    droppedFileNames.add(fileList[fi].name);
-                    uploadedFiles.others.push(fileList[fi]);
-                }
-            });*/
+      processFiles([file], (fileList: File[]) => {
+        for (let fi = 0; fi < fileList.length; fi++) {
+          droppedFileNames.add(fileList[fi].name);
+          uploadedFiles.others.push(fileList[fi]);
+        }
+      });
       hideDialogBox();
 
       uploadedFiles.experimentFile = file;
@@ -140,30 +160,12 @@ Dropzone.options.fileDropzone = {
       progressElement.style.display = "none";
     }
   },
-  init: function () {
-    // TODO look for better refactoring here for myThis
-    let myThis: any = this;
-    if (myThis != null) {
-      myDropzone.myDropzone = myThis;
-      // document
-      // .querySelector("#preprocess-file-submit")
-      // .querySelector("#file-dropzone")
-      // .addEventListener("click", (e) => {
-      //   processFiles(myDropzone.files);
-      //   // prepareExperimentFileForThreshold(myDropzone);
-      //   // myDropzone.processQueue()
-      //   // TODO make elegant
-      //   myDropzone.files.forEach((f) => {
-      //     myDropzone.removeFile(f);
-      //   });
-      // });
-    }
-  },
 
   // instant upload when files have been dropped
-  addedfiles: async (fileList) => {
+  addedfiles: async (fileList: File[]) => {
+    console.log("file list added");
     // filter out resources
-    let resourcesList = [];
+    let resourcesList: File[] = [];
     for (let fi = 0; fi < fileList.length; fi++) {
       const file = fileList[fi];
       const ext = getFileExtension(file);
@@ -179,9 +181,9 @@ Dropzone.options.fileDropzone = {
       showDialogBox("Now uploading files ...", "", false);
 
       // upload resources instantly
-      /* TOOO await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(
-                resourcesList
-            );*/
+      await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(
+        resourcesList
+      );
 
       // update info
       for (let fi = 0; fi < resourcesList.length; fi++) {
@@ -203,24 +205,11 @@ Dropzone.options.fileDropzone = {
       setTabList("forms", EasyEyesResources.forms);
 
       hideDialogBox();
-      let myDropzoneRef: any = myDropzone.myDropzone;
-      if (myDropzoneRef != null) {
-        myDropzoneRef.removeAllFiles();
-      }
+      clearDropzone();
     }
   },
+});
+
+export const clearDropzone = () => {
+  newDz.removeAllFiles();
 };
-
-let gitlabFileSubmit: any = document.querySelector("#gitlab-file-submit");
-if (gitlabFileSubmit != null) {
-  gitlabFileSubmit.addEventListener("click", async (e: any) => {
-    // call gitlab routine
-    // TODO await gitlabRoutine(uploadedFiles);
-
-    // clear dropzone
-    let myDropzoneRef: any = myDropzone.myDropzone;
-    if (myDropzoneRef != null) {
-      myDropzoneRef.removeAllFiles();
-    }
-  });
-}

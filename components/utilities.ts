@@ -1,5 +1,5 @@
 // Initialize dataframe-js module
-declare let dfjs: any;
+import * as dfjs from "dataframe-js";
 export var DataFrame = dfjs.DataFrame;
 
 /**
@@ -21,7 +21,10 @@ export const transpose = (nestedArray: any[]): any => {
  * @param {String} targetFileName
  * @returns {Boolean}
  */
-export const fileListContainsFileOfName = (fileList: File[], targetFileName: string): any => {
+export const fileListContainsFileOfName = (
+  fileList: File[],
+  targetFileName: string
+): any => {
   const isFileOfTargetName = (candidateFile: File) =>
     candidateFile.name == targetFileName;
   return fileList.filter(isFileOfTargetName).length > 0;

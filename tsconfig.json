@@ -2,13 +2,14 @@
   "compilerOptions": {
     "outDir": "./dist/",
     "noImplicitAny": true,
-    "module": "amd",
-    "lib": ["dom", "es2015", "es5", "es6" ],
-    "outFile": "./dist/main.js",
-    "downlevelIteration": true,
-    "target": "es5",
+    "module": "es6",
+    "target": "es6",
     "strict": true,
+    "lib": ["es5", "es6", "dom", "dom.iterable"],
     "allowJs": false,
-    "forceConsistentCasingInFileNames": true
-  }
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*", "node_modules/dataframe-js/dataframe-js.d.ts"]
 }
