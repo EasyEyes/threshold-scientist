@@ -1,6 +1,5 @@
 // Initialize dataframe-js module
-import * as dfjs from "dataframe-js";
-export var DataFrame = dfjs.DataFrame;
+import { DataFrame } from "dataframe-js";
 
 /**
  * Return a transposed copy of a 2D table.

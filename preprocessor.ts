@@ -1,7 +1,7 @@
 // const { EXPERIMENT_FILE_NOT_FOUND } = require("./components/errorMessages");
-import { EXPERIMENT_FILE_NOT_FOUND } from "./components/errorMessages.js";
-import { validateExperimentDf } from "./components/experimentFileChecks.js";
-import { dataframeFromPapaParsed, transpose } from "./components/utilities.js";
+import { EXPERIMENT_FILE_NOT_FOUND } from "./components/errorMessages";
+import { validateExperimentDf } from "./components/experimentFileChecks";
+import { dataframeFromPapaParsed, transpose } from "./components/utilities";
 import Papa from "papaparse";
 import JSZip from "jszip";
 import { user } from "./components/CONSTANTS";

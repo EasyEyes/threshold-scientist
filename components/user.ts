@@ -1,4 +1,5 @@
 import { EasyEyesResources, env, user } from "./CONSTANTS";
+import { getResourcesListFromRepository } from "./gitlabUtility";
 import { setTab } from "./tab";
 
 if (window.location.hash != "") {
@@ -30,10 +31,11 @@ export const populateUserInfo = async () => {
         "Please while we fetch your existing resources.",
         false
     );*/
-    userData = await userData.json();
+    user.userData = await userData.json();
   } else {
     return;
   }
+  console.log("userData", userData);
 
   var projectData = await fetch(
     "https://gitlab.pavlovia.org/api/v4/users/" +
@@ -44,6 +46,7 @@ export const populateUserInfo = async () => {
   );
   projectData = await projectData.json();
   user.userData.projects = projectData;
+  console.log("projects", user.userData.projects);
   // if user doesn't have a repo named EasyEyesResources, create one and add folders fonts and consent-forms
   if (
     !user.userData.projects
@@ -62,11 +65,10 @@ export const populateUserInfo = async () => {
   var easyEyesResourcesRepo = user.userData.projects.find(
     (i: any) => i.name == "EasyEyesResources"
   );
-  const resourcesList: any =
-    null; /* TODO : await getResourcesListFromRepository(
-      easyEyesResourcesRepo.id,
-      user.accessToken
-  );*/
+  const resourcesList: any = await getResourcesListFromRepository(
+    easyEyesResourcesRepo.id,
+    user.accessToken
+  );
   //hideDialogBox();
   EasyEyesResources.forms = resourcesList.forms;
   EasyEyesResources.fonts = resourcesList.fonts;
@@ -85,7 +87,10 @@ export const redirectToOauth2 = () => {
 
 export const redirectToPalvoliaActivation = async () => {
   window.open(
-    "https://pavlovia.org/" + user.userData.username + "/" + user.newRepo.name,
+    "https://pavlovia.org/" +
+      user.userData.username +
+      "/" +
+      user.newRepo.name.toLowerCase(),
     "_blank"
   );
 };

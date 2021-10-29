@@ -1,5 +1,6 @@
 import { openTab } from "../components/tab";
 import {
+  populateUserInfo,
   redirectToOauth2,
   redirectToPalvoliaActivation,
 } from "../components/user";
@@ -17,20 +18,16 @@ const addOnClickToEl = (elementId: string, handler: any) => {
 
 addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
 addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
-addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
-const fontsTab = document.getElementById("font-tab");
-if (fontsTab) {
-  fontsTab.addEventListener("click", async (evt: any) => {
+document
+  .getElementById("font-tab")!
+  .addEventListener("click", async (evt: any) => {
     openTab(evt, "fonts");
   });
-}
-
-const formsTab = document.getElementById("form-tab");
-if (formsTab) {
-  formsTab.addEventListener("click", async (evt: any) => {
-    openTab(evt, "fonts");
+document
+  .getElementById("form-tab")!
+  .addEventListener("click", async (evt: any) => {
+    openTab(evt, "forms");
   });
-}
 
 // -----------------------------------------
 // dropzone
@@ -45,3 +42,5 @@ if (gitlabFileSubmit) {
     clearDropzone();
   });
 }
+
+populateUserInfo();

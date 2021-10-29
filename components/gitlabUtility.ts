@@ -46,7 +46,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
 
     // create new experiment repo
     const gitlabRepo = await createRepo(newRepoName);
-    user.newRepo = newRepoName;
+    user.newRepo = gitlabRepo;
 
     await populateThresholdRepoOnExperiment(gitlabRepo);
 
@@ -317,7 +317,7 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
   await commitFile.json();
 };
 
-const getResourcesListFromRepository = async (
+export const getResourcesListFromRepository = async (
   repoId: number,
   accessToken: string
 ) => {
