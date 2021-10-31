@@ -1,4 +1,5 @@
 import { EasyEyesResources, env, user } from "./CONSTANTS";
+import { showDialogBox } from "./dropzoneHandler";
 import { getResourcesListFromRepository } from "./gitlabUtility";
 import { setTab } from "./tab";
 
@@ -12,10 +13,6 @@ if (window.location.hash != "") {
 
   if (gitlabFileBtn)
     gitlabFileBtn.className = gitlabFileBtn.className.replace("disabled", "");
-  /*document.getElementById("threshold-content").style.visibility = '';
-    document.getElementById("gitlab-login-div").style.visibility = 'hidden';
-    document.getElementById('old-content').style.visibility = 'hidden';
-    document.getElementById('gitlab-stuff').style.visibility = '';*/
 }
 
 export const populateUserInfo = async () => {
@@ -25,12 +22,12 @@ export const populateUserInfo = async () => {
       window.location.hash.split("&")[0].split("=")[1]
   );
   if (user.accessToken) {
-    //TODO after dropzone conversion
-    /*showDialogBox(
-        "Initializing",
-        "Please while we fetch your existing resources.",
-        false
-    );*/
+    // after dropzone conversion
+    showDialogBox(
+      "Initializing",
+      "Please while we fetch your existing resources.",
+      false
+    );
     user.userData = await userData.json();
   } else {
     return;
