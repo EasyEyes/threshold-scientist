@@ -32,7 +32,7 @@
   display: grid;
   grid-template-rows: auto auto;
   justify-content: left;
-  visibility: visible;
+  visibility: hidden;
 }
 
 #header {
