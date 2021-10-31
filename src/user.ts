@@ -58,8 +58,7 @@ export const populateUserInfo = async () => {
   }
   const gitlabUserInfoEl = document.getElementById("gitlab-user-info");
   if (gitlabUserInfoEl)
-    gitlabUserInfoEl.textContent =
-      "Account : " + user.userData.name + "(" + user.userData.username + ")";
+    gitlabUserInfoEl.innerHTML = `Pavlovia account : ${user.userData.name} (${user.userData.username})`;
 
   // get initial resources info
   var easyEyesResourcesRepo = user.userData.projects.find(
@@ -76,7 +75,11 @@ export const populateUserInfo = async () => {
 
   // display inital resources info
   setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
-  setTab("form-tab", EasyEyesResources.forms.length, "Consent Forms");
+  setTab(
+    "form-tab",
+    EasyEyesResources.forms.length,
+    "Consent and Debrief Forms"
+  );
 };
 
 export const redirectToOauth2 = () => {

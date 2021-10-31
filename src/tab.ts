@@ -29,9 +29,13 @@ export const setTab = (id: string, count: number, label: string) => {
 export const setTabList = (tabId: string, list: string[]) => {
   const listEl = document.querySelector(`#${tabId} ol`);
   let htmlContent = "";
-  list.map((name: string) => {
-    htmlContent += `<li>${name}</li>\n`;
-  });
+  if (list.length > 0) {
+    list.map((name: string) => {
+      htmlContent += `<li>${name}</li>\n`;
+    });
+  } else {
+    htmlContent = "No files found.";
+  }
 
   if (listEl) listEl.innerHTML = htmlContent;
 };

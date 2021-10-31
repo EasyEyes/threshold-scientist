@@ -51,6 +51,11 @@
       integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
       crossorigin="anonymous"
     ></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css"
+      type="text/css"
+    />
 
     <!-- Threshold Specific -->
     <!-- TODO--------------------------- Remove -------------------------------- -->
@@ -79,21 +84,6 @@
       type="image/x-icon"
     />
     <title>EasyEyes | Threshold</title>
-
-    <style>
-      .option-block {
-        margin-bottom: 2rem;
-      }
-
-      .option-block * {
-        font-size: 1.2rem !important;
-        color: #333;
-      }
-
-      #header {
-        margin-bottom: 2rem;
-      }
-    </style>
   </head>
 
   <body>
@@ -155,101 +145,148 @@
           <h1>Threshold</h1>
         </div>
         <p class="description">
-          A PsychoJS-based experiment generator for measuring perceptual
-          thresholds.
+          Welcome to Threshold, a PsychoJS-based experiment generator designed
+          to help you measure perceptual thresholds.
         </p>
-        <p>
-          All you need to run your experiment is a few accounts (Pavlovia and
-          maybe Prolific or Amazon Mechanical Turk) and a table that you create
-          in any spreadsheet app, e.g. Google Sheets. The
+        <p class="description">
+          All you need to run your experiment is a few accounts (<a
+            href="https://pavlovia.org/"
+            >Pavlovia</a
+          >
+          and maybe <a href="https://prolific.co/">Prolific</a> or
+          <a href="https://www.mturk.com/">Amazon Mechanical Turk</a>) and a
+          table that you create in any spreadsheet app, e.g. Google Sheets. The
           <a
             href="https://docs.google.com/spreadsheets/d/1x65NjykMm-XUOz98Eu_oo6ON2xspm_h0Q0M2u6UGtug/edit#gid=905853743"
             target="_blank"
             >manual</a
           >
           explains how to create your table and run your experiment.
+          <span class="description2">
+            We offer two degrees of integration with Prolific. Full integration
+            uses their API, which, because it's only in beta release, currently
+            requires a token that you can only get by emailing Prolific to
+            request one,
+            <a href="https://prolificapi.docs.apiary.io/"
+              >https://prolificapi.docs.apiary.io/</a
+            >, which may take a few days. Alas. We can save your token for you
+            in your Pavlovia account.
+          </span>
+        </p>
+        <p class="description2">
+          First, provide any needed consent form and font files that are not
+          already in your Pavlovia account. Then provide your experiment table,
+          which will be immediately checked for errors.
         </p>
       </div>
 
       <!--<div class="option-block">
     <input id="file-submit" type="submit" value=" OK " />
   </div>-->
-      <div class="pavlovia-header">
-        <h3 style="position: relative; text-align: center">Pavlovia</h3>
-        <h4 id="gitlab-user-info"></h4>
-      </div>
 
-      <div class="option-block" style="display: flex; justify-content: left">
-        <!--<btn class="btn btn-outline-secondary" id="preprocess-file-submit">Preprocess Files</btn>-->
-        <div class="input-group" style="width: auto">
-          <input
-            id="new-gitlab-repo-name"
-            type="text"
-            class="form-control"
-            placeholder="Name of new Repository"
-            aria-label="Recipient's username"
-            aria-describedby="gitlab-file-submit"
-          />
-          <button
-            class="btn btn-outline-secondary disabled"
-            type="button"
-            id="gitlab-file-submit"
+      <div class="pavlovia-section">
+        <!-- left section -->
+        <div class="pavlovia-left">
+          <!-- Pavlovia header -->
+          <div class="pavlovia-header">
+            <h3
+              id="gitlab-user-info"
+              style="position: relative; text-align: center"
+            >
+              Pavlovia account
+            </h3>
+          </div>
+
+          <!-- Pavlovia Repo Controls -->
+          <div
+            class="option-block"
+            style="display: flex; justify-content: left"
           >
-            Upload Files
-          </button>
+            <!--<btn class="btn btn-outline-secondary" id="preprocess-file-submit">Preprocess Files</btn>-->
+            <div class="input-group" style="width: auto">
+              <input
+                id="new-gitlab-repo-name"
+                type="text"
+                class="form-control"
+                placeholder="Name of new Repository"
+                aria-label="Recipient's username"
+                aria-describedby="gitlab-file-submit"
+              />
+              <button
+                class="btn btn-outline-secondary disabled"
+                type="button"
+                id="gitlab-file-submit"
+              >
+                Upload Files
+              </button>
+            </div>
+
+            <!--<btn class="btn btn-outline-secondary disabled" id="gitlab-file-submit"> Upload Files to GITLAB</btn>-->
+          </div>
+
+          <!-- Pavlovia Auth Controls -->
+          <div
+            class="option-block"
+            style="display: flex; justify-content: left"
+          >
+            <button
+              id="gitlab-connect-btn"
+              class="btn btn-outline-secondary"
+              style="align-content: center"
+            >
+              Connect with your Pavlovia account to upload files.
+            </button>
+          </div>
+
+          <!-- Pavlovia Experiment Controls -->
+          <div id="pavlovia-activate-div" class="option-block">
+            <button
+              id="activate-experiment-btn"
+              class="btn btn-outline-success"
+              style="align-content: center"
+            >
+              Activate in Pavlovia
+            </button>
+            <a
+              id="palvolia-experiment-link"
+              href="#"
+              target="_blank"
+              class="link-success"
+            ></a>
+          </div>
         </div>
-        <!--<btn class="btn btn-outline-secondary disabled" id="gitlab-file-submit"> Upload Files to GITLAB</btn>-->
-      </div>
-      <div class="option-block" style="display: flex; justify-content: left">
-        <button
-          id="gitlab-connect-btn"
-          class="btn btn-outline-secondary"
-          style="align-content: center"
-        >
-          Connect with your Pavlovia account to upload files.
-        </button>
-      </div>
-      <div
-        id="pavlovia-div"
-        class="option-block"
-        style="
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          visibility: hidden;
-        "
-      >
-        <button
-          id="activate-experiment-btn"
-          class="btn btn-outline-success"
-          style="align-content: center"
-        >
-          Activate in Pavlovia
-        </button>
-        <a
-          id="palvolia-experiment-link"
-          href="#"
-          target="_blank"
-          class="link-success"
-        ></a>
-      </div>
-      <div
-        id="waiting-div"
-        style="
-          height: 80vh;
-          width: 80vh;
-          display: flex;
-          padding: 20vh;
-          position: absolute;
-          top: 10vh;
-          left: 50vh;
-          font-size: xxx-large;
-          background-color: darkgrey;
-          z-index: 99999;
-          visibility: hidden;
-        "
-      >
-        The project is being initialed ...
+
+        <!-- right section -->
+        <div class="pavlovia-right">
+          <div>
+            <form action="/" class="dropzone" id="file-dropzone">
+              <div class="dz-message" data-dz-message>
+                <span>
+                  <span id="drop-message-header"
+                    >Drop files here, or click to browse for them.</span
+                  >
+                  <br />
+                  <!-- First, provide any needed consent form and font files that are not already in
+                your Pavlovia account. Then provide your experiment table, which
+                will be immediately checked for errors. -->
+                </span>
+              </div>
+            </form>
+          </div>
+          <!-- Font List -->
+          <div class="tab">
+            <button id="font-tab" class="tablinks">Fonts</button>
+            <button id="form-tab" class="tablinks">
+              Consent and Debrief Forms
+            </button>
+          </div>
+          <div id="fonts" class="tabcontent">
+            <ol></ol>
+          </div>
+          <div id="forms" class="tabcontent">
+            <ol></ol>
+          </div>
+        </div>
       </div>
 
       <!-- Dialog box -->
@@ -257,33 +294,6 @@
         <div class="dialog-title">Title</div>
         <div class="dialog-body">Body</div>
         <div class="dialog-button">OK</div>
-      </div>
-
-      <div class="option-block">
-        <form action="/" class="dropzone" id="file-dropzone">
-          <div class="dz-message" data-dz-message>
-            <span>
-              Drop files here, or click to browse for them. <br />First, provide
-              any needed consent form and font files that are not already in
-              your Pavlovia account. Then provide your experiment table, which
-              will be immediately checked for errors.
-            </span>
-          </div>
-        </form>
-      </div>
-
-      <!-- Font List -->
-      <div class="tab">
-        <button id="font-tab" class="tablinks">Fonts</button>
-        <button id="form-tab" class="tablinks">Consent Forms</button>
-      </div>
-      <div id="fonts" class="tabcontent">
-        <h3>Fonts</h3>
-        <ol></ol>
-      </div>
-      <div id="forms" class="tabcontent">
-        <h3>Consent Forms</h3>
-        <ol></ol>
       </div>
     </main>
 

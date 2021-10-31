@@ -25,11 +25,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     return;
   }
 
-  showDialogBox(
-    `Creating Experiment`,
-    `Now uploading files to create your experiment ...`,
-    false
-  );
+  showDialogBox(`Creating Experiment`, `Uploading experiment files: 0%`, false);
 
   const gitlabRepoNameEl = document.getElementById(
     "new-gitlab-repo-name"
@@ -66,7 +62,11 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
 
     // update resources info
     setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
-    setTab("form-tab", EasyEyesResources.forms.length, "Consent Forms");
+    setTab(
+      "form-tab",
+      EasyEyesResources.forms.length,
+      "Consent and Debrief Forms"
+    );
 
     // window.alert(
     //   "New Repo " + newRepoName + " has been successfully initiated"
@@ -82,7 +82,9 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       "btn btn-success disabled";
     document.getElementById("gitlab-file-submit")!.innerText =
       "Files have been uploaded.";
-    document.getElementById("waiting-div")!.style.visibility = "hidden";
+
+    const actEl = document.getElementById("pavlovia-activate-div");
+    actEl!.style.visibility = "visible";
 
     // display "run" experiement link
     const pavExpLinkEl = document.getElementById(
@@ -102,8 +104,6 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       "/";
 
     // document.getElementById("activate-experiment-btn");
-
-    document.getElementById("pavlovia-div")!.style.visibility = "";
   }
 
   // else if repo name is invalid, display response
@@ -456,7 +456,7 @@ const populateThresholdRepoOnExperiment = async (gitlabRepo: any) => {
         );
         showDialogBox(
           "Creating Experiment",
-          `Initializing experiment files: ${progressPercent}%`,
+          `Uploading experiment files: ${progressPercent}%`,
           false
         );
 
