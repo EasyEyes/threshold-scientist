@@ -1,5 +1,5 @@
 import { EasyEyesResources, env, user } from "./CONSTANTS";
-import { showDialogBox } from "./dropzoneHandler";
+import { hideDialogBox, showDialogBox } from "./dropzoneHandler";
 import { getResourcesListFromRepository } from "./gitlabUtility";
 import { setTab } from "./tab";
 
@@ -65,7 +65,7 @@ export const populateUserInfo = async () => {
     easyEyesResourcesRepo.id,
     user.accessToken
   );
-  //hideDialogBox();
+  hideDialogBox();
   EasyEyesResources.forms = resourcesList.forms;
   EasyEyesResources.fonts = resourcesList.fonts;
   console.log("EasyEyesResources", EasyEyesResources);
