@@ -12,7 +12,7 @@ import {
   NOT_YET_SUPPORTED_PARAMETER,
   DUPLICATE_PARAMETER,
 } from "./errorMessages";
-import { GLOSSARY } from "./glossary";
+import { GLOSSARY } from "../threshold/parameters/glossary";
 import { dataframeFromPapaParsed, levDist } from "./utilities";
 
 var parametersToCheck: any[] = [];

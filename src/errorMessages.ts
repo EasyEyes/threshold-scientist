@@ -1,4 +1,4 @@
-import { GLOSSARY } from "./glossary";
+import { GLOSSARY } from "../threshold/parameters/glossary";
 
 export const EXPERIMENT_FILE_NOT_FOUND = (filesProvided: string[]) => {
   return {

@@ -35,6 +35,9 @@ const ignorePattern = [
   "i18n",
   "node_modules",
   "threshold.js",
+  "parameters",
+  "server",
+  "tsconfig.json",
 ];
 
 const inIgnore = (f) => {
