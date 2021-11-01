@@ -615,7 +615,7 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
 const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
   const jsonFiles = [];
 
-  // convert texternal files to Gitlab API data format
+  // convert external files to Gitlab API data format
   for (var i = 0; i < uploadedFiles.others.length; i++) {
     const externalFile = uploadedFiles.others[i];
 
@@ -662,11 +662,18 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
     }
   }
 
-  // experiment file
+  // add experiment file to root
   const fileData = await uploadedFiles.experimentFile.text();
   jsonFiles.push({
     action: "create",
     file_path: uploadedFiles.experimentFile.name,
+    content: fileData,
+  });
+
+  // add experiment file to `/conditions`
+  jsonFiles.push({
+    action: "create",
+    file_path: "conditions/experiment.csv",
     content: fileData,
   });
 
