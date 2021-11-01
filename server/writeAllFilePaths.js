@@ -34,6 +34,7 @@ const ignorePattern = [
   "experiment",
   "i18n",
   "node_modules",
+  "threshold.js",
 ];
 
 const inIgnore = (f) => {
