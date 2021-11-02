@@ -8,6 +8,7 @@ if (window.location.hash != "") {
   const gitlabFileBtn = document.getElementById("gitlab-file-submit");
   if (gitlabConnBtn) {
     gitlabConnBtn.className = "btn btn-success disabled";
+    gitlabConnBtn.style.color = "white";
     gitlabConnBtn.innerText = "Connected to Pavlovia. Ready to upload.";
   }
 
@@ -77,7 +78,7 @@ export const populateUserInfo = async () => {
   setTab(
     "form-tab",
     EasyEyesResources.forms.length,
-    "Consent and Debrief Forms"
+    "Consent and debrief forms"
   );
 };
 

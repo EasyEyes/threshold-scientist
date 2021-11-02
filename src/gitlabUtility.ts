@@ -65,7 +65,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     setTab(
       "form-tab",
       EasyEyesResources.forms.length,
-      "Consent and Debrief Forms"
+      "Consent and debrief forms"
     );
 
     // window.alert(
@@ -90,18 +90,18 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       "pavlovia-experiment-url"
     );
     pavloviaExperimentUrlElement!.style.visibility = "visible";
-    document.getElementById("copy-pavlovia-url")!.style.visibility = "visible";
 
     // display "run" experiement link
-    const pavExpLinkEl = document.getElementById(
-      "pavlovia-experiment-url"
-    ) as HTMLInputElement;
-    pavExpLinkEl.value =
-      "https://run.pavlovia.org/" +
-      user.userData.username +
-      "/" +
-      newRepoName.toLowerCase() +
-      "/";
+    const pavExpLinkEl = document.getElementById("pavlovia-experiment-url");
+    const expUrl = `https://run.pavlovia.org/${
+      user.userData.username
+    }/${newRepoName.toLocaleLowerCase()}/`;
+    pavExpLinkEl!.innerHTML = `<a href="${expUrl}">${expUrl}</a>`;
+    // "https://run.pavlovia.org/" +
+    // user.userData.username +
+    // "/" +
+    // newRepoName.toLowerCase() +
+    // "/";
 
     if (
       user.currentExperiment.participantRecruitmentServiceName == "Prolific"

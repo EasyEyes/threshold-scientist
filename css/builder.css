@@ -15,27 +15,29 @@
   column-gap: 10px;
 }
 #gitlab-user-info {
-  font-size: 1.5rem;
+  position: relative;
+  text-align: center;
+  font-size: 1rem;
   margin-top: 15px;
 }
 .option-block {
+  font-size: 1rem !important;
   margin-top: 10px;
+  display: inline-block;
 }
 
 .option-block * {
-  font-size: 1.2rem !important;
+  font-size: 1rem !important;
   color: #333;
 }
 #pavlovia-activate-div {
   position: relative;
   top: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  left: -18px;
   display: grid;
-  grid-template-rows: auto auto;
+  grid-template-columns: 20% 80%;
   justify-content: left;
-  visibility: hidden;
+  visibility: visible;
 }
 #pavlovia-left-list li {
   position: relative;
@@ -52,7 +54,6 @@
 #file-dropzone {
   position: relative;
   top: 10px;
-  border-radius: 0.75rem;
   border: 1px solid #ccc;
   height: 180px !important;
 }
@@ -66,7 +67,10 @@
 }
 #drop-message-header {
   position: relative;
-  color: black !important;
+  margin-left: -25px;
+  font-weight: bold;
+  font-size: 1rem;
+  color: gray !important;
 }
 .dz-message {
   font-size: 1.1rem !important;
@@ -76,11 +80,27 @@
 .dz-message:hover {
   cursor: pointer;
 }
+#new-gitlab-repo-name::placeholder {
+  font-weight: bold;
+  color: gray;
+  font-size: 1rem;
+}
 /* .option-block * { */
 /* } */
 #new-repo-input-group {
   position: relative;
   top: 10px;
+}
+#new-repo-input-group button {
+  color: white;
+  background-color: gray;
+  font-weight: bold;
+  font-size: 1rem;
+}
+#activate-experiment-btn {
+  position: relative;
+  top: -10px;
+  left: -70px;
 }
 
 #pavlovia-exp-url-group {

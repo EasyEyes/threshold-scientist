@@ -224,7 +224,7 @@ const newDz = new Dropzone("#file-dropzone", {
       setTab(
         "form-tab",
         EasyEyesResources.forms.length,
-        "Consent and Debrief Forms"
+        "Consent and debrief forms"
       );
       setTabList("fonts", EasyEyesResources.fonts);
       setTabList("forms", EasyEyesResources.forms);

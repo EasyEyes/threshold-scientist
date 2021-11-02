@@ -166,11 +166,6 @@
           >, which may take a few days. Alas. We can save your token for you in
           your Pavlovia account.
         </p>
-        <p class="description2">
-          First, provide any needed consent form and font files that are not
-          already in your Pavlovia account. Then provide your experiment table,
-          which will be immediately checked for errors.
-        </p>
       </div>
 
       <div class="pavlovia-section">
@@ -186,27 +181,27 @@
                 <button
                   id="gitlab-connect-btn"
                   class="btn btn-outline-secondary"
-                  style="align-content: center"
+                  style="
+                    align-content: center;
+                    font-weight: bold;
+                    font-size: 1rem;
+                  "
                 >
                   Connect with your Pavlovia account to upload files.
                 </button>
               </div>
-            </li>
-
-            <!-- Pavlovia header -->
-            <li>
               <div class="pavlovia-header">
-                <h3
-                  id="gitlab-user-info"
-                  style="position: relative; text-align: center"
-                >
-                  Pavlovia account
-                </h3>
+                <div id="gitlab-user-info">Pavlovia account</div>
               </div>
             </li>
 
             <!-- Dropzone -->
             <li>
+              <div>
+                Submit
+                <span style="position: relative; height: 10vh"> &#8595; </span>
+                any missing fonts & consent/debriefing forms.
+              </div>
               <div>
                 <form action="/" class="dropzone" id="file-dropzone">
                   <div class="dz-message" data-dz-message>
@@ -219,13 +214,18 @@
               </div>
             </li>
 
+            <!-- Instruction -->
+            <li>
+              Submit
+              <span style="position: relative; height: 10vh">&#8593;</span> your
+              experiment table, to be checked now.
+            </li>
             <!-- Pavlovia Repo Controls -->
             <li>
               <div
                 class="option-block"
                 style="display: flex; justify-content: left"
               >
-                <!--<btn class="btn btn-outline-secondary" id="preprocess-file-submit">Preprocess Files</btn>-->
                 <div
                   class="input-group"
                   id="new-repo-input-group"
@@ -235,7 +235,7 @@
                     id="new-gitlab-repo-name"
                     type="text"
                     class="form-control"
-                    placeholder="Name of new Repository"
+                    placeholder="Name new experiment"
                     aria-label="Recipient's username"
                     aria-describedby="gitlab-file-submit"
                   />
@@ -244,7 +244,7 @@
                     type="button"
                     id="gitlab-file-submit"
                   >
-                    Upload Files
+                    Upload to Pavlovia
                   </button>
                 </div>
               </div>
@@ -252,6 +252,7 @@
 
             <!-- Pavlovia Experiment Controls -->
             <li id="pavlovia-activate-div">
+              <div>5.</div>
               <div class="option-block">
                 <button
                   id="activate-experiment-btn"
@@ -265,7 +266,8 @@
 
             <!-- Pavlovia Experiment URL -->
             <li id="pavlovia-exp-url-group">
-              <div class="input-group">
+              <div id="pavlovia-experiment-url"></div>
+              <!-- <div class="input-group">
                 <input
                   id="pavlovia-experiment-url"
                   type="text"
@@ -279,7 +281,7 @@
                 <button id="copy-pavlovia-url" class="btn btn-outline-primary">
                   <i class="bi bi-clipboard"></i> Copy Experiment URL
                 </button>
-              </div>
+              </div> -->
             </li>
           </ol>
         </div>
@@ -291,7 +293,7 @@
             <div class="tab">
               <button id="font-tab" class="tablinks">Fonts</button>
               <button id="form-tab" class="tablinks">
-                Consent and Debrief Forms
+                Consent and debrief forms
               </button>
             </div>
             <!-- Font List -->
