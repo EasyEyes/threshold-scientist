@@ -740,7 +740,7 @@ export const handleParticipantRecruitmentUrl = () => {
   )!.style.visibility = "";
   document.getElementById("participant-survey-new-url-div")!.style.visibility =
     "";
-  document.getElementById("activate-experiment-btn")!.className += " disabled";
+  // document.getElementById("activate-experiment-btn")!.className += " disabled";
 };
 
 export const copyUrl = () => {

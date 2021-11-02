@@ -70,7 +70,7 @@
   margin-left: -25px;
   font-weight: bold;
   font-size: 1rem;
-  color: gray !important;
+  color: rgb(170, 170, 170) !important;
 }
 .dz-message {
   font-size: 1.1rem !important;
@@ -82,7 +82,7 @@
 }
 #new-gitlab-repo-name::placeholder {
   font-weight: bold;
-  color: gray;
+  color: rgb(170, 170, 170);
   font-size: 1rem;
 }
 /* .option-block * { */
@@ -101,6 +101,7 @@
   position: relative;
   top: -10px;
   left: -70px;
+  font-weight: bold;
 }
 
 #pavlovia-exp-url-group {
