@@ -87,9 +87,10 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     actEl!.style.visibility = "visible";
 
     const pavloviaExperimentUrlElement = document.getElementById(
-      "pavlovia-experiment-url-div"
+      "pavlovia-experiment-url"
     );
     pavloviaExperimentUrlElement!.style.visibility = "visible";
+    document.getElementById("copy-pavlovia-url")!.style.visibility = "visible";
 
     // display "run" experiement link
     const pavExpLinkEl = document.getElementById(

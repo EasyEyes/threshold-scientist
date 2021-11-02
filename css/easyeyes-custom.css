@@ -1,5 +1,5 @@
 #dialog-box {
-  position: absolute;
+  position: fixed;
   top: 37vh;
   left: 37vw;
   width: 25vw;
@@ -37,8 +37,14 @@
 }
 
 /* Style the tab */
+.tab-container {
+  position: relative;
+  top: 150px;
+}
 .tab {
-  overflow: hidden;
+  position: relative;
+  top: 0px;
+  overflow: auto;
   border: 1px solid #ccc;
   background-color: #f1f1f1;
 }

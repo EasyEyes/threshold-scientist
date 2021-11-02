@@ -176,122 +176,137 @@
       <div class="pavlovia-section">
         <!-- left section -->
         <div class="pavlovia-left">
-          <!-- Pavlovia header -->
-          <div class="pavlovia-header">
-            <h3
-              id="gitlab-user-info"
-              style="position: relative; text-align: center"
-            >
-              Pavlovia account
-            </h3>
-          </div>
-
-          <!-- Pavlovia Repo Controls -->
-          <div
-            class="option-block"
-            style="display: flex; justify-content: left"
-          >
-            <!--<btn class="btn btn-outline-secondary" id="preprocess-file-submit">Preprocess Files</btn>-->
-            <div class="input-group" style="width: auto">
-              <input
-                id="new-gitlab-repo-name"
-                type="text"
-                class="form-control"
-                placeholder="Name of new Repository"
-                aria-label="Recipient's username"
-                aria-describedby="gitlab-file-submit"
-              />
-              <button
-                class="btn btn-outline-secondary disabled"
-                type="button"
-                id="gitlab-file-submit"
+          <ol id="pavlovia-left-list">
+            <!-- Pavlovia Auth Controls -->
+            <li>
+              <div
+                class="option-block"
+                style="display: flex; justify-content: left"
               >
-                Upload Files
-              </button>
-            </div>
-          </div>
+                <button
+                  id="gitlab-connect-btn"
+                  class="btn btn-outline-secondary"
+                  style="align-content: center"
+                >
+                  Connect with your Pavlovia account to upload files.
+                </button>
+              </div>
+            </li>
 
-          <!-- Pavlovia Auth Controls -->
-          <div
-            class="option-block"
-            style="display: flex; justify-content: left"
-          >
-            <button
-              id="gitlab-connect-btn"
-              class="btn btn-outline-secondary"
-              style="align-content: center"
-            >
-              Connect with your Pavlovia account to upload files.
-            </button>
-          </div>
+            <!-- Pavlovia header -->
+            <li>
+              <div class="pavlovia-header">
+                <h3
+                  id="gitlab-user-info"
+                  style="position: relative; text-align: center"
+                >
+                  Pavlovia account
+                </h3>
+              </div>
+            </li>
 
-          <!-- Pavlovia Experiment Controls -->
-          <div id="pavlovia-activate-div" class="option-block">
-            <button
-              id="activate-experiment-btn"
-              class="btn btn-outline-success"
-              style="align-content: center"
-            >
-              Activate in Pavlovia
-            </button>
-            <!--<a
-              id="palvolia-experiment-link"
-              href="#"
-              target="_blank"
-              class="link-success"
-            ></a>-->
-          </div>
+            <!-- Dropzone -->
+            <li>
+              <div>
+                <form action="/" class="dropzone" id="file-dropzone">
+                  <div class="dz-message" data-dz-message>
+                    <span id="drop-message-header"
+                      >Drop files here, or click to browse for them.
+                    </span>
+                    <br />
+                  </div>
+                </form>
+              </div>
+            </li>
+
+            <!-- Pavlovia Repo Controls -->
+            <li>
+              <div
+                class="option-block"
+                style="display: flex; justify-content: left"
+              >
+                <!--<btn class="btn btn-outline-secondary" id="preprocess-file-submit">Preprocess Files</btn>-->
+                <div
+                  class="input-group"
+                  id="new-repo-input-group"
+                  style="width: auto"
+                >
+                  <input
+                    id="new-gitlab-repo-name"
+                    type="text"
+                    class="form-control"
+                    placeholder="Name of new Repository"
+                    aria-label="Recipient's username"
+                    aria-describedby="gitlab-file-submit"
+                  />
+                  <button
+                    class="btn btn-outline-secondary disabled"
+                    type="button"
+                    id="gitlab-file-submit"
+                  >
+                    Upload Files
+                  </button>
+                </div>
+              </div>
+            </li>
+
+            <!-- Pavlovia Experiment Controls -->
+            <li id="pavlovia-activate-div">
+              <div class="option-block">
+                <button
+                  id="activate-experiment-btn"
+                  class="btn btn-outline-success"
+                  style="align-content: center"
+                >
+                  Activate in Pavlovia
+                </button>
+              </div>
+            </li>
+
+            <!-- Pavlovia Experiment URL -->
+            <li id="pavlovia-exp-url-group">
+              <div class="input-group">
+                <input
+                  id="pavlovia-experiment-url"
+                  type="text"
+                  class="form-control"
+                  placeholder="Name of new Repository"
+                  aria-label="Recipient's username"
+                  aria-describedby="gitlab-file-submit"
+                  disabled
+                />
+
+                <button id="copy-pavlovia-url" class="btn btn-outline-primary">
+                  <i class="bi bi-clipboard"></i> Copy Experiment URL
+                </button>
+              </div>
+            </li>
+          </ol>
         </div>
 
         <!-- right section -->
         <div class="pavlovia-right">
-          <div>
-            <form action="/" class="dropzone" id="file-dropzone">
-              <div class="dz-message" data-dz-message>
-                <span>
-                  <span id="drop-message-header"
-                    >Drop files here, or click to browse for them.</span
-                  >
-                  <br />
-                </span>
-              </div>
-            </form>
-          </div>
-          <!-- Font List -->
-          <div class="tab">
-            <button id="font-tab" class="tablinks">Fonts</button>
-            <button id="form-tab" class="tablinks">
-              Consent and Debrief Forms
-            </button>
-          </div>
-          <div id="fonts" class="tabcontent">
-            <ol></ol>
-          </div>
-          <div id="forms" class="tabcontent">
-            <ol></ol>
+          <div class="tab-container">
+            <!-- Tab buttons -->
+            <div class="tab">
+              <button id="font-tab" class="tablinks">Fonts</button>
+              <button id="form-tab" class="tablinks">
+                Consent and Debrief Forms
+              </button>
+            </div>
+            <!-- Font List -->
+            <div id="fonts" class="tabcontent">
+              <ol></ol>
+            </div>
+            <!-- Form List -->
+            <div id="forms" class="tabcontent">
+              <ol></ol>
+            </div>
           </div>
         </div>
       </div>
       <br />
-      <div
-        id="pavlovia-experiment-url-div"
-        class="input-group"
-        style="width: auto; visibility: hidden"
-      >
-        <input
-          id="pavlovia-experiment-url"
-          type="text"
-          class="form-control"
-          placeholder="Name of new Repository"
-          aria-label="Recipient's username"
-          aria-describedby="gitlab-file-submit"
-          disabled
-        />
 
-        <button id="copy-pavlovia-url" class="btn btn-outline-primary">
-          <i class="bi bi-clipboard"></i> Copy Experiment URL
-        </button>
-      </div>
       <div
         id="participant-survey-completion-div"
         class="input-group"

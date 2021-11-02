@@ -6,9 +6,12 @@ import {
 } from "./CONSTANTS";
 import { isCsvFile } from "./utilities";
 import Dropzone from "dropzone";
-import { setTabList } from "./tab";
+import { setTab, setTabList } from "./tab";
 import { processFiles } from "./preprocessor";
-import { populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment } from "./gitlabUtility";
+import {
+  getResourcesListFromRepository,
+  populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment,
+} from "./gitlabUtility";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -139,6 +142,12 @@ const newDz = new Dropzone("#file-dropzone", {
       hideDialogBox();
 
       uploadedFiles.experimentFile = file;
+
+      // set repo name
+      const gitlabRepoNameEl = document.getElementById(
+        "new-gitlab-repo-name"
+      ) as HTMLInputElement;
+      gitlabRepoNameEl.value = file.name.split(".")[0];
     }
 
     // store experiment files only as resource files are uploaded instantaneously
@@ -186,21 +195,37 @@ const newDz = new Dropzone("#file-dropzone", {
       );
 
       // update info
-      for (let fi = 0; fi < resourcesList.length; fi++) {
-        const file = resourcesList[fi];
-        const ext = getFileExtension(file);
-        if (acceptableExtensions.fonts.includes(ext)) {
-          if (EasyEyesResources.fonts.indexOf(file.name) == -1)
-            EasyEyesResources.fonts.push(file.name);
-        }
+      // for (let fi = 0; fi < resourcesList.length; fi++) {
+      //   const file = resourcesList[fi];
+      //   const ext = getFileExtension(file);
+      //   if (acceptableExtensions.fonts.includes(ext)) {
+      //     if (EasyEyesResources.fonts.indexOf(file.name) == -1)
+      //       EasyEyesResources.fonts.push(file.name);
+      //   }
 
-        if (acceptableExtensions.forms.includes(ext)) {
-          if (EasyEyesResources.forms.indexOf(file.name) == -1)
-            EasyEyesResources.forms.push(file.name);
-        }
-      }
+      //   if (acceptableExtensions.forms.includes(ext)) {
+      //     if (EasyEyesResources.forms.indexOf(file.name) == -1)
+      //       EasyEyesResources.forms.push(file.name);
+      //   }
+      // }
+      const easyEyesResourcesRepo = user.userData.projects.find(
+        (i: any) => i.name == "EasyEyesResources"
+      );
+      user.easyEyesResourcesRepo = easyEyesResourcesRepo;
+      const allResourcesList = await getResourcesListFromRepository(
+        easyEyesResourcesRepo.id,
+        user.accessToken
+      );
+      EasyEyesResources.fonts = allResourcesList.fonts;
+      EasyEyesResources.forms = allResourcesList.forms;
 
       // update info UI
+      setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
+      setTab(
+        "form-tab",
+        EasyEyesResources.forms.length,
+        "Consent and Debrief Forms"
+      );
       setTabList("fonts", EasyEyesResources.fonts);
       setTabList("forms", EasyEyesResources.forms);
 

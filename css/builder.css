@@ -16,6 +16,7 @@
 }
 #gitlab-user-info {
   font-size: 1.5rem;
+  margin-top: 15px;
 }
 .option-block {
   margin-top: 10px;
@@ -26,6 +27,8 @@
   color: #333;
 }
 #pavlovia-activate-div {
+  position: relative;
+  top: 30px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -34,22 +37,35 @@
   justify-content: left;
   visibility: hidden;
 }
+#pavlovia-left-list li {
+  position: relative;
+  margin-top: 15px;
+}
 
 #header {
   margin-bottom: 2rem;
 }
 
+.dropzone {
+  min-height: 0px !important;
+}
 #file-dropzone {
   position: relative;
+  top: 10px;
   border-radius: 0.75rem;
-  border: 3px solid #ccc;
+  border: 1px solid #ccc;
+  height: 180px !important;
 }
 
 .dz-button,
 .dz-message * {
+  position: relative;
+  top: 0px;
+  left: 40px;
   color: #999 !important;
 }
 #drop-message-header {
+  position: relative;
   color: black !important;
 }
 .dz-message {
@@ -62,3 +78,24 @@
 }
 /* .option-block * { */
 /* } */
+#new-repo-input-group {
+  position: relative;
+  top: 10px;
+}
+
+#pavlovia-exp-url-group {
+  position: relative;
+  top: 20px;
+  visibility: hidden;
+}
+
+#pavlovia-experiment-url {
+  position: relative;
+  top: 40px;
+  visibility: hidden;
+}
+#copy-pavlovia-url {
+  position: relative;
+  top: 40px;
+  visibility: hidden;
+}
