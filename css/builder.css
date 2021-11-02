@@ -37,7 +37,7 @@
   display: grid;
   grid-template-columns: 20% 80%;
   justify-content: left;
-  visibility: visible;
+  visibility: hidden;
 }
 #pavlovia-left-list li {
   position: relative;
