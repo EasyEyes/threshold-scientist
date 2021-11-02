@@ -4,6 +4,7 @@
 
 export const _loadDir: string = "/threshold/threshold/";
 export const _loadFiles: string[] = [
+  ".DS_Store",
   "LICENSE",
   "README.md",
   "css/consent.css",
@@ -17,4 +18,11 @@ export const _loadFiles: string[] = [
   "js/threshold.min.js.map",
   "psychojs/LICENSE.md",
   "psychojs/out/psychojs-2021.3.0.css",
+  "resources/Douglass Pen.woff2",
+  "resources/IBMPlexSansArabic.woff2",
+  "resources/P22 Aragon.woff2",
+  "resources/Roboto Mono.woff2",
+  "resources/Sloan.woff2",
+  "resources/consent-form.md",
+  "resources/consent-form.pdf",
 ];
