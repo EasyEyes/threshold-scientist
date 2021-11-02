@@ -5,7 +5,13 @@ import {
   redirectToPalvoliaActivation,
 } from "./user";
 import { clearDropzone } from "./dropzoneHandler";
-import { gitlabRoutine } from "./gitlabUtility";
+import {
+  copyUrl,
+  gitlabRoutine,
+  handleGeneratedURLSubmission,
+  redirectToProlific,
+  uploadCompletionURL,
+} from "./gitlabUtility";
 import { uploadedFiles } from "./CONSTANTS";
 
 const addOnClickToEl = (elementId: string, handler: any) => {
@@ -18,6 +24,14 @@ const addOnClickToEl = (elementId: string, handler: any) => {
 
 addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
 addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
+addOnClickToEl("copy-pavlovia-url", copyUrl);
+addOnClickToEl("prolific-redirect-btn", redirectToProlific);
+addOnClickToEl(
+  "participant-recruitment-completion-url-submit",
+  uploadCompletionURL
+);
+addOnClickToEl("new-url-submit", handleGeneratedURLSubmission);
+
 document
   .getElementById("font-tab")!
   .addEventListener("click", async (evt: any) => {

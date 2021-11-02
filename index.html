@@ -46,6 +46,10 @@
       integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
       crossorigin="anonymous"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.6.1/font/bootstrap-icons.css"
+    />
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
       integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
@@ -231,12 +235,12 @@
             >
               Activate in Pavlovia
             </button>
-            <a
+            <!--<a
               id="palvolia-experiment-link"
               href="#"
               target="_blank"
               class="link-success"
-            ></a>
+            ></a>-->
           </div>
         </div>
 
@@ -267,6 +271,96 @@
           <div id="forms" class="tabcontent">
             <ol></ol>
           </div>
+        </div>
+      </div>
+      <br />
+      <div
+        id="pavlovia-experiment-url-div"
+        class="input-group"
+        style="width: auto; visibility: hidden"
+      >
+        <input
+          id="pavlovia-experiment-url"
+          type="text"
+          class="form-control"
+          placeholder="Name of new Repository"
+          aria-label="Recipient's username"
+          aria-describedby="gitlab-file-submit"
+          disabled
+        />
+
+        <button id="copy-pavlovia-url" class="btn btn-outline-primary">
+          <i class="bi bi-clipboard"></i> Copy Experiment URL
+        </button>
+      </div>
+      <div
+        id="participant-survey-completion-div"
+        class="input-group"
+        style="display: grid; width: auto; visibility: hidden"
+      >
+        <div
+          style="display: flex; /*justify-self: center;*/ align-items: center"
+        >
+          <i
+            class="bi bi-arrow-down bi-large"
+            style="justify-self: center; font-size: 6vh !important"
+          ></i>
+          Enter copied URL in Prolific to generate Completion and Experiment
+          URLS
+        </div>
+
+        <button
+          id="prolific-redirect-btn"
+          class="btn btn-outline-secondary"
+          style="/*justify-self: center;*/ width: 60vw"
+        >
+          Go to Prolific
+        </button>
+        <div
+          style="display: flex; /*justify-self: center;*/ align-items: center"
+        >
+          <i
+            class="bi bi-arrow-down"
+            style="justify-self: center; font-size: 6vh !important"
+          ></i>
+          Paste Completion and Experiment URLs from Prolific
+        </div>
+        <div style="display: flex">
+          <input
+            id="participant-code"
+            type="text"
+            class="form-control"
+            placeholder="Enter Completion URL"
+            aria-label="Participant Recruitment Completion URL"
+            style="width: 50vw"
+          />
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            id="participant-recruitment-completion-url-submit"
+            style="width: 15vw"
+          >
+            Submit Completion URL
+          </button>
+        </div>
+        <br />
+        <div id="participant-survey-new-url-div" style="display: flex">
+          <input
+            id="new-url"
+            type="text"
+            class="form-control"
+            placeholder="Enter Generated URL"
+            aria-label="Participant Recruitment Generated URL"
+            style="width: 50vw"
+          />
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            id="new-url-submit"
+            style="width: 15vw"
+          >
+            Submit Generated Experiment URL
+          </button>
         </div>
       </div>
 

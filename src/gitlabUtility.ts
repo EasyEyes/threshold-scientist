@@ -86,22 +86,27 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     const actEl = document.getElementById("pavlovia-activate-div");
     actEl!.style.visibility = "visible";
 
+    const pavloviaExperimentUrlElement = document.getElementById(
+      "pavlovia-experiment-url-div"
+    );
+    pavloviaExperimentUrlElement!.style.visibility = "visible";
+
     // display "run" experiement link
     const pavExpLinkEl = document.getElementById(
-      "palvolia-experiment-link"
-    ) as HTMLAnchorElement;
-    pavExpLinkEl.href =
+      "pavlovia-experiment-url"
+    ) as HTMLInputElement;
+    pavExpLinkEl.value =
       "https://run.pavlovia.org/" +
       user.userData.username +
       "/" +
       newRepoName.toLowerCase() +
       "/";
-    pavExpLinkEl.text =
-      "https://run.pavlovia.org/" +
-      user.userData.username +
-      "/" +
-      newRepoName.toLowerCase() +
-      "/";
+
+    if (
+      user.currentExperiment.participantRecruitmentServiceName == "Prolific"
+    ) {
+      handleParticipantRecruitmentUrl();
+    }
 
     // document.getElementById("activate-experiment-btn");
   }
@@ -726,15 +731,95 @@ const encodeGitlabFilePath = (filePath: string): string => {
   return res;
 };
 
-// const handleParticipantRecruitmentUrl = async () => {
-//   // check if service is Prolific
-//   // if Prolific, expose
-// };
+export const handleParticipantRecruitmentUrl = () => {
+  // check if service is Prolific
+  // if Prolific, expose
+  document.getElementById(
+    "participant-survey-completion-div"
+  )!.style.visibility = "";
+  document.getElementById("participant-survey-new-url-div")!.style.visibility =
+    "";
+  document.getElementById("activate-experiment-btn")!.className += " disabled";
+};
 
-// const copyUrl = () => {
-//   const cb = navigator.clipboard;
-//   const paragraph = document.querySelector("#pavlovia-experiment-url");
-//   cb.writeText(paragraph.value).then(() =>
-//     alert("URL has been copied to clipboard")
-//   );
-// };
+export const copyUrl = () => {
+  const cb = navigator.clipboard;
+  const paragraph = document.querySelector(
+    "#pavlovia-experiment-url"
+  ) as HTMLInputElement;
+  cb.writeText(paragraph.value).then(() => {
+    showDialogBox(``, `Your URL has been copied to clipboard.`, true);
+  });
+};
+
+export const uploadCompletionURL = async () => {
+  let participantCodeElement = document.getElementById(
+    "participant-code"
+  ) as HTMLInputElement;
+  var completionURL: string = participantCodeElement.value;
+  if (completionURL != "") {
+    var commitAction = {
+      action: "create",
+      file_path: "survey/participantRecruitmentServiceData.json",
+      content: JSON.stringify({
+        name: user.currentExperiment.participantRecruitmentServiceName,
+        code: user.currentExperiment.participantRecruitmentServiceCode,
+        url: completionURL,
+      }),
+    };
+    var commitBody = {
+      branch: "master",
+      commit_message: "Easy Eyes to Gitlab INIT",
+      actions: [commitAction],
+    };
+    showDialogBox(
+      `Completion URL Update`,
+      `Your Experiment Completion URL is being uploaded.`,
+      true
+    );
+    var commitFile = await fetch(
+      "https://gitlab.pavlovia.org/api/v4/projects/" +
+        user.newRepo.id +
+        "/repository/commits?access_token=" +
+        user.accessToken,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(commitBody),
+      }
+    );
+    await commitFile.json();
+    document
+      .getElementById("participant-code")!
+      .setAttribute("disabled", "disabled");
+    document.getElementById(
+      "participant-recruitment-completion-url-submit"
+    )!.className += " disabled";
+    document.getElementById(
+      "participant-recruitment-completion-url-submit"
+    )!.innerText = "Completion URL Submitted";
+  }
+};
+
+export const handleGeneratedURLSubmission = () => {
+  let newUrlElement = document.getElementById("new-url") as HTMLInputElement;
+  var generatedUrl: string = newUrlElement.value;
+  if (generatedUrl != "") {
+    let pavloviaExperimentUrlElement = document.getElementById(
+      "pavlovia-experiment-url"
+    ) as HTMLInputElement;
+    pavloviaExperimentUrlElement.value = generatedUrl;
+    document.getElementById(
+      "participant-survey-new-url-div"
+    )!.style.visibility = "hidden";
+    document.getElementById("activate-experiment-btn")!.className = document
+      .getElementById("activate-experiment-btn")!
+      .className.replace("disabled", "");
+  }
+};
+
+export const redirectToProlific = () => {
+  window.open("https://www.prolific.co/auth/accounts/login/", "_blank");
+};

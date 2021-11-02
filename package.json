@@ -8,10 +8,9 @@
     "prepare": "husky install",
     "update:git": "git add -A && git commit -m 'update' && git push",
     "files": "node server/writeAllFilePaths.js && prettier src/files.ts --write && git add src/files.ts",
-    "glossary": "node server/prepareGlossary.js && git add src/glossary.ts",
     "start": "webpack --env=development",
     "build": "webpack --env=production",
-    "prepare:commit": "npm run glossary && npm run files",
+    "prepare:commit": "npm run files",
     "netlify": "npm ci && npm run build && rm -r node_modules"
   },
   "keywords": [],
