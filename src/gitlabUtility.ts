@@ -136,7 +136,7 @@ const validateRepoName = async (newRepoName: string) => {
   );
 };
 
-const createRepo = async (repoName: string) => {
+export const createRepo = async (repoName: string) => {
   var newRepo = await fetch(
     "https://gitlab.pavlovia.org/api/v4/projects?name=" +
       repoName +

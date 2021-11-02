@@ -1,6 +1,6 @@
 import { EasyEyesResources, env, user } from "./CONSTANTS";
 import { hideDialogBox, showDialogBox } from "./dropzoneHandler";
-import { getResourcesListFromRepository } from "./gitlabUtility";
+import { createRepo, getResourcesListFromRepository } from "./gitlabUtility";
 import { setTab } from "./tab";
 
 if (window.location.hash != "") {
@@ -42,22 +42,17 @@ export const populateUserInfo = async () => {
       "&per_page=100"
   );
   projectData = await projectData.json();
-
-  // remove null elements from projectData
-  let projectDataFiltered: any = [];
-  for (let i = 0; i < projectDataFiltered.length; i++)
-    if (projectData[i]) projectDataFiltered.push(projectData[i]);
-  projectData = projectDataFiltered;
-
   user.userData.projects = projectData;
-  console.log("projects", user.userData.projects);
+  console.log("projectDataFiltered", projectData);
   // if user doesn't have a repo named EasyEyesResources, create one and add folders fonts and consent-forms
   if (
     !user.userData.projects
-      .map((i: any) => i.name)
+      .map((i: any) => {
+        return i ? i.name : "null";
+      })
       .includes("EasyEyesResources")
   ) {
-    var easyEyesResourcesRepo = null; //TODO : await createRepo("EasyEyesResources");
+    let easyEyesResourcesRepo = await createRepo("EasyEyesResources");
     user.userData.projects.push(easyEyesResourcesRepo);
   }
   const gitlabUserInfoEl = document.getElementById("gitlab-user-info");
@@ -65,7 +60,7 @@ export const populateUserInfo = async () => {
     gitlabUserInfoEl.innerHTML = `Pavlovia account : ${user.userData.name} (${user.userData.username})`;
 
   // get initial resources info
-  var easyEyesResourcesRepo = user.userData.projects.find(
+  let easyEyesResourcesRepo = user.userData.projects.find(
     (i: any) => i.name == "EasyEyesResources"
   );
   const resourcesList: any = await getResourcesListFromRepository(
@@ -88,8 +83,8 @@ export const populateUserInfo = async () => {
 
 export const redirectToOauth2 = () => {
   // TODO switch this for production
-  location.href = env.PRODUCTION.GITLAB_REDIRECT_URL;
-  //location.href = env.DEVELOPMENT.GITLAB_REDIRECT_URL;
+  // location.href = env.PRODUCTION.GITLAB_REDIRECT_URL;
+  location.href = env.DEVELOPMENT.GITLAB_REDIRECT_URL;
 };
 
 export const redirectToPalvoliaActivation = async () => {
