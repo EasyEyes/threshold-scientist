@@ -6,6 +6,7 @@ const fetchDir = "threshold/";
 const psychoJSVersion = "2021.3.0";
 
 const ignorePattern = [
+  ".DS_Store",
   ".git",
   ".husky",
   ".prettierignore",
