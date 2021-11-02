@@ -34,7 +34,7 @@ export const populateUserInfo = async () => {
   }
   console.log("userData", userData);
 
-  var projectData = await fetch(
+  var projectData: any = await fetch(
     "https://gitlab.pavlovia.org/api/v4/users/" +
       user.userData.id +
       "/projects?access_token=" +
@@ -42,6 +42,13 @@ export const populateUserInfo = async () => {
       "&per_page=100"
   );
   projectData = await projectData.json();
+
+  // remove null elements from projectData
+  let projectDataFiltered: any = [];
+  for (let i = 0; i < projectDataFiltered.length; i++)
+    if (projectData[i]) projectDataFiltered.push(projectData[i]);
+  projectData = projectDataFiltered;
+
   user.userData.projects = projectData;
   console.log("projects", user.userData.projects);
   // if user doesn't have a repo named EasyEyesResources, create one and add folders fonts and consent-forms
@@ -82,7 +89,7 @@ export const populateUserInfo = async () => {
 export const redirectToOauth2 = () => {
   // TODO switch this for production
   location.href = env.PRODUCTION.GITLAB_REDIRECT_URL;
-  // location.href = env.DEVELOPMENT.GITLAB_REDIRECT_URL;
+  //location.href = env.DEVELOPMENT.GITLAB_REDIRECT_URL;
 };
 
 export const redirectToPalvoliaActivation = async () => {
