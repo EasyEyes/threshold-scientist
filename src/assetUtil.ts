@@ -42,6 +42,6 @@ export const getFileBinaryData = (file: File) => {
       console.log("unable to get binary data", file, e);
     };
 
-    fileReader.readAsBinaryString(file);
+    fileReader.readAsArrayBuffer(file);
   });
 };
