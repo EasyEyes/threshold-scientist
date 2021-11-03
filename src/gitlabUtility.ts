@@ -1,4 +1,8 @@
-import { getFileBinaryData, getGitlabBodyForThreshold } from "./assetUtil";
+import {
+  getFileBinaryData,
+  getFileTextData,
+  getGitlabBodyForThreshold,
+} from "./assetUtil";
 import {
   acceptableExtensions,
   EasyEyesResources,
@@ -195,6 +199,7 @@ export const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment =
         action: actionValue,
         file_path: "forms/" + consentFormm.name,
         content: content,
+        encoding: "base64",
       });
     }
 
@@ -209,6 +214,7 @@ export const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment =
         action: actionValue,
         file_path: "fonts/" + userFont.name,
         content: content,
+        encoding: "base64",
       });
     }
 
@@ -603,6 +609,7 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
         // change to blocks after threshold is modified
         file_path: "conditions/" + externalFile.name,
         content: fileData,
+        encoding: "base64",
       });
     }
     if (externalFile.type == "application/pdf") {
@@ -611,6 +618,7 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
         action: "create",
         file_path: "forms/" + externalFile.name,
         content: fileData,
+        encoding: "base64",
       });
     } else {
       let fileData: any = await getFileBinaryData(externalFile);
@@ -618,6 +626,7 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
         action: "create",
         file_path: "fonts/" + externalFile.name,
         content: fileData,
+        encoding: "base64",
       });
     }
   }
@@ -641,6 +650,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
         action: "create",
         file_path: "conditions/" + externalFile.name,
         content: fileData,
+        encoding: "base64",
       });
     }
 
@@ -651,11 +661,13 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
         action: "create",
         file_path: "fonts/" + externalFile.name,
         content: fileData,
+        encoding: "base64",
       });
       jsonFiles.push({
         action: "update",
         file_path: "fonts/" + externalFile.name,
         content: fileData,
+        encoding: "base64",
       });
     }
 
@@ -666,11 +678,13 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
         action: "create",
         file_path: "forms/" + externalFile.name,
         content: fileData,
+        encoding: "base64",
       });
       jsonFiles.push({
         action: "update",
         file_path: "forms/" + externalFile.name,
         content: fileData,
+        encoding: "base64",
       });
     }
   }
@@ -681,6 +695,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
     action: "create",
     file_path: uploadedFiles.experimentFile.name,
     content: fileData,
+    encoding: "base64",
   });
 
   // add experiment file to `/conditions`
