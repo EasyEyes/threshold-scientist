@@ -45,7 +45,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     const gitlabRepo = await createRepo(newRepoName);
     user.newRepo = gitlabRepo;
 
-    // await populateThresholdRepoOnExperiment(gitlabRepo);
+    await populateThresholdRepoOnExperiment(gitlabRepo);
 
     // filter and get all .csv files
     // var blockFiles = files.filter( f => {
