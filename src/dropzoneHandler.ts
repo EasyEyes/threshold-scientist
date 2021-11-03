@@ -12,6 +12,7 @@ import {
   getResourcesListFromRepository,
   populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment,
 } from "./gitlabUtility";
+import { getExperimentFontList } from "./experimentUtil";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -141,7 +142,16 @@ const newDz = new Dropzone("#file-dropzone", {
       });
       hideDialogBox();
 
+      // store experiment file
       uploadedFiles.experimentFile = file;
+
+      // extract required fonts
+      getExperimentFontList(
+        uploadedFiles.experimentFile,
+        (fontList: string[]) => {
+          uploadedFiles.requestedFonts = fontList;
+        }
+      );
 
       // set repo name
       const gitlabRepoNameEl = document.getElementById(

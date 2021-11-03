@@ -3,6 +3,7 @@ import {
   acceptableExtensions,
   EasyEyesResources,
   env,
+  uploadedFiles,
   user,
 } from "./CONSTANTS";
 import {
@@ -44,7 +45,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     const gitlabRepo = await createRepo(newRepoName);
     user.newRepo = gitlabRepo;
 
-    await populateThresholdRepoOnExperiment(gitlabRepo);
+    // await populateThresholdRepoOnExperiment(gitlabRepo);
 
     // filter and get all .csv files
     // var blockFiles = files.filter( f => {
@@ -281,7 +282,13 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
 
   // generate Gitlab API body to commit font files
   for (var i = 0; i < fontList.length; i++) {
-    var userFont = fontList[i];
+    let userFont = fontList[i];
+
+    // do not transfer fonts that are not required by the experiment
+    if (!uploadedFiles.requestedFonts.includes(userFont)) {
+      continue;
+    }
+
     const resourcesRepoFilePath = encodeGitlabFilePath(`fonts/${userFont}`);
     let content: string = await getFileRawFromGitlab(
       easyEyesResourcesRepo.id,

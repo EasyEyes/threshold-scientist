@@ -71,4 +71,5 @@ export const setCurrentTabId = (newId: string) => {
 export const uploadedFiles: any = {
   experimentFile: null,
   others: [],
+  requestedFonts: [],
 };
