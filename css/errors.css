@@ -1,0 +1,81 @@
+.errors {
+  margin: 2rem 0;
+}
+
+.error-box {
+  position: relative;
+  display: block;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  border-radius: 7px;
+}
+
+.error-box * {
+  font-size: 1rem;
+}
+
+/* -------------------------------------------------------------------------- */
+
+.error-warning {
+  background-color: #f7881233;
+  border-left: 3px solid #f78812;
+}
+
+.error-error {
+  background-color: #e0240133;
+  border-left: 3px solid #e02401;
+}
+
+.error-correct {
+  background-color: #4e9f3d33;
+  border-left: 3px solid #4e9f3d;
+}
+
+/* -------------------------------------------------------------------------- */
+
+.error-key {
+  font-weight: 700;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.error-warning .error-key {
+  background-color: #f7881233;
+  color: #f78812;
+}
+
+.error-error .error-key {
+  background-color: #e0240133;
+  color: #e02401;
+}
+
+.error-correct .error-key {
+  background-color: #4e9f3d33;
+  color: #4e9f3d;
+}
+
+.error-line {
+  margin: 0;
+}
+
+.error-time {
+  margin: 0;
+  padding: 3px 7px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-size: 0.9rem;
+  color: #999;
+}
+
+.error-ok {
+  margin: 1rem 0 0 0;
+  padding: 3px 1rem;
+  display: inline-block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 7px;
+  /* color: #666; */
+  background: #ffffff99;
+}
