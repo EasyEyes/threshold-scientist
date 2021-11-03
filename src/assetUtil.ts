@@ -30,3 +30,18 @@ export const getAssetFileContent = async (filePath: string) => {
       return error;
     });
 };
+
+export const getFileBinaryData = (file: File) => {
+  return new Promise((resolve) => {
+    const fileReader = new FileReader();
+    fileReader.onload = (e: any) => {
+      resolve(e.target.result);
+    };
+
+    fileReader.onerror = (e: any) => {
+      console.log("unable to get binary data", file, e);
+    };
+
+    fileReader.readAsBinaryString(file);
+  });
+};

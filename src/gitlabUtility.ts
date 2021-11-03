@@ -1,4 +1,4 @@
-import { getGitlabBodyForThreshold } from "./assetUtil";
+import { getFileBinaryData, getGitlabBodyForThreshold } from "./assetUtil";
 import {
   acceptableExtensions,
   EasyEyesResources,
@@ -186,7 +186,7 @@ export const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment =
     // generate Gitlab API body to commit form files
     for (var i = 0; i < consentForms.length; i++) {
       var consentFormm = consentForms[i];
-      var content = await consentFormm.text();
+      var content = await getFileBinaryData(consentFormm);
       let actionValue = prevFormList.includes(consentFormm.name)
         ? "update"
         : "create";
@@ -199,8 +199,8 @@ export const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment =
 
     // generate Gitlab API body to commit font files
     for (var i = 0; i < fonts.length; i++) {
-      var userFont = fonts[i];
-      var content = await userFont.text();
+      let userFont = fonts[i];
+      let content = await getFileBinaryData(userFont);
       let actionValue = prevFontList.includes(userFont.name)
         ? "update"
         : "create";
@@ -590,7 +590,7 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
   for (var i = 0; i < externalFiles.length; i++) {
     var externalFile = externalFiles[i];
     if (externalFile.type == "text/csv") {
-      let fileData: any = await externalFile.text();
+      let fileData: any = await getFileBinaryData(externalFile);
       jsonFiles.push({
         action: "create",
         // change to blocks after threshold is modified
@@ -599,14 +599,14 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
       });
     }
     if (externalFile.type == "application/pdf") {
-      let fileData: any = await externalFile.text();
+      let fileData: any = await getFileBinaryData(externalFile);
       jsonFiles.push({
         action: "create",
         file_path: "forms/" + externalFile.name,
         content: fileData,
       });
     } else {
-      let fileData: any = await externalFile.text();
+      let fileData: any = await getFileBinaryData(externalFile);
       jsonFiles.push({
         action: "create",
         file_path: "fonts/" + externalFile.name,
@@ -629,7 +629,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
 
     // experiment files
     if (acceptableExtensions.experiments.includes(ext)) {
-      const fileData = await externalFile.text();
+      const fileData = await getFileBinaryData(externalFile);
       jsonFiles.push({
         action: "create",
         file_path: "conditions/" + externalFile.name,
@@ -639,7 +639,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
 
     // fonts
     else if (acceptableExtensions.fonts.includes(ext)) {
-      const fileData = await externalFile.text();
+      const fileData = await getFileBinaryData(externalFile);
       jsonFiles.push({
         action: "create",
         file_path: "fonts/" + externalFile.name,
@@ -654,7 +654,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
 
     // forms
     else if (acceptableExtensions.forms.includes(ext)) {
-      const fileData = await externalFile.text();
+      const fileData = await getFileBinaryData(externalFile);
       jsonFiles.push({
         action: "create",
         file_path: "forms/" + externalFile.name,
@@ -669,7 +669,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
   }
 
   // add experiment file to root
-  const fileData = await uploadedFiles.experimentFile.text();
+  const fileData = await getFileBinaryData(uploadedFiles.experimentFile);
   jsonFiles.push({
     action: "create",
     file_path: uploadedFiles.experimentFile.name,
