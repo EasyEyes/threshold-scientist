@@ -35,6 +35,7 @@ export const getFileBinaryData = (file: File) => {
   return new Promise((resolve) => {
     const fileReader = new FileReader();
     fileReader.onload = (e: any) => {
+      console.log("binary data", e);
       resolve(e.target.result);
     };
 
@@ -42,6 +43,6 @@ export const getFileBinaryData = (file: File) => {
       console.log("unable to get binary data", file, e);
     };
 
-    fileReader.readAsBinaryString(file);
+    fileReader.readAsDataURL(file);
   });
 };
