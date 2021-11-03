@@ -68,22 +68,6 @@ export const processFiles = (fileList: File[], callback: any) => {
  * @param {Object} parsedContent Returned value from Papa.parse
  */
 const prepareExperimentFileForThreshold = (parsedContent: any) => {
-  // add woff2 extension to font names if extension is missing
-  for (let i = 0; i < parsedContent.data.length; i++) {
-    // if current row is font row
-    if (parsedContent.data[i][0] == "targetFont") {
-      const fontRow = parsedContent.data[i];
-      for (let j = 1; j < fontRow.length; j++) {
-        // if extension is missing
-        const nameTokens = fontRow[j].split(".");
-        if (nameTokens.length < 2) {
-          // add extension to font-name
-          parsedContent.data[i][j] = `${parsedContent.data[i][j]}.woff2`;
-        }
-      }
-    }
-  }
-
   // Create a dataframe for easy data manipulation.
   // extract participant recruitement service name
   if (
