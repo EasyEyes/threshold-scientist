@@ -603,13 +603,12 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
   for (var i = 0; i < externalFiles.length; i++) {
     var externalFile = externalFiles[i];
     if (externalFile.type == "text/csv") {
-      let fileData: any = await getFileBinaryData(externalFile);
+      let fileData: any = await getFileTextData(externalFile);
       jsonFiles.push({
         action: "create",
         // change to blocks after threshold is modified
         file_path: "conditions/" + externalFile.name,
         content: fileData,
-        encoding: "base64",
       });
     }
     if (externalFile.type == "application/pdf") {
@@ -645,12 +644,11 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
 
     // experiment files
     if (acceptableExtensions.experiments.includes(ext)) {
-      const fileData = await getFileBinaryData(externalFile);
+      const fileData = await getFileTextData(externalFile);
       jsonFiles.push({
         action: "create",
         file_path: "conditions/" + externalFile.name,
         content: fileData,
-        encoding: "base64",
       });
     }
 
@@ -690,12 +688,11 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
   }
 
   // add experiment file to root
-  const fileData = await getFileBinaryData(uploadedFiles.experimentFile);
+  const fileData = await getFileTextData(uploadedFiles.experimentFile);
   jsonFiles.push({
     action: "create",
     file_path: uploadedFiles.experimentFile.name,
     content: fileData,
-    encoding: "base64",
   });
 
   // add experiment file to `/conditions`
