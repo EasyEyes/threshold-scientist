@@ -62,19 +62,19 @@ if (gitlabFileSubmit) {
 
 populateUserInfo();
 
-// TODO Remove this
+// Sample error messages
 
-const errors = document.getElementById("errors")!;
-newLog(errors, "author", "The author name is missing.", "warning");
-newLog(
-  errors,
-  "targetFont",
-  "Your targetFont is set incorrectly. Ignore this, this is only for demo purposes. You are all good.",
-  "error"
-);
-newLog(
-  errors,
-  "Done",
-  "Your experiment.csv file is error free. Upload to Pavlovia now.",
-  "correct"
-);
+// const errors = document.getElementById("errors")!;
+// newLog(errors, "author", "The author name is missing.", "warning");
+// newLog(
+//   errors,
+//   "targetFont",
+//   "Your targetFont is set incorrectly. Ignore this, this is only for demo purposes. You are all good.",
+//   "error"
+// );
+// newLog(
+//   errors,
+//   "Done",
+//   "Your experiment.csv file is error free. Upload to Pavlovia now.",
+//   "correct"
+// );
