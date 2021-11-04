@@ -27,7 +27,7 @@ const addOnClickToEl = (elementId: string, handler: any) => {
 
 addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
 addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
-addOnClickToEl("copy-pavlovia-url", copyUrl);
+addOnClickToEl("copy-pavlovia-url-btn", copyUrl);
 addOnClickToEl("prolific-redirect-btn", redirectToProlific);
 addOnClickToEl(
   "participant-recruitment-completion-url-submit",
