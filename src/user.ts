@@ -84,7 +84,7 @@ export const populateUserInfo = async () => {
 
 export const redirectToOauth2 = () => {
   // TODO switch this for production
-  //location.href = env.PRODUCTION.GITLAB_REDIRECT_URL;
+  location.href = env.PRODUCTION.GITLAB_REDIRECT_URL;
   location.href = env.DEVELOPMENT.GITLAB_REDIRECT_URL;
 };
 
