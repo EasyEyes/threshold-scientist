@@ -107,7 +107,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       user.currentExperiment.participantRecruitmentServiceName == "Prolific"
     ) {
       expUrl +=
-        "?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}";
+        "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}";
       handleParticipantRecruitmentUrl();
     }
     pavExpLinkEl!.innerText += expUrl;
