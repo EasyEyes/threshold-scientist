@@ -774,14 +774,16 @@ export const uploadCompletionURL = async () => {
   ) as HTMLInputElement;
   var completionURL: string = participantCodeElement.value;
   if (completionURL != "") {
+    var jsonString = JSON.stringify({
+      name: user.currentExperiment.participantRecruitmentServiceName,
+      code: user.currentExperiment.participantRecruitmentServiceCode,
+      url: completionURL,
+    });
     var commitAction = {
       action: "create",
-      file_path: "survey/participantRecruitmentServiceData.json",
-      content: JSON.stringify({
-        name: user.currentExperiment.participantRecruitmentServiceName,
-        code: user.currentExperiment.participantRecruitmentServiceCode,
-        url: completionURL,
-      }),
+      file_path: "survey/participantRecruitmentServiceData.js",
+      content:
+        "export const participantRecruitmentService = " + jsonString + ";",
     };
     var commitBody = {
       branch: "master",
