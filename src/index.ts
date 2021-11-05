@@ -29,6 +29,7 @@ addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
 addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
 addOnClickToEl("copy-pavlovia-url-btn", copyUrl);
 addOnClickToEl("prolific-redirect-btn", redirectToProlific);
+addOnClickToEl("return-to-prolific", redirectToProlific);
 addOnClickToEl(
   "participant-recruitment-completion-url-submit",
   uploadCompletionURL

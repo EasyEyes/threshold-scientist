@@ -121,3 +121,7 @@
   top: 40px;
   visibility: hidden;
 }*/
+
+button {
+  border-radius: 40px !important;
+}
