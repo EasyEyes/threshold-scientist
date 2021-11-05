@@ -759,7 +759,7 @@ export const handleParticipantRecruitmentUrl = () => {
   // if Prolific, expose
   document.getElementById("participant-survey-completion-div")!.style.display =
     "";
-  document.getElementById("activate-experiment-btn")!.className += " disabled";
+  //document.getElementById("activate-experiment-btn")!.className += " disabled";
 };
 
 export const copyUrl = () => {
@@ -833,9 +833,9 @@ export const handleGeneratedURLSubmission = () => {
     pavloviaExperimentUrlElement.innerText = generatedUrl;
     document.getElementById("participant-survey-new-url-div")!.style.display =
       "none";
-    document.getElementById("activate-experiment-btn")!.className = document
-      .getElementById("activate-experiment-btn")!
-      .className.replace("disabled", "");
+    //document.getElementById("activate-experiment-btn")!.className = document
+    //.getElementById("activate-experiment-btn")!
+    //.className.replace("disabled", "");
   }
 };
 
