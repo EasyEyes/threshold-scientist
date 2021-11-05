@@ -780,7 +780,7 @@ export const uploadCompletionURL = async () => {
       url: completionURL,
     });
     var commitAction = {
-      action: "create",
+      action: "update",
       file_path: "survey/participantRecruitmentServiceData.js",
       content:
         "export const participantRecruitmentService = " + jsonString + ";",

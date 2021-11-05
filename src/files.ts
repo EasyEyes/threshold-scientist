@@ -17,4 +17,5 @@ export const _loadFiles: string[] = [
   "js/threshold.min.js.map",
   "psychojs/LICENSE.md",
   "psychojs/out/psychojs-2021.3.0.css",
+  "survey/participantRecruitmentServiceData.js",
 ];
