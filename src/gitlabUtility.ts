@@ -100,22 +100,18 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     const pavExpLinkEl: any = document.getElementById(
       "pavlovia-experiment-url"
     );
-    const expUrl = `https://run.pavlovia.org/${
+    let expUrl = `https://run.pavlovia.org/${
       user.userData.username
-    }/${newRepoName.toLocaleLowerCase()}/`;
-    pavExpLinkEl!.innerText += expUrl;
-    pavExpLinkEl!.href = expUrl;
-    // "https://run.pavlovia.org/" +
-    // user.userData.username +
-    // "/" +
-    // newRepoName.toLowerCase() +
-    // "/";
-
+    }/${newRepoName.toLocaleLowerCase()}`;
     if (
       user.currentExperiment.participantRecruitmentServiceName == "Prolific"
     ) {
+      expUrl +=
+        "?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}";
       handleParticipantRecruitmentUrl();
     }
+    pavExpLinkEl!.innerText += expUrl;
+    pavExpLinkEl!.href = expUrl;
 
     // document.getElementById("activate-experiment-btn");
   }
