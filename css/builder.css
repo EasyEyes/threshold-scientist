@@ -30,14 +30,14 @@
   font-size: 1rem !important;
   color: #333;
 }
-#pavlovia-activate-div {
+/*#pavlovia-activate-div {
   position: relative;
   left: -18px;
   display: grid;
   grid-template-columns: 20% 80%;
   justify-content: left;
   visibility: hidden;
-}
+}*/
 #pavlovia-left-list li {
   position: relative;
   margin-top: 15px;
@@ -96,28 +96,28 @@
   font-weight: bold;
   font-size: 1rem;
 }
-#activate-experiment-btn {
+/*#activate-experiment-btn {
   position: relative;
   top: -10px;
   left: -70px;
-}
+}*/
 #activate-experiment-btn:hover {
   font-weight: bold;
 }
 
-#pavlovia-exp-url-group {
+/*#pavlovia-exp-url-group {
   position: relative;
   top: 20px;
   visibility: hidden;
-}
+}*/
 
-#pavlovia-experiment-url {
+/*#pavlovia-experiment-url {
   position: relative;
   top: -30px;
   visibility: hidden;
-}
-#copy-pavlovia-url {
+}*/
+/*#copy-pavlovia-url {
   position: relative;
   top: 40px;
   visibility: hidden;
-}
+}*/

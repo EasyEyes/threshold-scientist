@@ -252,8 +252,7 @@
             </li>
 
             <!-- Pavlovia Experiment Controls -->
-            <li id="pavlovia-activate-div">
-              <div>5.</div>
+            <li id="pavlovia-activate-div" style="display: none">
               <div class="option-block">
                 <button
                   id="activate-experiment-btn"
@@ -266,9 +265,9 @@
             </li>
 
             <!-- Pavlovia Experiment URL -->
-            <li id="pavlovia-exp-url-group">
-              <div id="pavlovia-experiment-url"></div>
-              <!-- <div class="input-group">
+            <!--<li id="pavlovia-exp-url-group">
+              <div id="pavlovia-experiment-url"></div>-->
+            <!-- <div class="input-group">
                 <input
                   id="pavlovia-experiment-url"
                   type="text"
@@ -283,7 +282,7 @@
                   <i class="bi bi-clipboard"></i> Copy Experiment URL
                 </button>
               </div> -->
-            </li>
+            <!--</li>-->
           </ol>
         </div>
 
@@ -304,9 +303,62 @@
           </div>
         </div>
       </div>
-      <br />
-
-      <div
+      <ol id="pavlovia-experiment-url-ol" start="6">
+        <li id="pavlovia-experiment-url-li" style="display: none">
+          <button id="copy-pavlovia-url-btn" class="btn btn-outline-secondary">
+            Copy Study URL
+          </button>
+          <a id="pavlovia-experiment-url"></a>
+        </li>
+      </ol>
+      <ol
+        id="participant-survey-completion-div"
+        style="display: none"
+        start="7"
+      >
+        <li style="margin-top: 15px">
+          <button id="prolific-redirect-btn" class="btn btn-outline-secondary">
+            Take study URL to Prolific
+          </button>
+        </li>
+        <li style="margin-top: 15px">
+          <div style="display: flex; justify-content: space-between">
+            <input
+              id="participant-code"
+              style="width: 67%"
+              type="email"
+              class="form-control"
+              placeholder="Paste completion URL from Prolific here"
+            />
+            <button
+              id="participant-recruitment-completion-url-submit"
+              style="width: 30%"
+              class="btn btn-outline-secondary"
+            >
+              Submit Completion URL
+            </button>
+          </div>
+        </li>
+        <li id="participant-survey-new-url-div" style="margin-top: 15px">
+          <div style="display: flex; justify-content: space-between">
+            <input
+              id="new-url"
+              style="width: 67%"
+              type="email"
+              class="form-control"
+              placeholder="Paste generate URL from Prolific here"
+            />
+            <button
+              id="new-url-submit"
+              style="width: 30%"
+              class="btn btn-outline-secondary"
+            >
+              Submit Generated URL
+            </button>
+          </div>
+        </li>
+      </ol>
+      <!--<div
         id="participant-survey-completion-div"
         class="input-group"
         style="display: grid; width: auto; visibility: hidden"
@@ -375,7 +427,7 @@
             Submit Generated Experiment URL
           </button>
         </div>
-      </div>
+      </div>-->
 
       <!-- Dialog box -->
       <div id="dialog-box">

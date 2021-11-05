@@ -89,19 +89,22 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       "Files have been uploaded.";
 
     const actEl = document.getElementById("pavlovia-activate-div");
-    actEl!.style.visibility = "visible";
+    actEl!.style.display = "";
 
     const pavloviaExperimentUrlElement = document.getElementById(
-      "pavlovia-experiment-url"
+      "pavlovia-experiment-url-li"
     );
-    pavloviaExperimentUrlElement!.style.visibility = "visible";
+    pavloviaExperimentUrlElement!.style.display = "";
 
     // display "run" experiement link
-    const pavExpLinkEl = document.getElementById("pavlovia-experiment-url");
+    const pavExpLinkEl: any = document.getElementById(
+      "pavlovia-experiment-url"
+    );
     const expUrl = `https://run.pavlovia.org/${
       user.userData.username
     }/${newRepoName.toLocaleLowerCase()}/`;
-    pavExpLinkEl!.innerHTML = `<a href="${expUrl}">${expUrl}</a>`;
+    pavExpLinkEl!.innerText += expUrl;
+    pavExpLinkEl!.href = expUrl;
     // "https://run.pavlovia.org/" +
     // user.userData.username +
     // "/" +
@@ -754,20 +757,17 @@ const encodeGitlabFilePath = (filePath: string): string => {
 export const handleParticipantRecruitmentUrl = () => {
   // check if service is Prolific
   // if Prolific, expose
-  document.getElementById(
-    "participant-survey-completion-div"
-  )!.style.visibility = "";
-  document.getElementById("participant-survey-new-url-div")!.style.visibility =
+  document.getElementById("participant-survey-completion-div")!.style.display =
     "";
-  // document.getElementById("activate-experiment-btn")!.className += " disabled";
+  //document.getElementById("activate-experiment-btn")!.className += " disabled";
 };
 
 export const copyUrl = () => {
   const cb = navigator.clipboard;
   const paragraph = document.querySelector(
     "#pavlovia-experiment-url"
-  ) as HTMLInputElement;
-  cb.writeText(paragraph.value).then(() => {
+  ) as HTMLElement;
+  cb.writeText(paragraph.innerText).then(() => {
     showDialogBox(``, `Your URL has been copied to clipboard.`, true);
   });
 };
@@ -829,14 +829,13 @@ export const handleGeneratedURLSubmission = () => {
   if (generatedUrl != "") {
     let pavloviaExperimentUrlElement = document.getElementById(
       "pavlovia-experiment-url"
-    ) as HTMLInputElement;
-    pavloviaExperimentUrlElement.value = generatedUrl;
-    document.getElementById(
-      "participant-survey-new-url-div"
-    )!.style.visibility = "hidden";
-    document.getElementById("activate-experiment-btn")!.className = document
-      .getElementById("activate-experiment-btn")!
-      .className.replace("disabled", "");
+    ) as HTMLElement;
+    pavloviaExperimentUrlElement.innerText = generatedUrl;
+    document.getElementById("participant-survey-new-url-div")!.style.display =
+      "none";
+    //document.getElementById("activate-experiment-btn")!.className = document
+    //.getElementById("activate-experiment-btn")!
+    //.className.replace("disabled", "");
   }
 };
 
