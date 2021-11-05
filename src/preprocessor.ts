@@ -6,6 +6,7 @@ import { EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
 import { validateExperimentDf } from "./experimentFileChecks";
 import { dataframeFromPapaParsed, transpose } from "./utilities";
 import { user } from "./CONSTANTS";
+import { newLog } from "./errorLog";
 
 let externalCallback: any;
 
@@ -83,7 +84,18 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
 
   let df = dataframeFromPapaParsed(parsedContent);
   const validationErrors = validateExperimentDf(df);
-  console.log("Parsing Errors: ", validationErrors);
+
+  /* ------------------------------- Got errors ------------------------------- */
+  const errors = document.getElementById("errors")!;
+  for (let error of validationErrors) {
+    newLog(
+      errors,
+      error.name,
+      error.message + " " + error.hint,
+      error.kind || "error"
+    );
+  }
+
   // Change some names to the ones that PsychoJS expects.
   const nameChanges: any = {
     conditionName: "label",
