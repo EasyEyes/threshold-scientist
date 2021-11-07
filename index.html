@@ -134,7 +134,7 @@
 
     <main>
       <div id="header">
-        <div style="display: flex; justify-content: space-between">
+        <div id="header-title">
           <h1>Threshold</h1>
         </div>
         <p class="description">
@@ -164,18 +164,10 @@
           <ol id="pavlovia-left-list">
             <!-- Pavlovia Auth Controls -->
             <li>
-              <div
-                class="option-block"
-                style="display: flex; justify-content: left"
-              >
+              <div class="option-block">
                 <button
                   id="gitlab-connect-btn"
                   class="btn btn-outline-secondary"
-                  style="
-                    align-content: center;
-                    font-weight: bold;
-                    font-size: 1rem;
-                  "
                 >
                   Connect with your Pavlovia account to upload files.
                 </button>
@@ -189,7 +181,7 @@
             <li>
               <div>
                 Submit
-                <span style="position: relative; height: 10vh"> &#8595; </span>
+                <span id="dz-downarrow"> &#8595; </span>
                 any missing fonts & consent/debriefing forms.
               </div>
               <div>
@@ -208,20 +200,13 @@
             <!-- Instruction -->
             <li>
               Submit
-              <span style="position: relative; height: 10vh">&#8593;</span> your
-              experiment table, to be checked now.
+              <span id="dz-uparrow">&#8593;</span> your experiment table, to be
+              checked now.
             </li>
             <!-- Pavlovia Repo Controls -->
             <li>
-              <div
-                class="option-block"
-                style="display: flex; justify-content: left"
-              >
-                <div
-                  class="input-group"
-                  id="new-repo-input-group"
-                  style="width: auto"
-                >
+              <div class="option-block">
+                <div class="input-group" id="new-repo-input-group">
                   <input
                     id="new-gitlab-repo-name"
                     type="text"
@@ -242,12 +227,11 @@
             </li>
 
             <!-- Pavlovia Experiment Controls -->
-            <li id="pavlovia-activate-div" style="display: none">
+            <li id="pavlovia-activate-div">
               <div class="option-block">
                 <button
                   id="activate-experiment-btn"
                   class="btn btn-outline-success"
-                  style="align-content: center"
                 >
                   Activate in Pavlovia
                 </button>
@@ -294,63 +278,49 @@
         </div>
       </div>
       <ol id="pavlovia-experiment-url-ol" start="6">
-        <li id="pavlovia-experiment-url-li" style="display: none">
+        <li id="pavlovia-experiment-url-li">
           <button id="copy-pavlovia-url-btn" class="btn btn-outline-secondary">
             Copy Study URL
           </button>
           <a id="pavlovia-experiment-url"></a>
         </li>
       </ol>
-      <ol
-        id="participant-survey-completion-div"
-        style="display: none"
-        start="7"
-      >
-        <li style="margin-top: 15px">
+      <ol id="participant-survey-completion-div" start="7">
+        <li>
           <button id="prolific-redirect-btn" class="btn btn-outline-secondary">
             Take study URL to Prolific
           </button>
         </li>
-        <li style="margin-top: 15px">
-          <div style="display: flex; justify-content: space-between">
+        <li>
+          <div id="profilic-input-group">
             <input
               id="participant-code"
-              style="width: 67%"
               type="email"
               class="form-control"
               placeholder="Paste completion URL from Prolific here"
             />
             <button
               id="participant-recruitment-completion-url-submit"
-              style="width: 30%"
               class="btn btn-outline-secondary"
             >
               Submit Completion URL
             </button>
           </div>
         </li>
-        <li style="margin-top: 15px">
+        <li>
           <button id="return-to-prolific" class="btn btn-outline-secondary">
             Return to Prolific to run the study
           </button>
         </li>
-        <li
-          id="participant-survey-new-url-div"
-          style="margin-top: 15px; display: none"
-        >
-          <div style="display: flex; justify-content: space-between">
+        <li id="participant-survey-new-url-div">
+          <div>
             <input
               id="new-url"
-              style="width: 67%"
               type="email"
               class="form-control"
               placeholder="Paste generate URL from Prolific here"
             />
-            <button
-              id="new-url-submit"
-              style="width: 30%"
-              class="btn btn-outline-secondary"
-            >
+            <button id="new-url-submit" class="btn btn-outline-secondary">
               Submit Generated URL
             </button>
           </div>
