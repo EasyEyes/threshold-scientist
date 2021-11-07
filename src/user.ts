@@ -1,4 +1,4 @@
-import { EasyEyesResources, env, user } from "./CONSTANTS";
+import { EasyEyesResources, user } from "./CONSTANTS";
 import { hideDialogBox, showDialogBox } from "./dropzoneHandler";
 import { createRepo, getResourcesListFromRepository } from "./gitlabUtility";
 import { setTab } from "./tab";
@@ -83,9 +83,7 @@ export const populateUserInfo = async () => {
 };
 
 export const redirectToOauth2 = () => {
-  // TODO switch this for production
-  location.href = env.PRODUCTION.GITLAB_REDIRECT_URL;
-  //location.href = env.DEVELOPMENT.GITLAB_REDIRECT_URL;
+  location.href = process.env.REDIRECT_URL!;
 };
 
 export const redirectToPalvoliaActivation = async () => {

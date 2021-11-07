@@ -6,7 +6,6 @@ import {
 import {
   acceptableExtensions,
   EasyEyesResources,
-  env,
   uploadedFiles,
   user,
 } from "./CONSTANTS";
@@ -404,7 +403,7 @@ const commitFilesToGitlabFromGithubAndEasyEyes = async (
     "https://api.github.com/repos/EasyEyes/threshold/contents",
     {
       headers: {
-        Authorization: `token ${env.GITHUB_PAT}`,
+        Authorization: `token ${process.env.GITHUB_PAT!}`,
       },
     }
   );
@@ -536,7 +535,7 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
         currentFile.git_url.split("/git")[0] + "/contents/" + currentFile.path,
         {
           headers: {
-            Authorization: `token ${env.GITHUB_PAT}`,
+            Authorization: `token ${process.env.GITHUB_PAT!}`,
           },
         }
       );
@@ -555,7 +554,7 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
           currentFile.git_url.split("/git")[0] + "/contents/",
           {
             headers: {
-              Authorization: `token ${env.GITHUB_PAT}`,
+              Authorization: `token ${process.env.GITHUB_PAT!}`,
             },
           }
         );
@@ -579,7 +578,7 @@ const populateCommitBody = async (rootContent: any, externalFiles: any) => {
             currentFile.path,
           {
             headers: {
-              Authorization: `token ${env.GITHUB_PAT}`,
+              Authorization: `token ${process.env.GITHUB_PAT!}`,
             },
           }
         );
@@ -774,14 +773,16 @@ export const uploadCompletionURL = async () => {
   ) as HTMLInputElement;
   var completionURL: string = participantCodeElement.value;
   if (completionURL != "") {
+    var jsonString = JSON.stringify({
+      name: user.currentExperiment.participantRecruitmentServiceName,
+      code: user.currentExperiment.participantRecruitmentServiceCode,
+      url: completionURL,
+    });
     var commitAction = {
-      action: "create",
-      file_path: "survey/participantRecruitmentServiceData.json",
-      content: JSON.stringify({
-        name: user.currentExperiment.participantRecruitmentServiceName,
-        code: user.currentExperiment.participantRecruitmentServiceCode,
-        url: completionURL,
-      }),
+      action: "update",
+      file_path: "survey/participantRecruitmentServiceData.js",
+      content:
+        "export const participantRecruitmentService = " + jsonString + ";",
     };
     var commitBody = {
       branch: "master",
