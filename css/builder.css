@@ -3,23 +3,27 @@
   line-height: 170%;
   color: #666;
 }
+
 .description2 {
   font-size: 1.2rem;
   line-height: 170%;
   color: #666;
 }
+
 .pavlovia-section {
   position: relative;
   display: grid;
   grid-template-columns: 50% 50%;
   column-gap: 10px;
 }
+
 #gitlab-user-info {
   position: relative;
   text-align: center;
   font-size: 1rem;
   margin-top: 15px;
 }
+
 .option-block {
   font-size: 1rem !important;
   margin-top: 10px;
@@ -30,14 +34,16 @@
   font-size: 1rem !important;
   color: #333;
 }
-/*#pavlovia-activate-div {
+
+/* #pavlovia-activate-div {
   position: relative;
   left: -18px;
   display: grid;
   grid-template-columns: 20% 80%;
   justify-content: left;
   visibility: hidden;
-}*/
+} */
+
 #pavlovia-left-list li {
   position: relative;
   margin-top: 15px;
@@ -50,6 +56,7 @@
 .dropzone {
   min-height: 0px !important;
 }
+
 #file-dropzone {
   position: relative;
   top: 10px;
@@ -64,6 +71,7 @@
   left: 40px;
   color: #999 !important;
 }
+
 #drop-message-header {
   position: relative;
   margin-left: -25px;
@@ -71,36 +79,44 @@
   font-size: 1rem;
   color: rgb(170, 170, 170) !important;
 }
+
 .dz-message {
   font-size: 1.1rem !important;
   text-align: left !important;
   padding: 10px;
 }
+
 .dz-message:hover {
   cursor: pointer;
 }
+
 #new-gitlab-repo-name::placeholder {
   font-weight: bold;
   color: rgb(170, 170, 170);
   font-size: 1rem;
 }
+
 /* .option-block * { */
 /* } */
+
 #new-repo-input-group {
   position: relative;
   top: 10px;
 }
+
 #new-repo-input-group button {
   color: white;
   background-color: gray;
   font-weight: bold;
   font-size: 1rem;
 }
+
 /*#activate-experiment-btn {
   position: relative;
   top: -10px;
   left: -70px;
 }*/
+
 #activate-experiment-btn:hover {
   font-weight: bold;
 }
@@ -116,6 +132,7 @@
   top: -30px;
   visibility: hidden;
 }*/
+
 /*#copy-pavlovia-url {
   position: relative;
   top: 40px;
@@ -124,4 +141,9 @@
 
 button {
   border-radius: 40px !important;
+}
+
+.repo-name-input {
+  width: 100% !important;
+  margin-bottom: 0.5rem !important;
 }

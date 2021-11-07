@@ -17,10 +17,12 @@
   font-size: 2vh;
   font-weight: bold;
 }
+
 .dialog-body {
   position: relative;
   margin: 5px 0px;
 }
+
 .dialog-button {
   position: absolute;
   bottom: 20px;
@@ -31,6 +33,7 @@
   color: white;
   transition: 0.12s;
 }
+
 .dialog-button:hover {
   cursor: pointer;
   background-color: rgb(78, 78, 78);
@@ -41,6 +44,7 @@
   position: relative;
   top: 140px;
 }
+
 .tab {
   position: relative;
   top: 0px;
