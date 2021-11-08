@@ -102,7 +102,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     let expUrl = `https://run.pavlovia.org/${
       user.userData.username
     }/${newRepoName.toLocaleLowerCase()}`;
-    const tryExp: any = document.getElementById("pavlovia-experiment-url");
+    const tryExp: any = document.getElementById("try-study-url");
     tryExp!.innerText = expUrl;
     tryExp!.href = expUrl;
     if (
