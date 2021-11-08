@@ -781,16 +781,12 @@ export const uploadCompletionURL = async () => {
   ) as HTMLInputElement;
   var completionURL: string = participantCodeElement.value;
   if (completionURL != "") {
-    var jsonString = JSON.stringify({
-      name: user.currentExperiment.participantRecruitmentServiceName,
-      code: user.currentExperiment.participantRecruitmentServiceCode,
-      url: completionURL,
-    });
+    var jsonString = `name,${user.currentExperiment.participantRecruitmentServiceName}\ncode,\nurl,${completionURL}`;
+
     var commitAction = {
       action: "update",
-      file_path: "survey/participantRecruitmentServiceData.js",
-      content:
-        "export const participantRecruitmentService = " + jsonString + ";",
+      file_path: "survey/participantRecruitmentServiceData.csv",
+      content: jsonString,
     };
     var commitBody = {
       branch: "master",
