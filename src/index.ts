@@ -25,15 +25,20 @@ const addOnClickToEl = (elementId: string, handler: any) => {
     });
 };
 
+const addOnChangeToEl = (elementId: string, handler: any) => {
+  const el = document.getElementById(elementId);
+  if (el)
+    el.addEventListener("change", async (evt: any) => {
+      handler();
+    });
+};
+
 addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
 addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
 addOnClickToEl("copy-pavlovia-url-btn", copyUrl);
 addOnClickToEl("prolific-redirect-btn", redirectToProlific);
 addOnClickToEl("return-to-prolific", redirectToProlific);
-addOnClickToEl(
-  "participant-recruitment-completion-url-submit",
-  uploadCompletionURL
-);
+addOnChangeToEl("participant-code", uploadCompletionURL);
 addOnClickToEl("new-url-submit", handleGeneratedURLSubmission);
 
 document

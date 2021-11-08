@@ -819,12 +819,6 @@ export const uploadCompletionURL = async () => {
     document
       .getElementById("participant-code")!
       .setAttribute("disabled", "disabled");
-    document.getElementById(
-      "participant-recruitment-completion-url-submit"
-    )!.className += " disabled";
-    document.getElementById(
-      "participant-recruitment-completion-url-submit"
-    )!.innerText = "Completion URL Submitted";
   }
 };
 
