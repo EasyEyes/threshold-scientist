@@ -88,13 +88,13 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       "Files have been uploaded.";
 
     const actEl = document.getElementById("pavlovia-activate-div");
-    actEl!.style.display = "";
+    actEl!.className = actEl!.className.replace("no-display", "");
 
     const pavloviaExperimentUrlElement = document.getElementById(
       "pavlovia-experiment-url-li"
     );
-    pavloviaExperimentUrlElement!.style.display = "";
-
+    pavloviaExperimentUrlElement!.className =
+      pavloviaExperimentUrlElement!.className.replace("no-display", "");
     // display "run" experiement link
     const pavExpLinkEl: any = document.getElementById(
       "pavlovia-experiment-url"
@@ -102,6 +102,9 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     let expUrl = `https://run.pavlovia.org/${
       user.userData.username
     }/${newRepoName.toLocaleLowerCase()}`;
+    const tryExp: any = document.getElementById("pavlovia-experiment-url");
+    tryExp!.innerText = expUrl;
+    tryExp!.href = expUrl;
     if (
       user.currentExperiment.participantRecruitmentServiceName == "Prolific"
     ) {
@@ -752,8 +755,13 @@ const encodeGitlabFilePath = (filePath: string): string => {
 export const handleParticipantRecruitmentUrl = () => {
   // check if service is Prolific
   // if Prolific, expose
-  document.getElementById("participant-survey-completion-div")!.style.display =
-    "";
+  document.getElementById("prolific-hr-div")!.className = document
+    .getElementById("prolific-hr-div")!
+    .className.replace("no-display", "");
+  document.getElementById("participant-survey-completion-div")!.className =
+    document
+      .getElementById("participant-survey-completion-div")!
+      .className.replace("no-display", "");
   //document.getElementById("activate-experiment-btn")!.className += " disabled";
 };
 
@@ -828,8 +836,10 @@ export const handleGeneratedURLSubmission = () => {
       "pavlovia-experiment-url"
     ) as HTMLElement;
     pavloviaExperimentUrlElement.innerText = generatedUrl;
-    document.getElementById("participant-survey-new-url-div")!.style.display =
-      "none";
+    document.getElementById("participant-survey-new-url-div")!.className =
+      document
+        .getElementById("participant-survey-new-url-div")!
+        .className.replace("no-display", "");
     //document.getElementById("activate-experiment-btn")!.className = document
     //.getElementById("activate-experiment-btn")!
     //.className.replace("disabled", "");
