@@ -762,6 +762,8 @@ export const handleParticipantRecruitmentUrl = () => {
     document
       .getElementById("participant-survey-completion-div")!
       .className.replace("no-display", "");
+  document.getElementById("copy-pavlovia-url-btn")!.innerText =
+    "Copy our study URL for Prolific";
   //document.getElementById("activate-experiment-btn")!.className += " disabled";
 };
 
