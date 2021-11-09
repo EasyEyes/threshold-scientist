@@ -180,6 +180,7 @@
 
 button {
   border-radius: 40px !important;
+  height: fit-content;
 }
 
 .repo-name-input {
