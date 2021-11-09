@@ -279,6 +279,11 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
     )
       continue;
 
+    // do not transfer fonts that are not required by the experiment
+    if (!uploadedFiles.requestedForms.includes(consentFormm)) {
+      continue;
+    }
+
     // update gitlab commit
     jsonFiles.push({
       action: "create",

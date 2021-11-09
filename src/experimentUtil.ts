@@ -1,6 +1,4 @@
 import Papa from "papaparse";
-import { user } from "./CONSTANTS";
-import { dataframeFromPapaParsed } from "./utilities";
 
 let externalCallback: any;
 
@@ -14,19 +12,51 @@ export const getExperimentFontList = (experimentFile: File, callback: any) => {
   });
 };
 
+export const getExperimentFormList = (experimentFile: File, callback: any) => {
+  // init callback for returning values
+  externalCallback = callback;
+
+  Papa.parse(experimentFile, {
+    dynamicTyping: false,
+    complete: processFormList,
+  });
+};
+
 export const processFontList = (parsedContent: any) => {
   const fontList: string[] = [];
-  for (let i = 0; i < parsedContent.data.length; i++) {
-    // if current row is font row
-    if (parsedContent.data[i][0] == "targetFont") {
-      const fontRow = parsedContent.data[i];
-      for (let j = 1; j < fontRow.length; j++) {
-        fontList.push(fontRow[j]);
-      }
+  let targetFontRow: string[] = [];
+  let targetFontSourceRow: string[] = [];
 
-      break;
+  for (let i = 0; i < parsedContent.data.length; i++) {
+    if (parsedContent.data[i][0] == "targetFont") {
+      targetFontRow = parsedContent.data[i];
+    } else if (parsedContent.data[i][0] == "targetFontSource") {
+      targetFontSourceRow = parsedContent.data[i];
     }
   }
 
+  for (let i = 0; i < targetFontRow.length; i++) {
+    if (targetFontSourceRow[i].trim() == "file")
+      fontList.push(targetFontRow[i]);
+  }
+
   externalCallback(fontList);
+};
+
+export const processFormList = (parsedContent: any) => {
+  const formList: string[] = [];
+  let consentFormRow: string[] = [];
+  let debriefFormRow: string[] = [];
+
+  for (let i = 0; i < parsedContent.data.length; i++) {
+    if (parsedContent.data[i][0] == "_consentForm") {
+      consentFormRow = parsedContent.data[i];
+    } else if (parsedContent.data[i][0] == "_debriefForm") {
+      debriefFormRow = parsedContent.data[i];
+    }
+  }
+
+  formList.push(consentFormRow[1]);
+  formList.push(debriefFormRow[1]);
+  externalCallback(formList);
 };

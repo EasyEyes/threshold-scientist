@@ -12,7 +12,7 @@ import {
   getResourcesListFromRepository,
   populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment,
 } from "./gitlabUtility";
-import { getExperimentFontList } from "./experimentUtil";
+import { getExperimentFontList, getExperimentFormList } from "./experimentUtil";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -157,6 +157,14 @@ const newDz = new Dropzone("#file-dropzone", {
         uploadedFiles.experimentFile,
         (fontList: string[]) => {
           uploadedFiles.requestedFonts = fontList;
+        }
+      );
+
+      // extract required forms
+      getExperimentFormList(
+        uploadedFiles.experimentFile,
+        (formList: string[]) => {
+          uploadedFiles.requestedForms = formList;
         }
       );
 

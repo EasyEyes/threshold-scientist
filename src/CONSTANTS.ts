@@ -72,4 +72,5 @@ export const uploadedFiles: any = {
   experimentFile: null,
   others: [],
   requestedFonts: [],
+  requestedForms: [],
 };
