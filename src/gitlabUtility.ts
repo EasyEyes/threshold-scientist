@@ -76,7 +76,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     //   "New Repo " + newRepoName + " has been successfully initiated"
     // );
     hideDialogBox();
-    showDialogBox(`Sucess!`, `${newRepoName} has been created.`, true);
+    showDialogBox(`Sucess!`, `${newRepoName} has been created.`, false, true);
 
     // update repo name input field and btn
     document
@@ -773,7 +773,7 @@ export const copyUrl = () => {
     "#pavlovia-experiment-url"
   ) as HTMLElement;
   cb.writeText(paragraph.innerText).then(() => {
-    showDialogBox(``, `Your URL has been copied to clipboard.`, true);
+    showDialogBox(``, `Your URL has been copied to clipboard.`, false, true);
   });
 };
 
@@ -798,6 +798,7 @@ export const uploadCompletionURL = async () => {
     showDialogBox(
       `Completion URL Update`,
       `Your Experiment Completion URL is being uploaded.`,
+      false,
       true
     );
     var commitFile = await fetch(

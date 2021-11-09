@@ -29,7 +29,8 @@ export const isUserLoggedIn = () => {
 export const showDialogBox = (
   title: string,
   body: string,
-  exitOnOk: boolean
+  exitOnOk: boolean,
+  closeSelf: boolean = false
 ) => {
   // show dialog box
   let el: any = document.getElementById("dialog-box");
@@ -45,6 +46,12 @@ export const showDialogBox = (
     el.innerText = body;
 
     // toggle "OK" button
+    if (closeSelf) {
+      let noOfWords = title.split(" ").length;
+      setTimeout(function () {
+        hideDialogBox();
+      }, 1000 + 1000 * noOfWords);
+    }
     if (exitOnOk) {
       el = document.getElementsByClassName("dialog-button")[0];
       el.style.display = "block";
