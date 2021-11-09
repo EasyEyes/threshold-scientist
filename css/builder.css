@@ -206,6 +206,10 @@ button {
   margin-right: 20px;
 }
 
+#activate-experiment-btn {
+  margin-right: 20px;
+}
+
 #profilic-input-group {
   display: flex;
   justify-content: space-between;
