@@ -6,6 +6,7 @@
  * ## All parameters present are implemented
  */
 
+import { DataFrame } from "dataframe-js";
 import {
   PARAMETERS_NOT_ALPHABETICAL,
   UNRECOGNIZED_PARAMETER,
@@ -44,7 +45,7 @@ export const validateExperimentDf = (experimentDf: any): any => {
  * @param {String[]} parameters Array of parameters, as given by the experimenter
  * @returns {Object} Error message, if the parameters aren't in alphabetical order
  */
-const areParametersAlphabetical = (parameters: any): any => {
+const areParametersAlphabetical = (parameters: string[]): any => {
   if (parameters !== parameters.sort()) {
     return PARAMETERS_NOT_ALPHABETICAL;
   }
@@ -55,7 +56,7 @@ const areParametersAlphabetical = (parameters: any): any => {
  * @param {String[]} parameters Array of parameters, as given by the experimenter
  * @returns {Object[]} Array of error messages, for any parameter which has a duplicate
  */
-const areParametersDuplicated = (parameters: any): any => {
+const areParametersDuplicated = (parameters: string[]): any => {
   const seenParameters = new Set<any>();
   const duplicatesErrors = [];
   for (const parameter of parameters) {
@@ -118,6 +119,31 @@ const similarlySpelledCandidates = (
       levDist(proposedParameter, a) - levDist(proposedParameter, b)
   );
   return closest.slice(0, numberOfCandidatesToReturn - 1);
+};
+
+const _getDuplicateValuesAndIndicies = (
+  l: any[]
+): { [key: string]: number[] } => {
+  // const seen: {[key: T]: number[]} = {};
+  const seen: any = {};
+  const duplicated: any[] = [];
+  l.forEach((c: any, i: number) => {
+    if (seen.hasOwnProperty(c)) {
+      duplicated.push(c);
+      seen[c].push(i);
+    } else {
+      seen[c] = [i];
+    }
+  });
+  const duplicatedPairs: any = duplicated.map((dupe: any) => [
+    dupe,
+    seen[dupe],
+  ]);
+  return Object.fromEntries(duplicatedPairs);
+};
+const _areColumnValuesUnique = (targetColumn: string, df: any): boolean => {
+  if (df.unique(targetColumn) !== df.select(targetColumn)) return false;
+  return true;
 };
 
 // --------------- FUTURE ---------------

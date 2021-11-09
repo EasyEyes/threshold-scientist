@@ -4,7 +4,11 @@ import JSZip from "jszip";
 // const { EXPERIMENT_FILE_NOT_FOUND } = require("./errorMessages");
 import { EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
 import { validateExperimentDf } from "./experimentFileChecks";
-import { dataframeFromPapaParsed, transpose } from "./utilities";
+import {
+  dataframeFromPapaParsed,
+  transpose,
+  addUniqueLabelsToDf,
+} from "./utilities";
 import { user } from "./CONSTANTS";
 import { newLog } from "./errorLog";
 
@@ -85,6 +89,7 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
   let df = dataframeFromPapaParsed(parsedContent);
   const validationErrors = validateExperimentDf(df);
 
+  df = addUniqueLabelsToDf(df);
   /* ------------------------------- Got errors ------------------------------- */
   const errors = document.getElementById("errors")!;
   for (let error of validationErrors) {
@@ -98,7 +103,6 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
 
   // Change some names to the ones that PsychoJS expects.
   const nameChanges: any = {
-    conditionName: "label",
     thresholdBeta: "beta",
     thresholdDelta: "delta",
     thresholdProbability: "pThreshold",

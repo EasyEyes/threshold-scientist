@@ -122,3 +122,20 @@ export const levDist = (s: any, t: any): any => {
   // Step 7
   return d[n][m];
 };
+
+export const addUniqueLabelsToDf = (df: any): any => {
+  const blocks = df.select("block").toArray();
+  const blockCounts: any = {};
+  const labels: string[] = [];
+  blocks.forEach((nestedBlock: number[], i: number) => {
+    const block = nestedBlock[0];
+    if (blockCounts.hasOwnProperty(block)) {
+      blockCounts[block] += 1;
+    } else {
+      blockCounts[block] = 1;
+    }
+    labels.push(String(block) + "." + String(blockCounts[block]));
+  });
+  df = df.withColumn("label", (row: any, index: number) => labels[index]);
+  return df;
+};
