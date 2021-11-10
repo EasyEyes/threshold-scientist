@@ -134,7 +134,7 @@ export const addUniqueLabelsToDf = (df: any): any => {
     } else {
       blockCounts[block] = 1;
     }
-    labels.push(String(block) + "." + String(blockCounts[block]));
+    labels.push(String(block) + "_" + String(blockCounts[block]));
   });
   df = df.withColumn("label", (row: any, index: number) => labels[index]);
   return df;
