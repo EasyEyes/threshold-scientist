@@ -1,25 +1,44 @@
 {
-  "name": "control-panel",
+  "name": "threshold-scientist",
   "private": "true",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Experimenter-facing web-app, used to generate the necessary files for an online experiment from a single CSV file, all from and within the browser.",
   "scripts": {
-    "format": "prettier --write \"**/*.{js,json,md,html,css,scss}\"",
-    "prepare": "husky install"
+    "format": "prettier --write \"**/*.{js,json,md,html,css,scss,ts}\"",
+    "prepare": "husky install",
+    "update:git": "git add -A && git commit -m 'update' && git push",
+    "files": "node server/writeAllFilePaths.js && prettier src/files.ts --write && git add src/files.ts",
+    "start": "webpack --env=development",
+    "build": "webpack --env=production",
+    "prepare:commit": "npm run files",
+    "netlify": "npm ci && npm run build && rm -r node_modules"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "express": "^4.17.1"
+    "@types/dropzone": "^5.7.4",
+    "@types/papaparse": "^5.3.1",
+    "dataframe-js": "^1.4.4",
+    "dropzone": "^6.0.0-beta.1",
+    "jszip": "^3.7.1",
+    "papaparse": "^5.3.1"
   },
   "devDependencies": {
-    "husky": "^7.0.2",
-    "lint-staged": "^11.1.2",
-    "prettier": "^2.4.1"
+    "clean-webpack-plugin": "^4.0.0",
+    "css-loader": "^6.5.1",
+    "express": "^4.17.1",
+    "husky": "^7.0.4",
+    "lint-staged": "^11.2.6",
+    "prettier": "^2.4.1",
+    "style-loader": "^3.3.1",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.4.4",
+    "webpack": "^5.63.0",
+    "webpack-cli": "^4.9.1",
+    "xlsx": "^0.17.3"
   },
   "lint-staged": {
-    "*.{js,json,md,html,css,scss}": "prettier --write"
+    "*.{js,json,md,html,css,scss,ts}": "prettier --write"
   }
 }

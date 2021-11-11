@@ -1,0 +1,91 @@
+#dialog-box {
+  position: fixed;
+  top: 37vh;
+  left: 37vw;
+  width: 25vw;
+  height: 15vh;
+  padding: 20px;
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0px 0px 8px rgb(82, 82, 82);
+  display: none;
+
+  z-index: 1000;
+}
+
+.dialog-title {
+  position: relative;
+  font-size: 2vh;
+  font-weight: bold;
+}
+
+.dialog-body {
+  position: relative;
+  margin: 5px 0px;
+}
+
+.dialog-button {
+  position: absolute;
+  bottom: 20px;
+  right: 25px;
+  padding: 5px;
+  font-size: 1.5vh;
+  background-color: #333;
+  color: white;
+  transition: 0.12s;
+}
+
+.dialog-button:hover {
+  cursor: pointer;
+  background-color: rgb(78, 78, 78);
+}
+
+/* Style the tab */
+.tab-container {
+  position: relative;
+  top: 140px;
+}
+
+.tab {
+  position: relative;
+  top: 0px;
+  overflow: auto;
+  border: 1px solid #ddd;
+  background-color: #ddd;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #eee;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #ffffff;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+.pavlovia-header {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-between;
+}

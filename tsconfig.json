@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "noImplicitAny": true,
+    "module": "es6",
+    "target": "es6",
+    "strict": true,
+    "allowJs": false,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*", "node_modules/dataframe-js/dataframe-js.d.ts"]
+}
