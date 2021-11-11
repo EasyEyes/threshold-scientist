@@ -43,7 +43,7 @@ export const getFileBinaryData = (file: File) => {
       ) {
         var splitResult = fileReader!.result!.split(";base64,");
         resolve(splitResult![1]);
-      } else resolve(fileReader.result);
+      } else resolve(<string>fileReader.result);
     };
 
     fileReader.onerror = (e: any) => {

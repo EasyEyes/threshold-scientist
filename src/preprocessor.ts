@@ -1,5 +1,6 @@
-import Papa from "papaparse";
 import JSZip from "jszip";
+import Papa from "papaparse";
+import XLSX from "xlsx";
 
 // const { EXPERIMENT_FILE_NOT_FOUND } = require("./errorMessages");
 import { EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
@@ -11,6 +12,7 @@ import {
 } from "./utilities";
 import { user } from "./CONSTANTS";
 import { newLog } from "./errorLog";
+import { getFileBinaryData } from "./assetUtil";
 
 let externalCallback: any;
 
@@ -29,12 +31,23 @@ export const processFiles = (fileList: File[], callback: any) => {
   // init callback for returning values
   externalCallback = callback;
 
-  fileList.forEach((file) =>
-    Papa.parse(file, {
-      dynamicTyping: false, // check out index 23; make sure null values preserve
-      complete: prepareExperimentFileForThreshold,
-    })
-  );
+  fileList.forEach(async (file) => {
+    if (file.name.includes("xlsx")) {
+      const data = await file.arrayBuffer();
+      const book = XLSX.read(data);
+
+      for (let sheet in book.Sheets) {
+        Papa.parse(XLSX.utils.sheet_to_csv(book.Sheets[sheet]), {
+          complete: prepareExperimentFileForThreshold,
+        });
+        break;
+      }
+    } else
+      Papa.parse(file, {
+        dynamicTyping: false, // check out index 23; make sure null values preserve
+        complete: prepareExperimentFileForThreshold,
+      });
+  });
 };
 
 /**
