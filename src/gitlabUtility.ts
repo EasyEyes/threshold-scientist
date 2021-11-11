@@ -702,11 +702,11 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
   });
 
   // add experiment file to `/conditions`
-  jsonFiles.push({
-    action: "create",
-    file_path: "conditions/experiment.csv",
-    content: fileData,
-  });
+  // jsonFiles.push({
+  //   action: "create",
+  //   file_path: "conditions/experiment.csv",
+  //   content: fileData,
+  // });
 
   return jsonFiles;
 };

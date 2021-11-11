@@ -34,16 +34,21 @@ export const getAssetFileContent = async (filePath: string) => {
 export const getFileBinaryData = (file: File) => {
   return new Promise((resolve) => {
     const fileReader = new FileReader();
+    fileReader.readAsDataURL(file);
+
     fileReader.onload = (e: any) => {
-      console.log("binary data", fileReader.result);
-      resolve(fileReader.result);
+      if (
+        typeof fileReader.result === "string" &&
+        fileReader!.result!.includes(";base64,")
+      ) {
+        var splitResult = fileReader!.result!.split(";base64,");
+        resolve(splitResult![1]);
+      } else resolve(fileReader.result);
     };
 
     fileReader.onerror = (e: any) => {
-      console.log("unable to get binary data", file, e);
+      console.error("Unable to get BINARY data", file, e);
     };
-
-    fileReader.readAsDataURL(file);
   });
 };
 
@@ -51,12 +56,11 @@ export const getFileTextData = (file: File) => {
   return new Promise((resolve) => {
     const fileReader = new FileReader();
     fileReader.onload = (e: any) => {
-      console.log("binary data", e);
       resolve(e.target.result);
     };
 
     fileReader.onerror = (e: any) => {
-      console.log("unable to get binary data", file, e);
+      console.error("Unable to get TEXT data", file, e);
     };
 
     fileReader.readAsText(file);
