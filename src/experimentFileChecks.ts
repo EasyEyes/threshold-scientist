@@ -6,7 +6,6 @@
  * ## All parameters present are implemented
  */
 
-import { DataFrame } from "dataframe-js";
 import {
   PARAMETERS_NOT_ALPHABETICAL,
   UNRECOGNIZED_PARAMETER,
@@ -48,7 +47,9 @@ export const validateExperimentDf = (experimentDf: any): any => {
  * @param {String[]} parameters Array of parameters, as given by the experimenter
  * @returns {Object} Error message, if the parameters aren't in alphabetical order
  */
-const areParametersAlphabetical = (parameters: string[]): any => {
+const areParametersAlphabetical = (
+  parameters: string[]
+): EasyEyesError | undefined => {
   if (parameters !== parameters.sort()) {
     return PARAMETERS_NOT_ALPHABETICAL;
   }
@@ -59,7 +60,7 @@ const areParametersAlphabetical = (parameters: string[]): any => {
  * @param {String[]} parameters Array of parameters, as given by the experimenter
  * @returns {Object[]} Array of error messages, for any parameter which has a duplicate
  */
-const areParametersDuplicated = (parameters: string[]): any => {
+const areParametersDuplicated = (parameters: string[]): EasyEyesError[] => {
   const seenParameters = new Set<any>();
   const duplicatesErrors = [];
   for (const parameter of parameters) {
@@ -78,7 +79,9 @@ const areParametersDuplicated = (parameters: string[]): any => {
  * @param {String[]} parameters Array of parameter names, which the experimenter has provided
  * @returns {Object[]} List of error messages for unrecognized parameters
  */
-const areAllPresentParametersRecognized = (parameters: any): any => {
+const areAllPresentParametersRecognized = (
+  parameters: string[]
+): EasyEyesError[] => {
   const unrecognized: any[] = [];
   parametersToCheck = [];
   const checkIfRecognized = (parameter: any): any => {
@@ -95,7 +98,9 @@ const areAllPresentParametersRecognized = (parameters: any): any => {
   return unrecognized.map(UNRECOGNIZED_PARAMETER);
 };
 
-const areAllPresentParametersCurrentlySupported = (parameters: any): any => {
+const areAllPresentParametersCurrentlySupported = (
+  parameters: string[]
+): EasyEyesError[] => {
   parametersToCheck = parameters.filter(
     (parameter: any) => GLOSSARY[parameter]["availability"] === "now"
   );
@@ -182,10 +187,10 @@ const areParametersOfTheCorrectType = (df: any): EasyEyesError[] => {
  * @returns {String[]}
  */
 const similarlySpelledCandidates = (
-  proposedParameter: any,
-  parameters: any,
-  numberOfCandidatesToReturn = 4
-) => {
+  proposedParameter: string[],
+  parameters: string[],
+  numberOfCandidatesToReturn: number = 4
+): string[] => {
   const closest = parameters.sort(
     (a: any, b: any) =>
       levDist(proposedParameter, a) - levDist(proposedParameter, b)
