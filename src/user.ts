@@ -83,7 +83,8 @@ export const populateUserInfo = async () => {
 };
 
 export const redirectToOauth2 = () => {
-  location.href = process.env.REDIRECT_URL!;
+  location.href =
+    process.env.REDIRECT_URL! + `&state=${encodeURI(window.location.href)}`;
 };
 
 export const redirectToPalvoliaActivation = async () => {
