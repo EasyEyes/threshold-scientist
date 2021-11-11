@@ -6,15 +6,16 @@
  * ## All parameters present are implemented
  */
 
-import { DataFrame } from "dataframe-js";
 import {
   PARAMETERS_NOT_ALPHABETICAL,
   UNRECOGNIZED_PARAMETER,
   NOT_YET_SUPPORTED_PARAMETER,
   DUPLICATE_PARAMETER,
+  EasyEyesError,
+  INCORRECT_PARAMETER_TYPE,
 } from "./errorMessages";
 import { GLOSSARY } from "../threshold/parameters/glossary";
-import { dataframeFromPapaParsed, levDist } from "./utilities";
+import { dataframeFromPapaParsed, isNumeric, levDist } from "./utilities";
 
 var parametersToCheck: any[] = [];
 /**
@@ -36,6 +37,7 @@ export const validateExperimentDf = (experimentDf: any): any => {
   errors.push(...areParametersDuplicated(parametersToCheck));
   errors.push(...areAllPresentParametersRecognized(parametersToCheck));
   errors.push(...areAllPresentParametersCurrentlySupported(parametersToCheck));
+  errors.push(...areParametersOfTheCorrectType(experimentDf));
 
   return errors.filter((error) => error);
 };
@@ -45,7 +47,9 @@ export const validateExperimentDf = (experimentDf: any): any => {
  * @param {String[]} parameters Array of parameters, as given by the experimenter
  * @returns {Object} Error message, if the parameters aren't in alphabetical order
  */
-const areParametersAlphabetical = (parameters: string[]): any => {
+const areParametersAlphabetical = (
+  parameters: string[]
+): EasyEyesError | undefined => {
   if (parameters !== parameters.sort()) {
     return PARAMETERS_NOT_ALPHABETICAL;
   }
@@ -56,7 +60,7 @@ const areParametersAlphabetical = (parameters: string[]): any => {
  * @param {String[]} parameters Array of parameters, as given by the experimenter
  * @returns {Object[]} Array of error messages, for any parameter which has a duplicate
  */
-const areParametersDuplicated = (parameters: string[]): any => {
+const areParametersDuplicated = (parameters: string[]): EasyEyesError[] => {
   const seenParameters = new Set<any>();
   const duplicatesErrors = [];
   for (const parameter of parameters) {
@@ -75,7 +79,9 @@ const areParametersDuplicated = (parameters: string[]): any => {
  * @param {String[]} parameters Array of parameter names, which the experimenter has provided
  * @returns {Object[]} List of error messages for unrecognized parameters
  */
-const areAllPresentParametersRecognized = (parameters: any): any => {
+const areAllPresentParametersRecognized = (
+  parameters: string[]
+): EasyEyesError[] => {
   const unrecognized: any[] = [];
   parametersToCheck = [];
   const checkIfRecognized = (parameter: any): any => {
@@ -92,7 +98,9 @@ const areAllPresentParametersRecognized = (parameters: any): any => {
   return unrecognized.map(UNRECOGNIZED_PARAMETER);
 };
 
-const areAllPresentParametersCurrentlySupported = (parameters: any): any => {
+const areAllPresentParametersCurrentlySupported = (
+  parameters: string[]
+): EasyEyesError[] => {
   parametersToCheck = parameters.filter(
     (parameter: any) => GLOSSARY[parameter]["availability"] === "now"
   );
@@ -100,6 +108,75 @@ const areAllPresentParametersCurrentlySupported = (parameters: any): any => {
     (parameter: any) => GLOSSARY[parameter]["availability"] !== "now"
   );
   return notYetSupported.map(NOT_YET_SUPPORTED_PARAMETER);
+};
+
+const areParametersOfTheCorrectType = (df: any): EasyEyesError[] => {
+  const errors: EasyEyesError[] = [];
+  const checkType = (
+    column: string[],
+    typeCheck: (s: string) => boolean,
+    columnName: string,
+    correctType: "integer" | "numerical" | "text" | "boolean" | "categorical",
+    categories?: string[]
+  ): void => {
+    const notType = (s: string): boolean => !typeCheck(s);
+    if (column.some(notType)) {
+      const offendingValues = column
+        .map((e: string, i: number) => {
+          return { value: e, block: i };
+        })
+        .filter((d: { value: string; block: number }) => notType(d.value));
+      errors.push(
+        INCORRECT_PARAMETER_TYPE(
+          offendingValues,
+          columnName,
+          correctType,
+          categories
+        )
+      );
+    }
+  };
+  df.listColumns().forEach((columnName: string) => {
+    if (GLOSSARY.hasOwnProperty(columnName) && GLOSSARY[columnName]["type"]) {
+      const column: string[] = df
+        .select(columnName)
+        .toArray()
+        .map((x: any[]): any => x[0]);
+      const correctType = GLOSSARY[columnName]["type"];
+      switch (correctType) {
+        case "integer":
+          const isInt = (s: string): boolean =>
+            isNumeric(s) && Number.isInteger(Number(s));
+          checkType(column, isInt, columnName, correctType);
+          break;
+        case "numerical":
+          checkType(column, isNumeric, columnName, correctType);
+          break;
+        case "boolean":
+          const isBool = (s: string): boolean =>
+            s.toLowerCase() === "true" || s.toLowerCase() === "false";
+          checkType(column, isBool, columnName, correctType);
+          break;
+        case "text":
+          // TODO define what a failing, ie non-"text", value would be
+          break;
+        case "categorical":
+          const validCategory = (s: string): boolean =>
+            GLOSSARY[columnName]["categories"].includes(s);
+          checkType(
+            column,
+            validCategory,
+            columnName,
+            correctType,
+            GLOSSARY[columnName]["categories"] as string[]
+          );
+          break;
+        default:
+          throw `Unrecognized type \'${correctType}\' used in the glossary. Please contact the EasyEyes team.`;
+      }
+    }
+  });
+  return errors;
 };
 
 /**
@@ -110,10 +187,10 @@ const areAllPresentParametersCurrentlySupported = (parameters: any): any => {
  * @returns {String[]}
  */
 const similarlySpelledCandidates = (
-  proposedParameter: any,
-  parameters: any,
-  numberOfCandidatesToReturn = 4
-) => {
+  proposedParameter: string[],
+  parameters: string[],
+  numberOfCandidatesToReturn: number = 4
+): string[] => {
   const closest = parameters.sort(
     (a: any, b: any) =>
       levDist(proposedParameter, a) - levDist(proposedParameter, b)
@@ -126,20 +203,14 @@ const _getDuplicateValuesAndIndicies = (
 ): { [key: string]: number[] } => {
   // const seen: {[key: T]: number[]} = {};
   const seen: any = {};
-  const duplicated: any[] = [];
   l.forEach((c: any, i: number) => {
     if (seen.hasOwnProperty(c)) {
-      duplicated.push(c);
       seen[c].push(i);
     } else {
       seen[c] = [i];
     }
   });
-  const duplicatedPairs: any = duplicated.map((dupe: any) => [
-    dupe,
-    seen[dupe],
-  ]);
-  return Object.fromEntries(duplicatedPairs);
+  return seen;
 };
 const _areColumnValuesUnique = (targetColumn: string, df: any): boolean => {
   if (df.unique(targetColumn) !== df.select(targetColumn)) return false;
@@ -151,8 +222,4 @@ const parameterSpecificChecks = (experiment: any): any => {
   // TODO misc checks for other parameters
   // check font files according to 'targetFontSelection'
   // check consent file according to '_consentForm'
-};
-
-const areRequiredParametersPresent = (experiment: any): any => {
-  // TODO determine which parameters are required
 };

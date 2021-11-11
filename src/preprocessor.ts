@@ -18,14 +18,6 @@ let externalCallback: any;
 
 /**
  * @file Client-side (ie browser) processing of declarative table experiment.csv file.
- *
- * @goal Create a verbose, experimenter-friendly compiler, which validates the declarative experiment-specification found in experiment.csv, then prepares the provided files into the files/format which threshold.js expects.
- *
- * Program overview:
- * -> Get the list of files uploaded by user
- * -> Confirm that the list has all the necessary files (validateFileList())
- * -> Check the experiment file itself (validateExperimentFile())
- * -> Display all the errors found along the way, or actually preprocess the files
  */
 export const processFiles = (fileList: File[], callback: any) => {
   // init callback for returning values
@@ -51,42 +43,10 @@ export const processFiles = (fileList: File[], callback: any) => {
 };
 
 /**
- * Checks that the necessary files, eg an experiment.csv file, have been provided.
- * @param {File[]} filesProvided List of files offered by the user, ie put into the Dropzone
- * @returns {Object}
- */
-// const validateFileList = (filesProvided) => {
-//   const errors = [];
-//   const [experimentFilePresent, experimentFile, identifyExperimentFileError] =
-//     identifyExperimentFileError(filesProvided);
-//   if (!experimentFilePresent) {
-//     errors.push(EXPERIMENT_FILE_NOT_FOUND(filesProvided));
-//     errors.push(identifyExperimentFileError);
-//   }
-//   return { errors: errors, experimentFile: experimentFile };
-// };
-
-/**
- * Helper function for validateExperimentContent(), which checks the validity of the experiment file
- * provided against a number of different checks.
- * @see validateExperimentContent
- * @param {*} experimentFile
- */
-// const validateExperimentFile = (experimentFile) => {
-//   // TODO Restructure; Papa.parse will run .complete on the content of the file, but there is no ability to return those results here
-//   Papa.parse(experimentFile, {
-//     dynamicTyping: true, // TODO check out index 23; make sure null values preserve
-//     complete: validateExperimentContent,
-//   });
-// };
-
-// ------------------------- Utilities -------------------------------------------------
-/**
  * Given the parsed experiment csv from PapaParse, create PsychoJS readable files.
  * @param {Object} parsedContent Returned value from Papa.parse
  */
 const prepareExperimentFileForThreshold = (parsedContent: any) => {
-  // Create a dataframe for easy data manipulation.
   // extract participant recruitement service name
   if (
     parsedContent.data.find(
@@ -98,8 +58,9 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
         (i: any) => i[0] == "_participantRecruitmentService"
       )[1];
   }
-
+  // Create a dataframe for easy data manipulation.
   let df = dataframeFromPapaParsed(parsedContent);
+  // Run the compiler checks on our experiment
   const validationErrors = validateExperimentDf(df);
 
   df = addUniqueLabelsToDf(df);
