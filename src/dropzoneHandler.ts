@@ -134,10 +134,9 @@ const newDz = new Dropzone("#file-dropzone", {
 
     // if dropped file is an experiment file, ie a csv extension, preprocess it immediately, and upon successful processing, add to droppedFiles array
     // and names to droppedFileNames set to avoid duplicates
-    // if (file.name.split(".")[1] == "csv" || file.type == "text/csv") {
     if (isCsvFile(file)) {
       // call preprocessor here
-      // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed easyeyes table
+      // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed table
 
       // preprocess experiment files
       showDialogBox(`The file ${file.name} is being processed ...`, ``, false);

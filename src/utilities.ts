@@ -1,5 +1,6 @@
 // Initialize dataframe-js module
 import { DataFrame } from "dataframe-js";
+import { acceptableExtensions } from "./CONSTANTS";
 
 /**
  * Return a transposed copy of a 2D table.
@@ -54,15 +55,8 @@ export const dataframeFromPapaParsed = (parsedContent: any): any => {
  * @param {File} file File object to be checked
  * @returns {Boolean}
  */
-export const isCsvFile = (file: File): any => {
-  // https://stackoverflow.com/questions/11832930/html-input-file-accept-attribute-file-type-csv
-  // https://stackoverflow.com/questions/190852/how-can-i-get-file-extensions-with-javascript/1203361#1203361
-  return (
-    file.type === "text/csv" ||
-    file.type === "application/csv" ||
-    file.type === "application/vnd.ms-excel" ||
-    file.name.split(".").pop() === "csv"
-  );
+export const isCsvFile = (file: File): Boolean => {
+  return acceptableExtensions.experiments.includes(file.name.split(".").pop()!);
 };
 
 /**
