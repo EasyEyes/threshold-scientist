@@ -12,9 +12,9 @@ export const ILL_FORMED_UNDERSCORE_PARAM = (
   parameter: string
 ): EasyEyesError => {
   return {
-    name: `_Parameter \'${parameter}\' incorrectly formatted.`,
-    message: `Parameters starting with an underscore, such as \'${parameter}\', require exactly one value, as they don't vary across conditions.`,
-    hint: `Make sure that you give \'${parameter}\' a value for only the very first column. The \'${parameter}\' row should look something like: \"${parameter}, [your ${parameter} value]\", with the rest of the row blank.`,
+    name: `_Parameter "${parameter}" incorrectly formatted`,
+    message: `Experiment-scope parameters starting with an underscore, such as "${parameter}", require exactly one value, as they don't vary across conditions.`,
+    hint: `Make sure that you give "${parameter}" a value for only the very first column. The "${parameter}" row should look something like: "${parameter}, [your ${parameter} value]", with the rest of the columns left blank.`,
     kind: "error",
     context: "preprocessor",
   };
@@ -33,7 +33,7 @@ export const INCORRECT_PARAMETER_TYPE = (
     message = message + ` Valid categories are: ${categories.join(", ")}.`;
   }
   return {
-    name: `Parameter "${parameter}" contains values of the wrong type.`,
+    name: `Parameter "${parameter}" contains values of the wrong type`,
     message: message,
     hint: `We're having trouble with the following values, try double checking them:${offendingMessage}.`,
     context: "preprocessor",
@@ -54,7 +54,7 @@ export const EXPERIMENT_FILE_NOT_FOUND = (
 };
 
 export const NO_CSV_FILE_FOUND: EasyEyesError = {
-  name: "No CSV files provided.",
+  name: "No CSV files provided",
   message:
     "When looking for an experiment file, we couldn't even find one .csv file as a candidate.",
   hint: `Make sure you provide a file with the ".csv" extension amongst your files -- this file will be used as your experiment specification.`,
@@ -63,7 +63,7 @@ export const NO_CSV_FILE_FOUND: EasyEyesError = {
 };
 
 export const TOO_MANY_CSV_FILES_FOUND: EasyEyesError = {
-  name: "Multiple CSV files provided.",
+  name: "Multiple CSV files provided",
   message:
     "When looking for an experiment file, we found more than one .csv file, and we don't know which one to pick!",
   hint: `Make sure you provide a file with the ".csv" extension amongst your files -- this file will be used as your experiment specification.`,
@@ -82,7 +82,7 @@ export const PARAMETERS_NOT_ALPHABETICAL: EasyEyesError = {
 
 export const DUPLICATE_PARAMETER = (parameter: string): EasyEyesError => {
   return {
-    name: `Parameter ${parameter} is duplicated.`,
+    name: `Parameter ${parameter} is duplicated`,
     message: `The parameter ${parameter} appears more than once! Unintended behavior lurks ahead...`,
     hint: `Remove duplicate references to ${parameter} -- each parameter should only be set once per experiment file, so we know we're using exactly the value you want`,
     context: "preprocessor",
