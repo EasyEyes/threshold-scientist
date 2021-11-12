@@ -133,3 +133,17 @@ export const addUniqueLabelsToDf = (df: any): any => {
   df = df.withColumn("label", (row: any, index: number) => labels[index]);
   return df;
 };
+
+/**
+ * @see https://stackoverflow.com/questions/175739/built-in-way-in-javascript-to-check-if-a-string-is-a-valid-number
+ * @author Dan [https://stackoverflow.com/users/17121/dan]
+ * @param str
+ * @returns
+ */
+export const isNumeric = (str: string): boolean => {
+  if (typeof str != "string") return false; // we only process strings!
+  return (
+    !isNaN(str as unknown as number) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+    !isNaN(parseFloat(str))
+  ); // ...and ensure strings of whitespace fail
+};
