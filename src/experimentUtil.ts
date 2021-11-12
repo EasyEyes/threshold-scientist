@@ -1,5 +1,4 @@
 import Papa from "papaparse";
-import { GLOSSARY } from "../threshold/parameters/glossary";
 
 let externalCallback: any;
 
@@ -27,24 +26,13 @@ export const processFontList = (parsedContent: any) => {
   const fontList: string[] = [];
   let targetFontRow: string[] = [];
   let targetFontSourceRow: string[] = [];
-  let foundTargetFontSourceRow = false;
 
   for (let i = 0; i < parsedContent.data.length; i++) {
     if (parsedContent.data[i][0] == "targetFont") {
       targetFontRow = parsedContent.data[i];
     } else if (parsedContent.data[i][0] == "targetFontSource") {
       targetFontSourceRow = parsedContent.data[i];
-      foundTargetFontSourceRow = true;
     }
-  }
-
-  // read default value if it is absent
-  if (!foundTargetFontSourceRow) {
-    let defaultValue = GLOSSARY["targetFontSource"].default;
-    if (Array.isArray(defaultValue)) defaultValue = defaultValue[0];
-    for (let i = 0; i < targetFontRow.length; i++)
-      targetFontSourceRow[i] = defaultValue;
-    targetFontSourceRow[0] = "";
   }
 
   for (let i = 0; i < targetFontRow.length; i++) {
