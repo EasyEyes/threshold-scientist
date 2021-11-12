@@ -12,7 +12,7 @@ import {
   redirectToProlific,
   uploadCompletionURL,
 } from "./gitlabUtility";
-import { uploadedFiles } from "./CONSTANTS";
+import { uploadedFiles } from "./constants";
 import { newLog } from "./errorLog";
 
 import "../css/errors.css";
