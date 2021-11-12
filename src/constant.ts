@@ -14,7 +14,7 @@ export const acceptableFileExt = [
 ];
 
 // ----------------------------------------
-// user constants
+// User constants
 // ----------------------------------------
 export const user: any = {
   // gitlab auth
@@ -42,7 +42,7 @@ export const user: any = {
 };
 
 // ----------------------------------------
-// resources repository
+// Resources repository
 // ----------------------------------------
 export const EasyEyesResources: any = {
   fonts: [],
@@ -58,7 +58,7 @@ export const setCurrentTabId = (newId: string) => {
 };
 
 // ----------------------------------------
-// file upload constants
+// File upload constants
 // ----------------------------------------
 export const uploadedFiles: any = {
   experimentFile: null,
