@@ -13,9 +13,10 @@ import {
   DUPLICATE_PARAMETER,
   EasyEyesError,
   INCORRECT_PARAMETER_TYPE,
+  ILL_FORMED_UNDERSCORE_PARAM,
 } from "./errorMessages";
 import { GLOSSARY } from "../threshold/parameters/glossary";
-import { dataframeFromPapaParsed, isNumeric, levDist } from "./utilities";
+import { isNumeric, levDist, arraysEqual } from "./utilities";
 
 var parametersToCheck: any[] = [];
 /**
@@ -27,18 +28,27 @@ export const validateExperimentDf = (experimentDf: any): any => {
   const parameters = experimentDf.listColumns();
   const errors = [];
 
-  const tooStrict = true; // bc penalizing for alphabetical seems too strict lol
-  if (tooStrict) errors.push(areParametersAlphabetical(parameters));
-
+  // Check parameters are alphabetical
+  errors.push(areParametersAlphabetical(parameters));
   // Alphabetize experimentDf
   experimentDf = experimentDf.restructure(experimentDf.listColumns().sort());
   parametersToCheck.push(...experimentDf.listColumns());
 
+  // Check validity of parameters
   errors.push(...areParametersDuplicated(parametersToCheck));
   errors.push(...areAllPresentParametersRecognized(parametersToCheck));
   errors.push(...areAllPresentParametersCurrentlySupported(parametersToCheck));
+
+  // Check for properly formatted _param values
+  let underscoreErrors: EasyEyesError[];
+  [experimentDf, underscoreErrors] =
+    checkAndCorrectUnderscoreParams(experimentDf);
+  errors.push(...underscoreErrors);
+
+  // Check parameter values
   errors.push(...areParametersOfTheCorrectType(experimentDf));
 
+  // Remove empty errors (FUTURE ought to be unnecessary, find root cause)
   return errors.filter((error) => error);
 };
 
@@ -50,7 +60,10 @@ export const validateExperimentDf = (experimentDf: any): any => {
 const areParametersAlphabetical = (
   parameters: string[]
 ): EasyEyesError | undefined => {
-  if (parameters !== parameters.sort()) {
+  const originalOrder = [...parameters];
+  const correctOrder = [...parameters].sort();
+  if (!arraysEqual(originalOrder, correctOrder)) {
+    // TODO find exactly where the arrays are out of order
     return PARAMETERS_NOT_ALPHABETICAL;
   }
 };
@@ -108,6 +121,30 @@ const areAllPresentParametersCurrentlySupported = (
     (parameter: any) => GLOSSARY[parameter]["availability"] !== "now"
   );
   return notYetSupported.map(NOT_YET_SUPPORTED_PARAMETER);
+};
+
+const checkAndCorrectUnderscoreParams = (df: any): [any, EasyEyesError[]] => {
+  const underscoreParams = df.listColumns().filter((s: string) => s[0] === "_");
+  const underscoreDf = df.select(...underscoreParams);
+  const offendingParams = underscoreParams.filter(
+    (parameter: string): boolean => {
+      const values = underscoreDf
+        .select(parameter)
+        .toArray()
+        .map((x: string[]) => x[0]);
+      return !_valueOnlyInFirstPosition(values);
+    }
+  );
+  const errors: EasyEyesError[] = offendingParams.map(
+    ILL_FORMED_UNDERSCORE_PARAM
+  );
+  return [df, errors];
+};
+
+const _valueOnlyInFirstPosition = (a: any[]): boolean => {
+  return !a.some(
+    (value: any, i: number) => (i === 0 && !value) || (i !== 0 && value)
+  );
 };
 
 const areParametersOfTheCorrectType = (df: any): EasyEyesError[] => {
