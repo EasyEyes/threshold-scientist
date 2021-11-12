@@ -277,7 +277,7 @@
               Go to Pavlovia
             </button>
             <div class="self-center">
-              In Pavlovia, hit the "RUNNING" button, then here.
+              In Pavlovia, hit the "RUNNING" button, then return here.
             </div>
           </div>
           <br />
@@ -303,28 +303,12 @@
       </ol>
       <ol id="participant-survey-completion-div" class="no-display" start="7">
         <li>
-          <div class="option-block">
-            <button
-              id="prolific-redirect-btn"
-              class="btn btn-outline-secondary"
-            >
-              Go to Prolific
-            </button>
-            <div>
-              In Prolific, create or edit a draft study, look for STUDY LINK,
-              and paste into the box labeled “What is the URL of your study?”
-              Then look for STUDY COMPLETION, use the blue button to copy their
-              completion URL, and return here.
-            </div>
-          </div>
-        </li>
-        <li>
           <div id="profilic-input-group">
             <input
               id="participant-code"
               type="email"
               class="form-control"
-              placeholder="Paste completion URL here"
+              placeholder="Enter completion code here"
             />
             <!--<button
               id="participant-recruitment-completion-url-submit"
@@ -335,6 +319,17 @@
           </div>
         </li>
         <li>
+          <div class="option-block">
+            <button
+              id="prolific-redirect-btn"
+              class="btn btn-outline-secondary"
+            >
+              Go to Prolific to finalize and run your study
+            </button>
+            <div>In Prolific, create or edit a draft study.</div>
+          </div>
+        </li>
+        <li class="no-display">
           <button id="return-to-prolific" class="btn btn-outline-secondary">
             Return to Prolific to run our study
           </button>

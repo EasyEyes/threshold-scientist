@@ -33,6 +33,7 @@ export const user: any = {
     participantRecruitmentServiceName: null,
     participantRecruitmentServiceUrl: null,
     participantRecruitmentServiceCode: null,
+    experimentUrl: null,
   },
 
   userData: {

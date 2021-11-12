@@ -112,6 +112,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
         "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}";
       handleParticipantRecruitmentUrl();
     }
+    user.currentExperiment.experimentUrl = expUrl;
     pavExpLinkEl!.innerText += expUrl;
     pavExpLinkEl!.href = expUrl;
 
@@ -765,8 +766,6 @@ export const handleParticipantRecruitmentUrl = () => {
     document
       .getElementById("participant-survey-completion-div")!
       .className.replace("no-display", "");
-  document.getElementById("copy-pavlovia-url-btn")!.innerText =
-    "Copy our study URL for Prolific";
   //document.getElementById("activate-experiment-btn")!.className += " disabled";
 };
 
@@ -786,11 +785,14 @@ export const uploadCompletionURL = async () => {
   ) as HTMLInputElement;
   var completionURL: string = participantCodeElement.value;
   if (completionURL != "") {
+    user.currentExperiment.participantRecruitmentServiceCode = completionURL;
+    completionURL =
+      "https://app.prolific.co/submissions/complete?cc=" + completionURL;
     var jsonString = `name,${user.currentExperiment.participantRecruitmentServiceName}\ncode,\nurl,${completionURL}`;
 
     var commitAction = {
       action: "update",
-      file_path: "survey/participantRecruitmentServiceData.csv",
+      file_path: "recruitmentServiceConfig.csv",
       content: jsonString,
     };
     var commitBody = {
@@ -842,6 +844,25 @@ export const handleGeneratedURLSubmission = () => {
   }
 };
 
-export const redirectToProlific = () => {
+/*export const redirectToProlific = () => {
   window.open("https://www.prolific.co/auth/accounts/login/", "_blank");
+};*/
+
+export const redirectToProlific = () => {
+  let participantCodeElement = document.getElementById(
+    "participant-code"
+  ) as HTMLInputElement;
+  var completionURL: string = participantCodeElement.value;
+  let url =
+    "https://app.prolific.co/studies/new?" +
+    "external_study_url=" +
+    encodeURIComponent(user.currentExperiment.experimentUrl) +
+    "&completion_code=" +
+    encodeURIComponent(
+      user.currentExperiment.participantRecruitmentServiceCode
+    ) +
+    "&completion_option=url" +
+    "&prolific_id_option=url_parameters";
+
+  window.open(url, "_blank");
 };

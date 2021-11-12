@@ -40,7 +40,7 @@ export const populateUserInfo = async () => {
       user.userData.id +
       "/projects?access_token=" +
       user.accessToken +
-      "&per_page=100"
+      "&per_page=500"
   );
   projectData = await projectData.json();
   user.userData.projects = projectData;
