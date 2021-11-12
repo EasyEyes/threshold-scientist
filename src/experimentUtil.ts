@@ -68,7 +68,7 @@ export const processFormList = (parsedContent: any) => {
     }
   }
 
-  formList.push(consentFormRow[1]);
-  formList.push(debriefFormRow[1]);
+  if (consentFormRow[1]) formList.push(consentFormRow[1]);
+  if (debriefFormRow[1]) formList.push(debriefFormRow[1]);
   externalCallback(formList);
 };
