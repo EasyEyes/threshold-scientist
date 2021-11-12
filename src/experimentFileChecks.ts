@@ -135,6 +135,9 @@ const checkAndCorrectUnderscoreParams = (df: any): [any, EasyEyesError[]] => {
       return !_valueOnlyInFirstPosition(values);
     }
   );
+  underscoreParams.forEach((p: string) => {
+    df = df.withColumn(p, () => underscoreDf.select(p).toArray()[0][0]);
+  });
   const errors: EasyEyesError[] = offendingParams.map(
     ILL_FORMED_UNDERSCORE_PARAM
   );
@@ -175,10 +178,35 @@ const areParametersOfTheCorrectType = (df: any): EasyEyesError[] => {
   };
   df.listColumns().forEach((columnName: string) => {
     if (GLOSSARY.hasOwnProperty(columnName) && GLOSSARY[columnName]["type"]) {
+      if (
+        !arraysEqual(
+          df
+            .select(columnName)
+            .toArray()
+            .map((x: any[]): any => x[0]),
+          df
+            .select(columnName)
+            .toArray()
+            .map((x: any[]): any => x[0])
+            .filter((x: any) => x)
+        )
+      ) {
+        console.error(
+          `Undefined values in ${columnName}. Make sure that comma's are balanced across all rows.`
+        );
+        //   errors.push({
+        //     name: `Parameter \'${columnName}\' including undefined values`,
+        //     message: `We had trouble parsing \'${columnName}\' for some reason. Sometimes this is due to an unbalanced number of commas on this, nor another row.`,
+        //     hint: "Catching this bug through more specific tests is still a work in progress. Please report this bug to the EasyEyes team.",
+        //     context: "preprocessor",
+        //     kind: "error",
+        //   })
+      }
       const column: string[] = df
         .select(columnName)
         .toArray()
         .map((x: any[]): any => x[0]);
+      // .filter((x:any) => x); // Exclude undefined?
       const correctType = GLOSSARY[columnName]["type"];
       switch (correctType) {
         case "integer":

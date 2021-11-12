@@ -30,6 +30,7 @@ export const processFiles = (fileList: File[], callback: any) => {
 
       for (let sheet in book.Sheets) {
         Papa.parse(XLSX.utils.sheet_to_csv(book.Sheets[sheet]), {
+          skipEmptyLines: true,
           complete: prepareExperimentFileForThreshold,
         });
         break;
@@ -37,6 +38,7 @@ export const processFiles = (fileList: File[], callback: any) => {
     } else
       Papa.parse(file, {
         dynamicTyping: false, // check out index 23; make sure null values preserve
+        skipEmptyLines: true,
         complete: prepareExperimentFileForThreshold,
       });
   });
