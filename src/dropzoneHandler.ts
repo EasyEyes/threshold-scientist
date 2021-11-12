@@ -82,6 +82,61 @@ export const isAcceptableExtension = (ext: any) => {
   return acceptableFileExt.includes(ext);
 };
 
+const isAnyResourceMissing = () => {
+  const missingFonts: string[] = [];
+  const missingForms: string[] = [];
+  console.log("uploadedFiles", uploadedFiles);
+
+  // find missing fonts
+  for (let i = 0; i < uploadedFiles.requestedFonts.length; i++) {
+    if (
+      !EasyEyesResources.fonts.includes(uploadedFiles.requestedFonts[i]) &&
+      !missingFonts.includes(uploadedFiles.requestedFonts[i])
+    ) {
+      console.log(i, uploadedFiles.requestedFonts[i]);
+      missingFonts.push(uploadedFiles.requestedFonts[i]);
+    }
+  }
+
+  // find missing forms
+  for (let i = 0; i < uploadedFiles.requestedForms.length; i++) {
+    if (
+      !EasyEyesResources.forms.includes(uploadedFiles.requestedForms[i]) &&
+      !missingForms.includes(uploadedFiles.requestedForms[i])
+    ) {
+      console.log(i, uploadedFiles.requestedForms[i]);
+      missingForms.push(uploadedFiles.requestedForms[i]);
+    }
+  }
+
+  console.log("missingFonts", missingFonts);
+  console.log("missingForms", missingForms);
+
+  if (missingFonts.length > 0 || missingForms.length > 0) {
+    let message = "";
+
+    if (missingFonts.length > 0) {
+      message = "Missing Fonts: ";
+      for (let i = 0; i < missingFonts.length; i++) {
+        message += missingFonts[i] + " ";
+      }
+      message += "\n";
+    }
+
+    if (missingForms.length > 0) {
+      message += "Missing Forms: ";
+      for (let i = 0; i < missingForms.length; i++) {
+        message += missingForms[i] + " ";
+      }
+    }
+
+    alert(message);
+    return true;
+  } else {
+    return false;
+  }
+};
+
 // const myDropzone = { myDropzone: null };
 const newDz = new Dropzone("#file-dropzone", {
   paramName: "file",
@@ -155,15 +210,21 @@ const newDz = new Dropzone("#file-dropzone", {
       getExperimentFontList(
         uploadedFiles.experimentFile,
         (fontList: string[]) => {
+          console.log("REQUESTED FONTS", fontList);
           uploadedFiles.requestedFonts = fontList;
-        }
-      );
 
-      // extract required forms
-      getExperimentFormList(
-        uploadedFiles.experimentFile,
-        (formList: string[]) => {
-          uploadedFiles.requestedForms = formList;
+          // extract required forms
+          getExperimentFormList(
+            uploadedFiles.experimentFile,
+            (formList: string[]) => {
+              console.log("REQUESTED FORMS", formList);
+              uploadedFiles.requestedForms = formList;
+
+              if (isAnyResourceMissing()) {
+                clearDropzone();
+              }
+            }
+          );
         }
       );
 
@@ -218,20 +279,6 @@ const newDz = new Dropzone("#file-dropzone", {
         resourcesList
       );
 
-      // update info
-      // for (let fi = 0; fi < resourcesList.length; fi++) {
-      //   const file = resourcesList[fi];
-      //   const ext = getFileExtension(file);
-      //   if (acceptableExtensions.fonts.includes(ext)) {
-      //     if (EasyEyesResources.fonts.indexOf(file.name) == -1)
-      //       EasyEyesResources.fonts.push(file.name);
-      //   }
-
-      //   if (acceptableExtensions.forms.includes(ext)) {
-      //     if (EasyEyesResources.forms.indexOf(file.name) == -1)
-      //       EasyEyesResources.forms.push(file.name);
-      //   }
-      // }
       const easyEyesResourcesRepo = user.userData.projects.find(
         (i: any) => i.name == "EasyEyesResources"
       );
