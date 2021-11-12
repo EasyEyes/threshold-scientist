@@ -58,6 +58,30 @@
   margin: 0;
 }
 
+.error-hint {
+  font-weight: 600;
+}
+
+.error-warning .error-hint::before {
+  color: #f78812;
+}
+
+.error-error .error-hint::before {
+  color: #e02401;
+}
+
+.error-correct .error-hint::before {
+  color: #4e9f3d;
+}
+
+.error-hint::before {
+  content: " HINT: ";
+}
+
+/* .error-hint::after {
+  content: ')';
+} */
+
 .error-time {
   margin: 0;
   padding: 3px 7px;

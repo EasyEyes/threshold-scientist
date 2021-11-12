@@ -75,7 +75,7 @@ populateUserInfo();
 // newLog(
 //   errors,
 //   "targetFont",
-//   "Your targetFont is set incorrectly. Ignore this, this is only for demo purposes. You are all good.",
+//   `Your targetFont is set incorrectly. Ignore this, this is only for demo purposes. You are all good.<span class="error-hint">This is a hint.</span>`,
 //   "error"
 // );
 // newLog(

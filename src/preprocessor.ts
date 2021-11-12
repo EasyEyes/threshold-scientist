@@ -70,7 +70,8 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
     newLog(
       errors,
       error.name,
-      error.message + " " + error.hint,
+      error.message +
+        (error.hint ? `<span class="error-hint">${error.hint}</span>` : ""),
       error.kind || "error"
     );
   }
