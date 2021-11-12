@@ -18,7 +18,6 @@ import { _loadFiles } from "./files";
 import { setTab } from "./tab";
 
 export const gitlabRoutine = async (uploadedFiles: any) => {
-  console.log("uploaded files", uploadedFiles);
   // empty file list check
   if (
     uploadedFiles.others == null ||
@@ -265,7 +264,7 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
   for (var i = 0; i < formList.length; i++) {
     var consentFormm = formList[i];
     const resourcesRepoFilePath = encodeGitlabFilePath(`forms/${consentFormm}`);
-    let consentFormContent: string = await getFileRawFromGitlab(
+    let consentFormContent: string = await getBase64FileFromGitlab(
       easyEyesResourcesRepo.id,
       resourcesRepoFilePath,
       user.accessToken
@@ -288,6 +287,7 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
       action: "create",
       file_path: "forms/" + consentFormm,
       content: consentFormContent,
+      encoding: "base64",
     });
   }
 
@@ -301,7 +301,7 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
     }
 
     const resourcesRepoFilePath = encodeGitlabFilePath(`fonts/${userFont}`);
-    let content: string = await getFileRawFromGitlab(
+    let content: string = await getBase64FileFromGitlab(
       easyEyesResourcesRepo.id,
       resourcesRepoFilePath,
       user.accessToken
@@ -316,6 +316,7 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
       action: "create",
       file_path: "fonts/" + userFont,
       content: content,
+      encoding: "base64",
     });
   }
 
@@ -740,6 +741,40 @@ const getFileRawFromGitlab = async (
       });
 
     resolve(response);
+  });
+};
+
+const getBase64FileFromGitlab = (
+  repoID: number,
+  filePath: string,
+  accessToken: string
+) => {
+  return new Promise<string>(async (resolve) => {
+    var myHeaders = new Headers();
+    myHeaders.append("Authorization", `bearer ${accessToken}`);
+
+    var requestOptions: any = {
+      method: "GET",
+      headers: myHeaders,
+      redirect: "follow",
+    };
+
+    const encodedFilePath = encodeGitlabFilePath(filePath);
+    let response = await fetch(
+      `https://gitlab.pavlovia.org/api/v4/projects/${repoID}/repository/files/${encodedFilePath}/?ref=master`,
+      requestOptions
+    )
+      .then((response) => {
+        return response.text();
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        return error;
+      });
+
+    resolve(JSON.parse(response).content);
   });
 };
 
