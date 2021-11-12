@@ -1,4 +1,4 @@
-import { EasyEyesResources, user } from "./CONSTANTS";
+import { EasyEyesResources, user } from "./constants";
 import { hideDialogBox, showDialogBox } from "./dropzoneHandler";
 import { createRepo, getResourcesListFromRepository } from "./gitlabUtility";
 import { setTab } from "./tab";

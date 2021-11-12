@@ -3,7 +3,7 @@ import {
   EasyEyesResources,
   uploadedFiles,
   user,
-} from "./CONSTANTS";
+} from "./constants";
 import { isCsvFile } from "./utilities";
 import Dropzone from "dropzone";
 import { setTab, setTabList } from "./tab";

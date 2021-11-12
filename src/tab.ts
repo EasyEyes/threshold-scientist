@@ -1,4 +1,4 @@
-import { EasyEyesResources, currentTabId, setCurrentTabId } from "./CONSTANTS";
+import { EasyEyesResources, currentTabId, setCurrentTabId } from "./constants";
 
 export const openTab = (evt: any, tabId: string) => {
   setCurrentTabId(tabId);

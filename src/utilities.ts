@@ -1,6 +1,6 @@
 // Initialize dataframe-js module
 import { DataFrame } from "dataframe-js";
-import { acceptableExtensions } from "./CONSTANTS";
+import { acceptableExtensions } from "./constants";
 
 /**
  * Return a transposed copy of a 2D table.

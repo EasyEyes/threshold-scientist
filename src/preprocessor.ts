@@ -10,7 +10,7 @@ import {
   transpose,
   addUniqueLabelsToDf,
 } from "./utilities";
-import { user } from "./CONSTANTS";
+import { user } from "./constants";
 import { newLog } from "./errorLog";
 import { getFileBinaryData } from "./assetUtil";
 
@@ -47,7 +47,7 @@ export const processFiles = (fileList: File[], callback: any) => {
  * @param {Object} parsedContent Returned value from Papa.parse
  */
 const prepareExperimentFileForThreshold = (parsedContent: any) => {
-  // extract participant recruitement service name
+  // extract participant recruitment service name
   if (
     parsedContent.data.find(
       (i: any) => i[0] == "_participantRecruitmentService"
@@ -66,15 +66,23 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
   df = addUniqueLabelsToDf(df);
   /* ------------------------------- Got errors ------------------------------- */
   const errors = document.getElementById("errors")!;
-  for (let error of validationErrors) {
+  if (validationErrors.length)
+    for (let error of validationErrors) {
+      newLog(
+        errors,
+        error.name,
+        error.message +
+          (error.hint ? `<span class="error-hint">${error.hint}</span>` : ""),
+        error.kind || "error"
+      );
+    }
+  else
     newLog(
       errors,
-      error.name,
-      error.message +
-        (error.hint ? `<span class="error-hint">${error.hint}</span>` : ""),
-      error.kind || "error"
+      "The experiment file looks good",
+      `We didn't find any error in your experiment file. Feel free to upload it to Pavlovia and start running your experiment.`,
+      "correct"
     );
-  }
 
   // Change some names to the ones that PsychoJS expects.
   const nameChanges: any = {

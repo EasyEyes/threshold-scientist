@@ -8,7 +8,7 @@ import {
   EasyEyesResources,
   uploadedFiles,
   user,
-} from "./CONSTANTS";
+} from "./constants";
 import {
   getFileExtension,
   hideDialogBox,
