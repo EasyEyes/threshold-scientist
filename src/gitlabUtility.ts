@@ -18,7 +18,7 @@ import { _loadFiles } from "./files";
 import { setTab } from "./tab";
 
 export const gitlabRoutine = async (uploadedFiles: any) => {
-  console.log(uploadedFiles);
+  console.log("uploaded files", uploadedFiles);
   // empty file list check
   if (
     uploadedFiles.others == null ||
@@ -219,7 +219,6 @@ export const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment =
       });
     }
 
-    console.log("resources: ", jsonFiles);
     // commit files to EasyEyesResources repository
     var commitBody = {
       branch: "master",
@@ -497,7 +496,6 @@ const populateThresholdRepoOnExperiment = async (gitlabRepo: any) => {
 const commitNewFilesToGitlab = async (gitlabRepo: any, uploadedFiles: any) => {
   // get Gitlab API format data for files
   var jsonBody = await convertFilesToGitlabObjects(uploadedFiles);
-  console.log(jsonBody);
 
   // create single commit payload for multiple files
   var commitBody = {
