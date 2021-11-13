@@ -6,11 +6,9 @@ import {
 } from "./user";
 import { clearDropzone } from "./dropzoneHandler";
 import {
-  copyUrl,
   gitlabRoutine,
-  handleGeneratedURLSubmission,
   redirectToProlific,
-  uploadCompletionURL,
+  generateAndUploadCompletionURL,
 } from "./gitlabUtility";
 import { uploadedFiles } from "./constants";
 import { newLog } from "./errorLog";
@@ -35,11 +33,8 @@ const addOnChangeToEl = (elementId: string, handler: any) => {
 
 addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
 addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
-addOnClickToEl("copy-pavlovia-url-btn", copyUrl);
 addOnClickToEl("prolific-redirect-btn", redirectToProlific);
 addOnClickToEl("return-to-prolific", redirectToProlific);
-addOnChangeToEl("participant-code", uploadCompletionURL);
-addOnClickToEl("new-url-submit", handleGeneratedURLSubmission);
 
 document
   .getElementById("font-tab")!
@@ -65,6 +60,19 @@ if (gitlabFileSubmit) {
     clearDropzone();
   });
 }
+
+const gitlabNewFileNameInput: any = document.querySelector(
+  "#new-gitlab-repo-name"
+);
+gitlabNewFileNameInput.addEventListener("keydown", async (e: any) => {
+  // call gitlab routine
+  if (e.key == "Enter") {
+    await gitlabRoutine(uploadedFiles);
+
+    // clear dropzone
+    clearDropzone();
+  }
+});
 
 populateUserInfo();
 

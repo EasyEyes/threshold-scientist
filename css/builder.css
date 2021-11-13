@@ -126,6 +126,7 @@
   background-color: gray;
   font-weight: bold;
   font-size: 1rem;
+  margin-left: 20px;
 }
 
 /*#activate-experiment-btn {
@@ -143,9 +144,6 @@
 #prolific-input-group {
   display: flex;
   justify-content: space-between;
-}
-#participant-code {
-  width: 67%;
 }
 #participant-recruitment-completion-url-submit {
   width: 30%;
@@ -196,27 +194,7 @@ button {
   align-self: center;
 }
 
-#prolific-hr-div {
-  display: grid;
-  grid-template-columns: 10% 20% 70%;
-}
-
-#prolific-redirect-btn {
-  width: 30vw;
-  margin-right: 20px;
-}
-
 #activate-experiment-btn {
-  margin-right: 20px;
-}
-
-#profilic-input-group {
-  display: flex;
-  justify-content: space-between;
-}
-
-#copy-pavlovia-url-btn {
-  width: 30vw;
   margin-right: 20px;
 }
 

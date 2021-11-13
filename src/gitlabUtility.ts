@@ -89,15 +89,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     const actEl = document.getElementById("pavlovia-activate-div");
     actEl!.className = actEl!.className.replace("no-display", "");
 
-    const pavloviaExperimentUrlElement = document.getElementById(
-      "pavlovia-experiment-url-li"
-    );
-    pavloviaExperimentUrlElement!.className =
-      pavloviaExperimentUrlElement!.className.replace("no-display", "");
     // display "run" experiement link
-    const pavExpLinkEl: any = document.getElementById(
-      "pavlovia-experiment-url"
-    );
     let expUrl = `https://run.pavlovia.org/${
       user.userData.username
     }/${newRepoName.toLocaleLowerCase()}`;
@@ -112,10 +104,6 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       handleParticipantRecruitmentUrl();
     }
     user.currentExperiment.experimentUrl = expUrl;
-    pavExpLinkEl!.innerText += expUrl;
-    pavExpLinkEl!.href = expUrl;
-
-    // document.getElementById("activate-experiment-btn");
   }
 
   // else if repo name is invalid, display response
@@ -794,9 +782,6 @@ const encodeGitlabFilePath = (filePath: string): string => {
 export const handleParticipantRecruitmentUrl = () => {
   // check if service is Prolific
   // if Prolific, expose
-  document.getElementById("prolific-hr-div")!.className = document
-    .getElementById("prolific-hr-div")!
-    .className.replace("no-display", "");
   document.getElementById("participant-survey-completion-div")!.className =
     document
       .getElementById("participant-survey-completion-div")!
@@ -804,78 +789,47 @@ export const handleParticipantRecruitmentUrl = () => {
   //document.getElementById("activate-experiment-btn")!.className += " disabled";
 };
 
-export const copyUrl = () => {
-  const cb = navigator.clipboard;
-  const paragraph = document.querySelector(
-    "#pavlovia-experiment-url"
-  ) as HTMLElement;
-  cb.writeText(paragraph.innerText).then(() => {
-    showDialogBox(``, `Your URL has been copied to clipboard.`, false, true);
-  });
-};
+export const generateAndUploadCompletionURL = async () => {
+  if (user.currentExperiment.participantRecruitmentServiceCode == "") {
+    let completionCode: String =
+      "" + Math.floor(Math.random() * (999 - 100) + 100);
+    if (completionCode != "") {
+      user.currentExperiment.participantRecruitmentServiceCode = completionCode;
+      let completionURL =
+        "https://app.prolific.co/submissions/complete?cc=" + completionCode;
+      var jsonString = `name,${user.currentExperiment.participantRecruitmentServiceName}\ncode,\nurl,${completionURL}`;
 
-export const uploadCompletionURL = async () => {
-  let participantCodeElement = document.getElementById(
-    "participant-code"
-  ) as HTMLInputElement;
-  var completionURL: string = participantCodeElement.value;
-  if (completionURL != "") {
-    user.currentExperiment.participantRecruitmentServiceCode = completionURL;
-    completionURL =
-      "https://app.prolific.co/submissions/complete?cc=" + completionURL;
-    var jsonString = `name,${user.currentExperiment.participantRecruitmentServiceName}\ncode,\nurl,${completionURL}`;
-
-    var commitAction = {
-      action: "update",
-      file_path: "recruitmentServiceConfig.csv",
-      content: jsonString,
-    };
-    var commitBody = {
-      branch: "master",
-      commit_message: "Easy Eyes to Gitlab INIT",
-      actions: [commitAction],
-    };
-    showDialogBox(
-      `Completion URL Update`,
-      `Your Experiment Completion URL is being uploaded.`,
-      false,
-      true
-    );
-    var commitFile = await fetch(
-      "https://gitlab.pavlovia.org/api/v4/projects/" +
-        user.newRepo.id +
-        "/repository/commits?access_token=" +
-        user.accessToken,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(commitBody),
-      }
-    );
-    await commitFile.json();
-    document
-      .getElementById("participant-code")!
-      .setAttribute("disabled", "disabled");
-  }
-};
-
-export const handleGeneratedURLSubmission = () => {
-  let newUrlElement = document.getElementById("new-url") as HTMLInputElement;
-  var generatedUrl: string = newUrlElement.value;
-  if (generatedUrl != "") {
-    let pavloviaExperimentUrlElement = document.getElementById(
-      "pavlovia-experiment-url"
-    ) as HTMLElement;
-    pavloviaExperimentUrlElement.innerText = generatedUrl;
-    document.getElementById("participant-survey-new-url-div")!.className =
-      document
-        .getElementById("participant-survey-new-url-div")!
-        .className.replace("no-display", "");
-    //document.getElementById("activate-experiment-btn")!.className = document
-    //.getElementById("activate-experiment-btn")!
-    //.className.replace("disabled", "");
+      var commitAction = {
+        action: "update",
+        file_path: "recruitmentServiceConfig.csv",
+        content: jsonString,
+      };
+      var commitBody = {
+        branch: "master",
+        commit_message: "Easy Eyes to Gitlab INIT",
+        actions: [commitAction],
+      };
+      showDialogBox(
+        `Completion URL Update`,
+        `Your Experiment Completion URL is being uploaded.`,
+        false,
+        true
+      );
+      var commitFile = await fetch(
+        "https://gitlab.pavlovia.org/api/v4/projects/" +
+          user.newRepo.id +
+          "/repository/commits?access_token=" +
+          user.accessToken,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(commitBody),
+        }
+      );
+      await commitFile.json();
+    }
   }
 };
 
@@ -883,11 +837,8 @@ export const handleGeneratedURLSubmission = () => {
   window.open("https://www.prolific.co/auth/accounts/login/", "_blank");
 };*/
 
-export const redirectToProlific = () => {
-  let participantCodeElement = document.getElementById(
-    "participant-code"
-  ) as HTMLInputElement;
-  var completionURL: string = participantCodeElement.value;
+export const redirectToProlific = async () => {
+  await generateAndUploadCompletionURL();
   let url =
     "https://app.prolific.co/studies/new?" +
     "external_study_url=" +
