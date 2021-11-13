@@ -790,7 +790,7 @@ export const handleParticipantRecruitmentUrl = () => {
 };
 
 export const generateAndUploadCompletionURL = async () => {
-  if (user.currentExperiment.participantRecruitmentServiceCode == "") {
+  if (user.currentExperiment.participantRecruitmentServiceCode == null) {
     let completionCode: String =
       "" + Math.floor(Math.random() * (999 - 100) + 100);
     if (completionCode != "") {
