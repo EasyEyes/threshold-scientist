@@ -48,7 +48,10 @@ export const processFontList = (parsedContent: any) => {
   }
 
   for (let i = 0; i < targetFontRow.length; i++) {
-    if (targetFontSourceRow[i].trim() == "file")
+    if (
+      targetFontSourceRow[i].trim() == "file" &&
+      !fontList.includes(targetFontRow[i])
+    )
       fontList.push(targetFontRow[i]);
   }
 
