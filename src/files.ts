@@ -19,11 +19,11 @@ export const _loadFiles: string[] = [
   "psychojs/LICENSE.md",
   "psychojs/out/psychojs-2021.3.0.css",
   "recruitmentServiceConfig.csv",
-  "forms/201909 IRB-FY2016-404 Perception debriefing.pdf",
+  /*"forms/201909 IRB-FY2016-404 Perception debriefing.pdf",
   "forms/202009 IRB-FY2016-404 Remote Testing - Perception Research.pdf",
   "fonts/Douglass Pen.woff2",
   "fonts/IBMPlexSansArabic.woff2",
   "fonts/P22 Aragon.woff2",
   "fonts/Roboto Mono.woff2",
-  "fonts/Sloan.woff2",
+  "fonts/Sloan.woff2",*/
 ];
