@@ -44,7 +44,7 @@ export const showDialogBox = (
 
     // set body
     el = document.getElementsByClassName("dialog-body")[0];
-    el.innerText = body;
+    el.innerHTML = body;
 
     // toggle "OK" button
     if (closeSelf) {
