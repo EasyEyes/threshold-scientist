@@ -9,6 +9,7 @@ import {
   gitlabRoutine,
   redirectToProlific,
   generateAndUploadCompletionURL,
+  showPavloviaAdvice,
 } from "./gitlabUtility";
 import { uploadedFiles } from "./constants";
 import { newLog } from "./errorLog";
@@ -35,6 +36,7 @@ addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
 addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
 addOnClickToEl("prolific-redirect-btn", redirectToProlific);
 addOnClickToEl("return-to-prolific", redirectToProlific);
+addOnClickToEl("pavlovia-advice", showPavloviaAdvice);
 
 document
   .getElementById("font-tab")!

@@ -852,3 +852,11 @@ export const redirectToProlific = async () => {
 
   window.open(url, "_blank");
 };
+
+export const showPavloviaAdvice = () => {
+  showDialogBox(
+    `USING PAVLOVIA WITHOUT A UNIVERSITY LICENSE`,
+    `If you don't have an unlimited license from your university for your Pavlovia account, then Pavlovia will charge you 20 pence per participant. Pavlovia allows you to avoid that fee during evaluation: In Pavlovia, hit PILOTING instead of RUNNING, and use their PILOT button, instead of clicking your study URL, to run your study. Their (reasonable) fee cannot be avoided when you run participants on Prolific. In that case use RUNNING. Also, note that Pavlovia only charges for saved studies. If you set the Pavlovia slider to NOT save incomplete sessions then you won't be charged for them. Setting that slider allows you to set Pavlovia to RUNNING and still use Prolific's (free) preview feature without incurring Pavlovia charges, provided you quit early.`,
+    true
+  );
+};
