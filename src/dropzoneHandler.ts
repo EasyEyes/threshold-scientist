@@ -13,6 +13,7 @@ import {
   populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment,
 } from "./gitlabUtility";
 import { getExperimentFontList, getExperimentFormList } from "./experimentUtil";
+import XLSX from "xlsx";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -77,7 +78,10 @@ export const getFileExtension = (file: any) => {
   let splitExt = file.name.split(".");
   return splitExt[splitExt.length - 1].toLowerCase();
 };
-
+export const getFileNameWithoutExtension = (file: File) => {
+  let nameTokens = file.name.split(".");
+  return nameTokens[0];
+};
 export const isAcceptableExtension = (ext: any) => {
   return acceptableFileExt.includes(ext);
 };
@@ -165,7 +169,7 @@ const newDz = new Dropzone("#file-dropzone", {
   },
 
   // file type verification
-  accept: (file, done) => {
+  accept: async (file: any, done) => {
     // authentication check
     if (!isUserLoggedIn()) {
       showDialogBox(
@@ -185,6 +189,20 @@ const newDz = new Dropzone("#file-dropzone", {
         true
       );
       return;
+    }
+
+    if (getFileExtension(file) == "xlsx") {
+      // assuming there is only 1 sheet in the experiment file
+      const data = await file.arrayBuffer();
+      const book = XLSX.read(data);
+      for (let sheet in book.Sheets) {
+        const dataString = XLSX.utils.sheet_to_csv(book.Sheets[sheet]);
+        const blob = new Blob([dataString], { type: "text/csv;charset=utf-8" });
+        file = new File([blob], `${getFileNameWithoutExtension(file)}.csv`, {
+          type: "text/csv",
+          lastModified: Date.now(),
+        });
+      }
     }
 
     // if dropped file is an experiment file, ie a csv extension, preprocess it immediately, and upon successful processing, add to droppedFiles array
