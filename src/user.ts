@@ -31,7 +31,8 @@ export const populateUserInfo = async () => {
     );
     user.userData = await userData.json();
   } else {
-    document.getElementById("form-tab")?.click();
+    console.log(document.getElementById("form-tab"));
+    document.getElementById("form-tab")!.click();
     return;
   }
   console.log("userData", userData);
@@ -45,7 +46,6 @@ export const populateUserInfo = async () => {
   );
   projectData = await projectData.json();
   user.userData.projects = projectData;
-  console.log("projectDataFiltered", projectData);
   // if user doesn't have a repo named EasyEyesResources, create one and add folders fonts and consent-forms
   if (
     !user.userData.projects
