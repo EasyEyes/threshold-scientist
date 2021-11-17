@@ -31,6 +31,7 @@ export const populateUserInfo = async () => {
     );
     user.userData = await userData.json();
   } else {
+    document.getElementById("form-tab")?.click();
     return;
   }
   console.log("userData", userData);
@@ -82,6 +83,7 @@ export const populateUserInfo = async () => {
     "Consent and debrief forms"
   );
   setTabList("forms", EasyEyesResources.forms);
+  document.getElementById("form-tab")?.click();
 };
 
 export const redirectToOauth2 = () => {
