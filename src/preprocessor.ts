@@ -74,9 +74,13 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
   df = addUniqueLabelsToDf(df);
   /* ------------------------------- Got errors ------------------------------- */
   const errors = document.getElementById("errors")!;
-  if (validationErrors.length)
+  console.log(errors);
+  console.log(validationErrors);
+  if (validationErrors.length) {
     validationErrors.forEach((e) => logError(e, errors));
-  else
+    externalCallback([]);
+    return;
+  } else {
     newLog(
       errors,
       "The experiment file is ready",
@@ -84,28 +88,29 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
       "correct"
     );
 
-  // Change some names to the ones that PsychoJS expects.
-  const nameChanges: any = {
-    thresholdBeta: "beta",
-    thresholdDelta: "delta",
-    thresholdProbability: "pThreshold",
-  };
-  //// https://stackoverflow.com/questions/5915789/how-to-replace-item-in-array
-  let preparedNames = df
-    .listColumns()
-    .map((oldName: string) =>
-      nameChanges.hasOwnProperty(oldName) ? nameChanges[oldName] : oldName
-    );
-  df = df.renameAll(preparedNames);
-  // VERIFY correctness
-  if ("thresholdGuessLogSd" in df.toDict()) {
-    df = df
-      .withColumn("startValSd", (row: any) => row.get("thresholdGuessLogSd"))
-      .withColumn("startVal", (row: any) =>
-        Math.log10(row.get("thresholdGuess"))
+    // Change some names to the ones that PsychoJS expects.
+    const nameChanges: any = {
+      thresholdBeta: "beta",
+      thresholdDelta: "delta",
+      thresholdProbability: "pThreshold",
+    };
+    //// https://stackoverflow.com/questions/5915789/how-to-replace-item-in-array
+    let preparedNames = df
+      .listColumns()
+      .map((oldName: string) =>
+        nameChanges.hasOwnProperty(oldName) ? nameChanges[oldName] : oldName
       );
+    df = df.renameAll(preparedNames);
+    // VERIFY correctness
+    if ("thresholdGuessLogSd" in df.toDict()) {
+      df = df
+        .withColumn("startValSd", (row: any) => row.get("thresholdGuessLogSd"))
+        .withColumn("startVal", (row: any) =>
+          Math.log10(row.get("thresholdGuess"))
+        );
+    }
+    splitIntoBlockFilesAndDownload(df);
   }
-  splitIntoBlockFilesAndDownload(df);
 };
 
 /**

@@ -97,7 +97,6 @@ const isAnyResourceMissing = () => {
       !EasyEyesResources.fonts.includes(uploadedFiles.requestedFonts[i]) &&
       !missingFonts.includes(uploadedFiles.requestedFonts[i])
     ) {
-      console.log(i, uploadedFiles.requestedFonts[i]);
       missingFonts.push(uploadedFiles.requestedFonts[i]);
     }
   }
@@ -108,7 +107,6 @@ const isAnyResourceMissing = () => {
       !EasyEyesResources.forms.includes(uploadedFiles.requestedForms[i]) &&
       !missingForms.includes(uploadedFiles.requestedForms[i])
     ) {
-      console.log(i, uploadedFiles.requestedForms[i]);
       missingForms.push(uploadedFiles.requestedForms[i]);
     }
   }
@@ -148,7 +146,6 @@ const newDz = new Dropzone("#file-dropzone", {
   autoProcessQueue: false,
 
   init: function () {
-    console.log("dropzone init");
     // TODO look for better refactoring here for myThis
     // let myThis: any = this;
     // if (myThis != null) {
@@ -211,46 +208,56 @@ const newDz = new Dropzone("#file-dropzone", {
       // call preprocessor here
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed table
 
+      // store experiment file
+      uploadedFiles.experimentFile = file;
+
       // preprocess experiment files
       showDialogBox(`The file ${file.name} is being processed ...`, ``, false);
       processFiles([file], (fileList: File[]) => {
+        if (fileList.length == 0) {
+          hideDialogBox();
+          clearDropzone();
+          setTimeout(() => {
+            uploadedFiles.experimentFile = null;
+          }, 800);
+          return;
+        }
+
         for (let fi = 0; fi < fileList.length; fi++) {
           droppedFileNames.add(fileList[fi].name);
           uploadedFiles.others.push(fileList[fi]);
         }
-      });
-      hideDialogBox();
 
-      // store experiment file
-      uploadedFiles.experimentFile = file;
+        hideDialogBox();
 
-      // extract required fonts
-      getExperimentFontList(
-        uploadedFiles.experimentFile,
-        (fontList: string[]) => {
-          console.log("REQUESTED FONTS", fontList);
-          uploadedFiles.requestedFonts = fontList;
+        // extract required fonts
+        getExperimentFontList(
+          uploadedFiles.experimentFile,
+          (fontList: string[]) => {
+            console.log("REQUESTED FONTS", fontList);
+            uploadedFiles.requestedFonts = fontList;
 
-          // extract required forms
-          getExperimentFormList(
-            uploadedFiles.experimentFile,
-            (formList: string[]) => {
-              console.log("REQUESTED FORMS", formList);
-              uploadedFiles.requestedForms = formList;
+            // extract required forms
+            getExperimentFormList(
+              uploadedFiles.experimentFile,
+              (formList: string[]) => {
+                console.log("REQUESTED FORMS", formList);
+                uploadedFiles.requestedForms = formList;
 
-              if (isAnyResourceMissing()) {
-                clearDropzone();
+                if (isAnyResourceMissing()) {
+                  clearDropzone();
+                }
               }
-            }
-          );
-        }
-      );
+            );
+          }
+        );
 
-      // set repo name
-      const gitlabRepoNameEl = document.getElementById(
-        "new-gitlab-repo-name"
-      ) as HTMLInputElement;
-      gitlabRepoNameEl.value = file.name.split(".")[0];
+        // set repo name
+        const gitlabRepoNameEl = document.getElementById(
+          "new-gitlab-repo-name"
+        ) as HTMLInputElement;
+        gitlabRepoNameEl.value = file.name.split(".")[0];
+      });
     }
 
     // store experiment files only as resource files are uploaded instantaneously
@@ -275,7 +282,6 @@ const newDz = new Dropzone("#file-dropzone", {
 
   // instant upload when files have been dropped
   addedfiles: async (fileList: File[]) => {
-    console.log("file list added");
     // filter out resources
     let resourcesList: File[] = [];
     for (let fi = 0; fi < fileList.length; fi++) {
