@@ -31,7 +31,6 @@ export const populateUserInfo = async () => {
     );
     user.userData = await userData.json();
   } else {
-    console.log(document.getElementById("form-tab"));
     document.getElementById("form-tab")!.click();
     return;
   }
