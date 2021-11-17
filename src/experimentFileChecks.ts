@@ -222,6 +222,7 @@ const isBlockPresentAndProper = (df: any): EasyEyesError[] => {
     previousBlockValue = value;
   });
   if (nonsequentialValues.length) {
+    console.log("nonsequentialValues: ", nonsequentialValues);
     blockValueErrors.push(
       NONSEQUENTIAL_BLOCK_VALUE(nonsequentialValues, blockValues)
     );
