@@ -17,7 +17,6 @@ if (window.location.hash != "") {
 }
 
 export const populateUserInfo = async () => {
-  console.log("DEBUG #3");
   console.log(document.getElementById("form-tab"));
   document.getElementById("form-tab")!.click();
 
@@ -38,7 +37,6 @@ export const populateUserInfo = async () => {
   } else {
     return;
   }
-  console.log("userData", userData);
 
   var projectData: any = await fetch(
     "https://gitlab.pavlovia.org/api/v4/users/" +
@@ -86,7 +84,6 @@ export const populateUserInfo = async () => {
     "Consent and debrief forms"
   );
   setTabList("forms", EasyEyesResources.forms);
-  console.log("DEBUG #2");
   document.getElementById("form-tab")!.click();
 };
 
