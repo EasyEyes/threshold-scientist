@@ -221,10 +221,11 @@ const isBlockPresentAndProper = (df: any): EasyEyesError[] => {
     }
     previousBlockValue = value;
   });
-  if (nonsequentialValues.length)
+  if (nonsequentialValues.length) {
     blockValueErrors.push(
       NONSEQUENTIAL_BLOCK_VALUE(nonsequentialValues, blockValues)
     );
+  }
   return blockValueErrors;
 };
 
