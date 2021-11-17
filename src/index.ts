@@ -24,14 +24,6 @@ const addOnClickToEl = (elementId: string, handler: any) => {
     });
 };
 
-const addOnChangeToEl = (elementId: string, handler: any) => {
-  const el = document.getElementById(elementId);
-  if (el)
-    el.addEventListener("change", async (evt: any) => {
-      handler();
-    });
-};
-
 addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
 addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
 addOnClickToEl("prolific-redirect-btn", redirectToProlific);
@@ -76,6 +68,14 @@ gitlabNewFileNameInput.addEventListener("keydown", async (e: any) => {
   }
 });
 
+// -----------------------------------------
+// tabs
+// -----------------------------------------
+document.getElementById("form-tab")?.click();
+
+// -----------------------------------------
+// gitlab
+// -----------------------------------------
 populateUserInfo();
 
 // Sample error messages

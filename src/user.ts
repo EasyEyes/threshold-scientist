@@ -1,7 +1,7 @@
 import { EasyEyesResources, user } from "./constants";
 import { hideDialogBox, showDialogBox } from "./dropzoneHandler";
 import { createRepo, getResourcesListFromRepository } from "./gitlabUtility";
-import { setTab } from "./tab";
+import { setTab, setTabList } from "./tab";
 
 if (window.location.hash != "") {
   const gitlabConnBtn = document.getElementById("gitlab-connect-btn");
@@ -75,11 +75,13 @@ export const populateUserInfo = async () => {
 
   // display inital resources info
   setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
+  setTabList("fonts", EasyEyesResources.fonts);
   setTab(
     "form-tab",
     EasyEyesResources.forms.length,
     "Consent and debrief forms"
   );
+  setTabList("forms", EasyEyesResources.forms);
 };
 
 export const redirectToOauth2 = () => {
