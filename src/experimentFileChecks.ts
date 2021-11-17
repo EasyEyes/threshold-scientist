@@ -189,12 +189,16 @@ const isBlockPresentAndProper = (df: any): EasyEyesError[] => {
   const blockValueErrors: EasyEyesError[] = [];
 
   // Check the first value
+  // TODO use paramReader -- handling booleans again here is hacky
   const zeroIndexed: boolean =
     (df.listColumns().includes("zeroBasedNumberingBool") &&
-      df.getRow(0).get("zeroBasedNumberingBool")) ||
+      df.getRow(0).get("zeroBasedNumberingBool").toLowerCase() === "true") ||
     (df.listColumns().includes("_zeroBasedNumberingBool") &&
-      df.getRow(0).get("_zeroBasedNumberingBool"));
-  if (blockValues[0] !== 1 || (zeroIndexed && blockValues[0] !== 0)) {
+      df.getRow(0).get("_zeroBasedNumberingBool").toLowerCase() === "true");
+  if (
+    (!zeroIndexed && blockValues[0] !== 1) ||
+    (zeroIndexed && blockValues[0] !== 0)
+  ) {
     blockValueErrors.push(
       INVALID_STARTING_BLOCK(blockValues[0], zeroIndexed ? 0 : 1)
     );
@@ -208,22 +212,19 @@ const isBlockPresentAndProper = (df: any): EasyEyesError[] => {
     index: number;
   }[] = [];
   blockValues.forEach((value: number, i: number) => {
-    if (
-      blockValues[i] < previousBlockValue ||
-      blockValues[i] - previousBlockValue > 1
-    ) {
+    if (value < previousBlockValue || value - previousBlockValue > 1) {
       nonsequentialValues.push({
         value: value,
         previous: previousBlockValue,
         index: i,
       });
-    } else {
-      previousBlockValue = value;
     }
+    previousBlockValue = value;
   });
-  blockValueErrors.push(
-    NONSEQUENTIAL_BLOCK_VALUE(nonsequentialValues, blockValues)
-  );
+  if (nonsequentialValues.length)
+    blockValueErrors.push(
+      NONSEQUENTIAL_BLOCK_VALUE(nonsequentialValues, blockValues)
+    );
   return blockValueErrors;
 };
 
