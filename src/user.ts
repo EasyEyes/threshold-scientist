@@ -22,6 +22,9 @@ export const populateUserInfo = async () => {
     "https://gitlab.pavlovia.org/api/v4/user?access_token=" +
       window.location.hash.split("&")[0].split("=")[1]
   );
+  console.log(document.getElementById("form-tab"));
+  document.getElementById("form-tab")!.click();
+
   if (user.accessToken) {
     // after dropzone conversion
     showDialogBox(
@@ -31,7 +34,6 @@ export const populateUserInfo = async () => {
     );
     user.userData = await userData.json();
   } else {
-    document.getElementById("form-tab")!.click();
     return;
   }
   console.log("userData", userData);
