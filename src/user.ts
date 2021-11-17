@@ -17,13 +17,15 @@ if (window.location.hash != "") {
 }
 
 export const populateUserInfo = async () => {
+  console.log("DEBUG #3");
+  console.log(document.getElementById("form-tab"));
+  document.getElementById("form-tab")!.click();
+
   user.accessToken = window.location.hash.split("&")[0].split("=")[1];
   var userData = await fetch(
     "https://gitlab.pavlovia.org/api/v4/user?access_token=" +
       window.location.hash.split("&")[0].split("=")[1]
   );
-  console.log(document.getElementById("form-tab"));
-  document.getElementById("form-tab")!.click();
 
   if (user.accessToken) {
     // after dropzone conversion
@@ -84,7 +86,8 @@ export const populateUserInfo = async () => {
     "Consent and debrief forms"
   );
   setTabList("forms", EasyEyesResources.forms);
-  document.getElementById("form-tab")?.click();
+  console.log("DEBUG #2");
+  document.getElementById("form-tab")!.click();
 };
 
 export const redirectToOauth2 = () => {

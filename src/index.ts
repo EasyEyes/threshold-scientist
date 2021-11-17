@@ -71,7 +71,8 @@ gitlabNewFileNameInput.addEventListener("keydown", async (e: any) => {
 // -----------------------------------------
 // tabs
 // -----------------------------------------
-document.getElementById("form-tab")?.click();
+console.log("DEBUG #1");
+document.getElementById("form-tab")!.click();
 
 // -----------------------------------------
 // gitlab
