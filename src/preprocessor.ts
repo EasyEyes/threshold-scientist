@@ -4,14 +4,14 @@ import XLSX from "xlsx";
 
 // const { EXPERIMENT_FILE_NOT_FOUND } = require("./errorMessages");
 import { EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
-import { validateExperimentDf } from "./experimentFileChecks";
+import { validatedCommas, validateExperimentDf } from "./experimentFileChecks";
 import {
   dataframeFromPapaParsed,
   transpose,
   addUniqueLabelsToDf,
 } from "./utilities";
 import { user } from "./constants";
-import { newLog } from "./errorLog";
+import { newLog, logError } from "./errorLog";
 import { getFileBinaryData } from "./assetUtil";
 
 let externalCallback: any;
@@ -60,24 +60,22 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
         (i: any) => i[0] == "_participantRecruitmentService"
       )[1];
   }
+
+  // Check that every row has the same number of values
+  const unbalancedCommasError = validatedCommas(parsedContent);
+
   // Create a dataframe for easy data manipulation.
   let df = dataframeFromPapaParsed(parsedContent);
   // Run the compiler checks on our experiment
-  const validationErrors = validateExperimentDf(df);
+  const validationErrors = unbalancedCommasError
+    ? [unbalancedCommasError, ...validateExperimentDf(df)]
+    : validateExperimentDf(df);
 
   df = addUniqueLabelsToDf(df);
   /* ------------------------------- Got errors ------------------------------- */
   const errors = document.getElementById("errors")!;
   if (validationErrors.length)
-    for (let error of validationErrors) {
-      newLog(
-        errors,
-        error.name,
-        error.message +
-          (error.hint ? `<span class="error-hint">${error.hint}</span>` : ""),
-        error.kind || "error"
-      );
-    }
+    validationErrors.forEach((e) => logError(e, errors));
   else
     newLog(
       errors,

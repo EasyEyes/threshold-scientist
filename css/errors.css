@@ -58,8 +58,12 @@
   margin: 0;
 }
 
+.error-parameter {
+  font-weight: 900;
+}
 .error-hint {
-  font-weight: 600;
+  /* font-weight: 600; */
+  font-style: italic;
 }
 
 .error-warning .error-hint::before {
@@ -68,6 +72,7 @@
 
 .error-error .error-hint::before {
   color: #e02401;
+  font-weight: 900;
 }
 
 .error-correct .error-hint::before {

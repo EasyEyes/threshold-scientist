@@ -14,9 +14,58 @@ import {
   EasyEyesError,
   INCORRECT_PARAMETER_TYPE,
   ILL_FORMED_UNDERSCORE_PARAM,
+  NO_BLOCK_PARAMETER,
+  UNBALANCED_COMMAS,
+  INVALID_STARTING_BLOCK,
+  NONSEQUENTIAL_BLOCK_VALUE,
 } from "./errorMessages";
 import { GLOSSARY } from "../threshold/parameters/glossary";
 import { isNumeric, levDist, arraysEqual } from "./utilities";
+
+export const validatedCommas = (
+  parsed: Papa.ParseResult<string[]>
+): EasyEyesError | undefined => {
+  // Map all row-lengths with the rows of that length
+  // A correctly formatted experiment would all be off the same length
+  const rowLengths: { [key: number]: number[] } = {};
+  parsed.data.forEach((row: string[], i: number): void => {
+    if (!rowLengths.hasOwnProperty(row.length)) {
+      rowLengths[row.length] = [i];
+    } else {
+      rowLengths[row.length].push(i);
+    }
+  });
+  // All the different row lengths found, sorted most common first.
+  const lengthOrdering = Object.keys(rowLengths).sort(
+    (a, b) => rowLengths[Number(b)].length - rowLengths[Number(a)].length
+  );
+  // There should only be one unique row length, ie every row needs the same number of commas
+  if (lengthOrdering.length > 1) {
+    const offendingParams: {
+      parameter: string;
+      length: number;
+      correctLength: number;
+    }[] = [];
+    Object.entries(rowLengths)
+      .filter(([length, _]) => length !== lengthOrdering[0])
+      .forEach(([badLength, rowNums]) => {
+        const offendingOfThisLength = rowNums.map((i) => {
+          return {
+            parameter: parsed.data[i][0],
+            length: Number(badLength),
+            correctLength: Number(lengthOrdering[0]),
+          };
+        });
+        offendingParams.push(...offendingOfThisLength);
+      });
+    // Create an error message... just alphabetize the offending parameters first
+    return UNBALANCED_COMMAS(
+      offendingParams.sort((a, b) =>
+        a.parameter === b.parameter ? 0 : a.parameter > b.parameter ? 1 : -1
+      )
+    );
+  }
+};
 
 var parametersToCheck: any[] = [];
 /**
@@ -24,7 +73,7 @@ var parametersToCheck: any[] = [];
  * @param {DateFrame} experimentDf dataframe-js dataframe of the experiment file content
  * @returns {Object[]} Array of all errors found with the experiment file
  */
-export const validateExperimentDf = (experimentDf: any): any => {
+export const validateExperimentDf = (experimentDf: any): EasyEyesError[] => {
   const parameters = experimentDf.listColumns();
   const errors = [];
 
@@ -39,6 +88,9 @@ export const validateExperimentDf = (experimentDf: any): any => {
   errors.push(...areAllPresentParametersRecognized(parametersToCheck));
   errors.push(...areAllPresentParametersCurrentlySupported(parametersToCheck));
 
+  // Check for properly formatted "block" parameter values
+  errors.push(...isBlockPresentAndProper(experimentDf));
+
   // Check for properly formatted _param values
   let underscoreErrors: EasyEyesError[];
   [experimentDf, underscoreErrors] =
@@ -49,7 +101,7 @@ export const validateExperimentDf = (experimentDf: any): any => {
   errors.push(...areParametersOfTheCorrectType(experimentDf));
 
   // Remove empty errors (FUTURE ought to be unnecessary, find root cause)
-  return errors.filter((error) => error);
+  return errors.filter((error) => error) as EasyEyesError[];
 };
 
 /**
@@ -123,6 +175,58 @@ const areAllPresentParametersCurrentlySupported = (
   return notYetSupported.map(NOT_YET_SUPPORTED_PARAMETER);
 };
 
+const isBlockPresentAndProper = (df: any): EasyEyesError[] => {
+  // Can't do other checks when "block" isn't even present
+  const blockPresent: boolean = df.listColumns().includes("block");
+  if (!blockPresent) return [NO_BLOCK_PARAMETER];
+
+  // Array of the experiment-provided block values
+  const blockValues = df
+    .select("block")
+    .toArray()
+    .map((x: any) => Number(x[0]));
+  // Array to accumulate the errors we encounter; to be returned
+  const blockValueErrors: EasyEyesError[] = [];
+
+  // Check the first value
+  const zeroIndexed: boolean =
+    (df.listColumns().includes("zeroBasedNumberingBool") &&
+      df.getRow(0).get("zeroBasedNumberingBool")) ||
+    (df.listColumns().includes("_zeroBasedNumberingBool") &&
+      df.getRow(0).get("_zeroBasedNumberingBool"));
+  if (blockValues[0] !== 1 || (zeroIndexed && blockValues[0] !== 0)) {
+    blockValueErrors.push(
+      INVALID_STARTING_BLOCK(blockValues[0], zeroIndexed ? 0 : 1)
+    );
+  }
+
+  // Check that each value is sequential
+  let previousBlockValue = blockValues[0];
+  const nonsequentialValues: {
+    value: number;
+    previous: number;
+    index: number;
+  }[] = [];
+  blockValues.forEach((value: number, i: number) => {
+    if (
+      blockValues[i] < previousBlockValue ||
+      blockValues[i] - previousBlockValue > 1
+    ) {
+      nonsequentialValues.push({
+        value: value,
+        previous: previousBlockValue,
+        index: i,
+      });
+    } else {
+      previousBlockValue = value;
+    }
+  });
+  blockValueErrors.push(
+    NONSEQUENTIAL_BLOCK_VALUE(nonsequentialValues, blockValues)
+  );
+  return blockValueErrors;
+};
+
 const checkAndCorrectUnderscoreParams = (df: any): [any, EasyEyesError[]] => {
   const underscoreParams = df.listColumns().filter((s: string) => s[0] === "_");
   const underscoreDf = df.select(...underscoreParams);
@@ -194,13 +298,6 @@ const areParametersOfTheCorrectType = (df: any): EasyEyesError[] => {
         console.error(
           `Undefined values in ${columnName}. Make sure that comma's are balanced across all rows.`
         );
-        //   errors.push({
-        //     name: `Parameter \'${columnName}\' including undefined values`,
-        //     message: `We had trouble parsing \'${columnName}\' for some reason. Sometimes this is due to an unbalanced number of commas on this, nor another row.`,
-        //     hint: "Catching this bug through more specific tests is still a work in progress. Please report this bug to the EasyEyes team.",
-        //     context: "preprocessor",
-        //     kind: "error",
-        //   })
       }
       const column: string[] = df
         .select(columnName)

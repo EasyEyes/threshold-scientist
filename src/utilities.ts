@@ -118,6 +118,12 @@ export const levDist = (s: any, t: any): any => {
 };
 
 export const addUniqueLabelsToDf = (df: any): any => {
+  if (!df.listColumns().includes("block")) {
+    console.error(
+      "Experiment will fail. 'block' parameter not provided. Do not run experiment in this state."
+    );
+    return df;
+  }
   const blocks = df.select("block").toArray();
   const blockCounts: any = {};
   const labels: string[] = [];
@@ -169,4 +175,19 @@ export const arraysEqual = <T>(a: T[], b: T[]): boolean => {
     if (a[i] !== b[i]) return false;
   }
   return true;
+};
+
+export const verballyEnumerate = (individuals: string[]): string => {
+  if (individuals.length === 1) return individuals[0];
+  let enumeratedString = "";
+  for (let i = 0; i < individuals.length; i++) {
+    if (i !== individuals.length - 1) {
+      // Not last individual
+      enumeratedString += String(individuals[i]) + ", ";
+    } else {
+      // Last individual
+      enumeratedString += "and " + String(individuals[i]);
+    }
+  }
+  return enumeratedString;
 };
