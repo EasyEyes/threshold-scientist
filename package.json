@@ -11,7 +11,7 @@
     "start": "webpack --env=development",
     "build": "webpack --env=production",
     "prepare:commit": "npm run files",
-    "netlify": "npm ci && npm run build && rm -r node_modules"
+    "netlify": "npm ci && npm run build && rm -r node_modules && cd threshold && npm run netlify:website"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +29,7 @@
     "css-loader": "^6.5.1",
     "express": "^4.17.1",
     "husky": "^7.0.4",
-    "lint-staged": "^12.0.2",
+    "lint-staged": "^12.0.3",
     "prettier": "^2.4.1",
     "style-loader": "^3.3.1",
     "ts-loader": "^9.2.6",
