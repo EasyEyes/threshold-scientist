@@ -79,11 +79,7 @@ export const populateUserInfo = async () => {
   // display inital resources info
   setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
   setTabList("fonts", EasyEyesResources.fonts);
-  setTab(
-    "form-tab",
-    EasyEyesResources.forms.length,
-    "Consent and debrief forms"
-  );
+  setTab("form-tab", EasyEyesResources.forms.length, "Forms");
   setTabList("forms", EasyEyesResources.forms);
   document.getElementById("form-tab")!.click();
 };

@@ -69,11 +69,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
 
     // update resources info
     setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
-    setTab(
-      "form-tab",
-      EasyEyesResources.forms.length,
-      "Consent and debrief forms"
-    );
+    setTab("form-tab", EasyEyesResources.forms.length, "Forms");
 
     // window.alert(
     //   "New Repo " + newRepoName + " has been successfully initiated"
