@@ -29,11 +29,7 @@ export const populateUserInfo = async () => {
   let hideDialogBox;
   if (user.accessToken) {
     // after dropzone conversion
-    hideDialogBox = showDialogBox(
-      "Initializing",
-      "Please while we fetch your existing resources.",
-      false
-    );
+    hideDialogBox = showDialogBox("Initializing", "", false);
     user.userData = await userData.json();
   } else {
     return;
