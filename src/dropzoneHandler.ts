@@ -113,7 +113,7 @@ export const showDialogBox = (
       ""
     );
     modalButtonOkEl.onclick = () => {
-      bootstrapModal.hide();
+      if (bootstrapModal._isShown) bootstrapModal.hide();
     };
   } else {
     modalButtonOkEl.className += " no-display";
@@ -121,14 +121,14 @@ export const showDialogBox = (
   bootstrapModal.show();
   if (closeSelf) {
     setTimeout(function () {
-      bootstrapModal.hide();
+      if (bootstrapModal._isShown) bootstrapModal.hide();
     }, 1000 + 1000 * noOfWords);
   }
   return async () => {
     while (bootstrapModal._isTransitioning) {
       await new Promise((r) => setTimeout(r, 100));
     }
-    bootstrapModal.hide();
+    if (bootstrapModal._isShown) bootstrapModal.hide();
     modalButtonOkEl.className = modalButtonOkEl.className.replace(
       "no-display",
       ""

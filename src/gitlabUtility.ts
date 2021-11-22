@@ -112,13 +112,12 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
 
   // else if repo name is invalid, display response
   else {
-    let hideDialogBox = showDialogBox(
+    await hideDialogBox();
+    hideDialogBox = showDialogBox(
       "Duplicate Repository Name",
       "Please enter a new repository name.",
       true
     );
-    const waitingEl = document.getElementById("waiting-div");
-    waitingEl!.style.visibility = "hidden";
   }
 };
 
@@ -126,7 +125,8 @@ const validateRepoName = async (newRepoName: string) => {
   if (newRepoName == "") return false;
   var userRepos: any = await fetch(
     `https://gitlab.pavlovia.org/api/v4/users/${user.userData.id}/projects?access_token=` +
-      user.accessToken
+      user.accessToken +
+      "&per_page=2000"
   );
   userRepos = await userRepos.json();
   return (
