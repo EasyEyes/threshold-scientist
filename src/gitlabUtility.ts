@@ -88,8 +88,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       .setAttribute("disabled", "disabled");
     document.getElementById("gitlab-file-submit")!.className =
       "btn btn-success disabled";
-    document.getElementById("gitlab-file-submit")!.innerText =
-      "Files have been uploaded.";
+    document.getElementById("gitlab-file-submit")!.innerText = "Uploaded";
 
     const actEl = document.getElementById("pavlovia-activate-div");
     actEl!.className = actEl!.className.replace("no-display", "");
