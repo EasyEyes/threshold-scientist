@@ -1,5 +1,5 @@
 import { EasyEyesResources, user } from "./constants";
-import { hideDialogBox, showDialogBox } from "./dropzoneHandler";
+import { showDialogBox } from "./dropzoneHandler";
 import { createRepo, getResourcesListFromRepository } from "./gitlabUtility";
 import { setTab, setTabList } from "./tab";
 
@@ -26,9 +26,10 @@ export const populateUserInfo = async () => {
       window.location.hash.split("&")[0].split("=")[1]
   );
 
+  let hideDialogBox;
   if (user.accessToken) {
     // after dropzone conversion
-    showDialogBox(
+    hideDialogBox = showDialogBox(
       "Initializing",
       "Please while we fetch your existing resources.",
       false

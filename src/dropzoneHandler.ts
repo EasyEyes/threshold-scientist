@@ -14,6 +14,7 @@ import {
 } from "./gitlabUtility";
 import { getExperimentFontList, getExperimentFormList } from "./experimentUtil";
 import XLSX from "xlsx";
+import * as bootstrapImport from "bootstrap";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -27,7 +28,7 @@ export const isUserLoggedIn = () => {
   return user.userData && user.userData.id;
 };
 
-export const showDialogBox = (
+/*export const showDialogBox = (
   title: string,
   body: string,
   exitOnOk: boolean,
@@ -72,6 +73,67 @@ export const hideDialogBox = () => {
   if (el != null) {
     el.style.display = "none";
   }
+};*/
+
+export const updateDialog = (body: string) => {
+  let modalBodyDiv: HTMLElement = document.getElementById(
+    "modalBody"
+  ) as HTMLElement;
+  modalBodyDiv.innerText = body;
+};
+export const showDialogBox = (
+  title: string,
+  body: string,
+  exitOnOk: boolean,
+  closeSelf: boolean = false
+) => {
+  let el: HTMLElement = document.getElementById("exampleModal") as HTMLElement;
+  let bootstrapModal: any = new bootstrapImport.Modal(el);
+  let modalButtonCloseEl: HTMLElement = document.getElementById(
+    "modalButtonClose"
+  ) as HTMLElement;
+  let modalButtonOkEl: HTMLElement = document.getElementById(
+    "modalButtonOk"
+  ) as HTMLElement;
+  let modalTitleDiv: HTMLElement = document.getElementById(
+    "modalTitle"
+  ) as HTMLElement;
+  let modalBodyDiv: HTMLElement = document.getElementById(
+    "modalBody"
+  ) as HTMLElement;
+  let noOfWords = title.split(" ").length;
+  modalTitleDiv.innerText = title;
+  modalBodyDiv.innerHTML = body;
+  modalButtonCloseEl.onclick = () => {
+    bootstrapModal.hide();
+  };
+  if (exitOnOk) {
+    modalButtonOkEl.className = modalButtonOkEl.className.replace(
+      "no-display",
+      ""
+    );
+    modalButtonOkEl.onclick = () => {
+      bootstrapModal.hide();
+    };
+  } else {
+    modalButtonOkEl.className += " no-display";
+  }
+  bootstrapModal.show();
+  if (closeSelf) {
+    setTimeout(function () {
+      bootstrapModal.hide();
+    }, 1000 + 1000 * noOfWords);
+  }
+  return async () => {
+    while (bootstrapModal._isTransitioning) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    bootstrapModal.hide();
+    modalButtonOkEl.className = modalButtonOkEl.className.replace(
+      "no-display",
+      ""
+    );
+  };
 };
 
 export const getFileExtension = (file: any) => {
@@ -169,7 +231,7 @@ const newDz = new Dropzone("#file-dropzone", {
   accept: async (file: any, done) => {
     // authentication check
     if (!isUserLoggedIn()) {
-      showDialogBox(
+      let hideDialogBox = showDialogBox(
         "Error",
         "Not connected to Pavlovia, so nothing can be uploaded.",
         true
@@ -180,7 +242,7 @@ const newDz = new Dropzone("#file-dropzone", {
     // check file type
     const ext = getFileExtension(file);
     if (!isAcceptableExtension(ext)) {
-      showDialogBox(
+      let hideDialogBox = showDialogBox(
         `${file.name} was discarded.`,
         `Sorry, cannot accept any file with extension '.${ext}'`,
         true
@@ -212,7 +274,11 @@ const newDz = new Dropzone("#file-dropzone", {
       uploadedFiles.experimentFile = file;
 
       // preprocess experiment files
-      showDialogBox(`The file ${file.name} is being processed ...`, ``, false);
+      let hideDialogBox = showDialogBox(
+        `The file ${file.name} is being processed ...`,
+        ``,
+        false
+      );
       processFiles([file], (fileList: File[]) => {
         if (fileList.length == 0) {
           hideDialogBox();
@@ -296,7 +362,7 @@ const newDz = new Dropzone("#file-dropzone", {
     }
 
     if (resourcesList.length > 0) {
-      showDialogBox("Now uploading files ...", "", false);
+      let hideDialogBox = showDialogBox("Now uploading files ...", "", false);
 
       // upload resources instantly
       await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(

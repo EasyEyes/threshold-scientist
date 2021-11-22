@@ -11,8 +11,8 @@ import {
 } from "./constants";
 import {
   getFileExtension,
-  hideDialogBox,
   showDialogBox,
+  updateDialog,
 } from "./dropzoneHandler";
 import { _loadFiles } from "./files";
 import { setTab } from "./tab";
@@ -28,7 +28,11 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     return;
   }
 
-  showDialogBox(`Creating Experiment`, `Uploading experiment files: 0%`, false);
+  let hideDialogBox = showDialogBox(
+    `Creating Experiment`,
+    `Uploading experiment files: 0%`,
+    false
+  );
 
   const gitlabRepoNameEl = document.getElementById(
     "new-gitlab-repo-name"
@@ -75,7 +79,12 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     //   "New Repo " + newRepoName + " has been successfully initiated"
     // );
     hideDialogBox();
-    showDialogBox(`Sucess!`, `${newRepoName} has been created.`, false, true);
+    hideDialogBox = showDialogBox(
+      `Sucess!`,
+      `${newRepoName} has been created.`,
+      false,
+      true
+    );
 
     // update repo name input field and btn
     document
@@ -108,7 +117,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
 
   // else if repo name is invalid, display response
   else {
-    showDialogBox(
+    let hideDialogBox = showDialogBox(
       "Duplicate Repository Name",
       "Please enter a new repository name.",
       true
@@ -468,12 +477,7 @@ const populateThresholdRepoOnExperiment = async (gitlabRepo: any) => {
         const progressPercent = Math.round(
           (progress / _loadFiles.length) * 100
         );
-        showDialogBox(
-          "Creating Experiment",
-          `Uploading experiment files: ${progressPercent}%`,
-          false
-        );
-
+        updateDialog(`Uploading experiment files: ${progressPercent}%`);
         resolve(commitResponse);
       });
     });
@@ -809,7 +813,7 @@ export const generateAndUploadCompletionURL = async () => {
         commit_message: "Easy Eyes to Gitlab INIT",
         actions: [commitAction],
       };
-      showDialogBox(
+      let hideDialogBox = showDialogBox(
         `Completion URL Update`,
         `Your Experiment Completion URL is being uploaded.`,
         false,
@@ -854,7 +858,7 @@ export const redirectToProlific = async () => {
 };
 
 export const showPavloviaAdvice = () => {
-  showDialogBox(
+  let hideDialogBox = showDialogBox(
     `USING PAVLOVIA WITHOUT A UNIVERSITY LICENSE`,
     `If you don't have an unlimited license from your university for your Pavlovia account, then Pavlovia will charge you 20 pence per participant. Pavlovia allows you to avoid that fee during evaluation: In Pavlovia, hit PILOTING instead of RUNNING, and use their PILOT button, instead of clicking your study URL, to run your study. Their (reasonable) fee cannot be avoided when you run participants on Prolific. In that case use RUNNING. Also, note that Pavlovia only charges for saved studies. If you set the Pavlovia slider to <i>not</i> save incomplete sessions then you won't be charged for them. Setting that slider allows you to set Pavlovia to RUNNING and still use Prolific's (free) preview feature without incurring Pavlovia charges, provided you quit early.`,
     true
