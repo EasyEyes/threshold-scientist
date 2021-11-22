@@ -87,6 +87,7 @@ export const showDialogBox = (
   exitOnOk: boolean,
   closeSelf: boolean = false
 ) => {
+  console.log("Test Commit");
   let el: HTMLElement = document.getElementById("exampleModal") as HTMLElement;
   let bootstrapModal: any = new bootstrapImport.Modal(el);
   let modalButtonCloseEl: HTMLElement = document.getElementById(
