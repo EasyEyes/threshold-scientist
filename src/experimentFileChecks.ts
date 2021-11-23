@@ -67,13 +67,13 @@ export const validatedCommas = (
   }
 };
 
-var parametersToCheck: any[] = [];
 /**
  * Check that the experiment file is correctly structured; provide errors for any problems
  * @param {DateFrame} experimentDf dataframe-js dataframe of the experiment file content
  * @returns {Object[]} Array of all errors found with the experiment file
  */
 export const validateExperimentDf = (experimentDf: any): EasyEyesError[] => {
+  var parametersToCheck: any[] = [];
   const parameters = experimentDf.listColumns();
   const errors = [];
 
@@ -133,7 +133,8 @@ const areParametersDuplicated = (parameters: string[]): EasyEyesError[] => {
       duplicatesErrors.push(DUPLICATE_PARAMETER(parameter));
     seenParameters.add(parameter);
   }
-  parametersToCheck = [...seenParameters];
+
+  parameters.splice(0, parameters.length, ...seenParameters);
   return duplicatesErrors;
 };
 
@@ -148,7 +149,9 @@ const areAllPresentParametersRecognized = (
   parameters: string[]
 ): EasyEyesError[] => {
   const unrecognized: any[] = [];
-  parametersToCheck = [];
+
+  parameters.splice(0, parameters.length); // parameters = []
+
   const checkIfRecognized = (parameter: any): any => {
     if (!GLOSSARY.hasOwnProperty(parameter)) {
       unrecognized.push({
@@ -156,7 +159,7 @@ const areAllPresentParametersRecognized = (
         closest: similarlySpelledCandidates(parameter, Object.keys(GLOSSARY)),
       });
     } else {
-      parametersToCheck.push(parameter);
+      parameters.push(parameter);
     }
   };
   parameters.forEach(checkIfRecognized);
@@ -166,7 +169,7 @@ const areAllPresentParametersRecognized = (
 const areAllPresentParametersCurrentlySupported = (
   parameters: string[]
 ): EasyEyesError[] => {
-  parametersToCheck = parameters.filter(
+  parameters = parameters.filter(
     (parameter: any) => GLOSSARY[parameter]["availability"] === "now"
   );
   const notYetSupported = parameters.filter(
