@@ -5,11 +5,7 @@ import { splitIntoBlockFiles } from "../threshold/init/blockgen";
 // const { EXPERIMENT_FILE_NOT_FOUND } = require("./errorMessages");
 import { EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
 import { validatedCommas, validateExperimentDf } from "./experimentFileChecks";
-import {
-  dataframeFromPapaParsed,
-  transpose,
-  addUniqueLabelsToDf,
-} from "./utilities";
+import { dataframeFromPapaParsed, addUniqueLabelsToDf } from "./utilities";
 import { user } from "./constants";
 import { newLog, logError } from "./errorLog";
 import { getFileBinaryData } from "./assetUtil";
@@ -74,8 +70,6 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
   df = addUniqueLabelsToDf(df);
   /* ------------------------------- Got errors ------------------------------- */
   const errors = document.getElementById("errors")!;
-  console.log(errors);
-  console.log(validationErrors);
   if (validationErrors.length) {
     validationErrors.forEach((e) => logError(e, errors));
     externalCallback([]);
