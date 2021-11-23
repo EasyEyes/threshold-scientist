@@ -1,7 +1,7 @@
 import JSZip from "jszip";
 import Papa from "papaparse";
 import XLSX from "xlsx";
-
+import { splitIntoBlockFiles } from "../threshold/init/blockgen";
 // const { EXPERIMENT_FILE_NOT_FOUND } = require("./errorMessages");
 import { EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
 import { validatedCommas, validateExperimentDf } from "./experimentFileChecks";
@@ -109,7 +109,14 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
           Math.log10(row.get("thresholdGuess"))
         );
     }
-    splitIntoBlockFilesAndDownload(df);
+    // split into blocks
+    const resultFileList = splitIntoBlockFiles(df);
+
+    // externalCallback must be initialised at the time of initial function
+    // call in function processFiles(). This is a workaround because calling
+    // through Papa.parse calls preppareExperimentForThreshold internally
+    // and thus, we do not have access to its return value.
+    externalCallback(resultFileList);
   }
 };
 
@@ -117,70 +124,6 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
  * Given a dataframe of the correctly formatted experiment parameters, split into appropriate files to be uploaded to Pavlovia.
  * @param {Object} df Dataframe (from data-frame.js) of correctly specified parameters for the experiment.
  */
-const splitIntoBlockFilesAndDownload = (df: any) => {
-  const resultFileList = [];
-
-  // Initialize the set of files to be downloaded as a zip file.
-  // September 2021: Instead we plan to upload to the scientist's Pavlovia account. Might skip zipping.
-  const zip = new JSZip();
-  // Split up into block files
-  const blockIndices: any = { block: [] };
-  df.unique("block")
-    .toDict()
-    ["block"].forEach((blockId: any, index: any) => {
-      // Add an index to our blockCount file (see below) for this block
-      blockIndices["block"].push(index);
-      // Get the parameters from just this block...
-      const blockDf = df.filter((row: any) => row.get("block") === blockId);
-      const blockDict = blockDf.toDict();
-      const columns = Object.keys(blockDict);
-      const data = transpose(columns.map((column) => blockDict[column]));
-      // ... and use them to create a csv file for this block.
-      const blockCSVString = Papa.unparse({ fields: columns, data: data });
-      const blockFileName = "block_" + String(blockId) + ".csv";
-
-      // store block file
-      const csvBlob = new Blob([blockCSVString], { type: "text/csv" });
-      const csvFile = new File([csvBlob], blockFileName, { type: "text/csv" });
-      resultFileList.push(csvFile);
-
-      // Add this block file to the output zip
-      // zip.file(blockFileName, blockCSVString);
-    });
-
-  // Create a "blockCount" file, just one column with the the indices of the blocks
-  const blockCountCSVString = Papa.unparse({
-    fields: ["block"],
-    data: blockIndices.block.map((x: any) => [x]),
-  });
-  const blockCountFileName = "blockCount.csv";
-
-  // store blockCount file
-  const blockCountBlob = new Blob([blockCountCSVString], { type: "text/csv" });
-  const blockCountFile = new File([blockCountBlob], blockCountFileName, {
-    type: "text/csv",
-  });
-  resultFileList.push(blockCountFile);
-
-  // it is expected that the externalCallback function has been initialized.
-  if (externalCallback && resultFileList.length > 0)
-    externalCallback(resultFileList);
-
-  // Add blockCount file to output zip
-  // zip.file(blockCountFileName, blockCountCSVString);
-
-  // Download the zip of files to the user's computer
-  // zip.generateAsync({ type: "base64" }).then((base64) => {
-  //   const link = document.createElement("a");
-  //   link.href = "data:application/zip;base64," + base64;
-  //   link.download = "blocks.zip"; // !
-  //   document.body.appendChild(link);
-  //   link.click();
-  //   document.body.removeChild(link);
-
-  //   // location.href = "data:application/zip;base64," + base64;
-  // });
-};
 
 // ------------------------- Potentially useful legacy code -------------------------------------------------
 /**
