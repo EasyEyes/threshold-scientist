@@ -12,7 +12,6 @@ import {
   showPavloviaAdvice,
 } from "./gitlabUtility";
 import { uploadedFiles } from "./constants";
-import { newLog } from "./errorLog";
 
 import "../css/errors.css";
 
@@ -77,20 +76,3 @@ document.getElementById("form-tab")!.click();
 // gitlab
 // -----------------------------------------
 populateUserInfo();
-
-// Sample error messages
-
-// const errors = document.getElementById("errors")!;
-// newLog(errors, "author", "The author name is missing.", "warning");
-// newLog(
-//   errors,
-//   "targetFont",
-//   `Your targetFont is set incorrectly. Ignore this, this is only for demo purposes. You are all good.<span class="error-hint">This is a hint.</span>`,
-//   "error"
-// );
-// newLog(
-//   errors,
-//   "Done",
-//   "Your experiment.csv file is error free. Upload to Pavlovia now.",
-//   "correct"
-// );

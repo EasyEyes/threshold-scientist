@@ -11,7 +11,7 @@ import {
   addUniqueLabelsToDf,
 } from "./utilities";
 import { user } from "./constants";
-import { newLog, logError } from "./errorLog";
+import { newLog, logError, clearLogs } from "./errorLog";
 import { getFileBinaryData } from "./assetUtil";
 
 let externalCallback: any;
@@ -74,7 +74,8 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
   df = addUniqueLabelsToDf(df);
   /* ------------------------------- Got errors ------------------------------- */
   const errors = document.getElementById("errors")!;
-  console.log(errors);
+  clearLogs(errors);
+
   console.log(validationErrors);
   if (validationErrors.length) {
     validationErrors.forEach((e) => logError(e, errors));

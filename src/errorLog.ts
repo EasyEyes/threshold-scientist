@@ -51,6 +51,10 @@ export const newLog = (
   return errorBox;
 };
 
+export const clearLogs = (parent: HTMLElement) => {
+  while (parent.firstChild) parent.removeChild(parent.firstChild);
+};
+
 function removeFadeOut(e: HTMLElement) {
   e.style.transition = "opacity 0.5s ease";
   e.style.opacity = "0";
