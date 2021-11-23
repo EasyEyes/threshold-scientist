@@ -42,7 +42,7 @@
 /* Style the tab */
 .tab-container {
   position: relative;
-  top: 140px;
+  top: 10px;
 }
 
 .tab {
@@ -94,4 +94,9 @@
 
 #pavlovia-advice {
   cursor: pointer;
+}
+
+#dropbox-forms-div {
+  display: grid;
+  grid-template-columns: 50% 50%;
 }

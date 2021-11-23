@@ -215,7 +215,7 @@
                 <span id="dz-downarrow"> &#8595; </span>
                 any missing fonts & consent/debrief forms.
               </div>
-              <div>
+              <div id="dropbox-forms-div">
                 <form action="/" class="dropzone" id="file-dropzone">
                   <div class="dz-message" data-dz-message>
                     <span id="drop-message-header"
@@ -224,6 +224,17 @@
                     <br />
                   </div>
                 </form>
+                <div class="tab-container">
+                  <!-- Tab buttons -->
+                  <div class="tab">
+                    <button id="font-tab" class="tablinks">Fonts</button>
+                    <button id="form-tab" class="tablinks">Forms</button>
+                  </div>
+                  <!-- Font List -->
+                  <div id="fonts" class="tabcontent"></div>
+                  <!-- Form List -->
+                  <div id="forms" class="tabcontent"></div>
+                </div>
               </div>
               <div id="errors" class="errors"></div>
             </li>
@@ -259,19 +270,19 @@
         </div>
 
         <!-- right section -->
-        <div class="pavlovia-right">
+        <!--<div class="pavlovia-right">
           <div class="tab-container">
-            <!-- Tab buttons -->
+            &lt;!&ndash; Tab buttons &ndash;&gt;
             <div class="tab">
               <button id="font-tab" class="tablinks">Fonts</button>
               <button id="form-tab" class="tablinks">Forms</button>
             </div>
-            <!-- Font List -->
+            &lt;!&ndash; Font List &ndash;&gt;
             <div id="fonts" class="tabcontent"></div>
-            <!-- Form List -->
+            &lt;!&ndash; Form List &ndash;&gt;
             <div id="forms" class="tabcontent"></div>
           </div>
-        </div>
+        </div>-->
       </div>
       <ol id="pavlovia-experiment-url-ol" start="4">
         <li>
@@ -290,7 +301,7 @@
                 type="button"
                 id="gitlab-file-submit"
               >
-                Upload to Pavlovia
+                Upload
               </button>
             </div>
           </div>

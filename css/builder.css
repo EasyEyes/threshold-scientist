@@ -30,7 +30,7 @@
 .pavlovia-section {
   position: relative;
   display: grid;
-  grid-template-columns: 50% 50%;
+  grid-template-columns: 100% 0%;
   column-gap: 10px;
 }
 
