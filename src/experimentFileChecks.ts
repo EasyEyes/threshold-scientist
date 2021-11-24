@@ -70,13 +70,13 @@ export const validatedCommas = (
   }
 };
 
-var parametersToCheck: string[] = [];
 /**
  * Check that the experiment file is correctly structured; provide errors for any problems
  * @param {DateFrame} experimentDf dataframe-js dataframe of the experiment file content
  * @returns {Object[]} Array of all errors found with the experiment file
  */
 export const validateExperimentDf = (experimentDf: any): EasyEyesError[] => {
+  var parametersToCheck: string[] = [];
   const parameters = experimentDf.listColumns();
   const errors = [];
 
@@ -169,8 +169,10 @@ const areAllPresentParametersRecognized = (
       recognized.push(parameter);
     }
   };
+
   parameters.forEach(checkIfRecognized);
-  parametersToCheck = [...recognized];
+  parameters.splice(0, parameters.length, ...recognized);
+
   return unrecognized.map(UNRECOGNIZED_PARAMETER);
 };
 
@@ -183,7 +185,8 @@ const areAllPresentParametersCurrentlySupported = (
   const notYetSupported = parameters.filter(
     (parameter: any) => GLOSSARY[parameter]["availability"] !== "now"
   );
-  parametersToCheck = parameters.filter(
+
+  parameters = parameters.filter(
     (parameter: any) => GLOSSARY[parameter]["availability"] === "now"
   );
   return notYetSupported.map(NOT_YET_SUPPORTED_PARAMETER);
