@@ -1,5 +1,5 @@
 import { GLOSSARY } from "../threshold/parameters/glossary";
-import { verballyEnumerate } from "./utilities";
+import { getNumericalSuffix, verballyEnumerate } from "./utilities";
 
 export interface EasyEyesError {
   name: string;
@@ -7,7 +7,7 @@ export interface EasyEyesError {
   hint: string;
   context: string;
   kind: "error" | "warning" | "correct";
-  parameters?: string[];
+  parameters: string[];
 }
 
 export const UNBALANCED_COMMAS = (
@@ -31,7 +31,7 @@ export const UNBALANCED_COMMAS = (
     name: "Unbalanced commas",
     message:
       "Uh oh, looks like we found an inconsistent number of commas. Each row needs to have the same number of commas, so that we can correctly read your experiment.",
-    hint: `Try this: <br/> ${hintBlob}`,
+    hint: `Try this:<br/>${hintBlob}`,
     kind: "error",
     context: "preprocessor",
     parameters: offendingParameters.map((value) => value.parameter),
@@ -43,8 +43,8 @@ export const ILL_FORMED_UNDERSCORE_PARAM = (
 ): EasyEyesError => {
   return {
     name: `_Underscore parameter incorrectly formatted`,
-    message: `Experiment-scope parameters, such as "${parameter}", start with an underscore and require exactly one value, as they don't vary across conditions.`,
-    hint: `Make sure that you give "${parameter}" a value for only the very first column. The "${parameter}" row should look something like: "${parameter}, [your ${parameter} value]", with the appropriate amount of trailing commas but not other values.`,
+    message: `Experiment-scope parameters, such as <span class="error-parameter">${parameter}</span>, start with an underscore and require exactly one value, as they don't vary across conditions.`,
+    hint: `Make sure that you give <span class="error-parameter">${parameter}</span> a value for only the very first column. The <span class="error-parameter">${parameter}</span> row should look something like: "${parameter}, [your ${parameter} value]", with the appropriate amount of trailing commas but no other values.`,
     kind: "error",
     context: "preprocessor",
     parameters: [parameter],
@@ -59,16 +59,18 @@ export const INCORRECT_PARAMETER_TYPE = (
   const offendingMessage = offendingValues.map(
     (offending) => ` "${offending.value}" [condition ${offending.block}]`
   );
-  let message: string = `All values for the parameter "${parameter}" must be "${correctType}" type.`;
+  let message: string = `All values for the parameter <span class="error-parameter">${parameter}</span> must be "${correctType}" type.`;
   if (categories) {
     message = message + ` Valid categories are: ${categories.join(", ")}.`;
   }
+  console.log("offendingValues, inocrrect type: ", offendingValues);
   return {
-    name: `Parameter "${parameter}" contains values of the wrong type`,
+    name: `Parameter contains values of the wrong type`,
     message: message,
     hint: `We're having trouble with the following values, try double checking them:${offendingMessage}.`,
     context: "preprocessor",
     kind: "error",
+    parameters: [parameter],
   };
 };
 
@@ -81,6 +83,7 @@ export const EXPERIMENT_FILE_NOT_FOUND = (
     message: `Sorry, we weren't able to find an csv file, e.g., "experiment.csv", in the files that you provided. This file is required, as it defines your entire experiment -- we can't make your movie without your don't provide a screenplay.`,
     hint: `Make sure you include exactly one ".csv" file among the files you upload. This file should be in row-major order, ie one row representing each parameter, and should follow the specification laid out in the EasyEyes Threshold Glossary.`,
     kind: "error",
+    parameters: ["FILE"],
   };
 };
 
@@ -88,69 +91,76 @@ export const NO_CSV_FILE_FOUND: EasyEyesError = {
   name: "No CSV files provided",
   message:
     "When looking for an experiment file, we couldn't even find one .csv file as a candidate.",
-  hint: `Make sure you provide a file with the ".csv" extension amongst your files -- this file will be used as your experiment specification.`,
+  hint: `Make sure you provide a file with the ".csv" extension amongst your files &#8212 this file will be used as your experiment specification.`,
   context: "preprocessor",
   kind: "error",
+  parameters: ["FILE"],
 };
 
 export const TOO_MANY_CSV_FILES_FOUND: EasyEyesError = {
   name: "Multiple CSV files provided",
   message:
     "When looking for an experiment file, we found more than one .csv file, and we don't know which one to pick!",
-  hint: `Make sure you provide a file with the ".csv" extension amongst your files -- this file will be used as your experiment specification.`,
+  hint: `Make sure you provide a file with the ".csv" extension amongst your files &#8212 this file will be used as your experiment specification.`,
   context: "preprocessor",
   kind: "error",
+  parameters: ["FILE"],
 };
 
-export const PARAMETERS_NOT_ALPHABETICAL: EasyEyesError = {
-  name: "Parameters aren't alphabetical",
-  message:
-    "Uh oh! Looks like your parameters are out of order. Keeping everything alphabetical will make working with your experiment file easier.",
-  hint: "Try reordering your parameters into alphabetical order",
-  context: "preprocessor",
-  kind: "error",
+export const PARAMETERS_NOT_ALPHABETICAL = (
+  firstOffendingParameter: string
+): EasyEyesError => {
+  return {
+    name: "Parameters aren't alphabetical",
+    message:
+      "Uh oh! Looks like your parameters are out of order. Keeping everything alphabetical will make working with your experiment file easier.",
+    hint: `Sort your parameters into alphabetical order. Try starting with <span class="error-parameter">${firstOffendingParameter}</span> &#8212 that's the first misplaced parameter we found.`,
+    context: "preprocessor",
+    kind: "error",
+    parameters: [firstOffendingParameter],
+  };
 };
 
 export const DUPLICATE_PARAMETER = (parameter: string): EasyEyesError => {
   return {
-    name: `Parameter \'${parameter}\' is duplicated`,
-    message: `The parameter ${parameter} appears more than once! Unintended behavior lurks ahead...`,
-    hint: `Remove duplicate references to ${parameter} -- each parameter should only be set once per experiment file, so we know we're using exactly the value you want`,
+    name: `Parameter is duplicated`,
+    message: `The parameter <span class="error-parameter">${parameter}</span> appears more than once! Unintended behavior lurks ahead...`,
+    hint: `Remove duplicate references to <span class="error-parameter">${parameter}</span> &#8212 each parameter should only be set once per experiment file, so we know we're using exactly the value you want.`,
     context: "preprocessor",
     kind: "error",
+    parameters: [parameter],
   };
 };
 
 // TODO create type to match report object structure
 export const UNRECOGNIZED_PARAMETER = (report: any): EasyEyesError => {
   return {
-    name: `Parameter \'${report.name}\' is unrecognized`,
-    message: `Sorry, we couldn't recognize the parameter ${report.name}. The closest supported parameter is "${report.closest[0]}" -- is that what you meant?`,
-    hint: `Make sure that you are only including parameter which are supported, and remember that all parameters are case-sensitive. Double check the spelling of "${report.name}". If you're confident it ought to be supported. The other closest supported parameters found were ${report.closest[1]}, ${report.closest[2]}, and ${report.closest[3]}.`,
+    name: `Parameter is unrecognized`,
+    message: `Sorry, we couldn't recognize the parameter <span class="error-parameter">${report.name}</span>. The closest supported parameter is <span class="error-parameter">${report.closest[0]}</span> &#8212 is that what you meant?`,
+    hint: `Make sure that you are only including parameter which are supported, and remember that all parameters are case-sensitive. Double check the spelling of <span class="error-parameter">${report.name}</span> if you think it ought to be supported. The other closest supported parameters found were <span class="error-parameter">${report.closest[1]}</span> and <span class="error-parameter">${report.closest[2]}</span>.`,
     context: "preprocessor",
     kind: "error",
+    parameters: [report.name],
   };
 };
 
 export const NOT_YET_SUPPORTED_PARAMETER = (
   parameter: string
 ): EasyEyesError => {
-  /*    let glossaryKey = Object.keys(GLOSSARY).find(i => i == parameter);
-    let glossaryObject = glossaryKey && GLOSSARY[glossaryKey];*/
   return {
-    name: `Parameter \'${parameter}\' is not yet supported`,
-    message: `Apologies from the EasyEyes team! The parameter "${parameter}" isn't supported yet. We hope to implement the parameter ${GLOSSARY[parameter]?.availability}.`,
-    hint: "Unfortunately, you won't be able to use this parameter at this time. Please, try again later. If the parameter is important to you, we'd encourage you to reach out and email the EasyEyes team at easyeyes.team@gmail.com",
+    name: `Parameter is not yet supported`,
+    message: `Apologies from the EasyEyes team! The parameter <span class="error-parameter">${parameter}</span> isn't supported yet. We hope to implement the parameter ${GLOSSARY[parameter]?.availability}.`,
+    hint: `Unfortunately, you won't be able to use this parameter at this time. Please, try again later. If the parameter is important to you, we'd encourage you to reach out to the <a href="mailto:easyeyes.team@gmail.com?subject=Please add support for ${parameter}.">EasyEyes team</a>.`,
     context: "preprocessor",
     kind: "error",
+    parameters: [parameter],
   };
 };
 
 export const NO_BLOCK_PARAMETER: EasyEyesError = {
-  name: "Parameter 'block' is not present.",
-  message:
-    "We weren't able to find a parameter named 'block'. This parameter is required, as it tells us how to organize your study.",
-  hint: "Be sure to include a 'block' parameter in your experiment file. The values should be increasing from 1 (or 0, if 'zeroBasedNumberingBool' is set to true). Each condition, ie column, needs one block number, but a block can have any number of conditions.",
+  name: "Parameter is not present.",
+  message: `We weren't able to find a parameter named <span class="error-parameter">block</span>. This parameter is required, as it tells us how to organize your study.`,
+  hint: `Be sure to include a <span class="error-parameter">block</span>block parameter in your experiment file. The values should be increasing from 1 (or 0, if <span class="error-parameter">zeroBasedNumberingBool</span> is set to true). Each condition, ie column, needs one block number, but a block can have any number of conditions.`,
   context: "preprocessor",
   kind: "error",
   parameters: ["block"],
@@ -165,7 +175,7 @@ export const INVALID_STARTING_BLOCK = (
   return {
     name: "Invalid initial value",
     message: `The first value in your <span class="error-parameter">block</span> row isn't correct; it is <em>${actualStartingValue}</em>, when it ought to be <em>${correctStartingValue}</em>.`,
-    hint: `Change your <span class="error-parameter">block</span> row to start with ${correctStartingValue}, with each value either the same -- or one larger --  than the previous. If you'd like the blocks to start from ${complementaryStart} instead, set <span class="error-parameter">_zeroBasedNumberingBool</span> to ${!zeroBasedNumberingBool}.`,
+    hint: `Change your <span class="error-parameter">block</span> row to start with ${correctStartingValue}, with each value either the same &#8212 or one larger &#8212 than the previous. If you'd like the blocks to start from ${complementaryStart} instead, set <span class="error-parameter">_zeroBasedNumberingBool</span> to ${!zeroBasedNumberingBool}.`,
     context: "preprocessor",
     kind: "error",
     parameters: ["block"],
@@ -191,21 +201,16 @@ export const NONSEQUENTIAL_BLOCK_VALUE = (
     "</span>";
   const nonsequentialIndicies: string[] = nonsequentials.map(
     (nonsequential) => {
-      const suffix =
-        nonsequential.index === 2
-          ? "nd"
-          : nonsequential.index === 3
-          ? "rd"
-          : "th";
+      const suffix = getNumericalSuffix(nonsequential.index + 1);
       return `${nonsequential.index + 1}${suffix}`;
     }
   );
-  const hintBlob = `<span class="error-parameter">block,${illustratedValues}</span><br/>
-                    The ${verballyEnumerate(
-                      nonsequentialIndicies
-                    )} values are nonsequential, as highlighted in 
-                    <span style="color: #e02401;">red</span>.`;
   const plural = nonsequentials.length > 1;
+  const hintBlob = `<span class="error-parameter">block,${illustratedValues}</span><br/>
+                    The ${verballyEnumerate(nonsequentialIndicies)} value${
+    plural ? "s are" : " is"
+  } nonsequential, as highlighted in 
+                    <span style="color: #e02401;">red</span>.`;
   return {
     name: `Nonsequential value${plural ? "s" : ""}`,
     message: `Looks like we've got ${
@@ -217,5 +222,41 @@ export const NONSEQUENTIAL_BLOCK_VALUE = (
     context: "preprocessor",
     kind: "error",
     parameters: ["block"],
+  };
+};
+
+export const NO_RESPONSE_POSSIBLE = (
+  conditionsLacking: number[] = [],
+  zeroIndexed = false,
+  totalNumberOfConditions = 0
+): EasyEyesError => {
+  const startingCondition = zeroIndexed ? 0 : 1;
+  const plural = conditionsLacking.length > 1 ? "s" : "";
+  const whereNotPermitted =
+    conditionsLacking.length &&
+    conditionsLacking.length !== totalNumberOfConditions
+      ? `the ${verballyEnumerate(
+          conditionsLacking.map(
+            (x) =>
+              String(x + startingCondition) +
+              getNumericalSuffix(x + startingCondition)
+          ),
+          "or"
+        )} condition${plural}.`
+      : `any condition.`;
+  const hintBlob = `If you intend to collect data from participant, make sure that, in each condition, at least one of <span class="error-parameter">responseClickedBool</span>, <span class="error-parameter">responseTypedBool</span>, or <span class="error-parameter">responseEasyEyesKeypadBool</span> is true. If you'd like to simulate a participant, set <span class="error-parameter">simulateParticipantBool</span> to true instead. In your case, no response modality was permitted in ${whereNotPermitted}`;
+  return {
+    name: "No response permitted",
+    message:
+      "At the moment, your experiment wouldn't allow participants to respond. Whether it's by typing, clicking, or from their phone, you have to give your participant at least some way to respond.",
+    hint: hintBlob,
+    context: "preprocessor",
+    kind: "error",
+    parameters: [
+      "responseClickedBool",
+      "responseTypedBool",
+      "responseTypedEasyEyesKeypadBool",
+      "simulateParticipantBool",
+    ],
   };
 };

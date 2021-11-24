@@ -18,9 +18,12 @@ import {
   UNBALANCED_COMMAS,
   INVALID_STARTING_BLOCK,
   NONSEQUENTIAL_BLOCK_VALUE,
+  NO_RESPONSE_POSSIBLE,
 } from "./errorMessages";
 import { GLOSSARY } from "../threshold/parameters/glossary";
 import { isNumeric, levDist, arraysEqual } from "./utilities";
+
+var zeroIndexed: boolean;
 
 export const validatedCommas = (
   parsed: Papa.ParseResult<string[]>
@@ -67,13 +70,13 @@ export const validatedCommas = (
   }
 };
 
+var parametersToCheck: string[] = [];
 /**
  * Check that the experiment file is correctly structured; provide errors for any problems
  * @param {DateFrame} experimentDf dataframe-js dataframe of the experiment file content
  * @returns {Object[]} Array of all errors found with the experiment file
  */
 export const validateExperimentDf = (experimentDf: any): EasyEyesError[] => {
-  var parametersToCheck: any[] = [];
   const parameters = experimentDf.listColumns();
   const errors = [];
 
@@ -100,6 +103,9 @@ export const validateExperimentDf = (experimentDf: any): EasyEyesError[] => {
   // Check parameter values
   errors.push(...areParametersOfTheCorrectType(experimentDf));
 
+  // Verify there is at least one response method turned on
+  errors.push(...isResponsePossible(experimentDf));
+
   // Remove empty errors (FUTURE ought to be unnecessary, find root cause)
   return errors.filter((error) => error) as EasyEyesError[];
 };
@@ -113,10 +119,12 @@ const areParametersAlphabetical = (
   parameters: string[]
 ): EasyEyesError | undefined => {
   const originalOrder = [...parameters];
-  const correctOrder = [...parameters].sort();
-  if (!arraysEqual(originalOrder, correctOrder)) {
-    // TODO find exactly where the arrays are out of order
-    return PARAMETERS_NOT_ALPHABETICAL;
+  let previousParameter = originalOrder[0];
+  for (let i = 1; i < originalOrder.length; i++) {
+    if (originalOrder[i] < previousParameter) {
+      return PARAMETERS_NOT_ALPHABETICAL(originalOrder[i]);
+    }
+    previousParameter = originalOrder[i];
   }
 };
 
@@ -149,31 +157,34 @@ const areAllPresentParametersRecognized = (
   parameters: string[]
 ): EasyEyesError[] => {
   const unrecognized: any[] = [];
+  const recognized: string[] = [];
 
-  parameters.splice(0, parameters.length); // parameters = []
-
-  const checkIfRecognized = (parameter: any): any => {
+  const checkIfRecognized = (parameter: string): any => {
     if (!GLOSSARY.hasOwnProperty(parameter)) {
       unrecognized.push({
         name: parameter,
         closest: similarlySpelledCandidates(parameter, Object.keys(GLOSSARY)),
       });
     } else {
-      parameters.push(parameter);
+      recognized.push(parameter);
     }
   };
   parameters.forEach(checkIfRecognized);
+  parametersToCheck = [...recognized];
   return unrecognized.map(UNRECOGNIZED_PARAMETER);
 };
 
 const areAllPresentParametersCurrentlySupported = (
   parameters: string[]
 ): EasyEyesError[] => {
-  parameters = parameters.filter(
-    (parameter: any) => GLOSSARY[parameter]["availability"] === "now"
+  parameters = parameters.filter((parameter: any) =>
+    GLOSSARY.hasOwnProperty(parameter)
   );
   const notYetSupported = parameters.filter(
     (parameter: any) => GLOSSARY[parameter]["availability"] !== "now"
+  );
+  parametersToCheck = parameters.filter(
+    (parameter: any) => GLOSSARY[parameter]["availability"] === "now"
   );
   return notYetSupported.map(NOT_YET_SUPPORTED_PARAMETER);
 };
@@ -193,7 +204,7 @@ const isBlockPresentAndProper = (df: any): EasyEyesError[] => {
 
   // Check the first value
   // TODO use paramReader -- handling booleans again here is hacky
-  const zeroIndexed: boolean =
+  zeroIndexed =
     (df.listColumns().includes("zeroBasedNumberingBool") &&
       df.getRow(0).get("zeroBasedNumberingBool").toLowerCase() === "true") ||
     (df.listColumns().includes("_zeroBasedNumberingBool") &&
@@ -225,7 +236,6 @@ const isBlockPresentAndProper = (df: any): EasyEyesError[] => {
     previousBlockValue = value;
   });
   if (nonsequentialValues.length) {
-    console.log("nonsequentialValues: ", nonsequentialValues);
     blockValueErrors.push(
       NONSEQUENTIAL_BLOCK_VALUE(nonsequentialValues, blockValues)
     );
@@ -355,7 +365,7 @@ const areParametersOfTheCorrectType = (df: any): EasyEyesError[] => {
  * @returns {String[]}
  */
 const similarlySpelledCandidates = (
-  proposedParameter: string[],
+  proposedParameter: string,
   parameters: string[],
   numberOfCandidatesToReturn: number = 4
 ): string[] => {
@@ -364,6 +374,35 @@ const similarlySpelledCandidates = (
       levDist(proposedParameter, a) - levDist(proposedParameter, b)
   );
   return closest.slice(0, numberOfCandidatesToReturn - 1);
+};
+
+const isResponsePossible = (df: any): EasyEyesError[] => {
+  const responseMedia = [
+    "responseClickedBool",
+    "responseTypedBool",
+    "responseTypedEasyEyesKeypadBool",
+    "simulateParticipantBool",
+  ];
+  const includedMedia = responseMedia.filter((responseParameter: string) =>
+    df.listColumns().includes(responseParameter)
+  );
+  if (!includedMedia.length) return [NO_RESPONSE_POSSIBLE()];
+  const responseOptionsDf = df.select(...includedMedia).toArray();
+  const conditionAllowsResponse: boolean[] = responseOptionsDf.map(
+    (row: string[]) => row.some((s: string) => s.toLowerCase() === "true")
+  );
+  const conditionsWithoutResponse: number[] = conditionAllowsResponse
+    .map((responsePresent: boolean, i: number) => (!responsePresent ? i : -1))
+    .filter((x) => x > -1);
+  if (conditionsWithoutResponse.length)
+    return [
+      NO_RESPONSE_POSSIBLE(
+        conditionsWithoutResponse,
+        zeroIndexed,
+        conditionAllowsResponse.length
+      ),
+    ];
+  return [];
 };
 
 const _getDuplicateValuesAndIndicies = (

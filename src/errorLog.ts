@@ -3,13 +3,13 @@ import { EasyEyesError } from "./errorMessages";
 
 export const logError = (error: EasyEyesError, parent: HTMLElement) => {
   const errorParameters = error.parameters
-    ? `<span class="error-parameter">${error.parameters.join(", ")}</span>`
+    ? `<span class="error-parameter">${error.parameters.join("<br/>")}</span>`
     : "";
   const errorTitle = `${errorParameters}<br/>${error.name}`;
   const errorBody =
     error.message +
     "<br/>" +
-    (error.hint ? `<span class="error-hint">${error.hint}</span>` : "");
+    (error.hint ? `<p class="error-hint">${error.hint}</p>` : "");
   newLog(parent, errorTitle, errorBody, error.kind || "error");
 };
 
@@ -30,8 +30,8 @@ export const newLog = (
       : "error-error"
   }`;
   errorBox.innerHTML = `<p class="error-line">
-  <span class="error-key">${keyMessage}</span>
-  <span class="error-body">${message}</span>
+  <p class="error-key">${keyMessage}</p>
+  <p class="error-body">${message}</p>
 </p>
 <p class="error-time">${
     uploadedFiles.experimentFile.name

@@ -177,7 +177,10 @@ export const arraysEqual = <T>(a: T[], b: T[]): boolean => {
   return true;
 };
 
-export const verballyEnumerate = (individuals: string[]): string => {
+export const verballyEnumerate = (
+  individuals: string[],
+  finalConnector: string = "and"
+): string => {
   if (individuals.length === 1) return individuals[0];
   let enumeratedString = "";
   for (let i = 0; i < individuals.length; i++) {
@@ -186,8 +189,21 @@ export const verballyEnumerate = (individuals: string[]): string => {
       enumeratedString += String(individuals[i]) + ", ";
     } else {
       // Last individual
-      enumeratedString += "and " + String(individuals[i]);
+      enumeratedString += finalConnector + " " + String(individuals[i]);
     }
   }
   return enumeratedString;
+};
+
+export const getNumericalSuffix = (n: number): string => {
+  switch (Math.abs(Number(n))) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
 };

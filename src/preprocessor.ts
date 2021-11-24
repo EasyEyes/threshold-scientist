@@ -3,7 +3,7 @@ import Papa from "papaparse";
 import XLSX from "xlsx";
 
 // const { EXPERIMENT_FILE_NOT_FOUND } = require("./errorMessages");
-import { EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
+import { EasyEyesError, EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
 import { validatedCommas, validateExperimentDf } from "./experimentFileChecks";
 import {
   dataframeFromPapaParsed,
@@ -67,9 +67,17 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
   // Create a dataframe for easy data manipulation.
   let df = dataframeFromPapaParsed(parsedContent);
   // Run the compiler checks on our experiment
-  const validationErrors = unbalancedCommasError
-    ? [unbalancedCommasError, ...validateExperimentDf(df)]
-    : validateExperimentDf(df);
+  const validationErrors = [] as EasyEyesError[];
+  try {
+    validationErrors.push(
+      ...(unbalancedCommasError
+        ? [unbalancedCommasError, ...validateExperimentDf(df)]
+        : validateExperimentDf(df))
+    );
+  } catch (e) {
+    console.error("Unable to validate experiment file", e);
+    if (unbalancedCommasError) validationErrors.push(unbalancedCommasError);
+  }
 
   df = addUniqueLabelsToDf(df);
   /* ------------------------------- Got errors ------------------------------- */
