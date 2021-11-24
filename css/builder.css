@@ -105,6 +105,7 @@
 }
 #new-gitlab-repo-name {
   width: 50%;
+  min-width: fit-content;
   flex: none;
 }
 #new-gitlab-repo-name::placeholder {
