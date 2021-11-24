@@ -78,10 +78,11 @@ export const validatedCommas = (
 export const validateExperimentDf = (experimentDf: any): EasyEyesError[] => {
   var parametersToCheck: string[] = [];
   const parameters = experimentDf.listColumns();
-  const errors = [];
+  let errors: EasyEyesError[] = [];
 
   // Check parameters are alphabetical
-  errors.push(areParametersAlphabetical(parameters));
+  const parametersArentAlphabetical = areParametersAlphabetical(parameters);
+  if (parametersArentAlphabetical) errors.push(parametersArentAlphabetical);
   // Alphabetize experimentDf
   experimentDf = experimentDf.restructure(experimentDf.listColumns().sort());
   parametersToCheck.push(...experimentDf.listColumns());
@@ -107,7 +108,12 @@ export const validateExperimentDf = (experimentDf: any): EasyEyesError[] => {
   errors.push(...isResponsePossible(experimentDf));
 
   // Remove empty errors (FUTURE ought to be unnecessary, find root cause)
-  return errors.filter((error) => error) as EasyEyesError[];
+  errors = errors
+    .filter((error) => error)
+    .sort((errorA, errorB) =>
+      errorA.parameters[0] > errorB.parameters[0] ? 1 : -1
+    );
+  return errors;
 };
 
 /**
