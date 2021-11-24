@@ -83,6 +83,7 @@
   border-top: none;
   padding-left: 50px;
   text-indent: -30px;
+  overflow-wrap: break-word;
 }
 
 .pavlovia-header {
@@ -99,4 +100,9 @@
 #dropbox-forms-div {
   display: grid;
   grid-template-columns: 50% 50%;
+}
+
+#drop-message-header-div {
+  display: flex;
+  justify-content: center;
 }

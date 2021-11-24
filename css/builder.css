@@ -83,15 +83,12 @@
 
 .dz-button,
 .dz-message * {
-  position: relative;
-  top: 0px;
-  left: 40px;
   color: #999 !important;
+  overflow-wrap: break-word;
 }
 
 #drop-message-header {
   position: relative;
-  margin-left: -25px;
   font-weight: bold;
   font-size: 1rem;
   color: rgb(170, 170, 170) !important;
