@@ -63,7 +63,6 @@ export const INCORRECT_PARAMETER_TYPE = (
   if (categories) {
     message = message + ` Valid categories are: ${categories.join(", ")}.`;
   }
-  console.log("offendingValues, inocrrect type: ", offendingValues);
   return {
     name: `Parameter contains values of the wrong type`,
     message: message,
@@ -246,10 +245,10 @@ export const NO_RESPONSE_POSSIBLE = (
       : `any condition.`;
   const hintBlob = `If you intend to collect data from participant, make sure that, in each condition, at least one of <span class="error-parameter">responseClickedBool</span>, <span class="error-parameter">responseTypedBool</span>, or <span class="error-parameter">responseEasyEyesKeypadBool</span> is true. If you'd like to simulate a participant, set <span class="error-parameter">simulateParticipantBool</span> to true instead. In your case, no response modality was permitted in ${whereNotPermitted}`;
   return {
-    name: "No response permitted",
+    name: "Experiment lacks any response",
     message:
-      "At the moment, your experiment wouldn't allow participants to respond. Whether it's by typing, clicking, or from their phone, you have to give your participant at least some way to respond.",
-    hint: hintBlob,
+      "At the moment, your experiment doesn't allow any response to the stimulus, so the test would wait forever. Whether it's a simulated response or the participant typing, clicking, or tapping (their phone), the test needs some kind of response.",
+    hint: "",
     context: "preprocessor",
     kind: "error",
     parameters: [

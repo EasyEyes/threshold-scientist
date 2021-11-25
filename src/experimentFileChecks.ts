@@ -22,6 +22,7 @@ import {
 } from "./errorMessages";
 import { GLOSSARY } from "../threshold/parameters/glossary";
 import { isNumeric, levDist, arraysEqual } from "./utilities";
+import { Modal } from "bootstrap";
 
 var zeroIndexed: boolean;
 
@@ -392,23 +393,42 @@ const isResponsePossible = (df: any): EasyEyesError[] => {
     "responseTypedEasyEyesKeypadBool",
     "simulateParticipantBool",
   ];
+  // Modalities the experimenter specified
   const includedMedia = responseMedia.filter((responseParameter: string) =>
     df.listColumns().includes(responseParameter)
   );
-  if (!includedMedia.length) return [NO_RESPONSE_POSSIBLE()];
-  const responseOptionsDf = df.select(...includedMedia).toArray();
-  const conditionAllowsResponse: boolean[] = responseOptionsDf.map(
-    (row: string[]) => row.some((s: string) => s.toLowerCase() === "true")
+  // Those that they didn't
+  const excludedMedia = responseMedia.filter(
+    (responseParameter: string) => !df.listColumns().includes(responseParameter)
   );
-  const conditionsWithoutResponse: number[] = conditionAllowsResponse
-    .map((responsePresent: boolean, i: number) => (!responsePresent ? i : -1))
-    .filter((x) => x > -1);
+  // Default values to use for the ones they didn't
+  const defaults = excludedMedia.map(
+    (modality: string) => GLOSSARY[modality].default as string
+  );
+  // The values for each included modality, for each condition of the experiment
+  const conditions = df.select(...includedMedia).toArray();
+  // Finding those problematic conditions which...
+  const conditionsWithoutResponse: number[] = [];
+  conditions.forEach((row: string[], conditionNumber: number) => {
+    // ... don't have a modality explictly allowed by the experimenter
+    if (
+      !(
+        row.some((bool: string) => bool.toLowerCase() === "true") ||
+        // ... or a modality which is true by default
+        excludedMedia.some(
+          (__: string, i: number) => defaults[i].toLowerCase() === "true"
+        )
+      )
+    )
+      conditionsWithoutResponse.push(conditionNumber);
+  });
+  // Return an error if there are any offending conditions
   if (conditionsWithoutResponse.length)
     return [
       NO_RESPONSE_POSSIBLE(
         conditionsWithoutResponse,
         zeroIndexed,
-        conditionAllowsResponse.length
+        conditions.length
       ),
     ];
   return [];
