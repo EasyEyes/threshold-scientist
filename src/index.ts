@@ -10,6 +10,7 @@ import {
   redirectToProlific,
   generateAndUploadCompletionURL,
   showPavloviaAdvice,
+  redirectToProlificToViewActiveStudies,
 } from "./gitlabUtility";
 import { uploadedFiles } from "./constants";
 
@@ -26,7 +27,7 @@ const addOnClickToEl = (elementId: string, handler: any) => {
 addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
 addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
 addOnClickToEl("prolific-redirect-btn", redirectToProlific);
-addOnClickToEl("return-to-prolific", redirectToProlific);
+addOnClickToEl("return-to-prolific", redirectToProlificToViewActiveStudies);
 addOnClickToEl("pavlovia-advice", showPavloviaAdvice);
 
 document

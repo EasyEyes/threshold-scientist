@@ -832,9 +832,9 @@ export const generateAndUploadCompletionURL = async () => {
   }
 };
 
-/*export const redirectToProlific = () => {
-  window.open("https://www.prolific.co/auth/accounts/login/", "_blank");
-};*/
+export const redirectToProlificToViewActiveStudies = () => {
+  window.open("https://app.prolific.co/researcher/studies/active", "_blank");
+};
 
 export const redirectToProlific = async () => {
   await generateAndUploadCompletionURL();
