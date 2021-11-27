@@ -85,10 +85,13 @@ export const showDialogBox = (
   title: string,
   body: string,
   exitOnOk: boolean,
-  closeSelf: boolean = false
+  closeSelf: boolean = false,
+  backdropEffect: boolean = true
 ) => {
   let el: HTMLElement = document.getElementById("exampleModal") as HTMLElement;
-  let bootstrapModal: any = new bootstrapImport.Modal(el);
+  let bootstrapModal: any = new bootstrapImport.Modal(el, {
+    backdrop: backdropEffect,
+  });
   let modalButtonCloseEl: HTMLElement = document.getElementById(
     "modalButtonClose"
   ) as HTMLElement;
