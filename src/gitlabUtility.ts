@@ -809,12 +809,6 @@ export const generateAndUploadCompletionURL = async () => {
         commit_message: "Easy Eyes to Gitlab INIT",
         actions: [commitAction],
       };
-      let hideDialogBox = showDialogBox(
-        `Completion URL Update`,
-        `Your Experiment Completion URL is being uploaded.`,
-        false,
-        true
-      );
       var commitFile = await fetch(
         "https://gitlab.pavlovia.org/api/v4/projects/" +
           user.newRepo.id +

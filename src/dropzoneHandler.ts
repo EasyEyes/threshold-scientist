@@ -280,6 +280,8 @@ const newDz = new Dropzone("#file-dropzone", {
       let hideDialogBox = showDialogBox(
         `The file ${file.name} is being processed ...`,
         ``,
+        false,
+        false,
         false
       );
       processFiles([file], (fileList: File[]) => {
