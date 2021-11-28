@@ -79,7 +79,8 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       `Sucess!`,
       `${newRepoName} has been created.`,
       false,
-      true
+      true,
+      false
     );
 
     // update repo name input field and btn
