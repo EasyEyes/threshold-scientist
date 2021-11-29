@@ -7,7 +7,7 @@
 .download-icon-box {
   text-align: center;
   display: block;
-  font-size: 4rem;
+  font-size: 3rem;
   margin: 0;
   padding: 0;
   line-height: 100%;
@@ -86,6 +86,7 @@
 }
 
 .dropzone {
+  padding: 1rem !important;
   min-height: 0px !important;
 }
 
@@ -93,7 +94,7 @@
   position: relative;
   top: 10px;
   border: 1px solid #ccc;
-  height: 180px !important;
+  /* height: 180px !important; */
 }
 
 .dz-button,
