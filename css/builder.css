@@ -1,3 +1,18 @@
+.dz-preview,
+.dz-preview *,
+.dz-image {
+  display: none !important;
+}
+
+.download-icon-box {
+  text-align: center;
+  display: block;
+  font-size: 4rem;
+  margin: 0;
+  padding: 0;
+  line-height: 100%;
+}
+
 #header-title {
   display: flex;
   justify-content: space-between;
@@ -88,6 +103,7 @@
 }
 
 #drop-message-header {
+  padding: 0;
   position: relative;
   font-weight: bold;
   font-size: 1rem;
@@ -96,13 +112,17 @@
 
 .dz-message {
   font-size: 1.1rem !important;
-  text-align: left !important;
-  padding: 10px;
+  text-align: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  top: 0;
+  /* padding: 10px; */
 }
 
 .dz-message:hover {
   cursor: pointer;
 }
+
 #new-gitlab-repo-name {
   width: 50%;
   min-width: fit-content;
