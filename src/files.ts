@@ -2,7 +2,7 @@
   Do not modify this file! Run npm `npm run files` at ROOT of this project to update
 */
 
-export const _loadDir: string = "/threshold/threshold/";
+export const _loadDir: string = "threshold/";
 export const _loadFiles: string[] = [
   "LICENSE",
   "README.md",
@@ -12,7 +12,11 @@ export const _loadFiles: string[] = [
   "css/showAlphabet.css",
   "css/utils.css",
   "css/widgets.css",
+  "debugExperiment.csv",
   "index.html",
+  "init/blockgen.ts",
+  "init/dataframe-js.dt.ts",
+  "init/utilities.ts",
   "js/threshold.min.js",
   "js/threshold.min.js.LICENSE.txt",
   "js/threshold.min.js.map",
