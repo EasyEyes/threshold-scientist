@@ -22,12 +22,12 @@
 }
 
 .error-error {
-  background-color: #e0220117;
+  background-color: #fff3f3;
   border-left: 3px solid #e02401;
 }
 
 .error-correct {
-  background-color: #4e9f3d1e;
+  background-color: #f6fff2;
   border-left: 3px solid #4e9f3d;
 }
 
@@ -110,13 +110,22 @@
 }
 
 .error-ok {
-  margin: 1rem 0 0 0;
+  margin: 0.25rem 0 0 0;
   padding: 3px 1rem;
-  display: inline-block;
+  /* display: inline-block; */
+  position: absolute;
+  top: 0;
+  right: 0;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
   border-radius: 7px;
   /* color: #666; */
-  background: #ffffff99;
+  /* background: #ffffff99; */
+}
+
+.filename-banner .timestamp {
+  display: inline-block;
+  position: absolute;
+  right: 0;
 }

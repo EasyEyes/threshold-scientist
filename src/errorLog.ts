@@ -1,3 +1,4 @@
+import { Parser } from "papaparse";
 import { uploadedFiles } from "./constants";
 import { EasyEyesError } from "./errorMessages";
 
@@ -19,8 +20,6 @@ export const newLog = (
   message: string,
   kind: string = "error"
 ) => {
-  const now: Date = new Date();
-
   const errorBox: HTMLElement = document.createElement("div");
   errorBox.className = `error-box ${
     kind === "warning"
@@ -32,14 +31,11 @@ export const newLog = (
   errorBox.innerHTML = `<p class="error-line">
   <p class="error-key">${keyMessage}</p>
   <p class="error-body">${message}</p>
-</p>
-<p class="error-time">${
-    uploadedFiles.experimentFile.name
-  } at ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}</p>`;
+</p>`;
 
   const errorOK: HTMLElement = document.createElement("p");
   errorOK.className = "error-ok";
-  errorOK.innerHTML = "OK";
+  errorOK.innerHTML = "x";
   errorOK.onclick = (e) => {
     // (e.target! as HTMLElement).parentElement?.remove()
     removeFadeOut((e.target! as HTMLElement).parentElement!);
@@ -62,3 +58,13 @@ function removeFadeOut(e: HTMLElement) {
     e.parentNode!.removeChild(e);
   }, 500);
 }
+
+export const addExperimentNameBanner = (parent: HTMLElement) => {
+  const now: Date = new Date();
+  const experimentNameHeader = document.createElement("h2");
+  experimentNameHeader.className = "filename-banner";
+  experimentNameHeader.innerHTML = `
+    ${uploadedFiles.experimentFile.name} 
+    <p class="timestamp">${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}</p>`;
+  parent.appendChild(experimentNameHeader);
+};

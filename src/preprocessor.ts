@@ -7,7 +7,12 @@ import { EasyEyesError, EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
 import { validatedCommas, validateExperimentDf } from "./experimentFileChecks";
 import { dataframeFromPapaParsed, addUniqueLabelsToDf } from "./utilities";
 import { user } from "./constants";
-import { newLog, logError, clearLogs } from "./errorLog";
+import {
+  newLog,
+  logError,
+  clearLogs,
+  addExperimentNameBanner,
+} from "./errorLog";
 import { getFileBinaryData } from "./assetUtil";
 
 let externalCallback: any;
@@ -79,6 +84,7 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
   /* ------------------------------- Got errors ------------------------------- */
   const errors = document.getElementById("errors")!;
   clearLogs(errors);
+  addExperimentNameBanner(errors);
   console.log(validationErrors);
   if (validationErrors.length) {
     validationErrors.forEach((e) => logError(e, errors));
