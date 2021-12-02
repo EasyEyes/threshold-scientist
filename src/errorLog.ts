@@ -1,4 +1,3 @@
-import { Parser } from "papaparse";
 import { uploadedFiles } from "./constants";
 import { EasyEyesError } from "./errorMessages";
 
