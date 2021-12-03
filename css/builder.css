@@ -92,7 +92,6 @@
 
 #file-dropzone {
   position: relative;
-  top: 10px;
   border: 1px solid #ccc;
   /* height: 180px !important; */
 }

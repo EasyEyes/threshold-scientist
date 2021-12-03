@@ -18,7 +18,7 @@ if (window.location.hash != "") {
 
 export const populateUserInfo = async () => {
   console.log(document.getElementById("form-tab"));
-  document.getElementById("form-tab")!.click();
+  //document.getElementById("form-tab")!.click();
 
   user.accessToken = window.location.hash.split("&")[0].split("=")[1];
   var userData = await fetch(
@@ -72,12 +72,23 @@ export const populateUserInfo = async () => {
   EasyEyesResources.fonts = resourcesList.fonts;
   console.log("EasyEyesResources", EasyEyesResources);
 
-  // display inital resources info
+  let easyEyesFormsButton: HTMLElement = document.getElementById(
+    "easyeyes-forms"
+  ) as HTMLElement;
+  easyEyesFormsButton.textContent =
+    EasyEyesResources.forms.length + " " + easyEyesFormsButton.textContent;
+
+  let easyEyesFontsButton: HTMLElement = document.getElementById(
+    "easyeyes-fonts"
+  ) as HTMLElement;
+  easyEyesFontsButton.textContent =
+    EasyEyesResources.fonts.length + " " + easyEyesFontsButton.textContent;
+  /*// display inital resources info
   setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
   setTabList("fonts", EasyEyesResources.fonts);
   setTab("form-tab", EasyEyesResources.forms.length, "Forms");
   setTabList("forms", EasyEyesResources.forms);
-  document.getElementById("form-tab")!.click();
+  document.getElementById("form-tab")!.click();*/
 };
 
 export const redirectToOauth2 = () => {
