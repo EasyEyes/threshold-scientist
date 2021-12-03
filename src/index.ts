@@ -11,6 +11,8 @@ import {
   generateAndUploadCompletionURL,
   showPavloviaAdvice,
   redirectToProlificToViewActiveStudies,
+  showForms,
+  showFonts,
 } from "./gitlabUtility";
 import { uploadedFiles } from "./constants";
 
@@ -29,8 +31,10 @@ addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
 addOnClickToEl("prolific-redirect-btn", redirectToProlific);
 addOnClickToEl("return-to-prolific", redirectToProlificToViewActiveStudies);
 addOnClickToEl("pavlovia-advice", showPavloviaAdvice);
+addOnClickToEl("easyeyes-forms", showForms);
+addOnClickToEl("easyeyes-fonts", showFonts);
 
-document
+/*document
   .getElementById("font-tab")!
   .addEventListener("click", async (evt: any) => {
     openTab(evt, "fonts");
@@ -39,7 +43,7 @@ document
   .getElementById("form-tab")!
   .addEventListener("click", async (evt: any) => {
     openTab(evt, "forms");
-  });
+  });*/
 
 // -----------------------------------------
 // dropzone
@@ -71,7 +75,7 @@ gitlabNewFileNameInput.addEventListener("keydown", async (e: any) => {
 // -----------------------------------------
 // tabs
 // -----------------------------------------
-document.getElementById("form-tab")!.click();
+//document.getElementById("form-tab")!.click();
 
 // -----------------------------------------
 // gitlab

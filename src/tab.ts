@@ -1,4 +1,5 @@
 import { EasyEyesResources, currentTabId, setCurrentTabId } from "./constants";
+import { showDialogBox } from "./dropzoneHandler";
 
 export const openTab = (evt: any, tabId: string) => {
   setCurrentTabId(tabId);
@@ -19,6 +20,17 @@ export const openTab = (evt: any, tabId: string) => {
 
   // display list
   setTabList(tabId, EasyEyesResources[tabId]);
+  let body = "";
+  EasyEyesResources[tabId].forEach(
+    (i: String) => (body += "<div>" + i + "</div>")
+  );
+  showDialogBox(
+    EasyEyesResources[tabId].length + " " + tabId.toLocaleUpperCase(),
+    body,
+    true,
+    false,
+    false
+  );
 };
 
 export const setTab = (id: string, count: number, label: string) => {

@@ -855,3 +855,33 @@ export const showPavloviaAdvice = () => {
   );
   console.log("Printing for sake of commit");
 };
+
+export const showForms = () => {
+  let body = "<ol>";
+  EasyEyesResources.forms.forEach((i: String) => {
+    body += `<li>${i}</li>`;
+  });
+  body += "</ol>";
+  showDialogBox(
+    EasyEyesResources.forms.length + " Forms",
+    body,
+    true,
+    false,
+    false
+  );
+};
+
+export const showFonts = () => {
+  let body = "<ol>";
+  EasyEyesResources.fonts.forEach((i: String) => {
+    body += `<li>${i}</li>`;
+  });
+  body += "</ol>";
+  showDialogBox(
+    EasyEyesResources.fonts.length + " Fonts",
+    body,
+    true,
+    false,
+    false
+  );
+};
