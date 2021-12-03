@@ -857,10 +857,11 @@ export const showPavloviaAdvice = () => {
 };
 
 export const showForms = () => {
-  let body = "";
+  let body = "<ol>";
   EasyEyesResources.forms.forEach((i: String) => {
-    body += `<div>${i}</div>`;
+    body += `<li>${i}</li>`;
   });
+  body += "</ol>";
   showDialogBox(
     EasyEyesResources.forms.length + " Forms",
     body,
@@ -871,10 +872,11 @@ export const showForms = () => {
 };
 
 export const showFonts = () => {
-  let body = "";
+  let body = "<ol>";
   EasyEyesResources.fonts.forEach((i: String) => {
-    body += `<div>${i}</div>`;
+    body += `<li>${i}</li>`;
   });
+  body += "</ol>";
   showDialogBox(
     EasyEyesResources.fonts.length + " Fonts",
     body,
