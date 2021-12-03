@@ -77,12 +77,20 @@ export const populateUserInfo = async () => {
   ) as HTMLElement;
   easyEyesFormsButton.textContent =
     EasyEyesResources.forms.length + " " + easyEyesFormsButton.textContent;
+  easyEyesFormsButton.className = easyEyesFormsButton.className.replace(
+    "no-display",
+    ""
+  );
 
   let easyEyesFontsButton: HTMLElement = document.getElementById(
     "easyeyes-fonts"
   ) as HTMLElement;
   easyEyesFontsButton.textContent =
     EasyEyesResources.fonts.length + " " + easyEyesFontsButton.textContent;
+  easyEyesFontsButton.className = easyEyesFontsButton.className.replace(
+    "no-display",
+    ""
+  );
   /*// display inital resources info
   setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
   setTabList("fonts", EasyEyesResources.fonts);
