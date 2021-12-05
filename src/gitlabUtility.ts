@@ -862,13 +862,7 @@ export const showForms = () => {
     body += `<li>${i}</li>`;
   });
   body += "</ol>";
-  showDialogBox(
-    EasyEyesResources.forms.length + " Forms",
-    body,
-    true,
-    false,
-    false
-  );
+  showDialogBox("Forms", body, true, false, false);
 };
 
 export const showFonts = () => {
@@ -877,11 +871,5 @@ export const showFonts = () => {
     body += `<li>${i}</li>`;
   });
   body += "</ol>";
-  showDialogBox(
-    EasyEyesResources.fonts.length + " Fonts",
-    body,
-    true,
-    false,
-    false
-  );
+  showDialogBox("Fonts", body, true, false, false);
 };
