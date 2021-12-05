@@ -857,19 +857,19 @@ export const showPavloviaAdvice = () => {
 };
 
 export const showForms = () => {
-  let body = "<ol>";
+  let body = "<ul>";
   EasyEyesResources.forms.forEach((i: String) => {
     body += `<li>${i}</li>`;
   });
-  body += "</ol>";
+  body += "</ul>";
   showDialogBox("Forms", body, true, false, false);
 };
 
 export const showFonts = () => {
-  let body = "<ol>";
+  let body = "<ul>";
   EasyEyesResources.fonts.forEach((i: String) => {
     body += `<li>${i}</li>`;
   });
-  body += "</ol>";
+  body += "</ul>";
   showDialogBox("Fonts", body, true, false, false);
 };
