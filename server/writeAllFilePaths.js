@@ -41,6 +41,8 @@ const ignorePattern = [
   "tsconfig.json",
   "debugExperiment.csv",
   "conditions/",
+  "init",
+  "map",
 ];
 
 const inIgnore = (f) => {

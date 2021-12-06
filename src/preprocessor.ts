@@ -1,7 +1,7 @@
 import JSZip from "jszip";
 import Papa from "papaparse";
 import XLSX from "xlsx";
-import { splitIntoBlockFiles } from "../threshold/init/blockgen";
+import { splitIntoBlockFiles } from "../threshold/preprocess/blockGen";
 import { EasyEyesError, EXPERIMENT_FILE_NOT_FOUND } from "./errorMessages";
 import { validatedCommas, validateExperimentDf } from "./experimentFileChecks";
 import { dataframeFromPapaParsed, addUniqueLabelsToDf } from "./utilities";
