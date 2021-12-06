@@ -15,6 +15,13 @@ import {
 import { getExperimentFontList, getExperimentFormList } from "./experimentUtil";
 import XLSX from "xlsx";
 import * as bootstrapImport from "bootstrap";
+import {
+  isConsentFormMissing,
+  isDebriefFormMissing,
+  isFontMissing,
+} from "./experimentFileChecks";
+import { EasyEyesError } from "./errorMessages";
+import { logError } from "./errorLog";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -151,6 +158,7 @@ export const isAcceptableExtension = (ext: any) => {
   return acceptableFileExt.includes(ext);
 };
 
+/*
 const isAnyResourceMissing = () => {
   const missingFonts: string[] = [];
   const missingForms: string[] = [];
@@ -203,6 +211,7 @@ const isAnyResourceMissing = () => {
     return false;
   }
 };
+*/
 
 // const myDropzone = { myDropzone: null };
 const newDz = new Dropzone("#file-dropzone", {
@@ -284,52 +293,80 @@ const newDz = new Dropzone("#file-dropzone", {
           uploadedFiles.requestedFonts = fontList;
 
           // extract required forms
-          getExperimentFormList(
-            uploadedFiles.experimentFile,
-            (formList: string[]) => {
-              console.log("REQUESTED FORMS", formList);
-              uploadedFiles.requestedForms = formList;
+          getExperimentFormList(uploadedFiles.experimentFile, (forms: any) => {
+            const formList: string[] = [];
+            const missingResourcesErrorList: EasyEyesError[] = [];
 
-              if (isAnyResourceMissing()) {
-                // clearDropzone();
-              }
-
-              // all checks have passed
-              else {
-                // preprocess experiment files
-                let hideDialogBox = showDialogBox(
-                  `The file ${file.name} is being processed ...`,
-                  ``,
-                  false,
-                  false,
-                  false
-                );
-                processFiles([file], (fileList: File[]) => {
-                  if (fileList.length == 0) {
-                    hideDialogBox();
-                    clearDropzone();
-                    setTimeout(() => {
-                      uploadedFiles.experimentFile = null;
-                    }, 800);
-                    return;
-                  }
-
-                  for (let fi = 0; fi < fileList.length; fi++) {
-                    droppedFileNames.add(fileList[fi].name);
-                    uploadedFiles.others.push(fileList[fi]);
-                  }
-
-                  hideDialogBox();
-
-                  // set repo name
-                  const gitlabRepoNameEl = document.getElementById(
-                    "new-gitlab-repo-name"
-                  ) as HTMLInputElement;
-                  gitlabRepoNameEl.value = file.name.split(".")[0];
-                });
-              }
+            if (forms.consentForm) {
+              formList.push(forms.consentForm);
+              missingResourcesErrorList.push(
+                ...isConsentFormMissing(
+                  forms.consentForm,
+                  EasyEyesResources.forms
+                )
+              );
             }
-          );
+            if (forms.debriefForm) {
+              formList.push(forms.debriefForm);
+              missingResourcesErrorList.push(
+                ...isDebriefFormMissing(
+                  forms.debriefForm,
+                  EasyEyesResources.forms
+                )
+              );
+            }
+
+            missingResourcesErrorList.push(
+              ...isFontMissing(
+                uploadedFiles.requestedFonts,
+                EasyEyesResources.fonts
+              )
+            );
+
+            console.log("REQUESTED FORMS", formList);
+            uploadedFiles.requestedForms = formList;
+
+            if (missingResourcesErrorList.length > 0) {
+              clearDropzone();
+              const errorsEl = document.getElementById("errors")!;
+              missingResourcesErrorList.forEach((e) => logError(e, errorsEl));
+            }
+
+            // all checks have passed
+            else {
+              // preprocess experiment files
+              let hideDialogBox = showDialogBox(
+                `The file ${file.name} is being processed ...`,
+                ``,
+                false,
+                false,
+                false
+              );
+              processFiles([file], (fileList: File[]) => {
+                if (fileList.length == 0) {
+                  hideDialogBox();
+                  clearDropzone();
+                  setTimeout(() => {
+                    uploadedFiles.experimentFile = null;
+                  }, 800);
+                  return;
+                }
+
+                for (let fi = 0; fi < fileList.length; fi++) {
+                  droppedFileNames.add(fileList[fi].name);
+                  uploadedFiles.others.push(fileList[fi]);
+                }
+
+                hideDialogBox();
+
+                // set repo name
+                const gitlabRepoNameEl = document.getElementById(
+                  "new-gitlab-repo-name"
+                ) as HTMLInputElement;
+                gitlabRepoNameEl.value = file.name.split(".")[0];
+              });
+            }
+          });
         }
       );
     }

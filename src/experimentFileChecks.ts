@@ -19,6 +19,7 @@ import {
   INVALID_STARTING_BLOCK,
   NONSEQUENTIAL_BLOCK_VALUE,
   NO_RESPONSE_POSSIBLE,
+  RESOURCE_FILES_MISSING,
 } from "./errorMessages";
 import { GLOSSARY } from "../threshold/parameters/glossary";
 import { isNumeric, levDist, arraysEqual } from "./utilities";
@@ -451,6 +452,52 @@ const _getDuplicateValuesAndIndicies = (
 const _areColumnValuesUnique = (targetColumn: string, df: any): boolean => {
   if (df.unique(targetColumn) !== df.select(targetColumn)) return false;
   return true;
+};
+export const isConsentFormMissing = (
+  requestedConsentForm: string,
+  existingFormList: string[]
+): EasyEyesError[] => {
+  const errorList: EasyEyesError[] = [];
+  // if requested form is not found in existing resources list
+  if (!existingFormList.includes(requestedConsentForm)) {
+    errorList.push(
+      RESOURCE_FILES_MISSING("_consentForm", [requestedConsentForm])
+    );
+  }
+
+  return errorList;
+};
+export const isDebriefFormMissing = (
+  requestedDebriefForm: string,
+  existingFormList: string[]
+): EasyEyesError[] => {
+  const errorList: EasyEyesError[] = [];
+  if (!existingFormList.includes(requestedDebriefForm)) {
+    errorList.push(
+      RESOURCE_FILES_MISSING("_debriefForm", [requestedDebriefForm])
+    );
+  }
+
+  return errorList;
+};
+export const isFontMissing = (
+  requestedFontList: string[],
+  existingFontList: string[]
+): EasyEyesError[] => {
+  const errorList: EasyEyesError[] = [];
+  const missingFontList: string[] = [];
+  for (let i = 0; i < requestedFontList.length; i++) {
+    if (
+      !existingFontList.includes(requestedFontList[i]) &&
+      !missingFontList.includes(requestedFontList[i])
+    ) {
+      missingFontList.push(requestedFontList[i]);
+    }
+  }
+  if (missingFontList.length > 0)
+    errorList.push(RESOURCE_FILES_MISSING("targetFont", missingFontList));
+
+  return errorList;
 };
 
 // --------------- FUTURE ---------------

@@ -59,7 +59,6 @@ export const processFontList = (parsedContent: any) => {
 };
 
 export const processFormList = (parsedContent: any) => {
-  const formList: string[] = [];
   let consentFormRow: string[] = [];
   let debriefFormRow: string[] = [];
 
@@ -71,7 +70,8 @@ export const processFormList = (parsedContent: any) => {
     }
   }
 
-  if (consentFormRow[1]) formList.push(consentFormRow[1]);
-  if (debriefFormRow[1]) formList.push(debriefFormRow[1]);
-  externalCallback(formList);
+  const formData: any = {};
+  if (consentFormRow[1]) formData["consentForm"] = consentFormRow[1];
+  if (debriefFormRow[1]) formData["debriefForm"] = debriefFormRow[1];
+  externalCallback(formData);
 };

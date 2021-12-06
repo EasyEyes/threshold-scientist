@@ -106,6 +106,22 @@ export const TOO_MANY_CSV_FILES_FOUND: EasyEyesError = {
   parameters: ["FILE"],
 };
 
+export const RESOURCE_FILES_MISSING = (
+  parameter: string,
+  missingFileNameList: string[]
+): EasyEyesError => {
+  return {
+    name: "Resource file is missing",
+    message: `When looking for the file(s) given in ${parameter}, we found that the following files were not uploaded: ${missingFileNameList.join(
+      ","
+    )}.`,
+    hint: `Please check that the value provided in ${parameter} is present in the existing list of existing resources.`,
+    context: "preprocessor",
+    kind: "error",
+    parameters: [parameter],
+  };
+};
+
 export const PARAMETERS_NOT_ALPHABETICAL = (
   firstOffendingParameter: string
 ): EasyEyesError => {
