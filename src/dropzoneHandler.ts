@@ -260,8 +260,8 @@ const newDz = new Dropzone("#file-dropzone", {
       for (let sheet in book.Sheets) {
         const dataString = XLSX.utils.sheet_to_csv(book.Sheets[sheet]);
         const blob = new Blob([dataString], { type: "text/csv;charset=utf-8" });
-        file = new File([blob], `${getFileNameWithoutExtension(file)}.csv`, {
-          type: "text/csv",
+        file = new File([blob], file.name, {
+          type: file.type,
           lastModified: Date.now(),
         });
       }
@@ -276,59 +276,62 @@ const newDz = new Dropzone("#file-dropzone", {
       // store experiment file
       uploadedFiles.experimentFile = file;
 
-      // preprocess experiment files
-      let hideDialogBox = showDialogBox(
-        `The file ${file.name} is being processed ...`,
-        ``,
-        false,
-        false,
-        false
-      );
-      processFiles([file], (fileList: File[]) => {
-        if (fileList.length == 0) {
-          hideDialogBox();
-          clearDropzone();
-          setTimeout(() => {
-            uploadedFiles.experimentFile = null;
-          }, 800);
-          return;
-        }
+      // extract required fonts
+      getExperimentFontList(
+        uploadedFiles.experimentFile,
+        (fontList: string[]) => {
+          console.log("REQUESTED FONTS", fontList);
+          uploadedFiles.requestedFonts = fontList;
 
-        for (let fi = 0; fi < fileList.length; fi++) {
-          droppedFileNames.add(fileList[fi].name);
-          uploadedFiles.others.push(fileList[fi]);
-        }
+          // extract required forms
+          getExperimentFormList(
+            uploadedFiles.experimentFile,
+            (formList: string[]) => {
+              console.log("REQUESTED FORMS", formList);
+              uploadedFiles.requestedForms = formList;
 
-        hideDialogBox();
-
-        // extract required fonts
-        getExperimentFontList(
-          uploadedFiles.experimentFile,
-          (fontList: string[]) => {
-            console.log("REQUESTED FONTS", fontList);
-            uploadedFiles.requestedFonts = fontList;
-
-            // extract required forms
-            getExperimentFormList(
-              uploadedFiles.experimentFile,
-              (formList: string[]) => {
-                console.log("REQUESTED FORMS", formList);
-                uploadedFiles.requestedForms = formList;
-
-                if (isAnyResourceMissing()) {
-                  clearDropzone();
-                }
+              if (isAnyResourceMissing()) {
+                // clearDropzone();
               }
-            );
-          }
-        );
 
-        // set repo name
-        const gitlabRepoNameEl = document.getElementById(
-          "new-gitlab-repo-name"
-        ) as HTMLInputElement;
-        gitlabRepoNameEl.value = file.name.split(".")[0];
-      });
+              // all checks have passed
+              else {
+                // preprocess experiment files
+                let hideDialogBox = showDialogBox(
+                  `The file ${file.name} is being processed ...`,
+                  ``,
+                  false,
+                  false,
+                  false
+                );
+                processFiles([file], (fileList: File[]) => {
+                  if (fileList.length == 0) {
+                    hideDialogBox();
+                    clearDropzone();
+                    setTimeout(() => {
+                      uploadedFiles.experimentFile = null;
+                    }, 800);
+                    return;
+                  }
+
+                  for (let fi = 0; fi < fileList.length; fi++) {
+                    droppedFileNames.add(fileList[fi].name);
+                    uploadedFiles.others.push(fileList[fi]);
+                  }
+
+                  hideDialogBox();
+
+                  // set repo name
+                  const gitlabRepoNameEl = document.getElementById(
+                    "new-gitlab-repo-name"
+                  ) as HTMLInputElement;
+                  gitlabRepoNameEl.value = file.name.split(".")[0];
+                });
+              }
+            }
+          );
+        }
+      );
     }
 
     // store experiment files only as resource files are uploaded instantaneously
