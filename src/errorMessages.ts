@@ -112,10 +112,10 @@ export const RESOURCE_FILES_MISSING = (
 ): EasyEyesError => {
   return {
     name: "Resource file is missing",
-    message: `When looking for the file(s) given in ${parameter}, we found that the following files were not uploaded: ${missingFileNameList.join(
+    message: `We could not find the following file(s) specified by ${parameter}: <b>${missingFileNameList.join(
       ","
-    )}.`,
-    hint: `Please check that the value provided in ${parameter} is present in the existing list of existing resources.`,
+    )}</b>.`,
+    hint: `Submit the file(s) to the drop box above ↑`,
     context: "preprocessor",
     kind: "error",
     parameters: [parameter],
