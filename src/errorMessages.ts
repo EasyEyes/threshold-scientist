@@ -110,11 +110,13 @@ export const FONT_FILES_MISSING = (
   parameter: string,
   missingFileNameList: string[]
 ): EasyEyesError => {
+  let htmlList = "";
+  missingFileNameList.map((fileName: string) => {
+    htmlList += `<li>${fileName}</li>`;
+  });
   return {
     name: "Font file is missing",
-    message: `We could not find the following file(s) specified by ${parameter}: <b>${missingFileNameList.join(
-      ","
-    )}</b>.`,
+    message: `We could not find the following file(s) specified by ${parameter}: <br/><ul>${htmlList}</ul>`,
     hint: `Submit the file(s) to the drop box above ↑`,
     context: "preprocessor",
     kind: "error",
@@ -126,11 +128,13 @@ export const FORM_FILES_MISSING = (
   parameter: string,
   missingFileNameList: string[]
 ): EasyEyesError => {
+  let htmlList = "";
+  missingFileNameList.map((fileName: string) => {
+    htmlList += `<li>${fileName}</li>`;
+  });
   return {
     name: "Form file is missing",
-    message: `We could not find the following file(s) specified by ${parameter}: <b>${missingFileNameList.join(
-      ","
-    )}</b>.`,
+    message: `We could not find the following file(s) specified by ${parameter}: <br/><ul>${htmlList}</ul>`,
     hint: `Submit the file(s) to the drop box above ↑`,
     context: "preprocessor",
     kind: "error",
