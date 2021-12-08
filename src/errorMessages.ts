@@ -106,12 +106,28 @@ export const TOO_MANY_CSV_FILES_FOUND: EasyEyesError = {
   parameters: ["FILE"],
 };
 
-export const RESOURCE_FILES_MISSING = (
+export const FONT_FILES_MISSING = (
   parameter: string,
   missingFileNameList: string[]
 ): EasyEyesError => {
   return {
-    name: "Resource file is missing",
+    name: "Font file is missing",
+    message: `We could not find the following file(s) specified by ${parameter}: <b>${missingFileNameList.join(
+      ","
+    )}</b>.`,
+    hint: `Submit the file(s) to the drop box above ↑`,
+    context: "preprocessor",
+    kind: "error",
+    parameters: [parameter],
+  };
+};
+
+export const FORM_FILES_MISSING = (
+  parameter: string,
+  missingFileNameList: string[]
+): EasyEyesError => {
+  return {
+    name: "Form file is missing",
     message: `We could not find the following file(s) specified by ${parameter}: <b>${missingFileNameList.join(
       ","
     )}</b>.`,

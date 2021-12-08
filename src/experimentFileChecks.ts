@@ -19,7 +19,8 @@ import {
   INVALID_STARTING_BLOCK,
   NONSEQUENTIAL_BLOCK_VALUE,
   NO_RESPONSE_POSSIBLE,
-  RESOURCE_FILES_MISSING,
+  FORM_FILES_MISSING,
+  FONT_FILES_MISSING,
 } from "./errorMessages";
 import { GLOSSARY } from "../threshold/parameters/glossary";
 import { isNumeric, levDist, arraysEqual } from "./utilities";
@@ -460,9 +461,7 @@ export const isConsentFormMissing = (
   const errorList: EasyEyesError[] = [];
   // if requested form is not found in existing resources list
   if (!existingFormList.includes(requestedConsentForm)) {
-    errorList.push(
-      RESOURCE_FILES_MISSING("_consentForm", [requestedConsentForm])
-    );
+    errorList.push(FORM_FILES_MISSING("_consentForm", [requestedConsentForm]));
   }
 
   return errorList;
@@ -473,9 +472,7 @@ export const isDebriefFormMissing = (
 ): EasyEyesError[] => {
   const errorList: EasyEyesError[] = [];
   if (!existingFormList.includes(requestedDebriefForm)) {
-    errorList.push(
-      RESOURCE_FILES_MISSING("_debriefForm", [requestedDebriefForm])
-    );
+    errorList.push(FORM_FILES_MISSING("_debriefForm", [requestedDebriefForm]));
   }
 
   return errorList;
@@ -495,7 +492,7 @@ export const isFontMissing = (
     }
   }
   if (missingFontList.length > 0)
-    errorList.push(RESOURCE_FILES_MISSING("targetFont", missingFontList));
+    errorList.push(FONT_FILES_MISSING("targetFont", missingFontList));
 
   return errorList;
 };
