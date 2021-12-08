@@ -90,8 +90,9 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
     externalCallback([]);
     return;
   } else {
+    const successLogs = document.getElementById("success-logs")!;
     newLog(
-      errors,
+      successLogs,
       "The experiment file is ready",
       `We didn't find any error in your experiment file. Feel free to upload your experiment to Pavlovia and start running it.`,
       "correct"
