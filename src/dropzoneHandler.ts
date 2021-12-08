@@ -241,7 +241,7 @@ const newDz = new Dropzone("#file-dropzone", {
 
   // file type verification
   accept: async (file: any, done) => {
-    // clear logs
+    // clear success logs
     document.getElementById("success-logs")!.innerHTML = "";
 
     // authentication check
