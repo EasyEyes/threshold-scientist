@@ -81,9 +81,12 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
 
   df = addUniqueLabelsToDf(df);
   /* ------------------------------- Got errors ------------------------------- */
-  const errors = document.getElementById("errors")!;
+  const errors = document.getElementById("success-logs")!;
   clearLogs(errors);
+
+  // show file name of exeperiment file
   addExperimentNameBanner(errors);
+
   console.log(validationErrors);
   if (validationErrors.length) {
     validationErrors.forEach((e) => logError(e, errors));
