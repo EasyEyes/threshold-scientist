@@ -81,59 +81,63 @@ const prepareExperimentFileForThreshold = (parsedContent: any) => {
 
   df = addUniqueLabelsToDf(df);
   /* ------------------------------- Got errors ------------------------------- */
-  const errors = document.getElementById("errors")!;
-  const successLogs = document.getElementById("success-logs")!;
-
-  clearLogs(errors);
-  clearLogs(successLogs);
 
   // show file name of exeperiment file
 
   console.log(validationErrors);
   if (validationErrors.length) {
-    addExperimentNameBanner(errors);
-    validationErrors.forEach((e) => logError(e, errors));
-    externalCallback([]);
-    return;
+    externalCallback([], validationErrors);
   } else {
-    addExperimentNameBanner(successLogs);
-    newLog(
-      successLogs,
-      "The experiment file is ready",
-      `We didn't find any error in your experiment file. Feel free to upload your experiment to Pavlovia and start running it.`,
-      "correct"
-    );
-
-    // // Change some names to the ones that PsychoJS expects.
-    // const nameChanges: any = {
-    //   thresholdBeta: "beta",
-    //   thresholdDelta: "delta",
-    //   thresholdProbability: "pThreshold",
-    // };
-    // //// https://stackoverflow.com/questions/5915789/how-to-replace-item-in-array
-    // let preparedNames = df
-    //   .listColumns()
-    //   .map((oldName: string) =>
-    //     nameChanges.hasOwnProperty(oldName) ? nameChanges[oldName] : oldName
-    //   );
-    // df = df.renameAll(preparedNames);
-    // // VERIFY correctness
-    // if ("thresholdGuessLogSd" in df.toDict()) {
-    //   df = df
-    //     .withColumn("startValSd", (row: any) => row.get("thresholdGuessLogSd"))
-    //     .withColumn("startVal", (row: any) =>
-    //       Math.log10(row.get("thresholdGuess"))
-    //     );
-    // }
     // split into blocks
     const resultFileList = splitIntoBlockFiles(df);
-
-    // externalCallback must be initialised at the time of initial function
-    // call in function processFiles(). This is a workaround because calling
-    // through Papa.parse calls preppareExperimentForThreshold internally
-    // and thus, we do not have access to its return value.
-    externalCallback(resultFileList);
+    externalCallback(resultFileList, []);
   }
+
+  /* ---- all error reporting in UI has been moved to dropzoneHandler.js. preprocessor returns list of errors and block files ----- */
+  // if (validationErrors.length) {
+  //   addExperimentNameBanner(errors);
+  //   validationErrors.forEach((e) => logError(e, errors));
+  //   externalCallback([]);
+  //   return;
+  // } else {
+  //   addExperimentNameBanner(successLogs);
+  //   newLog(
+  //     successLogs,
+  //     "The experiment file is ready",
+  //     `We didn't find any error in your experiment file. Feel free to upload your experiment to Pavlovia and start running it.`,
+  //     "correct"
+  //   );
+
+  //   // // Change some names to the ones that PsychoJS expects.
+  //   // const nameChanges: any = {
+  //   //   thresholdBeta: "beta",
+  //   //   thresholdDelta: "delta",
+  //   //   thresholdProbability: "pThreshold",
+  //   // };
+  //   // //// https://stackoverflow.com/questions/5915789/how-to-replace-item-in-array
+  //   // let preparedNames = df
+  //   //   .listColumns()
+  //   //   .map((oldName: string) =>
+  //   //     nameChanges.hasOwnProperty(oldName) ? nameChanges[oldName] : oldName
+  //   //   );
+  //   // df = df.renameAll(preparedNames);
+  //   // // VERIFY correctness
+  //   // if ("thresholdGuessLogSd" in df.toDict()) {
+  //   //   df = df
+  //   //     .withColumn("startValSd", (row: any) => row.get("thresholdGuessLogSd"))
+  //   //     .withColumn("startVal", (row: any) =>
+  //   //       Math.log10(row.get("thresholdGuess"))
+  //   //     );
+  //   // }
+  //   // split into blocks
+  //   const resultFileList = splitIntoBlockFiles(df);
+
+  //   // externalCallback must be initialised at the time of initial function
+  //   // call in function processFiles(). This is a workaround because calling
+  //   // through Papa.parse calls preppareExperimentForThreshold internally
+  //   // and thus, we do not have access to its return value.
+  //   externalCallback(resultFileList);
+  // }
 };
 
 /**
