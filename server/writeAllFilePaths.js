@@ -13,6 +13,7 @@ const ignorePattern = [
   "fonts/",
   "forms/",
   "components",
+  "preprocess",
   "addons",
   "legacy",
   "psychojs/src",
@@ -43,11 +44,31 @@ const ignorePattern = [
   "conditions/",
   "init",
   "map",
+  "eslintrc",
 ];
+
+const containPattern = ["components/css"];
+
+// Exact match
+const matchPattern = ["js/threshold.min.js"];
 
 const inIgnore = (f) => {
   for (let ig of ignorePattern) {
     if (f.includes(ig)) return true;
+  }
+  return false;
+};
+
+const inContain = (f) => {
+  for (let ig of containPattern) {
+    if (f.includes(ig)) return true;
+  }
+  return false;
+};
+
+const inMatch = (f) => {
+  for (let ig of matchPattern) {
+    if (f === ig) return true;
   }
   return false;
 };
@@ -63,7 +84,8 @@ function throughDirectory(directory) {
   });
 
   const returner = [];
-  for (let f of files) if (!inIgnore(f)) returner.push(f);
+  for (let f of files)
+    if (!inIgnore(f) || inContain(f) || inMatch(f)) returner.push(f);
   return returner;
 }
 

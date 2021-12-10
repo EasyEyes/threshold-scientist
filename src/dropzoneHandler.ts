@@ -345,7 +345,6 @@ const newDz = new Dropzone("#file-dropzone", {
               false,
               false
             );
-            console.log("kkk");
 
             processFiles([file], (fileList: File[], errorList: any[]) => {
               if (errorList.length || missingResourcesErrorList.length > 0) {
