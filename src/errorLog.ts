@@ -1,5 +1,5 @@
 import { uploadedFiles } from "./constants";
-import { EasyEyesError } from "./errorMessages";
+import { EasyEyesError } from "../threshold/preprocess/errorMessages";
 
 export const logError = (error: EasyEyesError, parent: HTMLElement) => {
   const errorParameters = error.parameters

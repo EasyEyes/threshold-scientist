@@ -10,5 +10,9 @@
     "moduleResolution": "node",
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "node_modules/dataframe-js/dataframe-js.d.ts"]
+  "include": [
+    "src/**/*",
+    "node_modules/dataframe-js/dataframe-js.d.ts",
+    "threshold/preprocess/*.ts"
+  ]
 }

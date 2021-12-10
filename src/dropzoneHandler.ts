@@ -4,7 +4,7 @@ import {
   uploadedFiles,
   user,
 } from "./constants";
-import { isCsvFile } from "./utilities";
+import { isCsvFile } from "../threshold/preprocess/utilities";
 import Dropzone from "dropzone";
 import { setTab, setTabList } from "./tab";
 import { processFiles } from "./preprocessor";
@@ -19,8 +19,8 @@ import {
   isConsentFormMissing,
   isDebriefFormMissing,
   isFontMissing,
-} from "./experimentFileChecks";
-import { EasyEyesError } from "./errorMessages";
+} from "../threshold/preprocess/experimentFileChecks";
+import { EasyEyesError } from "../threshold/preprocess/errorMessages";
 import {
   addExperimentNameBanner,
   clearLogs,
@@ -345,6 +345,7 @@ const newDz = new Dropzone("#file-dropzone", {
               false,
               false
             );
+            console.log("kkk");
 
             processFiles([file], (fileList: File[], errorList: any[]) => {
               if (errorList.length || missingResourcesErrorList.length > 0) {
