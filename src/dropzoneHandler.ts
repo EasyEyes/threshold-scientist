@@ -356,8 +356,12 @@ const newDz = new Dropzone("#file-dropzone", {
 
                 // append missing resources errors
                 errorList.push(...missingResourcesErrorList);
-                // TODO sort errorList according to parameter name
 
+                // sort errorList according to parameter name
+                errorList.sort((errA: EasyEyesError, errB: EasyEyesError) => {
+                  if (errA.parameters < errB.parameters) return -1;
+                  else return 1;
+                });
                 // show errors
                 errorList.forEach((e) => logError(e, errorLogsEl));
 
