@@ -1,5 +1,8 @@
-import { isCsvFile } from "./utilities";
-import { NO_CSV_FILE_FOUND, TOO_MANY_CSV_FILES_FOUND } from "./errorMessages";
+import { isCsvFile } from "../threshold/preprocess/utilities";
+import {
+  NO_CSV_FILE_FOUND,
+  TOO_MANY_CSV_FILES_FOUND,
+} from "../threshold/preprocess/errorMessages";
 
 export const validateFileList = (fileList: any) => {
   const numberOfCsvFiles = fileList.filter(isCsvFile).length;
@@ -13,6 +16,6 @@ export const validateFileList = (fileList: any) => {
  * @param {File[]} filesProvided Set of files that the user has provided
  * @returns {File}
  */
-const returnExperimentFile = (filesProvided: any) => {
+export const returnExperimentFile = (filesProvided: any) => {
   return filesProvided.filter(isCsvFile)[0];
 };

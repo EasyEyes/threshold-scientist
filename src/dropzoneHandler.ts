@@ -4,7 +4,7 @@ import {
   uploadedFiles,
   user,
 } from "./constants";
-import { isCsvFile } from "./utilities";
+import { isCsvFile } from "../threshold/preprocess/utilities";
 import Dropzone from "dropzone";
 import { setTab, setTabList } from "./tab";
 import { processFiles } from "./preprocessor";
@@ -19,9 +19,14 @@ import {
   isConsentFormMissing,
   isDebriefFormMissing,
   isFontMissing,
-} from "./experimentFileChecks";
-import { EasyEyesError } from "./errorMessages";
-import { logError } from "./errorLog";
+} from "../threshold/preprocess/experimentFileChecks";
+import { EasyEyesError } from "../threshold/preprocess/errorMessages";
+import {
+  addExperimentNameBanner,
+  clearLogs,
+  logError,
+  newLog,
+} from "./errorLog";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -241,8 +246,11 @@ const newDz = new Dropzone("#file-dropzone", {
 
   // file type verification
   accept: async (file: any, done) => {
-    // clear success logs
-    document.getElementById("success-logs")!.innerHTML = "";
+    // clear logs
+    const errorLogsEl = document.getElementById("errors")!;
+    const successLogsEl = document.getElementById("success-logs")!;
+    clearLogs(errorLogsEl);
+    clearLogs(successLogsEl);
 
     // authentication check
     if (!isUserLoggedIn()) {
@@ -329,46 +337,62 @@ const newDz = new Dropzone("#file-dropzone", {
             console.log("REQUESTED FORMS", formList);
             uploadedFiles.requestedForms = formList;
 
-            if (missingResourcesErrorList.length > 0) {
-              clearDropzone();
-              const errorsEl = document.getElementById("errors")!;
-              missingResourcesErrorList.forEach((e) => logError(e, errorsEl));
-            }
+            // preprocess experiment files
+            let hideDialogBox = showDialogBox(
+              `The file ${file.name} is being processed ...`,
+              ``,
+              false,
+              false,
+              false
+            );
 
-            // all checks have passed
-            else {
-              // preprocess experiment files
-              let hideDialogBox = showDialogBox(
-                `The file ${file.name} is being processed ...`,
-                ``,
-                false,
-                false,
-                false
-              );
-              processFiles([file], (fileList: File[]) => {
-                if (fileList.length == 0) {
-                  hideDialogBox();
-                  clearDropzone();
-                  setTimeout(() => {
-                    uploadedFiles.experimentFile = null;
-                  }, 800);
-                  return;
-                }
-
-                for (let fi = 0; fi < fileList.length; fi++) {
-                  droppedFileNames.add(fileList[fi].name);
-                  uploadedFiles.others.push(fileList[fi]);
-                }
-
+            processFiles([file], (fileList: File[], errorList: any[]) => {
+              if (errorList.length || missingResourcesErrorList.length > 0) {
                 hideDialogBox();
+                clearDropzone();
 
-                // set repo name
-                const gitlabRepoNameEl = document.getElementById(
-                  "new-gitlab-repo-name"
-                ) as HTMLInputElement;
-                gitlabRepoNameEl.value = file.name.split(".")[0];
-              });
-            }
+                // show file name
+                addExperimentNameBanner(errorLogsEl);
+
+                // append missing resources errors
+                errorList.push(...missingResourcesErrorList);
+
+                // sort errorList according to parameter name
+                errorList.sort((errA: EasyEyesError, errB: EasyEyesError) => {
+                  if (errA.parameters < errB.parameters) return -1;
+                  else return 1;
+                });
+                // show errors
+                errorList.forEach((e) => logError(e, errorLogsEl));
+
+                setTimeout(() => {
+                  uploadedFiles.experimentFile = null;
+                }, 800);
+                return;
+              } else {
+                // show success log
+                addExperimentNameBanner(successLogsEl);
+                newLog(
+                  successLogsEl,
+                  "The experiment file is ready",
+                  `We didn't find any error in your experiment file. Feel free to upload your experiment to Pavlovia and start running it.`,
+                  "correct"
+                );
+              }
+
+              for (let fi = 0; fi < fileList.length; fi++) {
+                droppedFileNames.add(fileList[fi].name);
+                uploadedFiles.others.push(fileList[fi]);
+              }
+
+              hideDialogBox();
+
+              // set repo name
+              const gitlabRepoNameEl = document.getElementById(
+                "new-gitlab-repo-name"
+              ) as HTMLInputElement;
+              gitlabRepoNameEl.value = file.name.split(".")[0];
+            });
           });
         }
       );

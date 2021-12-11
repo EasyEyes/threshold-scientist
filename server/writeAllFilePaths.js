@@ -13,6 +13,7 @@ const ignorePattern = [
   "fonts/",
   "forms/",
   "components",
+  "preprocess",
   "addons",
   "legacy",
   "psychojs/src",
@@ -25,10 +26,11 @@ const ignorePattern = [
   "psychojs/CONTRIBUTING.md",
   "psychojs/README.md",
   "psychojs/code-of-conduct.md",
-  `psychojs/out/psychojs-${psychoJSVersion}.iife.js`,
-  `psychojs/out/psychojs-${psychoJSVersion}.iife.js.map`,
-  `psychojs/out/psychojs-${psychoJSVersion}.js`,
-  `psychojs/out/psychojs-${psychoJSVersion}.js.map`,
+  // `psychojs/out/psychojs-${psychoJSVersion}.iife.js`,
+  // `psychojs/out/psychojs-${psychoJSVersion}.iife.js.map`,
+  // `psychojs/out/psychojs-${psychoJSVersion}.js`,
+  // `psychojs/out/psychojs-${psychoJSVersion}.js.map`,
+  `psychojs/out`,
   "netlify",
   "package",
   "webpack",
@@ -43,11 +45,32 @@ const ignorePattern = [
   "conditions/",
   "init",
   "map",
+  "eslintrc",
+  "examples",
 ];
+
+const containPattern = ["favicon.ico"];
+
+// Exact match
+const matchPattern = ["js/threshold.min.js"];
 
 const inIgnore = (f) => {
   for (let ig of ignorePattern) {
     if (f.includes(ig)) return true;
+  }
+  return false;
+};
+
+const inContain = (f) => {
+  for (let ig of containPattern) {
+    if (f.includes(ig)) return true;
+  }
+  return false;
+};
+
+const inMatch = (f) => {
+  for (let ig of matchPattern) {
+    if (f === ig) return true;
   }
   return false;
 };
@@ -63,7 +86,8 @@ function throughDirectory(directory) {
   });
 
   const returner = [];
-  for (let f of files) if (!inIgnore(f)) returner.push(f);
+  for (let f of files)
+    if (!inIgnore(f) || inContain(f) || inMatch(f)) returner.push(f);
   return returner;
 }
 
