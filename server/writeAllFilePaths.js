@@ -26,10 +26,11 @@ const ignorePattern = [
   "psychojs/CONTRIBUTING.md",
   "psychojs/README.md",
   "psychojs/code-of-conduct.md",
-  `psychojs/out/psychojs-${psychoJSVersion}.iife.js`,
-  `psychojs/out/psychojs-${psychoJSVersion}.iife.js.map`,
-  `psychojs/out/psychojs-${psychoJSVersion}.js`,
-  `psychojs/out/psychojs-${psychoJSVersion}.js.map`,
+  // `psychojs/out/psychojs-${psychoJSVersion}.iife.js`,
+  // `psychojs/out/psychojs-${psychoJSVersion}.iife.js.map`,
+  // `psychojs/out/psychojs-${psychoJSVersion}.js`,
+  // `psychojs/out/psychojs-${psychoJSVersion}.js.map`,
+  `psychojs/out`,
   "netlify",
   "package",
   "webpack",
@@ -45,9 +46,10 @@ const ignorePattern = [
   "init",
   "map",
   "eslintrc",
+  "examples",
 ];
 
-const containPattern = ["components/css"];
+const containPattern = [];
 
 // Exact match
 const matchPattern = ["js/threshold.min.js"];
