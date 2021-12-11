@@ -49,7 +49,7 @@ const ignorePattern = [
   "examples",
 ];
 
-const containPattern = [];
+const containPattern = ["favicon.ico"];
 
 // Exact match
 const matchPattern = ["js/threshold.min.js"];
