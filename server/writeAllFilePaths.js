@@ -49,10 +49,10 @@ const ignorePattern = [
   "examples",
 ];
 
-const containPattern = ["favicon.ico"];
+const containPattern = [];
 
 // Exact match
-const matchPattern = ["js/threshold.min.js"];
+const matchPattern = ["js/threshold.min.js", "components/images/favicon.ico"];
 
 const inIgnore = (f) => {
   for (let ig of ignorePattern) {
