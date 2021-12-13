@@ -31,3 +31,7 @@
   text-align: center;
   vertical-align: top;
 }
+
+.left-td {
+  text-align: left !important;
+}
