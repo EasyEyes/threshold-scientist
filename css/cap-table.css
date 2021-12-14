@@ -6,28 +6,32 @@
 
 .tg td {
   border-color: #ccc;
-  border-style: solid;
+  border-style: hidden;
   border-width: 1px;
   font-family: Arial, sans-serif;
   font-size: 14px;
   overflow: hidden;
-  padding: 10px 10px;
+  padding: 0px 5px 0px 5px;
   word-break: normal;
 }
 
 .tg th {
   border-color: #ccc;
-  border-style: solid;
+  border-style: hidden;
   border-width: 1px;
   font-family: Arial, sans-serif;
   font-size: 14px;
   font-weight: normal;
   overflow: hidden;
-  padding: 10px 10px;
+  padding: 0px 5px 0px 5px;
   word-break: normal;
 }
 
 .tg .tg-baqh {
   text-align: center;
   vertical-align: top;
+}
+
+.left-td {
+  text-align: left !important;
 }
