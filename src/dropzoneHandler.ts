@@ -23,6 +23,7 @@ import {
 import { EasyEyesError } from "../threshold/preprocess/errorMessages";
 import {
   addExperimentNameBanner,
+  clearAllLogs,
   clearLogs,
   logError,
   newLog,
@@ -249,8 +250,7 @@ const newDz = new Dropzone("#file-dropzone", {
     // clear logs
     const errorLogsEl = document.getElementById("errors")!;
     const successLogsEl = document.getElementById("success-logs")!;
-    clearLogs(errorLogsEl);
-    clearLogs(successLogsEl);
+    clearAllLogs("errors");
 
     // authentication check
     if (!isUserLoggedIn()) {

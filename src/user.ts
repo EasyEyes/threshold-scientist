@@ -17,8 +17,8 @@ if (window.location.hash != "") {
 }
 
 export const populateUserInfo = async () => {
-  console.log(document.getElementById("form-tab"));
-  //document.getElementById("form-tab")!.click();
+  // console.log(document.getElementById("form-tab"));
+  // document.getElementById("form-tab")!.click();
 
   user.accessToken = window.location.hash.split("&")[0].split("=")[1];
   var userData = await fetch(

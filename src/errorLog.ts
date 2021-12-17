@@ -46,8 +46,13 @@ export const newLog = (
   return errorBox;
 };
 
-export const clearLogs = (parent: HTMLElement) => {
+export const clearLogs = (parent: Element) => {
   while (parent.firstChild) parent.removeChild(parent.firstChild);
+};
+
+export const clearAllLogs = (commonClass: string) => {
+  const parents = document.getElementsByClassName(commonClass);
+  if (parents.length) for (let parent of parents) clearLogs(parent);
 };
 
 function removeFadeOut(e: HTMLElement) {
