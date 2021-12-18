@@ -1,4 +1,4 @@
-import { openTab } from "./tab";
+// import { openTab } from "./tab";
 import {
   populateUserInfo,
   redirectToOauth2,
@@ -8,7 +8,7 @@ import { clearDropzone } from "./dropzoneHandler";
 import {
   gitlabRoutine,
   redirectToProlific,
-  generateAndUploadCompletionURL,
+  // generateAndUploadCompletionURL,
   showPavloviaAdvice,
   redirectToProlificToViewActiveStudies,
   showForms,
@@ -48,34 +48,31 @@ document
 // -----------------------------------------
 // dropzone
 // -----------------------------------------
-const gitlabFileSubmit: any = document.querySelector("#gitlab-file-submit");
-if (gitlabFileSubmit) {
-  gitlabFileSubmit.addEventListener("click", async (e: any) => {
-    // call gitlab routine
-    await gitlabRoutine(uploadedFiles);
+const pushToGitLab = async () => {
+  await gitlabRoutine(uploadedFiles);
+  clearDropzone();
+};
 
-    // clear dropzone
-    clearDropzone();
-  });
-}
+const gitlabFileSubmit: Element = document.querySelector(
+  "#gitlab-file-submit"
+)!;
+gitlabFileSubmit.addEventListener("click", async () => {
+  await pushToGitLab();
+});
 
-const gitlabNewFileNameInput: any = document.querySelector(
+const gitlabNewFileNameInput: Element = document.querySelector(
   "#new-gitlab-repo-name"
-);
+)!;
 gitlabNewFileNameInput.addEventListener("keydown", async (e: any) => {
-  // call gitlab routine
-  if (e.key == "Enter") {
-    await gitlabRoutine(uploadedFiles);
-
-    // clear dropzone
-    clearDropzone();
+  if (e.key === "Enter") {
+    await pushToGitLab();
   }
 });
 
 // -----------------------------------------
 // tabs
 // -----------------------------------------
-//document.getElementById("form-tab")!.click();
+// document.getElementById("form-tab")!.click();
 
 // -----------------------------------------
 // gitlab

@@ -19,11 +19,7 @@ import { setTab } from "./tab";
 
 export const gitlabRoutine = async (uploadedFiles: any) => {
   // empty file list check
-  if (
-    uploadedFiles.others == null ||
-    uploadedFiles.others == undefined ||
-    uploadedFiles.others.length == 0
-  ) {
+  if (!uploadedFiles.others || uploadedFiles.others.length == 0) {
     window.alert("Please upload required files.");
     return;
   }
@@ -53,18 +49,10 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
 
     await populateThresholdRepoOnExperiment(gitlabRepo);
 
-    // filter and get all .csv files
-    // var blockFiles = files.filter( f => {
-    //   var extension = f.name.split('.');
-    //   extension = extension[extension.length - 1];
-    //   return extension.includes('csv');
-    // });
-
-    // await commitNewFilesToGitlab(gitlabRepo, files)
     await commitNewFilesToGitlab(gitlabRepo, uploadedFiles);
     // await commitFilesToGitlabFromGithubAndEasyEyes(gitlabRepo, files);
 
-    // download all consent forms and fonts from resources repo, and commit to new expeiment repo in 2nd commit
+    // download all consent forms and fonts from resources repo, and commit to new experiment repo in 2nd commit
     await populateResourcesOnExperiment(gitlabRepo);
 
     // update resources info
@@ -76,7 +64,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     // );
     hideDialogBox();
     hideDialogBox = showDialogBox(
-      `Sucess!`,
+      `Success!`,
       `${newRepoName} has been created.`,
       false,
       true,
@@ -184,14 +172,14 @@ export const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment =
 
     // generate Gitlab API body to commit form files
     for (var i = 0; i < consentForms.length; i++) {
-      var consentFormm = consentForms[i];
-      var content = await getFileBinaryData(consentFormm);
-      let actionValue = prevFormList.includes(consentFormm.name)
+      var consentForm = consentForms[i];
+      var content = await getFileBinaryData(consentForm);
+      let actionValue = prevFormList.includes(consentForm.name)
         ? "update"
         : "create";
       jsonFiles.push({
         action: actionValue,
-        file_path: "forms/" + consentFormm.name,
+        file_path: "forms/" + consentForm.name,
         content: content,
         encoding: "base64",
       });
@@ -215,7 +203,7 @@ export const populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment =
     // commit files to EasyEyesResources repository
     var commitBody = {
       branch: "master",
-      commit_message: "Update EasyEyes Resources",
+      commit_message: "EasyEyes initialization",
       actions: [...jsonFiles],
     };
     var commitFile = await fetch(
@@ -256,8 +244,8 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
 
   // generate Gitlab API body to commit form files
   for (var i = 0; i < formList.length; i++) {
-    var consentFormm = formList[i];
-    const resourcesRepoFilePath = encodeGitlabFilePath(`forms/${consentFormm}`);
+    var consentForm = formList[i];
+    const resourcesRepoFilePath = encodeGitlabFilePath(`forms/${consentForm}`);
     let consentFormContent: string = await getBase64FileFromGitlab(
       easyEyesResourcesRepo.id,
       resourcesRepoFilePath,
@@ -272,14 +260,14 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
       continue;
 
     // do not transfer fonts that are not required by the experiment
-    if (!uploadedFiles.requestedForms.includes(consentFormm)) {
+    if (!uploadedFiles.requestedForms.includes(consentForm)) {
       continue;
     }
 
     // update gitlab commit
     jsonFiles.push({
       action: "create",
-      file_path: "forms/" + consentFormm,
+      file_path: "forms/" + consentForm,
       content: consentFormContent,
       encoding: "base64",
     });
@@ -317,7 +305,7 @@ const populateResourcesOnExperiment = async (gitlabRepo: any) => {
   // commit files to EasyEyesResources repository
   var commitBody = {
     branch: "master",
-    commit_message: "Add EasyEyes Resources",
+    commit_message: "Add from EasyEyesResources Repository",
     actions: [...jsonFiles],
   };
   var commitFile = await fetch(
@@ -396,47 +384,6 @@ export const getResourcesListFromRepository = async (
   };
 };
 
-const commitFilesToGitlabFromGithubAndEasyEyes = async (
-  gitlabRepo: any,
-  files: any
-) => {
-  // get threshold files from Github: EasyEyes/threshold
-  var rootContent = await fetch(
-    "https://api.github.com/repos/EasyEyes/threshold/contents",
-    {
-      headers: {
-        Authorization: `token ${process.env.GITHUB_PAT!}`,
-      },
-    }
-  );
-  rootContent = await rootContent.json();
-
-  // get Gitlab API format data for files
-  var jsonBody = await populateCommitBody(rootContent, files);
-
-  // create single commit payload for multiple files
-  var commitBody = {
-    branch: "master",
-    commit_message: "Add experiment and threshold files",
-    actions: [...jsonBody],
-  };
-  var commitFile = await fetch(
-    "https://gitlab.pavlovia.org/api/v4/projects/" +
-      gitlabRepo.id +
-      "/repository/commits?access_token=" +
-      user.accessToken,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(commitBody),
-    }
-  );
-  await commitFile.json();
-  //alert('Repo has been successfully initiated. Please add your easy eyes table to add your experiment');
-};
-
 const populateThresholdRepoOnExperiment = async (gitlabRepo: any) => {
   const promiseList = [];
   let progress = 0;
@@ -450,7 +397,7 @@ const populateThresholdRepoOnExperiment = async (gitlabRepo: any) => {
       const rootContent = await getGitlabBodyForThreshold(startIdx, endIdx);
       const commitBody = {
         branch: "master",
-        commit_message: "Initialise repository with threshold",
+        commit_message: "EasyEyes initialization",
         actions: rootContent,
       };
 
@@ -490,7 +437,7 @@ const commitNewFilesToGitlab = async (gitlabRepo: any, uploadedFiles: any) => {
   // create single commit payload for multiple files
   var commitBody = {
     branch: "master",
-    commit_message: "Easy Eyes to Gitlab INIT",
+    commit_message: "EasyEyes initialization",
     actions: [...jsonBody],
   };
   console.log(
@@ -516,117 +463,6 @@ const commitNewFilesToGitlab = async (gitlabRepo: any, uploadedFiles: any) => {
   //alert('Repo has been successfully initiated. Please add your easy eyes table to add your experiment');
 };
 
-const populateCommitBody = async (rootContent: any, externalFiles: any) => {
-  let jsonFiles = [];
-  let files = [...rootContent];
-  while (files.length > 0) {
-    // get dirs and files in dir
-    // if file, get data and populate fileList
-    let currentFile = files.pop();
-
-    // if current object is a "Directory", get inner contents
-    if (currentFile.type == "dir") {
-      // get content from Github
-      let innerFiles: any = await fetch(
-        currentFile.git_url.split("/git")[0] + "/contents/" + currentFile.path,
-        {
-          headers: {
-            Authorization: `token ${process.env.GITHUB_PAT!}`,
-          },
-        }
-      );
-      innerFiles = await innerFiles.json();
-
-      // update files list
-      files.push(...innerFiles);
-    }
-
-    // else if current object is a "File", get inner content
-    else if (currentFile.type == "file") {
-      // possibility of inner folders being linked to other github projects
-      // fetch them again in that case and continue
-      if (currentFile.name == "psychojs" && currentFile.size == 0) {
-        let innerFiles: any = await fetch(
-          currentFile.git_url.split("/git")[0] + "/contents/",
-          {
-            headers: {
-              Authorization: `token ${process.env.GITHUB_PAT!}`,
-            },
-          }
-        );
-        innerFiles = await innerFiles.json();
-
-        // update files list
-        files.push(...innerFiles);
-      }
-
-      // ignore control-panel
-      else if (currentFile.name == "control-panel") {
-        // we don't need control-panel code in gitlab
-        continue;
-      }
-
-      // create Gitlab API data for file
-      else {
-        let fileData: any = await fetch(
-          currentFile.git_url.split("/git")[0] +
-            "/contents/" +
-            currentFile.path,
-          {
-            headers: {
-              Authorization: `token ${process.env.GITHUB_PAT!}`,
-            },
-          }
-        );
-        fileData = await fileData.json();
-        jsonFiles.push({
-          action: "create",
-          file_path: fileData.git_url.split("/git")[0].includes("psychojs")
-            ? "psychojs/" + fileData.path
-            : fileData.path,
-          content:
-            fileData.encoding == "base64"
-              ? atob(fileData.content)
-              : fileData.content,
-        });
-      }
-    }
-  }
-
-  // convert texternal files to Gitlab API data format
-  for (var i = 0; i < externalFiles.length; i++) {
-    var externalFile = externalFiles[i];
-    if (externalFile.type == "text/csv") {
-      let fileData: any = await getFileTextData(externalFile);
-      jsonFiles.push({
-        action: "create",
-        // change to blocks after threshold is modified
-        file_path: "conditions/" + externalFile.name,
-        content: fileData,
-      });
-    }
-    if (externalFile.type == "application/pdf") {
-      let fileData: any = await getFileBinaryData(externalFile);
-      jsonFiles.push({
-        action: "create",
-        file_path: "forms/" + externalFile.name,
-        content: fileData,
-        encoding: "base64",
-      });
-    } else {
-      let fileData: any = await getFileBinaryData(externalFile);
-      jsonFiles.push({
-        action: "create",
-        file_path: "fonts/" + externalFile.name,
-        content: fileData,
-        encoding: "base64",
-      });
-    }
-  }
-
-  return jsonFiles;
-};
-
 const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
   const jsonFiles = [];
 
@@ -643,6 +479,7 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
         action: "create",
         file_path: "conditions/" + externalFile.name,
         content: fileData,
+        encoding: "text",
       });
     }
 
@@ -688,13 +525,6 @@ const convertFilesToGitlabObjects = async (uploadedFiles: any) => {
     file_path: uploadedFiles.experimentFile.name,
     content: fileData,
   });
-
-  // add experiment file to `/conditions`
-  // jsonFiles.push({
-  //   action: "create",
-  //   file_path: "conditions/experiment.csv",
-  //   content: fileData,
-  // });
 
   return jsonFiles;
 };
@@ -806,7 +636,7 @@ export const generateAndUploadCompletionURL = async () => {
       };
       var commitBody = {
         branch: "master",
-        commit_message: "Easy Eyes to Gitlab INIT",
+        commit_message: "EasyEyes initialization",
         actions: [commitAction],
       };
       var commitFile = await fetch(

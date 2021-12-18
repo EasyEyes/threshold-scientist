@@ -13,7 +13,6 @@ import {
   populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment,
 } from "./gitlabUtility";
 import { getExperimentFontList, getExperimentFormList } from "./experimentUtil";
-import XLSX from "xlsx";
 import * as bootstrapImport from "bootstrap";
 import {
   isConsentFormMissing,
@@ -24,7 +23,6 @@ import { EasyEyesError } from "../threshold/preprocess/errorMessages";
 import {
   addExperimentNameBanner,
   clearAllLogs,
-  clearLogs,
   logError,
   newLog,
 } from "./errorLog";
@@ -271,20 +269,6 @@ const newDz = new Dropzone("#file-dropzone", {
         true
       );
       return;
-    }
-
-    if (getFileExtension(file) == "xlsx") {
-      // assuming there is only 1 sheet in the experiment file
-      const data = await file.arrayBuffer();
-      const book = XLSX.read(data);
-      for (let sheet in book.Sheets) {
-        const dataString = XLSX.utils.sheet_to_csv(book.Sheets[sheet]);
-        const blob = new Blob([dataString], { type: "text/csv;charset=utf-8" });
-        file = new File([blob], file.name, {
-          type: file.type,
-          lastModified: Date.now(),
-        });
-      }
     }
 
     // if dropped file is an experiment file, ie a csv extension, preprocess it immediately, and upon successful processing, add to droppedFiles array

@@ -63,6 +63,6 @@ export const getFileTextData = (file: File) => {
       console.error("Unable to get TEXT data", file, e);
     };
 
-    fileReader.readAsText(file);
+    fileReader.readAsText(file, "UTF-8");
   });
 };
