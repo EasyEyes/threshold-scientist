@@ -1,7 +1,7 @@
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
 import { EasyEyesError } from "../threshold/preprocess/errorMessages";
 import { isCsvFile } from "../threshold/preprocess/utilities";
-import { user } from "./constants";
+import { EasyEyesResources, user } from "./constants";
 
 /**
  * @file Client-side (ie browser) processing of declarative table experiment.csv file.
@@ -11,7 +11,13 @@ export const processFiles = (fileList: File[], callback: any) => {
 
   fileList.forEach(async (file) => {
     if (isCsvFile(file)) {
-      await preprocessExperimentFile(file, user, errors, callback);
+      await preprocessExperimentFile(
+        file,
+        user,
+        errors,
+        EasyEyesResources,
+        callback
+      );
     }
   });
 };

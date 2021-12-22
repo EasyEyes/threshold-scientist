@@ -12,13 +12,7 @@ import {
   getResourcesListFromRepository,
   populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment,
 } from "./gitlabUtility";
-import { getExperimentFontList, getExperimentFormList } from "./experimentUtil";
 import * as bootstrapImport from "bootstrap";
-import {
-  isConsentFormMissing,
-  isDebriefFormMissing,
-  isFontMissing,
-} from "../threshold/preprocess/experimentFileChecks";
 import { EasyEyesError } from "../threshold/preprocess/errorMessages";
 import {
   addExperimentNameBanner,
@@ -38,53 +32,6 @@ export const acceptableFileExt = [
 export const isUserLoggedIn = () => {
   return user.userData && user.userData.id;
 };
-
-/*export const showDialogBox = (
-  title: string,
-  body: string,
-  exitOnOk: boolean,
-  closeSelf: boolean = false
-) => {
-  // show dialog box
-  let el: any = document.getElementById("dialog-box");
-  if (el != null) {
-    el.style.display = "block";
-
-    // set title
-    el = document.getElementsByClassName("dialog-title")[0];
-    el.innerText = title;
-
-    // set body
-    el = document.getElementsByClassName("dialog-body")[0];
-    el.innerHTML = body;
-
-    // toggle "OK" button
-    if (closeSelf) {
-      let noOfWords = title.split(" ").length;
-      setTimeout(function () {
-        hideDialogBox();
-      }, 1000 + 1000 * noOfWords);
-    }
-    if (exitOnOk) {
-      el = document.getElementsByClassName("dialog-button")[0];
-      el.style.display = "block";
-      el.onclick = () => {
-        hideDialogBox();
-      };
-    } else {
-      el = document.getElementsByClassName("dialog-button")[0];
-      el.style.display = "none";
-    }
-  }
-};
-
-export const hideDialogBox = () => {
-  // hide dialog box
-  let el = document.getElementById("dialog-box");
-  if (el != null) {
-    el.style.display = "none";
-  }
-};*/
 
 export const updateDialog = (body: string) => {
   let modalBodyDiv: HTMLElement = document.getElementById(
@@ -162,61 +109,6 @@ export const isAcceptableExtension = (ext: any) => {
   return acceptableFileExt.includes(ext);
 };
 
-/*
-const isAnyResourceMissing = () => {
-  const missingFonts: string[] = [];
-  const missingForms: string[] = [];
-  console.log("uploadedFiles", uploadedFiles);
-
-  // find missing fonts
-  for (let i = 0; i < uploadedFiles.requestedFonts.length; i++) {
-    if (
-      !EasyEyesResources.fonts.includes(uploadedFiles.requestedFonts[i]) &&
-      !missingFonts.includes(uploadedFiles.requestedFonts[i])
-    ) {
-      missingFonts.push(uploadedFiles.requestedFonts[i]);
-    }
-  }
-
-  // find missing forms
-  for (let i = 0; i < uploadedFiles.requestedForms.length; i++) {
-    if (
-      !EasyEyesResources.forms.includes(uploadedFiles.requestedForms[i]) &&
-      !missingForms.includes(uploadedFiles.requestedForms[i])
-    ) {
-      missingForms.push(uploadedFiles.requestedForms[i]);
-    }
-  }
-
-  console.log("missingFonts", missingFonts);
-  console.log("missingForms", missingForms);
-
-  if (missingFonts.length > 0 || missingForms.length > 0) {
-    let message = "";
-
-    if (missingFonts.length > 0) {
-      message = "Missing Fonts: ";
-      for (let i = 0; i < missingFonts.length; i++) {
-        message += missingFonts[i] + " ";
-      }
-      message += "\n";
-    }
-
-    if (missingForms.length > 0) {
-      message += "Missing Forms: ";
-      for (let i = 0; i < missingForms.length; i++) {
-        message += missingForms[i] + " ";
-      }
-    }
-
-    alert(message);
-    return true;
-  } else {
-    return false;
-  }
-};
-*/
-
 // const myDropzone = { myDropzone: null };
 const newDz = new Dropzone("#file-dropzone", {
   paramName: "file",
@@ -252,7 +144,7 @@ const newDz = new Dropzone("#file-dropzone", {
 
     // authentication check
     if (!isUserLoggedIn()) {
-      let hideDialogBox = showDialogBox(
+      showDialogBox(
         "Error",
         "Not connected to Pavlovia, so nothing can be uploaded.",
         true
@@ -263,7 +155,7 @@ const newDz = new Dropzone("#file-dropzone", {
     // check file type
     const ext = getFileExtension(file);
     if (!isAcceptableExtension(ext)) {
-      let hideDialogBox = showDialogBox(
+      showDialogBox(
         `${file.name} was discarded.`,
         `Sorry, cannot accept any file with extension '.${ext}'`,
         true
@@ -280,104 +172,80 @@ const newDz = new Dropzone("#file-dropzone", {
       // store experiment file
       uploadedFiles.experimentFile = file;
 
-      // extract required fonts
-      getExperimentFontList(
-        uploadedFiles.experimentFile,
-        (fontList: string[]) => {
-          console.log("REQUESTED FONTS", fontList);
-          uploadedFiles.requestedFonts = fontList;
+      // preprocess experiment files
+      let hideDialogBox = showDialogBox(
+        `The file ${file.name} is being processed ...`,
+        ``,
+        false,
+        false,
+        false
+      );
 
-          // extract required forms
-          getExperimentFormList(uploadedFiles.experimentFile, (forms: any) => {
-            const formList: string[] = [];
-            const missingResourcesErrorList: EasyEyesError[] = [];
+      processFiles(
+        [file],
+        (
+          requestedForms: any,
+          requestedFontList: string[],
+          fileList: File[],
+          errorList: any[]
+        ) => {
+          const formList: string[] = [];
 
-            if (forms.consentForm) {
-              formList.push(forms.consentForm);
-              missingResourcesErrorList.push(
-                ...isConsentFormMissing(
-                  forms.consentForm,
-                  EasyEyesResources.forms
-                )
-              );
-            }
-            if (forms.debriefForm) {
-              formList.push(forms.debriefForm);
-              missingResourcesErrorList.push(
-                ...isDebriefFormMissing(
-                  forms.debriefForm,
-                  EasyEyesResources.forms
-                )
-              );
-            }
+          if (requestedForms.debriefForm) {
+            formList.push(requestedForms.debreifForm);
+          }
 
-            missingResourcesErrorList.push(
-              ...isFontMissing(
-                uploadedFiles.requestedFonts,
-                EasyEyesResources.fonts
-              )
-            );
+          if (requestedForms.consentForm) {
+            formList.push(requestedForms.consentForm);
+          }
 
-            console.log("REQUESTED FORMS", formList);
-            uploadedFiles.requestedForms = formList;
+          uploadedFiles.requestedForms = formList;
+          uploadedFiles.requestedFonts = requestedFontList;
 
-            // preprocess experiment files
-            let hideDialogBox = showDialogBox(
-              `The file ${file.name} is being processed ...`,
-              ``,
-              false,
-              false,
-              false
-            );
+          if (errorList.length) {
+            hideDialogBox();
+            clearDropzone();
 
-            processFiles([file], (fileList: File[], errorList: any[]) => {
-              if (errorList.length || missingResourcesErrorList.length > 0) {
-                hideDialogBox();
-                clearDropzone();
+            // show file name
+            addExperimentNameBanner(errorLogsEl);
 
-                // show file name
-                addExperimentNameBanner(errorLogsEl);
-
-                // append missing resources errors
-                errorList.push(...missingResourcesErrorList);
-
-                // sort errorList according to parameter name
-                errorList.sort((errA: EasyEyesError, errB: EasyEyesError) => {
-                  if (errA.parameters < errB.parameters) return -1;
-                  else return 1;
-                });
-                // show errors
-                errorList.forEach((e) => logError(e, errorLogsEl));
-
-                setTimeout(() => {
-                  uploadedFiles.experimentFile = null;
-                }, 800);
-                return;
-              } else {
-                // show success log
-                addExperimentNameBanner(successLogsEl);
-                newLog(
-                  successLogsEl,
-                  "The experiment file is ready",
-                  `We didn't find any error in your experiment file. Feel free to upload your experiment to Pavlovia and start running it.`,
-                  "correct"
-                );
-              }
-
-              for (let fi = 0; fi < fileList.length; fi++) {
-                droppedFileNames.add(fileList[fi].name);
-                uploadedFiles.others.push(fileList[fi]);
-              }
-
-              hideDialogBox();
-
-              // set repo name
-              const gitlabRepoNameEl = document.getElementById(
-                "new-gitlab-repo-name"
-              ) as HTMLInputElement;
-              gitlabRepoNameEl.value = file.name.split(".")[0];
+            // sort errorList according to parameter name
+            errorList.sort((errA: EasyEyesError, errB: EasyEyesError) => {
+              if (errA.parameters < errB.parameters) return -1;
+              else return 1;
             });
-          });
+
+            // show errors
+            errorList.forEach((e) => logError(e, errorLogsEl));
+
+            // clear experiment file cache
+            setTimeout(() => {
+              uploadedFiles.experimentFile = null;
+            }, 800);
+            return;
+          } else {
+            // show success log
+            addExperimentNameBanner(successLogsEl);
+            newLog(
+              successLogsEl,
+              "The experiment file is ready",
+              `We didn't find any error in your experiment file. Feel free to upload your experiment to Pavlovia and start running it.`,
+              "correct"
+            );
+          }
+
+          for (let fi = 0; fi < fileList.length; fi++) {
+            droppedFileNames.add(fileList[fi].name);
+            uploadedFiles.others.push(fileList[fi]);
+          }
+
+          hideDialogBox();
+
+          // set repo name
+          const gitlabRepoNameEl = document.getElementById(
+            "new-gitlab-repo-name"
+          ) as HTMLInputElement;
+          gitlabRepoNameEl.value = file.name.split(".")[0];
         }
       );
     }
