@@ -20,6 +20,7 @@ import {
   logError,
   newLog,
 } from "./errorLog";
+import { disableStep, enableStep } from "./thresholdState";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -195,6 +196,7 @@ const newDz = new Dropzone("#file-dropzone", {
           if (errorList.length) {
             hideDialogBox();
             clearDropzone();
+            disableStep(4);
 
             // show file name
             addExperimentNameBanner(errorLogsEl);
@@ -215,6 +217,7 @@ const newDz = new Dropzone("#file-dropzone", {
             return;
           } else {
             // show success log
+            enableStep(4);
             addExperimentNameBanner(successLogsEl);
             newLog(
               successLogsEl,

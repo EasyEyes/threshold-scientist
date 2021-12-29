@@ -2,6 +2,7 @@ import { EasyEyesResources, user } from "./constants";
 import { showDialogBox } from "./dropzoneHandler";
 import { createRepo, getResourcesListFromRepository } from "./gitlabUtility";
 import { setTab, setTabList } from "./tab";
+import { disableStep, enableStep } from "./thresholdState";
 
 if (window.location.hash != "") {
   const gitlabConnBtn = document.getElementById("gitlab-connect-btn");
@@ -17,9 +18,6 @@ if (window.location.hash != "") {
 }
 
 export const populateUserInfo = async () => {
-  // console.log(document.getElementById("form-tab"));
-  // document.getElementById("form-tab")!.click();
-
   user.accessToken = window.location.hash.split("&")[0].split("=")[1];
   var userData = await fetch(
     "https://gitlab.pavlovia.org/api/v4/user?access_token=" +
@@ -34,6 +32,10 @@ export const populateUserInfo = async () => {
   } else {
     return;
   }
+
+  disableStep(1);
+  enableStep(2);
+  enableStep(3);
 
   var projectData: any = await fetch(
     "https://gitlab.pavlovia.org/api/v4/users/" +

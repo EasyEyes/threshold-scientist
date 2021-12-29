@@ -85,6 +85,12 @@
   margin-bottom: 2rem;
 }
 
+.right-arrow {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .dropzone {
   padding: 1rem !important;
   min-height: 0px !important;

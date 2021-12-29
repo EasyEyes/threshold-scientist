@@ -21,6 +21,7 @@ import {
 import { uploadedFiles } from "./constants";
 
 import "../css/errors.css";
+import { disableAllSteps, disableStep, enableStep } from "./thresholdState";
 
 const addOnClickToEl = (elementId: string, handler: any) => {
   const el = document.getElementById(elementId);
@@ -37,6 +38,10 @@ addOnClickToEl("return-to-prolific", redirectToProlificToViewActiveStudies);
 addOnClickToEl("pavlovia-advice", showPavloviaAdvice);
 addOnClickToEl("easyeyes-forms", showForms);
 addOnClickToEl("easyeyes-fonts", showFonts);
+
+// ThresholdState
+disableAllSteps();
+enableStep(1);
 
 /*document
   .getElementById("font-tab")!
@@ -64,6 +69,10 @@ const pushToGitLab = async () => {
   }
 
   await gitlabRoutine(uploadedFiles);
+  disableStep(4);
+  enableStep(5);
+  enableStep(6);
+  enableStep(7);
   clearDropzone();
 };
 
