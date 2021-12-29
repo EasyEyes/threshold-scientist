@@ -216,8 +216,9 @@ const newDz = new Dropzone("#file-dropzone", {
             }, 800);
             return;
           } else {
+            if (isUserLoggedIn()) enableStep(4);
+
             // show success log
-            enableStep(4);
             addExperimentNameBanner(successLogsEl);
             newLog(
               successLogsEl,
