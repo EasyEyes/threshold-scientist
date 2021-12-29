@@ -4,7 +4,11 @@ import {
   redirectToOauth2,
   redirectToPalvoliaActivation,
 } from "./user";
-import { clearDropzone } from "./dropzoneHandler";
+import {
+  clearDropzone,
+  isUserLoggedIn,
+  showDialogBox,
+} from "./dropzoneHandler";
 import {
   gitlabRoutine,
   redirectToProlific,
@@ -49,6 +53,16 @@ document
 // dropzone
 // -----------------------------------------
 const pushToGitLab = async () => {
+  if (!isUserLoggedIn()) {
+    showDialogBox(
+      "Error",
+      "Not connected to Pavlovia, so nothing can be uploaded.",
+      true
+    );
+    clearDropzone();
+    return;
+  }
+
   await gitlabRoutine(uploadedFiles);
   clearDropzone();
 };

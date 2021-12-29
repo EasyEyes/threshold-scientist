@@ -142,16 +142,6 @@ const newDz = new Dropzone("#file-dropzone", {
     const successLogsEl = document.getElementById("success-logs")!;
     clearAllLogs("errors");
 
-    // authentication check
-    if (!isUserLoggedIn()) {
-      showDialogBox(
-        "Error",
-        "Not connected to Pavlovia, so nothing can be uploaded.",
-        true
-      );
-      return;
-    }
-
     // check file type
     const ext = getFileExtension(file);
     if (!isAcceptableExtension(ext)) {
@@ -286,6 +276,17 @@ const newDz = new Dropzone("#file-dropzone", {
     }
 
     if (resourcesList.length > 0) {
+      // authentication check
+      if (!isUserLoggedIn()) {
+        showDialogBox(
+          "Error",
+          "Not connected to Pavlovia, so nothing can be uploaded.",
+          true
+        );
+        clearDropzone();
+        return;
+      }
+
       let hideDialogBox = showDialogBox("Now uploading files ...", "", false);
 
       // upload resources instantly
