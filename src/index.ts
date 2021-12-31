@@ -4,7 +4,11 @@ import {
   redirectToOauth2,
   redirectToPalvoliaActivation,
 } from "./user";
-import { clearDropzone } from "./dropzoneHandler";
+import {
+  clearDropzone,
+  isUserLoggedIn,
+  showDialogBox,
+} from "./dropzoneHandler";
 import {
   gitlabRoutine,
   redirectToProlific,
@@ -17,6 +21,7 @@ import {
 import { uploadedFiles } from "./constants";
 
 import "../css/errors.css";
+import { disableAllSteps, disableStep, enableStep } from "./thresholdState";
 
 const addOnClickToEl = (elementId: string, handler: any) => {
   const el = document.getElementById(elementId);
@@ -34,6 +39,11 @@ addOnClickToEl("pavlovia-advice", showPavloviaAdvice);
 addOnClickToEl("easyeyes-forms", showForms);
 addOnClickToEl("easyeyes-fonts", showFonts);
 
+// ThresholdState
+disableAllSteps();
+enableStep(1);
+enableStep(3);
+
 /*document
   .getElementById("font-tab")!
   .addEventListener("click", async (evt: any) => {
@@ -49,7 +59,21 @@ document
 // dropzone
 // -----------------------------------------
 const pushToGitLab = async () => {
+  if (!isUserLoggedIn()) {
+    showDialogBox(
+      "Error",
+      "Not connected to Pavlovia, so nothing can be uploaded.",
+      true
+    );
+    clearDropzone();
+    return;
+  }
+
   await gitlabRoutine(uploadedFiles);
+  disableStep(4);
+  enableStep(5);
+  enableStep(6);
+  enableStep(7);
   clearDropzone();
 };
 

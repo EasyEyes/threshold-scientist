@@ -20,6 +20,7 @@ import {
   logError,
   newLog,
 } from "./errorLog";
+import { disableStep, enableStep } from "./thresholdState";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -142,16 +143,6 @@ const newDz = new Dropzone("#file-dropzone", {
     const successLogsEl = document.getElementById("success-logs")!;
     clearAllLogs("errors");
 
-    // authentication check
-    if (!isUserLoggedIn()) {
-      showDialogBox(
-        "Error",
-        "Not connected to Pavlovia, so nothing can be uploaded.",
-        true
-      );
-      return;
-    }
-
     // check file type
     const ext = getFileExtension(file);
     if (!isAcceptableExtension(ext)) {
@@ -205,6 +196,7 @@ const newDz = new Dropzone("#file-dropzone", {
           if (errorList.length) {
             hideDialogBox();
             clearDropzone();
+            disableStep(4);
 
             // show file name
             addExperimentNameBanner(errorLogsEl);
@@ -224,6 +216,8 @@ const newDz = new Dropzone("#file-dropzone", {
             }, 800);
             return;
           } else {
+            if (isUserLoggedIn()) enableStep(4);
+
             // show success log
             addExperimentNameBanner(successLogsEl);
             newLog(
@@ -286,6 +280,17 @@ const newDz = new Dropzone("#file-dropzone", {
     }
 
     if (resourcesList.length > 0) {
+      // authentication check
+      if (!isUserLoggedIn()) {
+        showDialogBox(
+          "Error",
+          "Not connected to Pavlovia, so nothing can be uploaded.",
+          true
+        );
+        clearDropzone();
+        return;
+      }
+
       let hideDialogBox = showDialogBox("Now uploading files ...", "", false);
 
       // upload resources instantly

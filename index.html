@@ -341,6 +341,7 @@
             <!-- Pavlovia Auth Controls -->
             <li>
               <div class="option-block">
+                <div id="state-step1" class="right-arrow"></div>
                 <button
                   id="gitlab-connect-btn"
                   class="btn btn-outline-secondary"
@@ -356,6 +357,7 @@
             <!-- Dropzone -->
             <li>
               <div>
+                <div id="state-step2" class="right-arrow"></div>
                 Submit
                 <span id="dz-downarrow"> &#8595; </span>
                 any missing fonts & consent/debrief forms.
@@ -411,6 +413,7 @@
 
             <!-- Instruction -->
             <li>
+              <div id="state-step3" class="right-arrow"></div>
               Submit
               <span id="dz-uparrow">&#8593;</span> your experiment table, to be
               checked now.
@@ -458,6 +461,7 @@
       <ol id="pavlovia-experiment-url-ol" start="4">
         <li>
           <div class="option-block">
+            <div id="state-step4" class="right-arrow"></div>
             <div class="input-group" id="new-repo-input-group">
               <input
                 id="new-gitlab-repo-name"
@@ -481,6 +485,7 @@
         <!-- Pavlovia Experiment Controls -->
         <li id="pavlovia-activate-div" class="no-display">
           <div class="option-block">
+            <div id="state-step5" class="right-arrow"></div>
             <button
               id="activate-experiment-btn"
               class="btn btn-outline-success"
@@ -495,6 +500,11 @@
                 >Click here for advice on using Pavlovia without a university
                 license.</u
               >
+              If you're not signed into Pavlovia, then you'll be greeted by the
+              alarming message, "No information available for this experiment:
+              it may not exist or you may not have access to it." Don't worry.
+              Just sign in. Use the rightmost item in the Pavlovia menu bar.
+              Then return here and try again.
             </div>
           </div>
           <br />
@@ -507,11 +517,13 @@
       <br />
       <ol id="participant-survey-completion-div" class="no-display" start="6">
         <li>
+          <div id="state-step6" class="right-arrow"></div>
           <button id="prolific-redirect-btn" class="btn btn-outline-secondary">
             Go to Prolific to finalize and run your study
           </button>
         </li>
         <li>
+          <div id="state-step7" class="right-arrow"></div>
           <button id="return-to-prolific" class="btn btn-outline-secondary">
             Go to Prolific to view active studies
           </button>

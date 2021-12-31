@@ -66,3 +66,10 @@ export const uploadedFiles: any = {
   requestedFonts: [],
   requestedForms: [],
 };
+
+// TODO need review, where to store SVGs
+export const TOTAL_STEPS = 7;
+export const RIGHT_ARROW_DISABLED =
+  '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/></svg>';
+export const RIGHT_ARROW_ENABLED =
+  '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#00FF00"><path d="M0 0h24v24H0z" fill="none"/><path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/></svg>';
