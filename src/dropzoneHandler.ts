@@ -183,7 +183,7 @@ const newDz = new Dropzone("#file-dropzone", {
           const formList: string[] = [];
 
           if (requestedForms.debriefForm) {
-            formList.push(requestedForms.debreifForm);
+            formList.push(requestedForms.debriefForm);
           }
 
           if (requestedForms.consentForm) {
