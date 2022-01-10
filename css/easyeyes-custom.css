@@ -110,3 +110,8 @@
 .resource-btn {
   min-width: 7vw;
 }
+
+.exception-note {
+  font-size: 14px;
+  padding: 0px 5px 0px 5px;
+}
