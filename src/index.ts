@@ -70,10 +70,6 @@ const pushToGitLab = async () => {
   }
 
   await gitlabRoutine(uploadedFiles);
-  disableStep(4);
-  enableStep(5);
-  enableStep(6);
-  enableStep(7);
   clearDropzone();
 };
 

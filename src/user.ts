@@ -2,7 +2,7 @@ import { EasyEyesResources, user } from "./constants";
 import { showDialogBox } from "./dropzoneHandler";
 import { createRepo, getResourcesListFromRepository } from "./gitlabUtility";
 import { setTab, setTabList } from "./tab";
-import { disableStep, enableStep } from "./thresholdState";
+import { completeStep, disableStep, enableStep } from "./thresholdState";
 
 if (window.location.hash != "") {
   const gitlabConnBtn = document.getElementById("gitlab-connect-btn");
@@ -33,7 +33,7 @@ export const populateUserInfo = async () => {
     return;
   }
 
-  disableStep(1);
+  completeStep(1);
   enableStep(2);
   enableStep(3);
 

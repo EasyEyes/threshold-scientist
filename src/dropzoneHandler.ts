@@ -31,7 +31,7 @@ export const acceptableFileExt = [
 ];
 
 export const isUserLoggedIn = () => {
-  return user.userData && user.userData.id;
+  return user.userData != undefined && user.userData.id != undefined;
 };
 
 export const updateDialog = (body: string) => {
@@ -196,7 +196,6 @@ const newDz = new Dropzone("#file-dropzone", {
           if (errorList.length) {
             hideDialogBox();
             clearDropzone();
-            disableStep(4);
 
             // show file name
             addExperimentNameBanner(errorLogsEl);
@@ -216,6 +215,7 @@ const newDz = new Dropzone("#file-dropzone", {
             }, 800);
             return;
           } else {
+            console.log("> " + isUserLoggedIn());
             if (isUserLoggedIn()) enableStep(4);
 
             // show success log

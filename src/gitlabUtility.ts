@@ -16,11 +16,13 @@ import {
 } from "./dropzoneHandler";
 import { _loadFiles } from "./files";
 import { setTab } from "./tab";
+import { disableStep, enableStep } from "./thresholdState";
 
 export const gitlabRoutine = async (uploadedFiles: any) => {
   // empty file list check
   if (!uploadedFiles.others || uploadedFiles.others.length == 0) {
     window.alert("Please upload required files.");
+    enableStep(4);
     return;
   }
 
@@ -97,6 +99,11 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       handleParticipantRecruitmentUrl();
     }
     user.currentExperiment.experimentUrl = expUrl;
+
+    disableStep(4);
+    enableStep(5);
+    enableStep(6);
+    enableStep(7);
   }
 
   // else if repo name is invalid, display response
@@ -107,6 +114,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
       "Please enter a new repository name.",
       true
     );
+    enableStep(4);
   }
 };
 

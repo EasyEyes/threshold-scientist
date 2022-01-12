@@ -1,17 +1,21 @@
 import {
-  RIGHT_ARROW_DISABLED,
-  RIGHT_ARROW_ENABLED,
+  STEP_COMPLETED,
+  STEP_DEFAULT,
+  STEP_ENABLED,
   TOTAL_STEPS,
 } from "./constants";
 
 export const enableStep = (stepNumber: number): void => {
   const arrowElWrapper = document.getElementById(`state-step${stepNumber}`);
-  arrowElWrapper!.innerHTML = `${RIGHT_ARROW_ENABLED}`;
+  arrowElWrapper!.innerHTML = `${STEP_ENABLED}`;
 };
-
 export const disableStep = (stepNumber: number): void => {
   const arrowElWrapper = document.getElementById(`state-step${stepNumber}`);
-  arrowElWrapper!.innerHTML = `${RIGHT_ARROW_DISABLED}`;
+  arrowElWrapper!.innerHTML = `${STEP_DEFAULT}`;
+};
+export const completeStep = (stepNumber: number): void => {
+  const arrowElWrapper = document.getElementById(`state-step${stepNumber}`);
+  arrowElWrapper!.innerHTML = `${STEP_COMPLETED}`;
 };
 
 export const enableAllSteps = (): void => {
