@@ -42,7 +42,6 @@ addOnClickToEl("easyeyes-fonts", showFonts);
 // ThresholdState
 disableAllSteps();
 enableStep(1);
-enableStep(3);
 
 /*document
   .getElementById("font-tab")!

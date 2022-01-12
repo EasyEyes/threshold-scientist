@@ -70,5 +70,5 @@ export const uploadedFiles: any = {
 // TODO need review, where to store SVGs
 export const TOTAL_STEPS = 7;
 export const STEP_DEFAULT = "";
-export const STEP_ENABLED = "⮕";
+export const STEP_ENABLED = '<span style="color: rgb(0,255,0)">⮕</span>';
 export const STEP_COMPLETED = "✓";
