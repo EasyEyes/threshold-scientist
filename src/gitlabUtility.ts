@@ -102,8 +102,13 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
 
     completeStep(4);
     enableStep(5);
-    enableStep(6);
-    enableStep(7);
+
+    document
+      .getElementById("activate-experiment-btn")
+      ?.addEventListener("click", () => {
+        completeStep(5);
+        enableStep(6);
+      });
   }
 
   // else if repo name is invalid, display response
@@ -683,6 +688,9 @@ export const redirectToProlific = async () => {
     "&prolific_id_option=url_parameters";
 
   window.open(url, "_blank");
+
+  completeStep(6);
+  enableStep(7);
 };
 
 export const showPavloviaAdvice = () => {

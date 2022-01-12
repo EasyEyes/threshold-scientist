@@ -84,7 +84,8 @@
 #header {
   margin-bottom: 2rem;
 }
-#pavlovia-experiment-url-ol {
+#pavlovia-experiment-url-ol,
+#participant-survey-completion-div {
   position: relative;
 }
 .step-status {
@@ -95,6 +96,7 @@
 }
 #pavlovia-left-list .step-status {
   left: -72pt;
+  top: -19pt;
 }
 #state-step3 {
   top: -18pt;
@@ -105,6 +107,14 @@
 }
 #pavlovia-activate-div .step-status {
   top: 36pt;
+}
+#state-step6 {
+  top: -17pt;
+  left: -50pt;
+}
+#state-step7 {
+  top: 25pt;
+  left: -50pt;
 }
 
 .dropzone {
