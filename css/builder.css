@@ -95,14 +95,14 @@
   font-size: 36pt;
 }
 #pavlovia-left-list .step-status {
-  left: -72pt;
+  left: -59pt;
   top: -19pt;
 }
 #state-step3 {
   top: -18pt;
 }
 #pavlovia-experiment-url-ol .step-status {
-  left: -50pt;
+  left: -32pt;
   top: -5pt;
 }
 #pavlovia-activate-div .step-status {
@@ -110,11 +110,11 @@
 }
 #state-step6 {
   top: -17pt;
-  left: -50pt;
+  left: -32pt;
 }
 #state-step7 {
   top: 25pt;
-  left: -50pt;
+  left: -32pt;
 }
 
 .dropzone {
