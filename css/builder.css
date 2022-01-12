@@ -89,10 +89,12 @@
   position: relative;
 }
 .step-status {
+  width: 36pt;
   position: absolute;
   vertical-align: middle;
   font-family: Calibri, Calibri;
   font-size: 36pt;
+  text-align: end;
 }
 #pavlovia-left-list .step-status {
   left: -59pt;
