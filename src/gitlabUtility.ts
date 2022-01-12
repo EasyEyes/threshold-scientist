@@ -16,7 +16,7 @@ import {
 } from "./dropzoneHandler";
 import { _loadFiles } from "./files";
 import { setTab } from "./tab";
-import { disableStep, enableStep } from "./thresholdState";
+import { completeStep, disableStep, enableStep } from "./thresholdState";
 
 export const gitlabRoutine = async (uploadedFiles: any) => {
   // empty file list check
@@ -100,7 +100,7 @@ export const gitlabRoutine = async (uploadedFiles: any) => {
     }
     user.currentExperiment.experimentUrl = expUrl;
 
-    disableStep(4);
+    completeStep(4);
     enableStep(5);
     enableStep(6);
     enableStep(7);

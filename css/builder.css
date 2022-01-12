@@ -84,23 +84,29 @@
 #header {
   margin-bottom: 2rem;
 }
-
+#pavlovia-experiment-url-ol {
+  position: relative;
+}
 .step-status {
   position: absolute;
-  left: -72pt;
   vertical-align: middle;
   font-family: Calibri, Calibri;
   font-size: 36pt;
 }
-#pavlovia-experiment-url-ol .step-status {
-  left: 242pt;
+#pavlovia-left-list .step-status {
+  left: -72pt;
 }
 #state-step3 {
   top: -18pt;
 }
-#state-step4 {
-  margin-top: -10pt;
+#pavlovia-experiment-url-ol .step-status {
+  left: -50pt;
+  top: -5pt;
 }
+#pavlovia-activate-div .step-status {
+  top: 36pt;
+}
+
 .dropzone {
   padding: 1rem !important;
   min-height: 0px !important;

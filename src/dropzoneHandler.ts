@@ -20,7 +20,7 @@ import {
   logError,
   newLog,
 } from "./errorLog";
-import { disableStep, enableStep } from "./thresholdState";
+import { completeStep, disableStep, enableStep } from "./thresholdState";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -216,7 +216,11 @@ const newDz = new Dropzone("#file-dropzone", {
             return;
           } else {
             console.log("> " + isUserLoggedIn());
-            if (isUserLoggedIn()) enableStep(4);
+            if (isUserLoggedIn()) {
+              completeStep(2);
+              completeStep(3);
+              enableStep(4);
+            }
 
             // show success log
             addExperimentNameBanner(successLogsEl);
