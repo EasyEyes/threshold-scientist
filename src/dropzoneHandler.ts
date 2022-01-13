@@ -226,8 +226,8 @@ const newDz = new Dropzone("#file-dropzone", {
             addExperimentNameBanner(successLogsEl);
             newLog(
               successLogsEl,
-              "The experiment file is ready",
-              `We didn't find any error in your experiment file. Feel free to upload your experiment to Pavlovia and start running it.`,
+              "The experiment has been compiled, and is ready to upload.",
+              ``,
               "correct"
             );
           }
