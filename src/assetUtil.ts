@@ -1,10 +1,11 @@
 import { _loadDir, _loadFiles } from "./files";
+import { ICommitAction } from "./gitlabUtil";
 
 export const getGitlabBodyForThreshold = async (
   startIndex: number,
   endIndex: number
 ) => {
-  const res = [];
+  const res: ICommitAction[] = [];
 
   for (let i = startIndex; i <= endIndex; i++) {
     const path = _loadFiles[i];
@@ -29,40 +30,4 @@ export const getAssetFileContent = async (filePath: string) => {
     .catch((error) => {
       return error;
     });
-};
-
-export const getFileBinaryData = (file: File) => {
-  return new Promise((resolve) => {
-    const fileReader = new FileReader();
-    fileReader.readAsDataURL(file);
-
-    fileReader.onload = (e: any) => {
-      if (
-        typeof fileReader.result === "string" &&
-        fileReader!.result!.includes(";base64,")
-      ) {
-        var splitResult = fileReader!.result!.split(";base64,");
-        resolve(splitResult![1]);
-      } else resolve(<string>fileReader.result);
-    };
-
-    fileReader.onerror = (e: any) => {
-      console.error("Unable to get BINARY data", file, e);
-    };
-  });
-};
-
-export const getFileTextData = (file: File) => {
-  return new Promise((resolve) => {
-    const fileReader = new FileReader();
-    fileReader.onload = (e: any) => {
-      resolve(e.target.result);
-    };
-
-    fileReader.onerror = (e: any) => {
-      console.error("Unable to get TEXT data", file, e);
-    };
-
-    fileReader.readAsText(file, "UTF-8");
-  });
 };

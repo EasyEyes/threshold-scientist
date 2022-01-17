@@ -2,7 +2,7 @@
   Do not modify this file! Run npm `npm run files` at ROOT of this project to update
 */
 
-export const _loadDir: string = "/threshold/threshold/";
+export const _loadDir: string = "/docs/threshold/threshold/";
 export const _loadFiles: string[] = [
   "LICENSE",
   "README.md",

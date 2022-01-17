@@ -1,4 +1,3 @@
-// import { openTab } from "./tab";
 import {
   populateUserInfo,
   redirectToOauth2,
@@ -10,18 +9,16 @@ import {
   showDialogBox,
 } from "./dropzoneHandler";
 import {
-  gitlabRoutine,
   redirectToProlific,
   // generateAndUploadCompletionURL,
   showPavloviaAdvice,
   redirectToProlificToViewActiveStudies,
   showForms,
   showFonts,
-} from "./gitlabUtility";
-import { uploadedFiles } from "./constants";
-
+} from "./pavloviaController";
 import "../css/errors.css";
-import { disableAllSteps, disableStep, enableStep } from "./thresholdState";
+import { disableAllSteps, enableStep } from "./thresholdState";
+import { createPavloviaExperiment } from "./pavloviaController";
 
 const addOnClickToEl = (elementId: string, handler: any) => {
   const el = document.getElementById(elementId);
@@ -43,17 +40,6 @@ addOnClickToEl("easyeyes-fonts", showFonts);
 disableAllSteps();
 enableStep(1);
 
-/*document
-  .getElementById("font-tab")!
-  .addEventListener("click", async (evt: any) => {
-    openTab(evt, "fonts");
-  });
-document
-  .getElementById("form-tab")!
-  .addEventListener("click", async (evt: any) => {
-    openTab(evt, "forms");
-  });*/
-
 // -----------------------------------------
 // dropzone
 // -----------------------------------------
@@ -68,7 +54,7 @@ const pushToGitLab = async () => {
     return;
   }
 
-  await gitlabRoutine(uploadedFiles);
+  await createPavloviaExperiment();
   clearDropzone();
 };
 
@@ -87,11 +73,6 @@ gitlabNewFileNameInput.addEventListener("keydown", async (e: any) => {
     await pushToGitLab();
   }
 });
-
-// -----------------------------------------
-// tabs
-// -----------------------------------------
-// document.getElementById("form-tab")!.click();
 
 // -----------------------------------------
 // gitlab

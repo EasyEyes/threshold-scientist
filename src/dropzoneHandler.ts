@@ -1,17 +1,14 @@
 import {
   acceptableExtensions,
   EasyEyesResources,
-  uploadedFiles,
+  getAllUserAcceptableFileExtensions,
   user,
+  userRepoFiles,
 } from "./constants";
 import { isCsvFile } from "../threshold/preprocess/utilities";
 import Dropzone from "dropzone";
 import { setTab, setTabList } from "./tab";
 import { processFiles } from "./preprocessor";
-import {
-  getResourcesListFromRepository,
-  populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment,
-} from "./gitlabUtility";
 import * as bootstrapImport from "bootstrap";
 import { EasyEyesError } from "../threshold/preprocess/errorMessages";
 import {
@@ -20,7 +17,13 @@ import {
   logError,
   newLog,
 } from "./errorLog";
-import { completeStep, disableStep, enableStep } from "./thresholdState";
+import { completeStep, enableStep } from "./thresholdState";
+import { getFileExtension } from "./fileUtil";
+import {
+  createOrUpdateCommonResources,
+  getCommonResourcesNames,
+} from "./pavloviaController";
+import { getProjectByNameInProjectList } from "./gitlabUtil";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -31,7 +34,7 @@ export const acceptableFileExt = [
 ];
 
 export const isUserLoggedIn = () => {
-  return user.userData != undefined && user.userData.id != undefined;
+  return user.gitlabData.id != undefined;
 };
 
 export const updateDialog = (body: string) => {
@@ -98,16 +101,12 @@ export const showDialogBox = (
   };
 };
 
-export const getFileExtension = (file: any) => {
-  let splitExt = file.name.split(".");
-  return splitExt[splitExt.length - 1].toLowerCase();
-};
 export const getFileNameWithoutExtension = (file: File) => {
   let nameTokens = file.name.split(".");
   return nameTokens[0];
 };
-export const isAcceptableExtension = (ext: any) => {
-  return acceptableFileExt.includes(ext);
+const isAcceptableExtension = (ext: any) => {
+  return getAllUserAcceptableFileExtensions().includes(ext);
 };
 
 // const myDropzone = { myDropzone: null };
@@ -116,25 +115,7 @@ const newDz = new Dropzone("#file-dropzone", {
   maxFilesize: 2,
   autoProcessQueue: false,
 
-  init: function () {
-    // TODO look for better refactoring here for myThis
-    // let myThis: any = this;
-    // if (myThis != null) {
-    //   myDropzone.myDropzone = myThis;
-    // document
-    // .querySelector("#preprocess-file-submit")
-    // .querySelector("#file-dropzone")
-    // .addEventListener("click", (e) => {
-    //   processFiles(myDropzone.files);
-    //   // prepareExperimentFileForThreshold(myDropzone);
-    //   // myDropzone.processQueue()
-    //   // TODO make elegant
-    //   myDropzone.files.forEach((f) => {
-    //     myDropzone.removeFile(f);
-    //   });
-    // });
-    // }
-  },
+  init: function () {},
 
   // file type verification
   accept: async (file: any, done) => {
@@ -161,7 +142,7 @@ const newDz = new Dropzone("#file-dropzone", {
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed table
 
       // store experiment file
-      uploadedFiles.experimentFile = file;
+      userRepoFiles.experiment = file;
 
       // preprocess experiment files
       let hideDialogBox = showDialogBox(
@@ -190,8 +171,9 @@ const newDz = new Dropzone("#file-dropzone", {
             formList.push(requestedForms.consentForm);
           }
 
-          uploadedFiles.requestedForms = formList;
-          uploadedFiles.requestedFonts = requestedFontList;
+          userRepoFiles.requestedForms = formList;
+          userRepoFiles.requestedFonts = requestedFontList;
+          userRepoFiles.blockFiles = fileList;
 
           if (errorList.length) {
             hideDialogBox();
@@ -211,11 +193,10 @@ const newDz = new Dropzone("#file-dropzone", {
 
             // clear experiment file cache
             setTimeout(() => {
-              uploadedFiles.experimentFile = null;
+              userRepoFiles.experiment = null;
             }, 800);
             return;
           } else {
-            console.log("> " + isUserLoggedIn());
             if (isUserLoggedIn()) {
               completeStep(2);
               completeStep(3);
@@ -234,7 +215,6 @@ const newDz = new Dropzone("#file-dropzone", {
 
           for (let fi = 0; fi < fileList.length; fi++) {
             droppedFileNames.add(fileList[fi].name);
-            uploadedFiles.others.push(fileList[fi]);
           }
 
           hideDialogBox();
@@ -246,16 +226,6 @@ const newDz = new Dropzone("#file-dropzone", {
           gitlabRepoNameEl.value = file.name.split(".")[0];
         }
       );
-    }
-
-    // store experiment files only as resource files are uploaded instantaneously
-    else if (
-      !droppedFileNames.has(file.name) &&
-      !acceptableExtensions.fonts.includes(ext) &&
-      !acceptableExtensions.forms.includes(ext)
-    ) {
-      droppedFileNames.add(file.name);
-      uploadedFiles.others.push(file);
     }
 
     // hide default progress bar UI
@@ -298,18 +268,15 @@ const newDz = new Dropzone("#file-dropzone", {
       let hideDialogBox = showDialogBox("Now uploading files ...", "", false);
 
       // upload resources instantly
-      await populateFontsAndConsentFilesIntoResourcesAndGetAllForExperiment(
-        resourcesList
-      );
+      await createOrUpdateCommonResources(user.gitlabData, resourcesList);
 
-      const easyEyesResourcesRepo = user.userData.projects.find(
-        (i: any) => i.name == "EasyEyesResources"
+      const easyEyesResourcesRepo = getProjectByNameInProjectList(
+        user.gitlabData.projectList,
+        "EasyEyesResources"
       );
       user.easyEyesResourcesRepo = easyEyesResourcesRepo;
-      const allResourcesList = await getResourcesListFromRepository(
-        easyEyesResourcesRepo.id,
-        user.accessToken
-      );
+
+      const allResourcesList = await getCommonResourcesNames(user.gitlabData);
       EasyEyesResources.fonts = allResourcesList.fonts;
       EasyEyesResources.forms = allResourcesList.forms;
 

@@ -1,79 +1,83 @@
 import { EasyEyesResources, user } from "./constants";
 import { showDialogBox } from "./dropzoneHandler";
-import { createRepo, getResourcesListFromRepository } from "./gitlabUtility";
-import { setTab, setTabList } from "./tab";
-import { completeStep, disableStep, enableStep } from "./thresholdState";
+import {
+  createEmptyRepo,
+  GitlabUser,
+  isProjectNameExistInProjectList,
+} from "./gitlabUtil";
+import { getCommonResourcesNames } from "./pavloviaController";
+import { completeStep, enableStep } from "./thresholdState";
 
-if (window.location.hash != "") {
-  const gitlabConnBtn = document.getElementById("gitlab-connect-btn");
-  const gitlabFileBtn = document.getElementById("gitlab-file-submit");
-  if (gitlabConnBtn) {
-    gitlabConnBtn.className = "btn btn-success disabled";
-    gitlabConnBtn.style.color = "white";
-    gitlabConnBtn.innerText = "Connected to Pavlovia. Ready to upload.";
+/**
+ * initializes pavlovia account info and updates DOM with new info
+ */
+export const populateUserInfo = async () => {
+  if (window.location.hash != "") {
+    const gitlabConnBtn = document.getElementById("gitlab-connect-btn");
+    const gitlabFileBtn = document.getElementById("gitlab-file-submit");
+    if (gitlabConnBtn) {
+      gitlabConnBtn.className = "btn btn-success disabled";
+      gitlabConnBtn.style.color = "white";
+      gitlabConnBtn.innerText = "Connected to Pavlovia. Ready to upload.";
+    }
+
+    if (gitlabFileBtn)
+      gitlabFileBtn.className = gitlabFileBtn.className.replace("disabled", "");
   }
 
-  if (gitlabFileBtn)
-    gitlabFileBtn.className = gitlabFileBtn.className.replace("disabled", "");
-}
-
-export const populateUserInfo = async () => {
-  user.accessToken = window.location.hash.split("&")[0].split("=")[1];
-  var userData = await fetch(
-    "https://gitlab.pavlovia.org/api/v4/user?access_token=" +
-      window.location.hash.split("&")[0].split("=")[1]
+  // initialise user details
+  const gitlabUser = new GitlabUser(
+    window.location.hash.split("&")[0].split("=")[1]
   );
+  user.gitlabData = gitlabUser;
 
   let hideDialogBox;
-  if (user.accessToken) {
+  if (user.gitlabData.accessToken) {
     // after dropzone conversion
     hideDialogBox = showDialogBox("Initializing...", "", false, false, false);
-    user.userData = await userData.json();
   } else {
     return;
   }
+  // initalize account details
+  await gitlabUser.initUserDetails();
 
+  // initalize project list
+  await gitlabUser.initProjectList();
+
+  // update steps
   completeStep(1);
   enableStep(2);
   enableStep(3);
 
-  var projectData: any = await fetch(
-    "https://gitlab.pavlovia.org/api/v4/users/" +
-      user.userData.id +
-      "/projects?access_token=" +
-      user.accessToken +
-      "&per_page=500"
-  );
-  projectData = await projectData.json();
-  user.userData.projects = projectData;
   // if user doesn't have a repo named EasyEyesResources, create one and add folders fonts and consent-forms
   if (
-    !user.userData.projects
-      .map((i: any) => {
-        return i ? i.name : "null";
-      })
-      .includes("EasyEyesResources")
+    !isProjectNameExistInProjectList(
+      user.gitlabData.projectList,
+      "EasyEyesResources"
+    )
   ) {
-    let easyEyesResourcesRepo = await createRepo("EasyEyesResources");
-    user.userData.projects.push(easyEyesResourcesRepo);
+    console.log("creating resources repo");
+    let easyEyesResourcesRepo = await createEmptyRepo(
+      "EasyEyesResources",
+      user.gitlabData
+    );
+    user.gitlabData.projectList.push(easyEyesResourcesRepo);
   }
+
+  // update DOM with user info
   const gitlabUserInfoEl = document.getElementById("gitlab-user-info");
   if (gitlabUserInfoEl)
-    gitlabUserInfoEl.innerHTML = `Pavlovia account : ${user.userData.name} (${user.userData.username})`;
+    gitlabUserInfoEl.innerHTML = `Pavlovia account : ${user.gitlabData.name} (${user.gitlabData.username})`;
 
-  // get initial resources info
-  let easyEyesResourcesRepo = user.userData.projects.find(
-    (i: any) => i.name == "EasyEyesResources"
-  );
-  const resourcesList: any = await getResourcesListFromRepository(
-    easyEyesResourcesRepo.id,
-    user.accessToken
-  );
-  hideDialogBox();
-  EasyEyesResources.forms = resourcesList.forms;
-  EasyEyesResources.fonts = resourcesList.fonts;
+  // fetch common resources
+  const resources = await getCommonResourcesNames(user.gitlabData);
+  EasyEyesResources.forms = resources.forms;
+  EasyEyesResources.fonts = resources.fonts;
   console.log("EasyEyesResources", EasyEyesResources);
 
+  hideDialogBox();
+
+  // update DOM forms button
   let easyEyesFormsButton: HTMLElement = document.getElementById(
     "easyeyes-forms"
   ) as HTMLElement;
@@ -84,6 +88,7 @@ export const populateUserInfo = async () => {
     ""
   );
 
+  // update DOM fonts button
   let easyEyesFontsButton: HTMLElement = document.getElementById(
     "easyeyes-fonts"
   ) as HTMLElement;
@@ -93,12 +98,6 @@ export const populateUserInfo = async () => {
     "no-display",
     ""
   );
-  /*// display inital resources info
-  setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
-  setTabList("fonts", EasyEyesResources.fonts);
-  setTab("form-tab", EasyEyesResources.forms.length, "Forms");
-  setTabList("forms", EasyEyesResources.forms);
-  document.getElementById("form-tab")!.click();*/
 };
 
 export const redirectToOauth2 = () => {
@@ -109,7 +108,7 @@ export const redirectToOauth2 = () => {
 export const redirectToPalvoliaActivation = async () => {
   window.open(
     "https://pavlovia.org/" +
-      user.userData.username +
+      user.gitlabData.username +
       "/" +
       user.newRepo.name.toLowerCase(),
     "_blank"

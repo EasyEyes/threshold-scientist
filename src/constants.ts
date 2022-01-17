@@ -2,35 +2,38 @@
 // Configs
 // ----------------------------------------
 
-export const acceptableExtensions = {
+import { GitlabUser } from "./gitlabUtil";
+
+export interface IUserFileTypes {
+  experiments: string[];
+  fonts: string[];
+  forms: string[];
+}
+export const acceptableExtensions: IUserFileTypes = {
   experiments: ["csv", "xlsx"],
   fonts: ["woff", "woff2", "otf", "ttf", "svg"],
   forms: ["md", "pdf"],
 };
-export const acceptableFileExt = [
-  ...acceptableExtensions.experiments,
-  ...acceptableExtensions.fonts,
-  ...acceptableExtensions.forms,
-];
+export const getAllUserAcceptableFileExtensions = (): string[] => {
+  return [
+    ...acceptableExtensions.experiments,
+    ...acceptableExtensions.fonts,
+    ...acceptableExtensions.forms,
+  ];
+};
 
 // ----------------------------------------
 // User constants
 // ----------------------------------------
 export const user: any = {
-  // gitlab auth
-  accessToken: undefined,
+  // GitlabUser Object
+  gitlabData: undefined,
 
   currentExperiment: {
     participantRecruitmentServiceName: null,
     participantRecruitmentServiceUrl: null,
     participantRecruitmentServiceCode: null,
     experimentUrl: null,
-  },
-
-  userData: {
-    id: undefined,
-    username: undefined,
-    projects: [],
   },
 
   newRepo: {
@@ -60,14 +63,21 @@ export const setCurrentTabId = (newId: string) => {
 // ----------------------------------------
 // File upload constants
 // ----------------------------------------
-export const uploadedFiles: any = {
-  experimentFile: null,
-  others: [],
-  requestedFonts: [],
-  requestedForms: [],
+export interface ThresholdRepoFiles {
+  experiment: File | null;
+  blockFiles: File[];
+  fonts: File[];
+  forms: File[];
+  requestedForms?: string[];
+  requestedFonts?: string[];
+}
+export const userRepoFiles: ThresholdRepoFiles = {
+  experiment: null,
+  blockFiles: [],
+  fonts: [],
+  forms: [],
 };
 
-// TODO need review, where to store SVGs
 export const TOTAL_STEPS = 7;
 export const STEP_DEFAULT = "";
 export const STEP_ENABLED = '<span style="color: rgb(0,255,0)">⮕</span>';

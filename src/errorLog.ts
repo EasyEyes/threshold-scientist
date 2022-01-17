@@ -1,4 +1,4 @@
-import { uploadedFiles } from "./constants";
+import { userRepoFiles } from "./constants";
 import { EasyEyesError } from "../threshold/preprocess/errorMessages";
 
 export const logError = (error: EasyEyesError, parent: HTMLElement) => {
@@ -64,11 +64,13 @@ function removeFadeOut(e: HTMLElement) {
 }
 
 export const addExperimentNameBanner = (parent: HTMLElement) => {
+  if (!userRepoFiles.experiment) throw new Error("experiment file is null.");
+
   const now: Date = new Date();
   const experimentNameHeader = document.createElement("h2");
   experimentNameHeader.className = "filename-banner";
   experimentNameHeader.innerHTML = `
-    ${uploadedFiles.experimentFile.name} 
+    ${userRepoFiles.experiment.name} 
     <p class="timestamp">${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}</p>`;
   parent.appendChild(experimentNameHeader);
 };
