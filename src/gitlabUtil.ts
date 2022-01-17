@@ -147,7 +147,7 @@ export const pushCommits = async (
 export const getAllProjects = async (user: GitlabUser) => {
   const projectList: any[] = [];
 
-  // get first page spearately to fetch page count
+  // get first page separately to fetch page count
   const firstResponse = await fetch(
     `https://gitlab.pavlovia.org/api/v4/users/${user.id}/projects?access_token=${user.accessToken}&per_page=100`
   );
@@ -184,7 +184,7 @@ export const getAllProjects = async (user: GitlabUser) => {
 /**
  * @param projectList list of projects returned by gitlab API
  * @param keyProjectName project name to search for
- * @returns true if keyProjectName exists in given proejct list
+ * @returns true if keyProjectName exists in given project list
  */
 export const isProjectNameExistInProjectList = (
   projectList: any[],
