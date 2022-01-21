@@ -73,6 +73,8 @@ export const createPavloviaExperiment = async () => {
       true
     );
     enableStep(4);
+
+    return;
   }
 
   // create experiment repo
