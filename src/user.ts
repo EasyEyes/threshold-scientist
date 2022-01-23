@@ -30,7 +30,7 @@ export const populateUserInfo = async () => {
     window.location.hash.split("&")[0].split("=")[1]
   );
   user.gitlabData = gitlabUser;
-
+  user.accessToken = window.location.hash.split("&")[0].split("=")[1];
   let hideDialogBox;
   if (user.gitlabData.accessToken) {
     // after dropzone conversion
