@@ -43,7 +43,6 @@ export const populateUserInfo = async () => {
 
   // initalize project list
   await gitlabUser.initProjectList();
-
   // update steps
   completeStep(1);
   enableStep(2);
@@ -74,7 +73,6 @@ export const populateUserInfo = async () => {
   EasyEyesResources.forms = resources.forms;
   EasyEyesResources.fonts = resources.fonts;
   console.log("EasyEyesResources", EasyEyesResources);
-
   hideDialogBox();
 
   // update DOM forms button

@@ -137,7 +137,12 @@ export const pushCommits = async (
     }
   );
 
-  return await response.json();
+  const resp = await response.json();
+  if (!response.ok) {
+    alert("Uploading Failed. Please try again");
+    location.reload();
+  }
+  return resp;
 };
 
 /**

@@ -59,7 +59,6 @@ export const createPavloviaExperiment = async () => {
     "new-gitlab-repo-name"
   ) as HTMLInputElement;
   const newRepoName = gitlabRepoNameEl.value;
-
   // unique repo name check
   const isRepoValid = !isProjectNameExistInProjectList(
     user.gitlabData.projectList,

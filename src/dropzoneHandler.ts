@@ -23,7 +23,10 @@ import {
   createOrUpdateCommonResources,
   getCommonResourcesNames,
 } from "./pavloviaController";
-import { getProjectByNameInProjectList } from "./gitlabUtil";
+import {
+  getProjectByNameInProjectList,
+  isProjectNameExistInProjectList,
+} from "./gitlabUtil";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -107,6 +110,15 @@ export const getFileNameWithoutExtension = (file: File) => {
 };
 const isAcceptableExtension = (ext: any) => {
   return getAllUserAcceptableFileExtensions().includes(ext);
+};
+
+const setRepoName = (name: string): string => {
+  for (let i = 1; i < 100000; i++) {
+    if (!isProjectNameExistInProjectList(user.gitlabData.projectList, name + i))
+      return name + i;
+  }
+  alert("Duplicate experiment name found. Please change it.");
+  return name + 1;
 };
 
 // const myDropzone = { myDropzone: null };
@@ -223,7 +235,8 @@ const newDz = new Dropzone("#file-dropzone", {
           const gitlabRepoNameEl = document.getElementById(
             "new-gitlab-repo-name"
           ) as HTMLInputElement;
-          gitlabRepoNameEl.value = file.name.split(".")[0];
+
+          gitlabRepoNameEl.value = setRepoName(file.name.split(".")[0]);
         }
       );
     }
@@ -255,6 +268,7 @@ const newDz = new Dropzone("#file-dropzone", {
 
     if (resourcesList.length > 0) {
       // authentication check
+
       if (!isUserLoggedIn()) {
         showDialogBox(
           "Error",
