@@ -135,14 +135,15 @@ export const pushCommits = async (
       },
       body: JSON.stringify(commitBody),
     }
-  );
+  ).then(async (response) => {
+    if (!response.ok) {
+      alert("Uploading Failed. Please try again");
+      location.reload();
+    }
+    return response.json();
+  });
 
-  const resp = await response.json();
-  if (!response.ok) {
-    alert("Uploading Failed. Please try again");
-    location.reload();
-  }
-  return resp;
+  return await response;
 };
 
 /**
