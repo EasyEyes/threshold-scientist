@@ -24,13 +24,21 @@ import {
   isProjectNameExistInProjectList,
   pushCommits,
   Repository,
+  runExperiment,
 } from "./gitlabUtil";
 import { completeStep, enableStep } from "./thresholdState";
 
 // ----------------------------------------------------------------
 //                      Exported Functions
 // ----------------------------------------------------------------
-
+export const runPavloviaExperiment = async () => {
+  const experimentRunning = await runExperiment(
+    user.gitlabData,
+    user.newRepo,
+    user.currentExperiment
+  );
+  console.log(experimentRunning);
+};
 export const createPavloviaExperiment = async () => {
   // auth check
   if (!isUserLoggedIn()) {
@@ -77,6 +85,7 @@ export const createPavloviaExperiment = async () => {
 
   // create experiment repo
   const newRepo = await createEmptyRepo(newRepoName, user.gitlabData);
+  console.log(newRepo);
   user.newRepo = newRepo;
 
   // create threshold core files

@@ -13,7 +13,6 @@
     "prepare:commit": "npm run files",
     "netlify": "npm ci && npm run build && rm -r node_modules && cd threshold && npm run netlify:website"
   },
-
   "keywords": [],
   "author": "",
   "license": "MIT",

@@ -18,7 +18,10 @@ import {
 } from "./pavloviaController";
 import "../css/errors.css";
 import { disableAllSteps, enableStep } from "./thresholdState";
-import { createPavloviaExperiment } from "./pavloviaController";
+import {
+  createPavloviaExperiment,
+  runPavloviaExperiment,
+} from "./pavloviaController";
 
 const addOnClickToEl = (elementId: string, handler: any) => {
   const el = document.getElementById(elementId);
@@ -43,6 +46,18 @@ enableStep(1);
 // -----------------------------------------
 // dropzone
 // -----------------------------------------
+
+const runPavlovia = async () => {
+  await runPavloviaExperiment();
+};
+
+const runExperimentButton: Element = document.querySelector(
+  "#running-experiment-btn"
+)!;
+runExperimentButton.addEventListener("click", async () => {
+  await runPavlovia();
+});
+
 const pushToGitLab = async () => {
   if (!isUserLoggedIn()) {
     showDialogBox(
