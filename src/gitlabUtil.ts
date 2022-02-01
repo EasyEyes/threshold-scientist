@@ -232,6 +232,14 @@ export const createEmptyRepo = async (
     {
       method: "POST",
     }
-  );
-  return await newRepo.json();
+  )
+    .then((response) => {
+      return response.json();
+    })
+    .catch((error) => {
+      alert("Error uploading. Please try again");
+      location.reload();
+    });
+
+  return await newRepo;
 };
