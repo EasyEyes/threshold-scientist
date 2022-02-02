@@ -243,12 +243,12 @@ export const runExperiment = async (
   newRepo: Repository,
   currentExperiment: Experiment
 ) => {
-  //variables:
+  //varia
   //experimentID -> user.newRepo.id
   //oAuthToken
   //publicURLofExperiement user.currentExperiment.experimentUrl (?)
   const running = await fetch(
-    "https://pavlovia.org/api/v2/proxy/experiments/" + newRepo.id + "/status",
+    "https://pavlovia.org/api/v2/experiments/" + newRepo.id + "/status",
     {
       method: "PUT",
       headers: {
