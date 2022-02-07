@@ -283,7 +283,6 @@ const newDz = new Dropzone("#file-dropzone", {
 
       // upload resources instantly
       await createOrUpdateCommonResources(user.gitlabData, resourcesList);
-
       const easyEyesResourcesRepo = getProjectByNameInProjectList(
         user.gitlabData.projectList,
         "EasyEyesResources"
