@@ -55,6 +55,11 @@ const runExperimentButton: Element = document.querySelector(
   "#running-experiment-btn"
 )!;
 runExperimentButton.addEventListener("click", async () => {
+  //showDialogBox(
+  //  "asfdasf",
+  //  "adfasdf",
+  //  true
+  //);
   await runPavlovia();
 });
 

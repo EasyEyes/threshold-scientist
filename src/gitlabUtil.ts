@@ -264,4 +264,5 @@ export const runExperiment = async (
       }),
     }
   );
+  return await running.json();
 };
