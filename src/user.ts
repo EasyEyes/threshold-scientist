@@ -47,7 +47,6 @@ export const populateUserInfo = async () => {
   // update steps
   completeStep(1);
   enableStep(2);
-  enableStep(3);
 
   // if user doesn't have a repo named EasyEyesResources, create one and add folders fonts and consent-forms
   if (

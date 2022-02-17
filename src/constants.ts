@@ -78,7 +78,7 @@ export const userRepoFiles: ThresholdRepoFiles = {
   forms: [],
 };
 
-export const TOTAL_STEPS = 7;
+export const TOTAL_STEPS = 6;
 export const STEP_DEFAULT = "";
 export const STEP_ENABLED = '<span style="color: rgb(0,255,0)">⮕</span>';
 export const STEP_COMPLETED = "✓";

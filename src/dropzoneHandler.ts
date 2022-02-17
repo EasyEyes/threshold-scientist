@@ -199,8 +199,7 @@ const newDz = new Dropzone("#file-dropzone", {
           } else {
             if (isUserLoggedIn()) {
               completeStep(2);
-              completeStep(3);
-              enableStep(4);
+              enableStep(3);
             }
 
             // show success log

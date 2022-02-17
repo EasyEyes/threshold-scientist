@@ -80,7 +80,7 @@ export const createPavloviaExperiment = async () => {
       "Please enter a new repository name.",
       true
     );
-    enableStep(4);
+    enableStep(3);
   }
 
   // create experiment repo
@@ -135,14 +135,14 @@ export const createPavloviaExperiment = async () => {
   }
   user.currentExperiment.experimentUrl = expUrl;
 
-  completeStep(4);
-  enableStep(5);
+  completeStep(3);
+  enableStep(4);
 
   document
     .getElementById("activate-experiment-btn")
     ?.addEventListener("click", () => {
-      completeStep(5);
-      enableStep(6);
+      completeStep(4);
+      enableStep(5);
     });
 };
 
@@ -309,8 +309,8 @@ export const redirectToProlific = async () => {
 
   window.open(url, "_blank");
 
-  completeStep(6);
-  enableStep(7);
+  completeStep(5);
+  enableStep(6);
 };
 export const showPavloviaAdvice = () => {
   showDialogBox(
