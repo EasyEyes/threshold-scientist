@@ -368,8 +368,15 @@ export const generateAndUploadCompletionURL = async () => {
           },
           body: JSON.stringify(commitBody),
         }
-      );
-      await commitFile.json();
+      )
+        .then((response) => {
+          return response.json();
+        })
+        .catch((error) => {
+          alert("Error uploading. Please try again");
+          location.reload();
+        });
+      await commitFile;
     }
   }
 };
