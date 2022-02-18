@@ -6,6 +6,8 @@ import {
 } from "./constants";
 
 export const enableStep = (stepNumber: number): void => {
+  const uploadsection = document.getElementById(`step${stepNumber}`);
+  uploadsection!.style.visibility = `visible`;
   const arrowElWrapper = document.getElementById(`state-step${stepNumber}`);
   arrowElWrapper!.innerHTML = `${STEP_ENABLED}`;
 };

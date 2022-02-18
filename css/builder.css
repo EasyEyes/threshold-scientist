@@ -110,6 +110,21 @@
 #pavlovia-activate-div .step-status {
   top: 36pt;
 }
+#step1 {
+  visibility: hidden;
+}
+#step2 {
+  visibility: hidden;
+}
+#step3 {
+  visibility: hidden;
+}
+#step4 {
+  visibility: hidden;
+}
+#step5 {
+  visibility: hidden;
+}
 #state-step5 {
   top: -17pt;
   left: -32pt;
