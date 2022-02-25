@@ -3,11 +3,33 @@ import {
   STEP_DEFAULT,
   STEP_ENABLED,
   TOTAL_STEPS,
+  user,
 } from "./constants";
 
-export const enableStep = (stepNumber: number): void => {
-  const uploadsection = document.getElementById(`step${stepNumber}`);
-  uploadsection!.style.visibility = `visible`;
+import { runPavloviaExperiment } from "./pavloviaController";
+
+export const enableStep = async (stepNumber: number) => {
+  if (stepNumber != 4) {
+    const uploadsection = document.getElementById(`step${stepNumber}`);
+    uploadsection!.style.visibility = `visible`;
+  } else {
+    if (user.currentExperiment.pavloviaOfferPilotingOptionBool) {
+      console.log(user.currentExperiment.pavloviaOfferPilotingOptionBool);
+      const uploadsection = document.getElementById(`step${stepNumber}`);
+      uploadsection!.style.visibility = `visible`;
+      const pilotbutton = document.getElementById(`piloting-option`);
+      pilotbutton!.style.display = `block`;
+    } else {
+      await runPavloviaExperiment();
+      const uploadsection = document.getElementById(`step${stepNumber}`);
+      uploadsection!.style.visibility = `visible`;
+      const pilotbutton = document.getElementById(`running-option`);
+      pilotbutton!.style.display = `block`;
+      const uploadsection1 = document.getElementById(`step5-8`);
+      uploadsection1!.style.visibility = `visible`;
+    }
+  }
+
   const arrowElWrapper = document.getElementById(`state-step${stepNumber}`);
   arrowElWrapper!.innerHTML = `${STEP_ENABLED}`;
 };

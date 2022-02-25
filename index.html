@@ -483,19 +483,30 @@
             <div id="state-step4" class="step-status"></div>
 
             <div class="option-block">
-              <button
-                id="running-experiment-btn"
-                class="btn btn-outline-success"
-              >
-                RUNNING
-              </button>
+              <div id="piloting-option">
+                <button
+                  id="running-experiment-btn"
+                  class="btn btn-outline-success"
+                >
+                  RUNNING
+                </button>
+              </div>
+              <div id="running-option">
+                <button
+                  disabled
+                  id="running-experiment-btn"
+                  class="btn btn-outline-success"
+                >
+                  Now in RUNNING mode.
+                </button>
+              </div>
               <button
                 id="activate-experiment-btn"
                 class="btn btn-outline-success"
               >
                 Go to Pavlovia
               </button>
-              <div class="self-center">
+              <!--<div class="self-center">
                 In Pavlovia, hit the "RUNNING" button, then return here. (If you
                 don't hit RUNNING, you'll later get a "404 Not Found", error
                 when you try to run your study.)
@@ -508,19 +519,22 @@
                 experiment: it may not exist or you may not have access to it."
                 Don't worry. Just sign in, using the rightmost item in the
                 Pavlovia menu bar. Then return here and try again.
-              </div>
+              </div>-->
+              <div id="hover-button">&#9432;</div>
             </div>
             <br />
+          </li>
+        </div>
+      </ol>
+      <br />
+      <div id="step5-8">
+        <ol id="participant-survey-completion-div" class="no-display" start="5">
+          <li>
             <div class="option-block">
               <div>Optional. Click your study URL to try it :</div>
               <a target="_blank" id="try-study-url"></a>
             </div>
           </li>
-        </div>
-      </ol>
-      <br />
-      <ol id="participant-survey-completion-div" class="no-display" start="6">
-        <div id="step5">
           <li>
             <div id="state-step5" class="step-status"></div>
             <button
@@ -530,29 +544,28 @@
               Go to Prolific to finalize and run your study
             </button>
           </li>
-        </div>
-        <div id="step6">
           <li>
             <div id="state-step6" class="step-status"></div>
             <button id="return-to-prolific" class="btn btn-outline-secondary">
               Go to Prolific to view active studies
             </button>
           </li>
-        </div>
-        <li id="participant-survey-new-url-div" class="no-display">
-          <div>
-            <input
-              id="new-url"
-              type="email"
-              class="form-control"
-              placeholder="Paste generate URL from Prolific here"
-            />
-            <button id="new-url-submit" class="btn btn-outline-secondary">
-              Submit Generated URL
-            </button>
-          </div>
-        </li>
-      </ol>
+          <li id="participant-survey-new-url-div" class="no-display">
+            <div>
+              <input
+                id="new-url"
+                type="email"
+                class="form-control"
+                placeholder="Paste generate URL from Prolific here"
+              />
+              <button id="new-url-submit" class="btn btn-outline-secondary">
+                Submit Generated URL
+              </button>
+            </div>
+          </li>
+        </ol>
+      </div>
+
       <!--<div
         id="participant-survey-completion-div"
         class="input-group"

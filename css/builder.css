@@ -122,7 +122,13 @@
 #step4 {
   visibility: hidden;
 }
-#step5 {
+#piloting-option {
+  display: None;
+}
+#running-option {
+  display: None;
+}
+#step5-8 {
   visibility: hidden;
 }
 #state-step5 {
@@ -132,6 +138,10 @@
 #state-step6 {
   top: 25pt;
   left: -32pt;
+}
+#hover-button {
+  size: 100px;
+  color: blue;
 }
 
 .dropzone {

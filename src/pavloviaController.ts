@@ -32,10 +32,18 @@ import { completeStep, enableStep } from "./thresholdState";
 //                      Exported Functions
 // ----------------------------------------------------------------
 export const runPavloviaExperiment = async () => {
+  showDialogBox("Setting experiment to running...", "", false, false, false);
   const experimentRunning = await runExperiment(
     user.gitlabData,
     user.newRepo,
     user.currentExperiment
+  );
+  showDialogBox(
+    `Success!`,
+    `Pavlovia Experiment is running.`,
+    false,
+    true,
+    false
   );
   console.log(experimentRunning);
 };
@@ -142,7 +150,7 @@ export const createPavloviaExperiment = async () => {
     .getElementById("activate-experiment-btn")
     ?.addEventListener("click", () => {
       completeStep(4);
-      enableStep(5);
+      //enableStep(5);
     });
 };
 

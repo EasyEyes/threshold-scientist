@@ -243,10 +243,6 @@ export const runExperiment = async (
   newRepo: Repository,
   currentExperiment: Experiment
 ) => {
-  //varia
-  //experimentID -> user.newRepo.id
-  //oAuthToken
-  //publicURLofExperiement user.currentExperiment.experimentUrl (?)
   const running = await fetch(
     "https://pavlovia.org/api/v2/experiments/" + newRepo.id + "/status",
     {
