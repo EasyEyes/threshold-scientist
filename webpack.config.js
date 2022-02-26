@@ -26,7 +26,7 @@ const config = {
   },
 };
 
-const plugins = [new webpack.ProgressPlugin(), new CleanWebpackPlugin()];
+const plugins = [new CleanWebpackPlugin()];
 
 const redirect_uri = (uri) =>
   `https://gitlab.pavlovia.org//oauth/authorize`.concat(
@@ -44,6 +44,7 @@ module.exports = (env) => {
       },
       plugins: [
         ...plugins,
+        new webpack.ProgressPlugin(),
         new webpack.DefinePlugin({
           "process.env.debug": true,
           "process.env.REDIRECT_URL": JSON.stringify(
