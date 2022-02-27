@@ -83,7 +83,7 @@ export const createPavloviaExperiment = async () => {
   // create threshold core files
   await createThresholdCoreFilesOnRepo({ id: newRepo.id }, user.gitlabData);
 
-  // create user-uplaoded files
+  // create user-uploaded files
   await createUserUploadedFilesOnRepo(
     { id: newRepo.id },
     user.gitlabData,
@@ -238,6 +238,8 @@ export const createOrUpdateCommonResources = async (
     let ext = extensionList[extensionList.length - 1];
     return acceptableExtensions.forms.includes(ext);
   });
+
+  // function createOrUpdateBase64File() {}
 
   // generate Gitlab API body to commit form files
   for (var i = 0; i < forms.length; i++) {
