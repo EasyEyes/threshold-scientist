@@ -48,7 +48,7 @@ module.exports = (env) => {
         new webpack.DefinePlugin({
           "process.env.debug": true,
           "process.env.REDIRECT_URL": JSON.stringify(
-            redirect_uri("http%3A%2F%2Flocalhost%3A5500%2Fdocs%2Fredirect")
+            redirect_uri("http%3A%2F%2Flocalhost%3A5500%2Fredirect")
           ),
           "process.env.GITHUB_PAT": JSON.stringify(""),
         }),

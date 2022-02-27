@@ -127,7 +127,7 @@ export const pushCommits = async (
   };
 
   const response = await fetch(
-    `https://gitlab.pavlovia.org/api/v4/projects/${repo.id}/repository/commits?access_token=${user.accessToken}`,
+    `https://gitlab.pavlovia.org/api/v4/projects/${repo.id}//repository/commits?access_token=${user.accessToken}`,
     {
       method: "POST",
       headers: {
