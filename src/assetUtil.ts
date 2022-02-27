@@ -45,7 +45,13 @@ export const getAssetFileContentBase64 = async (filePath: string) => {
         const fileReader = new FileReader();
         fileReader.readAsDataURL(blob);
         fileReader.onload = function () {
-          resolve(blob);
+          if (
+            typeof fileReader.result === "string" &&
+            fileReader!.result!.includes(";base64,")
+          ) {
+            var splitResult = fileReader!.result!.split(";base64,");
+            resolve(splitResult![1]);
+          } else resolve(<string>fileReader.result);
         };
       });
     })

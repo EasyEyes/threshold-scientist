@@ -127,7 +127,7 @@ export const pushCommits = async (
   };
 
   const response = await fetch(
-    `https://gitlab.pavlovia.org/api/v4/projects/${repo.id}//repository/commits?access_token=${user.accessToken}`,
+    `https://gitlab.pavlovia.org/api/v4/projects/${repo.id}/repository/commits?access_token=${user.accessToken}`,
     {
       method: "POST",
       headers: {
@@ -137,7 +137,9 @@ export const pushCommits = async (
     }
   ).then(async (response) => {
     if (!response.ok) {
-      alert("Uploading Failed. Please try again");
+      alert(
+        "Uploading Failed. Please try again. We are working on providing more detailed error messages."
+      );
       location.reload();
     }
     return response.json();
