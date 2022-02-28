@@ -6,7 +6,9 @@ import {
   isProjectNameExistInProjectList,
 } from "./gitlabUtil";
 import { getCommonResourcesNames } from "./pavloviaController";
+import { setTab } from "./tab";
 import { completeStep, enableStep } from "./thresholdState";
+import { resourcesFileTypes } from "./utils";
 
 /**
  * initializes pavlovia account info and updates DOM with new info
@@ -55,7 +57,7 @@ export const populateUserInfo = async () => {
       "EasyEyesResources"
     )
   ) {
-    console.log("creating resources repo");
+    console.log("Creating EasyEyesResources repository...");
     let easyEyesResourcesRepo = await createEmptyRepo(
       "EasyEyesResources",
       user.gitlabData
@@ -63,39 +65,20 @@ export const populateUserInfo = async () => {
     user.gitlabData.projectList.push(easyEyesResourcesRepo);
   }
 
-  // update DOM with user info
-  const gitlabUserInfoEl = document.getElementById("gitlab-user-info");
-  if (gitlabUserInfoEl)
-    gitlabUserInfoEl.innerHTML = `Pavlovia account : ${user.gitlabData.name} (${user.gitlabData.username})`;
+  // Update DOM with user info
+  const pavloviaHeaderEle = document.getElementById("pavlovia-header");
+  if (pavloviaHeaderEle) pavloviaHeaderEle.style.display = "block";
+  const gitlabUserInfoEle = document.getElementById("gitlab-user-info");
+  if (gitlabUserInfoEle)
+    gitlabUserInfoEle.innerHTML = `<b>Pavlovia account</b> ${user.gitlabData.name} (${user.gitlabData.username})`;
 
-  // fetch common resources
+  // Fetch common resources
   const resources = await getCommonResourcesNames(user.gitlabData);
-  EasyEyesResources.forms = resources.forms;
-  EasyEyesResources.fonts = resources.fonts;
-  console.log("EasyEyesResources", EasyEyesResources);
+  for (let i in resources) EasyEyesResources[i] = [...resources[i]];
+  // Update resources buttons
+  for (let cat of resourcesFileTypes) setTab(cat.substring(0, cat.length - 1));
+
   hideDialogBox();
-
-  // update DOM forms button
-  let easyEyesFormsButton: HTMLElement = document.getElementById(
-    "easyeyes-forms"
-  ) as HTMLElement;
-  easyEyesFormsButton.textContent =
-    EasyEyesResources.forms.length + " " + easyEyesFormsButton.textContent;
-  easyEyesFormsButton.className = easyEyesFormsButton.className.replace(
-    "no-display",
-    ""
-  );
-
-  // update DOM fonts button
-  let easyEyesFontsButton: HTMLElement = document.getElementById(
-    "easyeyes-fonts"
-  ) as HTMLElement;
-  easyEyesFontsButton.textContent =
-    EasyEyesResources.fonts.length + " " + easyEyesFontsButton.textContent;
-  easyEyesFontsButton.className = easyEyesFontsButton.className.replace(
-    "no-display",
-    ""
-  );
 };
 
 export const redirectToOauth2 = () => {

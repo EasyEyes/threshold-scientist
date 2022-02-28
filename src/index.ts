@@ -1,3 +1,4 @@
+import { addOnClickToEle, resourcesFileTypes } from "./utils";
 import {
   populateUserInfo,
   redirectToOauth2,
@@ -13,28 +14,22 @@ import {
   // generateAndUploadCompletionURL,
   showPavloviaAdvice,
   redirectToProlificToViewActiveStudies,
-  showForms,
-  showFonts,
+  showResourcesPopup,
 } from "./pavloviaController";
-import "../css/errors.css";
 import { disableAllSteps, enableStep } from "./thresholdState";
 import { createPavloviaExperiment } from "./pavloviaController";
 
-const addOnClickToEl = (elementId: string, handler: any) => {
-  const el = document.getElementById(elementId);
-  if (el)
-    el.addEventListener("click", async (evt: any) => {
-      handler();
-    });
-};
+import "../css/errors.css";
 
-addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
-addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
-addOnClickToEl("prolific-redirect-btn", redirectToProlific);
-addOnClickToEl("return-to-prolific", redirectToProlificToViewActiveStudies);
-addOnClickToEl("pavlovia-advice", showPavloviaAdvice);
-addOnClickToEl("easyeyes-forms", showForms);
-addOnClickToEl("easyeyes-fonts", showFonts);
+addOnClickToEle("gitlab-connect-btn", redirectToOauth2);
+addOnClickToEle("activate-experiment-btn", redirectToPalvoliaActivation);
+addOnClickToEle("prolific-redirect-btn", redirectToProlific);
+addOnClickToEle("return-to-prolific", redirectToProlificToViewActiveStudies);
+addOnClickToEle("pavlovia-advice", showPavloviaAdvice);
+for (let type of resourcesFileTypes)
+  addOnClickToEle(`easyeyes-${type}`, () => {
+    showResourcesPopup(type);
+  });
 
 // ThresholdState
 disableAllSteps();

@@ -54,6 +54,7 @@ module.exports = (env) => {
         }),
       ],
       watch: true,
+      devtool: "source-map",
     });
   } else if (env.production) {
     return Object.assign({}, config, {

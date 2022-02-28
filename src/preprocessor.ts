@@ -1,6 +1,6 @@
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
 import { EasyEyesError } from "../threshold/preprocess/errorMessages";
-import { isCsvFile } from "../threshold/preprocess/utilities";
+import { isExpTableFile } from "../threshold/preprocess/utils";
 import { EasyEyesResources, user } from "./constants";
 
 /**
@@ -10,7 +10,7 @@ export const processFiles = (fileList: File[], callback: any) => {
   const errors: EasyEyesError[] = [];
 
   fileList.forEach(async (file) => {
-    if (isCsvFile(file)) {
+    if (isExpTableFile(file)) {
       await preprocessExperimentFile(
         file,
         user,

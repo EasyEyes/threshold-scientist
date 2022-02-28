@@ -86,11 +86,10 @@
   overflow-wrap: break-word;
 }
 
-.pavlovia-header {
+#pavlovia-header {
   position: relative;
-  display: grid;
-  grid-template-columns: auto auto;
-  justify-content: space-between;
+  text-align: left;
+  display: none;
 }
 
 #pavlovia-advice {
@@ -107,8 +106,19 @@
   justify-content: center;
 }
 
+#resource-buttons {
+  margin: 0 0 0 1rem;
+}
+
 .resource-btn {
-  min-width: 7vw;
+  position: relative;
+  display: block;
+  width: 6rem;
+  font-size: 0.8rem;
+}
+
+.resource-btn:not(:last-child) {
+  margin: 0 0 0.2rem 0;
 }
 
 .exception-note {

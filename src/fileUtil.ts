@@ -48,6 +48,11 @@ export const getBase64Data = (file: File): Promise<string> => {
  * @returns file extension
  */
 export const getFileExtension = (file: File): string => {
-  let splitExt = file.name.split(".");
+  return getFileExtensionFromFileName(file.name);
+};
+
+export const getFileExtensionFromFileName = (fileName: string): string => {
+  let splitExt = fileName.split(".");
+  if (splitExt.length === 1) return "";
   return splitExt[splitExt.length - 1].toLowerCase();
 };

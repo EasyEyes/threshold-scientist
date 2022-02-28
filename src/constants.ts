@@ -5,22 +5,43 @@
 import { GitlabUser } from "./gitlabUtil";
 
 export interface IUserFileTypes {
+  [key: string]: string[];
   experiments: string[];
   fonts: string[];
   forms: string[];
+  texts: string[];
+  folders: string[];
 }
+
 export const acceptableExtensions: IUserFileTypes = {
   experiments: ["csv", "xlsx"],
   fonts: ["woff", "woff2", "otf", "ttf", "svg"],
   forms: ["md", "pdf"],
+  texts: ["txt"],
+  folders: [""], // ?
 };
+
 export const getAllUserAcceptableFileExtensions = (): string[] => {
   return [
     ...acceptableExtensions.experiments,
     ...acceptableExtensions.fonts,
     ...acceptableExtensions.forms,
+    ...acceptableExtensions.texts,
   ];
 };
+
+export const getAllUserAcceptableResourcesExtensions = (): string[] => {
+  return [
+    ...acceptableExtensions.fonts,
+    ...acceptableExtensions.forms,
+    ...acceptableExtensions.texts,
+  ];
+};
+
+export const acceptableResourcesExtensionsOfTextDataType: string[] = [
+  "md",
+  "txt",
+];
 
 // ----------------------------------------
 // User constants
@@ -47,9 +68,14 @@ export const user: any = {
 // ----------------------------------------
 // Resources repository
 // ----------------------------------------
-export const EasyEyesResources: any = {
+interface EasyEyesResourcesTyped {
+  [key: string]: string[];
+}
+export const EasyEyesResources: EasyEyesResourcesTyped = {
   fonts: [],
   forms: [],
+  texts: [],
+  folders: [],
 };
 
 // ----------------------------------------
@@ -68,17 +94,20 @@ export interface ThresholdRepoFiles {
   blockFiles: File[];
   fonts: File[];
   forms: File[];
+  texts: File[];
   requestedForms?: string[];
   requestedFonts?: string[];
+  requestedTexts?: string[];
 }
 export const userRepoFiles: ThresholdRepoFiles = {
   experiment: null,
   blockFiles: [],
   fonts: [],
   forms: [],
+  texts: [],
 };
 
 export const TOTAL_STEPS = 7;
 export const STEP_DEFAULT = "";
-export const STEP_ENABLED = '<span style="color: rgb(0,255,0)">⮕</span>';
+export const STEP_ENABLED = '<span style="color: #2EB086">⮕</span>';
 export const STEP_COMPLETED = "✓";

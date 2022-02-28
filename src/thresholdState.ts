@@ -6,16 +6,16 @@ import {
 } from "./constants";
 
 export const enableStep = (stepNumber: number): void => {
-  const arrowElWrapper = document.getElementById(`state-step${stepNumber}`);
-  arrowElWrapper!.innerHTML = `${STEP_ENABLED}`;
+  const arrowEleWrapper = document.getElementById(`state-step${stepNumber}`);
+  arrowEleWrapper!.innerHTML = `${STEP_ENABLED}`;
 };
 export const disableStep = (stepNumber: number): void => {
-  const arrowElWrapper = document.getElementById(`state-step${stepNumber}`);
-  arrowElWrapper!.innerHTML = `${STEP_DEFAULT}`;
+  const arrowEleWrapper = document.getElementById(`state-step${stepNumber}`);
+  arrowEleWrapper!.innerHTML = `${STEP_DEFAULT}`;
 };
 export const completeStep = (stepNumber: number): void => {
-  const arrowElWrapper = document.getElementById(`state-step${stepNumber}`);
-  arrowElWrapper!.innerHTML = `${STEP_COMPLETED}`;
+  const arrowEleWrapper = document.getElementById(`state-step${stepNumber}`);
+  arrowEleWrapper!.innerHTML = `${STEP_COMPLETED}`;
 };
 
 export const enableAllSteps = (): void => {

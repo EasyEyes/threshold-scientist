@@ -343,8 +343,8 @@
                   Connect your Pavlovia account to upload files.
                 </button>
               </div>
-              <div class="pavlovia-header">
-                <div id="gitlab-user-info">Pavlovia account</div>
+              <div id="pavlovia-header">
+                <div id="gitlab-user-info"></div>
               </div>
             </li>
 
@@ -354,7 +354,7 @@
               <div>
                 Submit
                 <span id="dz-downarrow"> &#8595; </span>
-                any missing fonts & consent/debrief forms.
+                any missing fonts, consent/debrief forms, and other resources.
               </div>
               <div id="dropbox-forms-div">
                 <form action="/" class="dropzone" id="file-dropzone">
@@ -370,37 +370,33 @@
                     <br />
                   </div>
                 </form>
-                <div></div>
-                <div>
-                  <div>
-                    <button
-                      id="easyeyes-fonts"
-                      class="btn btn-secondary resource-btn no-display"
-                    >
-                      Fonts
-                    </button>
-                  </div>
-                  <br />
-                  <div>
-                    <button
-                      id="easyeyes-forms"
-                      class="btn btn-secondary resource-btn no-display"
-                    >
-                      Forms
-                    </button>
-                  </div>
+
+                <div id="resource-buttons">
+                  <button
+                    id="easyeyes-fonts"
+                    class="btn btn-secondary resource-btn no-display"
+                  >
+                    Fonts
+                  </button>
+                  <button
+                    id="easyeyes-forms"
+                    class="btn btn-secondary resource-btn no-display"
+                  >
+                    Forms
+                  </button>
+                  <button
+                    id="easyeyes-texts"
+                    class="btn btn-secondary resource-btn no-display"
+                  >
+                    Texts
+                  </button>
+                  <button
+                    id="easyeyes-folders"
+                    class="btn btn-secondary resource-btn no-display"
+                  >
+                    Folders
+                  </button>
                 </div>
-                <!-- <div class="tab-container no-display">
-                  &lt;!&ndash; Tab buttons &ndash;&gt;
-                  <div class="tab">
-                    <button id="font-tab" class="tablinks">Fonts</button>
-                    <button id="form-tab" class="tablinks">Forms</button>
-                  </div>
-                  &lt;!&ndash; Font List &ndash;&gt;
-                  <div id="fonts" class="tabcontent"></div>
-                  &lt;!&ndash; Form List &ndash;&gt;
-                  <div id="forms" class="tabcontent"></div>
-                </div>-->
               </div>
               <div id="errors" class="errors"></div>
             </li>
@@ -412,45 +408,10 @@
               <span id="dz-uparrow">&#8593;</span> your experiment table, to be
               checked now.
             </li>
-            <!-- Pavlovia Repo Controls -->
 
-            <!-- Pavlovia Experiment URL -->
-            <!--<li id="pavlovia-exp-url-group">
-              <div id="pavlovia-experiment-url"></div>-->
-            <!-- <div class="input-group">
-                <input
-                  id="pavlovia-experiment-url"
-                  type="text"
-                  class="form-control"
-                  placeholder="Name of new Repository"
-                  aria-label="Recipient's username"
-                  aria-describedby="gitlab-file-submit"
-                  disabled
-                />
-
-                <button id="copy-pavlovia-url" class="btn btn-outline-primary">
-                  <i class="bi bi-clipboard"></i> Copy Experiment URL
-                </button>
-              </div> -->
-            <!--</li>-->
             <div id="success-logs" class="errors"></div>
           </ol>
         </div>
-
-        <!-- right section -->
-        <!--<div class="pavlovia-right">
-          <div class="tab-container">
-            &lt;!&ndash; Tab buttons &ndash;&gt;
-            <div class="tab">
-              <button id="font-tab" class="tablinks">Fonts</button>
-              <button id="form-tab" class="tablinks">Forms</button>
-            </div>
-            &lt;!&ndash; Font List &ndash;&gt;
-            <div id="fonts" class="tabcontent"></div>
-            &lt;!&ndash; Form List &ndash;&gt;
-            <div id="forms" class="tabcontent"></div>
-          </div>
-        </div>-->
       </div>
       <ol id="pavlovia-experiment-url-ol" start="4">
         <li>
@@ -460,7 +421,7 @@
               <input
                 id="new-gitlab-repo-name"
                 type="text"
-                class="form-control repo-name-input"
+                class="form-control"
                 placeholder="Name new experiment"
                 aria-label="Repository name"
                 aria-describedby="gitlab-file-submit"
