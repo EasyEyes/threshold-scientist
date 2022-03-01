@@ -60,7 +60,7 @@ export const getAssetFileContentBase64 = async (filePath: string) => {
     });
 };
 
-// Now only used for favicon.ico
+// Now only used for favicon.ico and SOUNDS
 export const assetUsesBase64 = (filePath: string) => {
-  return filePath.includes(".ico");
+  return filePath.includes(".ico") || filePath.includes(".mp3");
 };
