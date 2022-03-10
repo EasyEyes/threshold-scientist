@@ -18,7 +18,7 @@ import {
   logError,
   newLog,
 } from "./errorLog";
-import { completeStep, enableStep } from "./thresholdState";
+import { completeStep, disableStepsAfter, enableStep } from "./thresholdState";
 import { getFileExtension } from "./fileUtil";
 import {
   createOrUpdateCommonResources,
@@ -153,6 +153,9 @@ const newDz = new Dropzone("#file-dropzone", {
     if (isExpTableFile(file)) {
       // call preprocessor here
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed table
+
+      // Reset state, to allow dropping an experiment file, uploading, then dropping another experiment file
+      resetStateAfterNewExperimentDropped();
 
       // store experiment file
       userRepoFiles.experiment = file;
@@ -298,4 +301,17 @@ const newDz = new Dropzone("#file-dropzone", {
 
 export const clearDropzone = () => {
   newDz.removeAllFiles();
+};
+
+const resetStateAfterNewExperimentDropped = () => {
+  console.log("CODES GETTIN RUN");
+  disableStepsAfter(2);
+  document.getElementById("new-gitlab-repo-name")!.removeAttribute("disabled");
+
+  const uploadButton = document.getElementById("gitlab-file-submit")!;
+  uploadButton.className = "btn btn-outline-secondary";
+  uploadButton.innerText = "Upload";
+
+  const actEl = document.getElementById("pavlovia-activate-div")!;
+  actEl.classList.add("no-display");
 };

@@ -29,3 +29,9 @@ export const disableAllSteps = (): void => {
     disableStep(i);
   }
 };
+
+export const disableStepsAfter = (stepNumber: number): void => {
+  for (let i = stepNumber + 1; i <= TOTAL_STEPS; i++) {
+    disableStep(i);
+  }
+};
