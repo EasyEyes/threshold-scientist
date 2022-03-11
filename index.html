@@ -333,7 +333,7 @@
         <div class="pavlovia-left">
           <ol id="pavlovia-left-list">
             <!-- Pavlovia Auth Controls -->
-            <li>
+            <li id="step1">
               <div id="state-step1" class="step-status"></div>
               <div class="option-block">
                 <button
@@ -349,7 +349,7 @@
             </li>
 
             <!-- Dropzone -->
-            <li>
+            <li id="step2">
               <div id="state-step2" class="step-status"></div>
               <div>
                 Submit
@@ -402,7 +402,7 @@
             </li>
 
             <!-- Instruction -->
-            <li>
+            <li id="step3">
               <div id="state-step3" class="step-status"></div>
               Submit
               <span id="dz-uparrow">&#8593;</span> your experiment table, to be
@@ -413,9 +413,10 @@
           </ol>
         </div>
       </div>
-      <ol id="pavlovia-experiment-url-ol" start="4">
-        <li>
-          <div id="state-step4" class="step-status"></div>
+
+      <ol id="pavlovia-experiment-url-ol" start="3">
+        <li id="step3">
+          <div id="state-step3" class="step-status"></div>
           <div class="option-block">
             <div class="input-group" id="new-repo-input-group">
               <input
@@ -438,135 +439,80 @@
         </li>
 
         <!-- Pavlovia Experiment Controls -->
-        <li id="pavlovia-activate-div" class="no-display">
-          <div id="state-step5" class="step-status"></div>
-          <div class="option-block">
-            <button
-              id="activate-experiment-btn"
-              class="btn btn-outline-success"
-            >
-              Go to Pavlovia
-            </button>
-            <div class="self-center">
-              In Pavlovia, hit the "RUNNING" button, then return here. (If you
-              don't hit RUNNING, you'll later get a "404 Not Found", error when
-              you try to run your study.)
-              <u id="pavlovia-advice"
-                >Click here for advice on using Pavlovia without a university
-                license.</u
+        <div id="step4">
+          <li id="pavlovia-activate-div" class="no-display">
+            <div id="state-step4" class="step-status"></div>
+
+            <div class="option-block">
+              <div id="piloting-option">
+                <button
+                  id="running-experiment-btn"
+                  class="btn btn-outline-success"
+                >
+                  RUNNING
+                </button>
+              </div>
+              <div id="running-option">
+                <button
+                  disabled
+                  id="running-experiment-btn"
+                  class="btn btn-outline-success"
+                >
+                  Now in RUNNING mode.
+                </button>
+              </div>
+              <button
+                id="activate-experiment-btn"
+                class="btn btn-outline-success"
               >
-              If you're not signed into Pavlovia, then you'll be greeted by the
-              alarming message, "No information available for this experiment:
-              it may not exist or you may not have access to it." Don't worry.
-              Just sign in, using the rightmost item in the Pavlovia menu bar.
-              Then return here and try again.
+                Go to Pavlovia
+              </button>
+
+              <div id="hover-button">&#9432;</div>
             </div>
-          </div>
-          <br />
-          <div class="option-block">
-            <div>Optional. Click your study URL to try it :</div>
-            <a target="_blank" id="try-study-url"></a>
-          </div>
-        </li>
+            <br />
+          </li>
+        </div>
       </ol>
       <br />
-      <ol id="participant-survey-completion-div" class="no-display" start="6">
-        <li>
-          <div id="state-step6" class="step-status"></div>
-          <button id="prolific-redirect-btn" class="btn btn-outline-secondary">
-            Go to Prolific to finalize and run your study
-          </button>
-        </li>
-        <li>
-          <div id="state-step7" class="step-status"></div>
-          <button id="return-to-prolific" class="btn btn-outline-secondary">
-            Go to Prolific to view active studies
-          </button>
-        </li>
-        <li id="participant-survey-new-url-div" class="no-display">
-          <div>
-            <input
-              id="new-url"
-              type="email"
-              class="form-control"
-              placeholder="Paste generate URL from Prolific here"
-            />
-            <button id="new-url-submit" class="btn btn-outline-secondary">
-              Submit Generated URL
+      <div id="step5-8">
+        <ol id="participant-survey-completion-div" class="no-display" start="5">
+          <li>
+            <div class="option-block">
+              <div>Optional. Click your study URL to try it :</div>
+              <a target="_blank" id="try-study-url"></a>
+            </div>
+          </li>
+          <li>
+            <div id="state-step5" class="step-status"></div>
+            <button
+              id="prolific-redirect-btn"
+              class="btn btn-outline-secondary"
+            >
+              Go to Prolific to finalize and run your study
             </button>
-          </div>
-        </li>
-      </ol>
-      <!--<div
-        id="participant-survey-completion-div"
-        class="input-group"
-        style="display: grid; width: auto; visibility: hidden"
-      >
-        <div
-          style="display: flex; /*justify-self: center;*/ align-items: center"
-        >
-          <i
-            class="bi bi-arrow-down bi-large"
-            style="justify-self: center; font-size: 6vh !important"
-          ></i>
-          Enter copied URL in Prolific to generate Completion and Experiment
-          URLS
-        </div>
-
-        <button
-          id="prolific-redirect-btn"
-          class="btn btn-outline-secondary"
-          style="/*justify-self: center;*/ width: 60vw"
-        >
-          Go to Prolific
-        </button>
-        <div
-          style="display: flex; /*justify-self: center;*/ align-items: center"
-        >
-          <i
-            class="bi bi-arrow-down"
-            style="justify-self: center; font-size: 6vh !important"
-          ></i>
-          Paste Completion and Experiment URLs from Prolific
-        </div>
-        <div style="display: flex">
-          <input
-            id="participant-code"
-            type="text"
-            class="form-control"
-            placeholder="Enter Completion URL"
-            aria-label="Participant Recruitment Completion URL"
-            style="width: 50vw"
-          />
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            id="participant-recruitment-completion-url-submit"
-            style="width: 15vw"
-          >
-            Submit Completion URL
-          </button>
-        </div>
-        <br />
-        <div id="participant-survey-new-url-div" style="display: flex">
-          <input
-            id="new-url"
-            type="text"
-            class="form-control"
-            placeholder="Enter Generated URL"
-            aria-label="Participant Recruitment Generated URL"
-            style="width: 50vw"
-          />
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            id="new-url-submit"
-            style="width: 15vw"
-          >
-            Submit Generated Experiment URL
-          </button>
-        </div>
-      </div>-->
+          </li>
+          <li>
+            <div id="state-step6" class="step-status"></div>
+            <button id="return-to-prolific" class="btn btn-outline-secondary">
+              Go to Prolific to view active studies
+            </button>
+          </li>
+          <li id="participant-survey-new-url-div" class="no-display">
+            <div>
+              <input
+                id="new-url"
+                type="email"
+                class="form-control"
+                placeholder="Paste generate URL from Prolific here"
+              />
+              <button id="new-url-submit" class="btn btn-outline-secondary">
+                Submit Generated URL
+              </button>
+            </div>
+          </li>
+        </ol>
+      </div>
 
       <!-- Dialog box -->
       <div id="dialog-box">

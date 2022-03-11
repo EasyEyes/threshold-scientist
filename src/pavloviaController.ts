@@ -28,6 +28,7 @@ import {
   isProjectNameExistInProjectList,
   pushCommits,
   Repository,
+  runExperiment,
 } from "./gitlabUtil";
 import { completeStep, enableStep } from "./thresholdState";
 import { resourcesFileTypes } from "./utils";
@@ -35,6 +36,21 @@ import { resourcesFileTypes } from "./utils";
 // ----------------------------------------------------------------
 //                      Exported Functions
 // ----------------------------------------------------------------
+export const runPavloviaExperiment = async () => {
+  showDialogBox("Setting experiment to running...", "", false, false, false);
+  const experimentRunning = await runExperiment(
+    user.gitlabData,
+    user.newRepo,
+    user.currentExperiment
+  );
+  showDialogBox(
+    `Success!`,
+    `Pavlovia Experiment is running.`,
+    false,
+    true,
+    false
+  );
+};
 
 export const createPavloviaExperiment = async () => {
   // auth check
@@ -76,13 +92,14 @@ export const createPavloviaExperiment = async () => {
       "Please enter a new repository name.",
       true
     );
-    enableStep(4);
 
+    enableStep(3); // ? Potential merge conflict
     return;
   }
 
   // create experiment repo
   const newRepo = await createEmptyRepo(newRepoName, user.gitlabData);
+  console.log(newRepo);
   user.newRepo = newRepo;
 
   // create threshold core files
@@ -132,14 +149,14 @@ export const createPavloviaExperiment = async () => {
   }
   user.currentExperiment.experimentUrl = expUrl;
 
-  completeStep(4);
-  enableStep(5);
+  completeStep(3);
+  enableStep(4);
 
   document
     .getElementById("activate-experiment-btn")
     ?.addEventListener("click", () => {
-      completeStep(5);
-      enableStep(6);
+      completeStep(4);
+      // enableStep(5);
     });
 };
 
@@ -266,8 +283,8 @@ export const redirectToProlific = async () => {
 
   window.open(url, "_blank");
 
-  completeStep(6);
-  enableStep(7);
+  completeStep(5);
+  enableStep(6);
 };
 export const showPavloviaAdvice = () => {
   showDialogBox(

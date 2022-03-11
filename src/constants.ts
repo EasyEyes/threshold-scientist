@@ -54,6 +54,7 @@ export const user: any = {
     participantRecruitmentServiceName: null,
     participantRecruitmentServiceUrl: null,
     participantRecruitmentServiceCode: null,
+    pavloviaOfferPilotingOptionBool: null,
     experimentUrl: null,
   },
 
@@ -107,7 +108,7 @@ export const userRepoFiles: ThresholdRepoFiles = {
   texts: [],
 };
 
-export const TOTAL_STEPS = 7;
+export const TOTAL_STEPS = 6;
 export const STEP_DEFAULT = "";
 export const STEP_ENABLED = '<span style="color: #2EB086">⮕</span>';
 export const STEP_COMPLETED = "✓";

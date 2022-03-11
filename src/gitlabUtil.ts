@@ -17,6 +17,13 @@ export interface Repository {
   id: string;
 }
 
+export interface Experiment {
+  participantRecruitmentServiceName: string;
+  participantRecruitmentServiceUrl: string;
+  participantRecruitmentServiceCode: string;
+  experimentUrl: string;
+}
+
 export class GitlabUser {
   public id: string = "";
   public username: string = "";
@@ -287,6 +294,31 @@ export const createEmptyRepo = async (
     });
 
   return await newRepo;
+};
+
+export const runExperiment = async (
+  user: GitlabUser,
+  newRepo: Repository,
+  currentExperiment: Experiment
+) => {
+  const running = await fetch(
+    "https://pavlovia.org/api/v2/experiments/" + newRepo.id + "/status",
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        oauthToken: user.accessToken,
+      },
+
+      body: JSON.stringify({
+        newStatus: "RUNNING",
+        recruitment: {
+          policy: { type: "URL", url: currentExperiment.experimentUrl },
+        },
+      }),
+    }
+  );
+  return await running.json();
 };
 
 /* -------------------------------------------------------------------------- */

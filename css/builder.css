@@ -98,6 +98,11 @@
   transform: translate(-200%, -55%);
 }
 
+#hover-button {
+  size: 100px;
+  color: blue;
+}
+
 .dropzone {
   padding: 1rem !important;
   min-height: 0px !important;
@@ -232,4 +237,15 @@ button {
 
 #try-study-url {
   padding-left: 10px;
+}
+
+/* -------------------------------------------------------------------------- */
+
+#step1,
+#step2,
+#step3,
+#step4,
+#step5,
+#step5-8 {
+  visibility: hidden;
 }
