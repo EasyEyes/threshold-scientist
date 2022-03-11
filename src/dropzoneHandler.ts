@@ -2,12 +2,13 @@ import {
   acceptableExtensions,
   EasyEyesResources,
   getAllUserAcceptableFileExtensions,
+  getAllUserAcceptableResourcesExtensions,
   user,
   userRepoFiles,
 } from "./constants";
-import { isCsvFile } from "../threshold/preprocess/utilities";
+import { isExpTableFile } from "../threshold/preprocess/utils";
 import Dropzone from "dropzone";
-import { setTab, setTabList } from "./tab";
+import { setTab } from "./tab";
 import { processFiles } from "./preprocessor";
 import * as bootstrapImport from "bootstrap";
 import { EasyEyesError } from "../threshold/preprocess/errorMessages";
@@ -17,13 +18,17 @@ import {
   logError,
   newLog,
 } from "./errorLog";
-import { completeStep, enableStep } from "./thresholdState";
+import { completeStep, disableStepsAfter, enableStep } from "./thresholdState";
 import { getFileExtension } from "./fileUtil";
 import {
   createOrUpdateCommonResources,
   getCommonResourcesNames,
 } from "./pavloviaController";
-import { getProjectByNameInProjectList } from "./gitlabUtil";
+import {
+  getProjectByNameInProjectList,
+  isProjectNameExistInProjectList,
+} from "./gitlabUtil";
+import { resourcesFileTypes } from "./utils";
 
 export const droppedFiles = [];
 export const droppedFileNames = new Set();
@@ -73,15 +78,12 @@ export const showDialogBox = (
     bootstrapModal.hide();
   };
   if (exitOnOk) {
-    modalButtonOkEl.className = modalButtonOkEl.className.replace(
-      "no-display",
-      ""
-    );
+    modalButtonOkEl.classList.remove("no-display");
     modalButtonOkEl.onclick = () => {
       if (bootstrapModal._isShown) bootstrapModal.hide();
     };
   } else {
-    modalButtonOkEl.className += " no-display";
+    modalButtonOkEl.classList.add("no-display");
   }
   bootstrapModal.show();
   if (closeSelf) {
@@ -94,10 +96,7 @@ export const showDialogBox = (
       await new Promise((r) => setTimeout(r, 100));
     }
     if (bootstrapModal._isShown) bootstrapModal.hide();
-    modalButtonOkEl.className = modalButtonOkEl.className.replace(
-      "no-display",
-      ""
-    );
+    modalButtonOkEl.classList.remove("no-display");
   };
 };
 
@@ -105,8 +104,22 @@ export const getFileNameWithoutExtension = (file: File) => {
   let nameTokens = file.name.split(".");
   return nameTokens[0];
 };
-const isAcceptableExtension = (ext: any) => {
+
+const isAcceptableExtension = (ext: string) => {
   return getAllUserAcceptableFileExtensions().includes(ext);
+};
+
+const isAcceptableResourcesExtension = (ext: string) => {
+  return getAllUserAcceptableResourcesExtensions().includes(ext);
+};
+
+const setRepoName = (name: string): string => {
+  for (let i = 1; i < 100000; i++) {
+    if (!isProjectNameExistInProjectList(user.gitlabData.projectList, name + i))
+      return name + i;
+  }
+  alert("Duplicate experiment name found. Please change it.");
+  return name + 1;
 };
 
 // const myDropzone = { myDropzone: null };
@@ -137,9 +150,13 @@ const newDz = new Dropzone("#file-dropzone", {
 
     // if dropped file is an experiment file, ie a csv extension, preprocess it immediately, and upon successful processing, add to droppedFiles array
     // and names to droppedFileNames set to avoid duplicates
-    if (isCsvFile(file)) {
+    if (isExpTableFile(file)) {
       // call preprocessor here
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed table
+
+      // Reset state, to allow dropping an experiment file, uploading, then dropping another experiment file
+      await user.gitlabData.initProjectList();
+      resetStateAfterNewExperimentDropped();
 
       // store experiment file
       userRepoFiles.experiment = file;
@@ -158,6 +175,7 @@ const newDz = new Dropzone("#file-dropzone", {
         (
           requestedForms: any,
           requestedFontList: string[],
+          requestedTextList: string[],
           fileList: File[],
           errorList: any[]
         ) => {
@@ -173,6 +191,7 @@ const newDz = new Dropzone("#file-dropzone", {
 
           userRepoFiles.requestedForms = formList;
           userRepoFiles.requestedFonts = requestedFontList;
+          userRepoFiles.requestedTexts = requestedTextList;
           userRepoFiles.blockFiles = fileList;
 
           if (errorList.length) {
@@ -222,7 +241,8 @@ const newDz = new Dropzone("#file-dropzone", {
           const gitlabRepoNameEl = document.getElementById(
             "new-gitlab-repo-name"
           ) as HTMLInputElement;
-          gitlabRepoNameEl.value = file.name.split(".")[0];
+
+          gitlabRepoNameEl.value = setRepoName(file.name.split(".")[0]);
         }
       );
     }
@@ -241,23 +261,18 @@ const newDz = new Dropzone("#file-dropzone", {
   addedfiles: async (fileList: File[]) => {
     // filter out resources
     let resourcesList: File[] = [];
-    for (let fi = 0; fi < fileList.length; fi++) {
-      const file = fileList[fi];
+
+    for (const file of fileList) {
       const ext = getFileExtension(file);
-      if (
-        acceptableExtensions.fonts.includes(ext) ||
-        acceptableExtensions.forms.includes(ext)
-      ) {
-        resourcesList.push(file);
-      }
+      if (isAcceptableResourcesExtension(ext)) resourcesList.push(file);
     }
 
     if (resourcesList.length > 0) {
-      // authentication check
+      // Authentication check
       if (!isUserLoggedIn()) {
         showDialogBox(
           "Error",
-          "Not connected to Pavlovia, so nothing can be uploaded.",
+          "Not connected to Pavlovia (https://pavlovia.org/), so nothing can be uploaded : (",
           true
         );
         clearDropzone();
@@ -266,24 +281,17 @@ const newDz = new Dropzone("#file-dropzone", {
 
       let hideDialogBox = showDialogBox("Now uploading files ...", "", false);
 
-      // upload resources instantly
+      // UPLOAD
       await createOrUpdateCommonResources(user.gitlabData, resourcesList);
-
-      const easyEyesResourcesRepo = getProjectByNameInProjectList(
+      user.easyEyesResourcesRepo = getProjectByNameInProjectList(
         user.gitlabData.projectList,
         "EasyEyesResources"
       );
-      user.easyEyesResourcesRepo = easyEyesResourcesRepo;
 
-      const allResourcesList = await getCommonResourcesNames(user.gitlabData);
-      EasyEyesResources.fonts = allResourcesList.fonts;
-      EasyEyesResources.forms = allResourcesList.forms;
-
-      // update info UI
-      setTab("font-tab", EasyEyesResources.fonts.length, "Fonts");
-      setTab("form-tab", EasyEyesResources.forms.length, "Forms");
-      setTabList("fonts", EasyEyesResources.fonts);
-      setTabList("forms", EasyEyesResources.forms);
+      const resources = await getCommonResourcesNames(user.gitlabData);
+      for (let i in resources) EasyEyesResources[i] = [...resources[i]];
+      for (let cat of resourcesFileTypes)
+        setTab(cat.substring(0, cat.length - 1));
 
       hideDialogBox();
       clearDropzone();
@@ -293,4 +301,16 @@ const newDz = new Dropzone("#file-dropzone", {
 
 export const clearDropzone = () => {
   newDz.removeAllFiles();
+};
+
+const resetStateAfterNewExperimentDropped = () => {
+  disableStepsAfter(2);
+  document.getElementById("new-gitlab-repo-name")!.removeAttribute("disabled");
+
+  const uploadButton = document.getElementById("gitlab-file-submit")!;
+  uploadButton.className = "btn btn-outline-secondary";
+  uploadButton.innerText = "Upload";
+
+  const actEl = document.getElementById("pavlovia-activate-div")!;
+  actEl.classList.add("no-display");
 };

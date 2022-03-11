@@ -26,7 +26,7 @@ const config = {
   },
 };
 
-const plugins = [new webpack.ProgressPlugin(), new CleanWebpackPlugin()];
+const plugins = [new CleanWebpackPlugin()];
 
 const redirect_uri = (uri) =>
   `https://gitlab.pavlovia.org//oauth/authorize`.concat(
@@ -44,15 +44,17 @@ module.exports = (env) => {
       },
       plugins: [
         ...plugins,
+        new webpack.ProgressPlugin(),
         new webpack.DefinePlugin({
           "process.env.debug": true,
           "process.env.REDIRECT_URL": JSON.stringify(
-            redirect_uri("http%3A%2F%2Flocalhost%3A5500%2Fdocs%2Fredirect")
+            redirect_uri("http%3A%2F%2Flocalhost%3A5500%2Fredirect")
           ),
           "process.env.GITHUB_PAT": JSON.stringify(""),
         }),
       ],
       watch: true,
+      devtool: "source-map",
     });
   } else if (env.production) {
     return Object.assign({}, config, {

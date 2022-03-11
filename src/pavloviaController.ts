@@ -1,6 +1,7 @@
 import { getGitlabBodyForThreshold } from "./assetUtil";
 import {
   acceptableExtensions,
+  acceptableResourcesExtensionsOfTextDataType,
   EasyEyesResources,
   ThresholdRepoFiles,
   user,
@@ -13,12 +14,15 @@ import {
   updateDialog,
 } from "./dropzoneHandler";
 import { _loadFiles } from "./files";
-import { getBase64Data, getFileTextData } from "./fileUtil";
+import { getBase64Data, getFileExtension, getFileTextData } from "./fileUtil";
 import {
+  commitMessages,
   createEmptyRepo,
+  defaultBranch,
   encodeGitlabFilePath,
-  getBase64FileData,
+  getBase64FileDataFromGitLab,
   getProjectByNameInProjectList,
+  getTextFileDataFromGitLab,
   GitlabUser,
   ICommitAction,
   isProjectNameExistInProjectList,
@@ -27,6 +31,7 @@ import {
   runExperiment,
 } from "./gitlabUtil";
 import { completeStep, enableStep } from "./thresholdState";
+import { resourcesFileTypes } from "./utils";
 
 // ----------------------------------------------------------------
 //                      Exported Functions
@@ -46,6 +51,7 @@ export const runPavloviaExperiment = async () => {
     false
   );
 };
+
 export const createPavloviaExperiment = async () => {
   // auth check
   if (!isUserLoggedIn()) {
@@ -74,7 +80,6 @@ export const createPavloviaExperiment = async () => {
     "new-gitlab-repo-name"
   ) as HTMLInputElement;
   const newRepoName = gitlabRepoNameEl.value;
-
   // unique repo name check
   const isRepoValid = !isProjectNameExistInProjectList(
     user.gitlabData.projectList,
@@ -87,7 +92,9 @@ export const createPavloviaExperiment = async () => {
       "Please enter a new repository name.",
       true
     );
-    enableStep(3);
+
+    enableStep(3); // ? Potential merge conflict
+    return;
   }
 
   // create experiment repo
@@ -98,7 +105,7 @@ export const createPavloviaExperiment = async () => {
   // create threshold core files
   await createThresholdCoreFilesOnRepo({ id: newRepo.id }, user.gitlabData);
 
-  // create user-uplaoded files
+  // create user-uploaded files
   await createUserUploadedFilesOnRepo(
     { id: newRepo.id },
     user.gitlabData,
@@ -149,7 +156,7 @@ export const createPavloviaExperiment = async () => {
     .getElementById("activate-experiment-btn")
     ?.addEventListener("click", () => {
       completeStep(4);
-      //enableStep(5);
+      // enableStep(5);
     });
 };
 
@@ -159,7 +166,7 @@ export const createPavloviaExperiment = async () => {
  */
 export const getCommonResourcesNames = async (
   user: GitlabUser
-): Promise<{ fonts: string[]; forms: string[] }> => {
+): Promise<{ [key: string]: string[] }> => {
   const easyEyesResourcesRepo = getProjectByNameInProjectList(
     user.projectList,
     "EasyEyesResources"
@@ -175,48 +182,28 @@ export const getCommonResourcesNames = async (
     redirect: "follow",
   };
 
-  let prevFontListResponse: any = await fetch(
-    `https://gitlab.pavlovia.org/api/v4/projects/${easyEyesResourcesRepo.id}/repository/tree/?path=fonts`,
-    requestOptions
-  )
-    .then((response) => {
-      return response.text();
-    })
-    .then((result) => {
-      return result;
-    })
-    .catch((error) => {
-      return console.log("error", error);
-    });
-  let fontList = JSON.parse(prevFontListResponse);
-  let fontNameList: string[] = [];
-  for (let i = 0; i < fontList.length; i++) {
-    fontNameList.push(fontList[i].name);
+  const resourcesNameByType: any = {};
+
+  for (let type of resourcesFileTypes) {
+    let prevFontListResponse: any = await fetch(
+      `https://gitlab.pavlovia.org/api/v4/projects/${easyEyesResourcesRepo.id}/repository/tree/?path=${type}`,
+      requestOptions
+    )
+      .then((response) => {
+        return response.text();
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+    const typeList = JSON.parse(prevFontListResponse);
+    resourcesNameByType[type] = new Array<string>();
+    for (let t of typeList) resourcesNameByType[type].push(t.name);
   }
 
-  let prevFormListResponse: any = await fetch(
-    `https://gitlab.pavlovia.org/api/v4/projects/${easyEyesResourcesRepo.id}/repository/tree/?path=forms`,
-    requestOptions
-  )
-    .then((response) => {
-      return response.text();
-    })
-    .then((result) => {
-      return result;
-    })
-    .catch((error) => {
-      return console.log("error", error);
-    });
-  let formList = JSON.parse(prevFormListResponse);
-  let formNameList: string[] = [];
-  for (let i = 0; i < formList.length; i++) {
-    formNameList.push(formList[i].name);
-  }
-
-  return {
-    fonts: fontNameList,
-    forms: formNameList,
-  };
+  return resourcesNameByType;
 };
 /**
  * creates or overrides resources in EasyEyesResources repository
@@ -233,59 +220,39 @@ export const createOrUpdateCommonResources = async (
   );
   const commonResourcesRepo: Repository = { id: easyEyesResourcesRepo.id };
 
-  const resourcesList = await getCommonResourcesNames(user);
-
-  const prevFormList: string[] = resourcesList.forms;
-  const prevFontList: string[] = resourcesList.fonts;
-
+  const prevResourcesList = await getCommonResourcesNames(user);
   const jsonFiles: ICommitAction[] = [];
 
-  // filter and get all font files
-  let fonts = resourceFileList.filter((i) => {
-    let extensionList = i.name.split(".");
-    let ext = extensionList[extensionList.length - 1];
-    return acceptableExtensions.fonts.includes(ext);
-  });
+  // Update each type of resources one by one
+  for (let type of resourcesFileTypes) {
+    let filesOfType = resourceFileList.filter((file) =>
+      acceptableExtensions[type].includes(getFileExtension(file))
+    );
+    for (const file of filesOfType) {
+      const useBase64 = !acceptableResourcesExtensionsOfTextDataType.includes(
+        getFileExtension(file)
+      );
+      const content = useBase64
+        ? await getBase64Data(file)
+        : await getFileTextData(file);
 
-  // filter and get all form files
-  let forms = resourceFileList.filter((resourceFile: File) => {
-    let extensionList = resourceFile.name.split(".");
-    let ext = extensionList[extensionList.length - 1];
-    return acceptableExtensions.forms.includes(ext);
-  });
-
-  // generate Gitlab API body to commit form files
-  for (var i = 0; i < forms.length; i++) {
-    var form = forms[i];
-    const content = await getBase64Data(form);
-
-    jsonFiles.push({
-      action: prevFormList.includes(form.name) ? "update" : "create",
-      file_path: "forms/" + form.name,
-      content: content,
-      encoding: "base64",
-    });
-  }
-
-  // generate Gitlab API body to commit font files
-  for (var i = 0; i < fonts.length; i++) {
-    const font = fonts[i];
-    const content = await getBase64Data(font);
-
-    jsonFiles.push({
-      action: prevFontList.includes(font.name) ? "update" : "create",
-      file_path: "fonts/" + font.name,
-      content: content,
-      encoding: "base64",
-    });
+      jsonFiles.push({
+        action: prevResourcesList[type].includes(file.name)
+          ? "update"
+          : "create",
+        file_path: `${type}/${file.name}`,
+        content,
+        encoding: useBase64 ? "base64" : "text",
+      });
+    }
   }
 
   await pushCommits(
     user,
     commonResourcesRepo,
     jsonFiles,
-    "EasyEyes resources updates",
-    "master"
+    commitMessages.newResourcesUploaded,
+    defaultBranch
   );
 };
 
@@ -328,27 +295,15 @@ export const showPavloviaAdvice = () => {
 };
 
 /**
- * updates DOM form list and shows popup
+ * Updates DOM fonts/forms/texts/folders etc. list and shows popup
  */
-export const showForms = () => {
+export const showResourcesPopup = (type: string) => {
   let body = "<ul>";
-  EasyEyesResources.forms.forEach((i: String) => {
+  EasyEyesResources[type].forEach((i: String) => {
     body += `<li>${i}</li>`;
   });
   body += "</ul>";
-  showDialogBox("Forms", body, true, false, false);
-};
-
-/**
- * updates DOM font list and shows popup
- */
-export const showFonts = () => {
-  let body = "<ul>";
-  EasyEyesResources.fonts.forEach((i: String) => {
-    body += `<li>${i}</li>`;
-  });
-  body += "</ul>";
-  showDialogBox("Fonts", body, true, false, false);
+  showDialogBox(type, body, true, false, false);
 };
 
 export const generateAndUploadCompletionURL = async () => {
@@ -383,8 +338,15 @@ export const generateAndUploadCompletionURL = async () => {
           },
           body: JSON.stringify(commitBody),
         }
-      );
-      await commitFile.json();
+      )
+        .then((response) => {
+          return response.json();
+        })
+        .catch((error) => {
+          alert("Error uploading. Please try again");
+          location.reload();
+        });
+      await commitFile;
     }
   }
 };
@@ -403,8 +365,12 @@ const createRequestedResourcesOnRepo = async (
   repo: Repository,
   user: GitlabUser
 ): Promise<void> => {
-  if (!userRepoFiles.requestedFonts || !userRepoFiles.requestedForms)
-    throw new Error("requested resource names are undefined.");
+  if (
+    !userRepoFiles.requestedFonts ||
+    !userRepoFiles.requestedForms ||
+    !userRepoFiles.requestedTexts
+  )
+    throw new Error("Requested resource names are undefined.");
 
   const easyEyesResourcesRepo = getProjectByNameInProjectList(
     user.projectList,
@@ -412,58 +378,60 @@ const createRequestedResourcesOnRepo = async (
   );
   const commitActionList: ICommitAction[] = [];
 
-  // requested fonts
-  for (let i = 0; i < userRepoFiles.requestedFonts.length; i++) {
-    const fileName = userRepoFiles.requestedFonts[i];
-    const resourcesRepoFilePath = encodeGitlabFilePath(`fonts/${fileName}`);
+  for (let resourceType of ["fonts", "forms", "texts"]) {
+    let requestedFiles: string[];
+    switch (resourceType) {
+      case "fonts":
+        requestedFiles = userRepoFiles.requestedFonts;
+        break;
+      case "forms":
+        requestedFiles = userRepoFiles.requestedForms;
+        break;
+      case "texts":
+        requestedFiles = userRepoFiles.requestedTexts;
+        break;
+      default:
+        requestedFiles = [];
+        break;
+    }
 
-    const content: string = await getBase64FileData(
-      parseInt(easyEyesResourcesRepo.id),
-      resourcesRepoFilePath,
-      user.accessToken
-    );
+    for (const fileName of requestedFiles) {
+      const resourcesRepoFilePath = encodeGitlabFilePath(
+        `${resourceType}/${fileName}`
+      );
 
-    // ignore 404s
-    if (content.trim().indexOf(`{"message":"404 File Not Found"}`) != -1)
-      continue;
+      const content: string =
+        resourceType === "texts"
+          ? await getTextFileDataFromGitLab(
+              parseInt(easyEyesResourcesRepo.id),
+              resourcesRepoFilePath,
+              user.accessToken
+            )
+          : await getBase64FileDataFromGitLab(
+              parseInt(easyEyesResourcesRepo.id),
+              resourcesRepoFilePath,
+              user.accessToken
+            );
 
-    commitActionList.push({
-      action: "create",
-      file_path: `fonts/${fileName}`,
-      content,
-      encoding: "base64",
-    });
-  }
+      // Ignore 404s
+      if (content.trim().indexOf(`{"message":"404 File Not Found"}`) != -1)
+        continue;
 
-  // requested forms
-  for (let i = 0; i < userRepoFiles.requestedForms.length; i++) {
-    const fileName = userRepoFiles.requestedForms[i];
-    const resourcesRepoFilePath = encodeGitlabFilePath(`forms/${fileName}`);
-
-    const content: string = await getBase64FileData(
-      parseInt(easyEyesResourcesRepo.id),
-      resourcesRepoFilePath,
-      user.accessToken
-    );
-
-    // ignore 404s
-    if (content.trim().indexOf(`{"message":"404 File Not Found"}`) != -1)
-      continue;
-
-    commitActionList.push({
-      action: "create",
-      file_path: `forms/${fileName}`,
-      content,
-      encoding: "base64",
-    });
+      commitActionList.push({
+        action: "create",
+        file_path: `${resourceType}/${fileName}`,
+        content,
+        encoding: resourceType === "texts" ? "text" : "base64",
+      });
+    }
   }
 
   await pushCommits(
     user,
     repo,
     commitActionList,
-    "Add files from EasyEyesResources",
-    "master"
+    commitMessages.resourcesTransferred,
+    defaultBranch
   );
 };
 
@@ -492,8 +460,8 @@ const createThresholdCoreFilesOnRepo = async (
         user,
         gitlabRepo,
         rootContent,
-        "Created threshold core files",
-        "master"
+        commitMessages.thresholdCoreFileUploaded,
+        defaultBranch
       ).then((commitResponse: any) => {
         progress += endIdx - startIdx;
         const progressPercent = Math.round(
@@ -557,7 +525,7 @@ const createUserUploadedFilesOnRepo = async (
     user,
     gitlabRepo,
     commitActionList,
-    "Added experiment file",
-    "master"
+    commitMessages.addExperimentFile,
+    defaultBranch
   );
 };

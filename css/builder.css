@@ -17,19 +17,23 @@
   display: flex;
   justify-content: space-between;
 }
+
 #gitlab-connect-btn {
   align-content: center;
   font-weight: bold;
   font-size: 1rem;
 }
+
 #dz-downarrow {
   position: relative;
   height: 10vh;
 }
+
 #dz-uparrow {
   position: relative;
   height: 10vh;
 }
+
 .description {
   font-size: 1.5rem;
   line-height: 170%;
@@ -51,14 +55,14 @@
 
 #gitlab-user-info {
   position: relative;
-  text-align: center;
   font-size: 1rem;
-  margin-top: 15px;
+  margin-top: 0.5rem;
+  margin-left: 3px;
 }
 
 .option-block {
   font-size: 1rem !important;
-  margin-top: 10px;
+  /* margin-top: 10px; */
   display: flex;
   justify-content: left;
 }
@@ -68,77 +72,32 @@
   color: #333;
 }
 
-/* #pavlovia-activate-div {
+#pavlovia-left-list li,
+#pavlovia-experiment-url-ol li {
   position: relative;
-  left: -18px;
-  display: grid;
-  grid-template-columns: 20% 80%;
-  justify-content: left;
-  visibility: hidden;
-}*/
-#pavlovia-left-list li {
-  position: relative;
-  margin-top: 15px;
+  margin-top: 1rem;
 }
 
 #header {
   margin-bottom: 2rem;
 }
+
 #pavlovia-experiment-url-ol,
 #participant-survey-completion-div {
   position: relative;
 }
+
 .step-status {
-  width: 36pt;
   position: absolute;
-  vertical-align: middle;
-  font-family: Calibri, Calibri;
-  font-size: 36pt;
+  margin: 1rem 0 0 0;
+  /* font-family: Calibri; */
+  font-size: 2.5rem;
   text-align: end;
+  left: 0;
+  top: 0;
+  transform: translate(-200%, -55%);
 }
-#pavlovia-left-list .step-status {
-  left: -59pt;
-  top: -19pt;
-}
-#state-step2 {
-  top: -18pt;
-}
-#pavlovia-experiment-url-ol .step-status {
-  left: -32pt;
-  top: -5pt;
-}
-#pavlovia-activate-div .step-status {
-  top: 36pt;
-}
-#step1 {
-  visibility: hidden;
-}
-#step2 {
-  visibility: hidden;
-}
-#step3 {
-  visibility: hidden;
-}
-#step4 {
-  visibility: hidden;
-}
-#piloting-option {
-  display: None;
-}
-#running-option {
-  display: None;
-}
-#step5-8 {
-  visibility: hidden;
-}
-#state-step5 {
-  top: -17pt;
-  left: -32pt;
-}
-#state-step6 {
-  top: 25pt;
-  left: -32pt;
-}
+
 #hover-button {
   size: 100px;
   color: blue;
@@ -187,23 +146,23 @@
   min-width: fit-content;
   flex: none;
 }
+
 #new-gitlab-repo-name::placeholder {
   font-weight: bold;
   color: rgb(170, 170, 170);
   font-size: 1rem;
 }
+
 #new-repo-input-group {
   position: relative;
-  top: 10px;
-  /*width: auto;*/
 }
 
 #new-repo-input-group button {
   color: white;
-  background-color: gray;
-  font-weight: bold;
+  background-color: #6c757d;
+  width: 6rem;
   font-size: 1rem;
-  margin-left: 20px;
+  margin-left: 1rem;
 }
 
 /*#activate-experiment-btn {
@@ -215,23 +174,29 @@
 #activate-experiment-btn:hover {
   font-weight: bold;
 }
+
 #participant-survey-completion-div li {
   margin-top: 15px;
 }
+
 #prolific-input-group {
   display: flex;
   justify-content: space-between;
 }
+
 #participant-recruitment-completion-url-submit {
   width: 30%;
 }
+
 #participant-survey-new-url-div div {
   display: flex;
   justify-content: space-between;
 }
+
 #new-url {
   width: 67%;
 }
+
 #new-url-submit {
   width: 30%;
 }
@@ -258,11 +223,6 @@ button {
   height: fit-content;
 }
 
-.repo-name-input {
-  /*width: 60% !important;*/
-  margin-bottom: 0.5rem !important;
-}
-
 .no-display {
   display: none !important;
 }
@@ -277,4 +237,15 @@ button {
 
 #try-study-url {
   padding-left: 10px;
+}
+
+/* -------------------------------------------------------------------------- */
+
+#step1,
+#step2,
+#step3,
+#step4,
+#step5,
+#step5-8 {
+  visibility: hidden;
 }

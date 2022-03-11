@@ -1,11 +1,11 @@
-import { isCsvFile } from "../threshold/preprocess/utilities";
+import { isExpTableFile } from "../threshold/preprocess/utils";
 import {
   NO_CSV_FILE_FOUND,
   TOO_MANY_CSV_FILES_FOUND,
 } from "../threshold/preprocess/errorMessages";
 
 export const validateFileList = (fileList: any) => {
-  const numberOfCsvFiles = fileList.filter(isCsvFile).length;
+  const numberOfCsvFiles = fileList.filter(isExpTableFile).length;
   if (numberOfCsvFiles < 1) return NO_CSV_FILE_FOUND;
   if (numberOfCsvFiles > 1) return TOO_MANY_CSV_FILES_FOUND;
 };
@@ -17,5 +17,5 @@ export const validateFileList = (fileList: any) => {
  * @returns {File}
  */
 export const returnExperimentFile = (filesProvided: any) => {
-  return filesProvided.filter(isCsvFile)[0];
+  return filesProvided.filter(isExpTableFile)[0];
 };

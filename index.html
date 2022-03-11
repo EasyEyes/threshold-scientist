@@ -178,9 +178,9 @@
         </p>
         <p class="description">
           You can online test yourself, and people you personally recruit, with
-          just a Pavlovia account. To use a recruitment service and test those
-          participants online, you'll need both Pavlovia and Prolific accounts.
-          We plan to offer MTurk support as well, as an alternative to Prolific.
+          just a Pavlovia account. To recruit and test participants online,
+          you'll need both Pavlovia and Prolific accounts. We plan to offer
+          MTurk support as well, as an alternative to Prolific.
         </p>
         <table class="tg">
           <colgroup>
@@ -333,149 +333,110 @@
         <div class="pavlovia-left">
           <ol id="pavlovia-left-list">
             <!-- Pavlovia Auth Controls -->
-            <div id="step1">
-              <li>
-                <div id="state-step1" class="step-status"></div>
-                <div class="option-block">
-                  <button
-                    id="gitlab-connect-btn"
-                    class="btn btn-outline-secondary"
-                  >
-                    Connect your Pavlovia account to upload files.
-                  </button>
-                </div>
-                <div class="pavlovia-header">
-                  <div id="gitlab-user-info">Pavlovia account</div>
-                </div>
-              </li>
-            </div>
+            <li id="step1">
+              <div id="state-step1" class="step-status"></div>
+              <div class="option-block">
+                <button
+                  id="gitlab-connect-btn"
+                  class="btn btn-outline-secondary"
+                >
+                  Connect your Pavlovia account to upload files.
+                </button>
+              </div>
+              <div id="pavlovia-header">
+                <div id="gitlab-user-info"></div>
+              </div>
+            </li>
 
             <!-- Dropzone -->
-            <div id="step2">
-              <li>
-                <div id="state-step2" class="step-status"></div>
-                <div>
-                  Submit
-                  <span id="dz-downarrow"> &#8595; </span>
-                  any missing fonts & consent/debrief forms.
-                </div>
-                <div id="dropbox-forms-div">
-                  <form action="/" class="dropzone" id="file-dropzone">
-                    <div
-                      id="drop-message-header-div"
-                      class="dz-message"
-                      data-dz-message
-                    >
-                      <span id="drop-message-header"
-                        ><i class="bi bi-download download-icon-box"></i
-                        ><br />Drop files here, or click to browse for them.
-                      </span>
-                      <br />
-                    </div>
-                  </form>
-                  <div></div>
-                  <div>
-                    <div>
-                      <button
-                        id="easyeyes-fonts"
-                        class="btn btn-secondary resource-btn no-display"
-                      >
-                        Fonts
-                      </button>
-                    </div>
+            <li id="step2">
+              <div id="state-step2" class="step-status"></div>
+              <div>
+                Submit
+                <span id="dz-downarrow"> &#8595; </span>
+                any missing fonts, consent/debrief forms, and other resources.
+              </div>
+              <div id="dropbox-forms-div">
+                <form action="/" class="dropzone" id="file-dropzone">
+                  <div
+                    id="drop-message-header-div"
+                    class="dz-message"
+                    data-dz-message
+                  >
+                    <span id="drop-message-header"
+                      ><i class="bi bi-download download-icon-box"></i
+                      ><br />Drop files here, or click to browse for them.
+                    </span>
                     <br />
-                    <div>
-                      <button
-                        id="easyeyes-forms"
-                        class="btn btn-secondary resource-btn no-display"
-                      >
-                        Forms
-                      </button>
-                    </div>
                   </div>
-                  <!-- <div class="tab-container no-display">
-                  &lt;!&ndash; Tab buttons &ndash;&gt;
-                  <div class="tab">
-                    <button id="font-tab" class="tablinks">Fonts</button>
-                    <button id="form-tab" class="tablinks">Forms</button>
-                  </div>
-                  &lt;!&ndash; Font List &ndash;&gt;
-                  <div id="fonts" class="tabcontent"></div>
-                  &lt;!&ndash; Form List &ndash;&gt;
-                  <div id="forms" class="tabcontent"></div>
-                </div>-->
+                </form>
+
+                <div id="resource-buttons">
+                  <button
+                    id="easyeyes-fonts"
+                    class="btn btn-secondary resource-btn no-display"
+                  >
+                    Fonts
+                  </button>
+                  <button
+                    id="easyeyes-forms"
+                    class="btn btn-secondary resource-btn no-display"
+                  >
+                    Forms
+                  </button>
+                  <button
+                    id="easyeyes-texts"
+                    class="btn btn-secondary resource-btn no-display"
+                  >
+                    Texts
+                  </button>
+                  <button
+                    id="easyeyes-folders"
+                    class="btn btn-secondary resource-btn no-display"
+                  >
+                    Folders
+                  </button>
                 </div>
-                <div id="errors" class="errors"></div>
-              </li>
-            </div>
+              </div>
+              <div id="errors" class="errors"></div>
+            </li>
 
             <!-- Instruction -->
+            <li id="step3">
+              <div id="state-step3" class="step-status"></div>
+              Submit
+              <span id="dz-uparrow">&#8593;</span> your experiment table, to be
+              checked now.
+            </li>
 
-            <!-- Pavlovia Repo Controls -->
-
-            <!-- Pavlovia Experiment URL -->
-            <!--<li id="pavlovia-exp-url-group">
-              <div id="pavlovia-experiment-url"></div>-->
-            <!-- <div class="input-group">
-                <input
-                  id="pavlovia-experiment-url"
-                  type="text"
-                  class="form-control"
-                  placeholder="Name of new Repository"
-                  aria-label="Recipient's username"
-                  aria-describedby="gitlab-file-submit"
-                  disabled
-                />
-
-                <button id="copy-pavlovia-url" class="btn btn-outline-primary">
-                  <i class="bi bi-clipboard"></i> Copy Experiment URL
-                </button>
-              </div> -->
-            <!--</li>-->
             <div id="success-logs" class="errors"></div>
           </ol>
         </div>
-
-        <!-- right section -->
-        <!--<div class="pavlovia-right">
-          <div class="tab-container">
-            &lt;!&ndash; Tab buttons &ndash;&gt;
-            <div class="tab">
-              <button id="font-tab" class="tablinks">Fonts</button>
-              <button id="form-tab" class="tablinks">Forms</button>
-            </div>
-            &lt;!&ndash; Font List &ndash;&gt;
-            <div id="fonts" class="tabcontent"></div>
-            &lt;!&ndash; Form List &ndash;&gt;
-            <div id="forms" class="tabcontent"></div>
-          </div>
-        </div>-->
       </div>
+
       <ol id="pavlovia-experiment-url-ol" start="3">
-        <div id="step3">
-          <li>
-            <div id="state-step3" class="step-status"></div>
-            <div class="option-block">
-              <div class="input-group" id="new-repo-input-group">
-                <input
-                  id="new-gitlab-repo-name"
-                  type="text"
-                  class="form-control repo-name-input"
-                  placeholder="Name new experiment"
-                  aria-label="Repository name"
-                  aria-describedby="gitlab-file-submit"
-                />
-                <button
-                  class="btn btn-outline-secondary disabled"
-                  type="button"
-                  id="gitlab-file-submit"
-                >
-                  Upload
-                </button>
-              </div>
+        <li id="step3">
+          <div id="state-step3" class="step-status"></div>
+          <div class="option-block">
+            <div class="input-group" id="new-repo-input-group">
+              <input
+                id="new-gitlab-repo-name"
+                type="text"
+                class="form-control"
+                placeholder="Name new experiment"
+                aria-label="Repository name"
+                aria-describedby="gitlab-file-submit"
+              />
+              <button
+                class="btn btn-outline-secondary disabled"
+                type="button"
+                id="gitlab-file-submit"
+              >
+                Upload
+              </button>
             </div>
-          </li>
-        </div>
+          </div>
+        </li>
 
         <!-- Pavlovia Experiment Controls -->
         <div id="step4">
@@ -506,20 +467,7 @@
               >
                 Go to Pavlovia
               </button>
-              <!--<div class="self-center">
-                In Pavlovia, hit the "RUNNING" button, then return here. (If you
-                don't hit RUNNING, you'll later get a "404 Not Found", error
-                when you try to run your study.)
-                <u id="pavlovia-advice"
-                  >Click here for advice on using Pavlovia without a university
-                  license.</u
-                >
-                If you're not signed into Pavlovia, then you'll be greeted by
-                the alarming message, "No information available for this
-                experiment: it may not exist or you may not have access to it."
-                Don't worry. Just sign in, using the rightmost item in the
-                Pavlovia menu bar. Then return here and try again.
-              </div>-->
+
               <div id="hover-button">&#9432;</div>
             </div>
             <br />
@@ -565,77 +513,6 @@
           </li>
         </ol>
       </div>
-
-      <!--<div
-        id="participant-survey-completion-div"
-        class="input-group"
-        style="display: grid; width: auto; visibility: hidden"
-      >
-        <div
-          style="display: flex; /*justify-self: center;*/ align-items: center"
-        >
-          <i
-            class="bi bi-arrow-down bi-large"
-            style="justify-self: center; font-size: 6vh !important"
-          ></i>
-          Enter copied URL in Prolific to generate Completion and Experiment
-          URLS
-        </div>
-
-        <button
-          id="prolific-redirect-btn"
-          class="btn btn-outline-secondary"
-          style="/*justify-self: center;*/ width: 60vw"
-        >
-          Go to Prolific
-        </button>
-        <div
-          style="display: flex; /*justify-self: center;*/ align-items: center"
-        >
-          <i
-            class="bi bi-arrow-down"
-            style="justify-self: center; font-size: 6vh !important"
-          ></i>
-          Paste Completion and Experiment URLs from Prolific
-        </div>
-        <div style="display: flex">
-          <input
-            id="participant-code"
-            type="text"
-            class="form-control"
-            placeholder="Enter Completion URL"
-            aria-label="Participant Recruitment Completion URL"
-            style="width: 50vw"
-          />
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            id="participant-recruitment-completion-url-submit"
-            style="width: 15vw"
-          >
-            Submit Completion URL
-          </button>
-        </div>
-        <br />
-        <div id="participant-survey-new-url-div" style="display: flex">
-          <input
-            id="new-url"
-            type="text"
-            class="form-control"
-            placeholder="Enter Generated URL"
-            aria-label="Participant Recruitment Generated URL"
-            style="width: 50vw"
-          />
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            id="new-url-submit"
-            style="width: 15vw"
-          >
-            Submit Generated Experiment URL
-          </button>
-        </div>
-      </div>-->
 
       <!-- Dialog box -->
       <div id="dialog-box">
@@ -697,7 +574,10 @@
           alt="GitHub license"
           src="https://img.shields.io/github/license/EasyEyes/threshold?style=flat-square"
       /></a>
-      <p>EasyEyes Team 2021</p>
+      <p>
+        Copyright © 2022 New York University<br />Created by Denis Pelli and the
+        EasyEyes team
+      </p>
     </footer>
   </body>
 </html>

@@ -1,3 +1,4 @@
+import { addOnClickToEle, resourcesFileTypes } from "./utils";
 import {
   populateUserInfo,
   redirectToOauth2,
@@ -12,31 +13,25 @@ import {
   redirectToProlific,
   showPavloviaAdvice,
   redirectToProlificToViewActiveStudies,
-  showForms,
-  showFonts,
+  showResourcesPopup,
 } from "./pavloviaController";
-import "../css/errors.css";
 import { disableAllSteps, enableStep } from "./thresholdState";
 import {
   createPavloviaExperiment,
   runPavloviaExperiment,
 } from "./pavloviaController";
 
-const addOnClickToEl = (elementId: string, handler: any) => {
-  const el = document.getElementById(elementId);
-  if (el)
-    el.addEventListener("click", async (evt: any) => {
-      handler();
-    });
-};
+import "../css/errors.css";
 
-addOnClickToEl("gitlab-connect-btn", redirectToOauth2);
-addOnClickToEl("activate-experiment-btn", redirectToPalvoliaActivation);
-addOnClickToEl("prolific-redirect-btn", redirectToProlific);
-addOnClickToEl("return-to-prolific", redirectToProlificToViewActiveStudies);
-addOnClickToEl("pavlovia-advice", showPavloviaAdvice);
-addOnClickToEl("easyeyes-forms", showForms);
-addOnClickToEl("easyeyes-fonts", showFonts);
+addOnClickToEle("gitlab-connect-btn", redirectToOauth2);
+addOnClickToEle("activate-experiment-btn", redirectToPalvoliaActivation);
+addOnClickToEle("prolific-redirect-btn", redirectToProlific);
+addOnClickToEle("return-to-prolific", redirectToProlificToViewActiveStudies);
+addOnClickToEle("pavlovia-advice", showPavloviaAdvice);
+for (let type of resourcesFileTypes)
+  addOnClickToEle(`easyeyes-${type}`, () => {
+    showResourcesPopup(type);
+  });
 
 // ThresholdState
 disableAllSteps();
@@ -50,17 +45,12 @@ const hoverButton: Element = document.querySelector("#hover-button")!;
 
 hoverButton.addEventListener("click", async () => {
   showDialogBox(
-    `EXPLANATION: +
-    Which button to press?`,
-    `RUNNING: This button, by remote control, tells Pavlovia to activate your study into RUNNING mode. Most users want this. In RUNNING mode you get a study URL, which you’ll need for recruitment, e.g. through Prolific. If your institution does not have a Pavlovia license, then you’ll be charged 20 pence (as of 1/2022) per participant. \n
-
-    Go to Pavlovia: This button takes you to the Pavlovia dashboard, which can do many things. You can activate your study into PILOTING or RUNNING mode. You can PILOT or RUN it. Or click the “View code” button to go to the GitLab browser to examine the files in your experiment’s Pavlovia repository. \n
-
-    PILOTING: In Pavlovia, first hit the PILOTING button, then hit the PILOT button. There is no study URL. Your study will run immediately on this screen. This is always free. \n
-
-    NO PILOTING: In your experiment table set _pavloviaOfferPILOTINGOptionBool TRUE if you want the PILOTING option. Otherwise set it FALSE to allow EasyEyes to streamline the compile-upload-activate sequence. \n
-
-    Misleading error message in Pavlovia: If you go to Pavlovia, and you're not already signed into Pavlovia, then you'll be greeted by the alarming message, "No information available for this experiment: it may not exist or you may not have access to it." Don't worry. Just sign in, using the rightmost item in the Pavlovia menu bar. Then return here and try again.`,
+    `EXPLANATION: Which button to press?`,
+    `RUNNING: This button, by remote control, tells Pavlovia to activate your study into RUNNING mode. Most users want this. In RUNNING mode you get a study URL, which you’ll need for recruitment, e.g. through Prolific. If your institution does not have a Pavlovia license, then you’ll be charged 20 pence (as of 1/2022) per participant.\n\n
+    Go to Pavlovia: This button takes you to the Pavlovia dashboard, which can do many things. You can activate your study into PILOTING or RUNNING mode. You can PILOT or RUN it. Or click the “View code” button to go to the GitLab browser to examine the files in your experiment’s Pavlovia repository.\n\n
+    PILOTING: In Pavlovia, first hit the PILOTING button, then hit the PILOT button. There is no study URL. Your study will run immediately on this screen. This is always free.\n\n
+    NO PILOTING: In your experiment table set _pavloviaOfferPILOTINGOptionBool TRUE if you want the PILOTING option. Otherwise set it FALSE to allow EasyEyes to streamline the compile-upload-activate sequence.\n\n
+    Misleading error message in Pavlovia: If you go to Pavlovia, and you're not already signed into Pavlovia, then you'll be greeted by the alarming message, "No information available for this experiment: it may not exist or you may not have access to it." Don't worry. Just sign in, using the rightmost item in the Pavlovia menu bar. Then return here and try again.`,
     true,
     false,
     true
