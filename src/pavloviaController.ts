@@ -45,7 +45,6 @@ export const runPavloviaExperiment = async () => {
     true,
     false
   );
-  console.log(experimentRunning);
 };
 export const createPavloviaExperiment = async () => {
   // auth check

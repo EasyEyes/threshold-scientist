@@ -14,7 +14,6 @@ export const enableStep = async (stepNumber: number) => {
     uploadsection!.style.visibility = `visible`;
   } else {
     if (user.currentExperiment.pavloviaOfferPilotingOptionBool) {
-      console.log(user.currentExperiment.pavloviaOfferPilotingOptionBool);
       const uploadsection = document.getElementById(`step${stepNumber}`);
       uploadsection!.style.visibility = `visible`;
       const pilotbutton = document.getElementById(`piloting-option`);
