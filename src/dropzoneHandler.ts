@@ -155,6 +155,7 @@ const newDz = new Dropzone("#file-dropzone", {
       // if successful, remove all csv files and their names, because we want to keep the block files from latest preprocessed table
 
       // Reset state, to allow dropping an experiment file, uploading, then dropping another experiment file
+      await user.gitlabData.initProjectList();
       resetStateAfterNewExperimentDropped();
 
       // store experiment file
@@ -304,7 +305,6 @@ export const clearDropzone = () => {
 };
 
 const resetStateAfterNewExperimentDropped = () => {
-  console.log("CODES GETTIN RUN");
   disableStepsAfter(2);
   document.getElementById("new-gitlab-repo-name")!.removeAttribute("disabled");
 
