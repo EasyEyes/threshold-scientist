@@ -1,0 +1,50 @@
+import Swal from "sweetalert2";
+import { getFileExtension, isAcceptableExtension } from "./fileUtils";
+import { isExpTableFile } from "../../threshold/preprocess/utils";
+import {
+  createOrUpdateCommonResources,
+  getCommonResourcesNames,
+  User,
+} from "./gitlabUtils";
+
+export const handleDrop = async (
+  user: User,
+  addResourcesForApp: (newResourcesRepo: any) => void,
+  files: File[]
+) => {
+  const resourcesList: File[] = [];
+  let experimentFile = null;
+  for (const file of files) {
+    const ext = getFileExtension(file);
+    if (!isAcceptableExtension(ext)) {
+      Swal.fire({
+        icon: "error",
+        title: `${file.name} was discarded.`,
+        text: `Sorry, we cannot accept files with extension '.${ext}'.`,
+      });
+      continue;
+    }
+
+    if (!isExpTableFile(file)) resourcesList.push(file);
+    else experimentFile = file;
+  }
+
+  if (resourcesList.length > 0) {
+    await Swal.fire({
+      title: "We are uploading your files for you ...",
+      // html: 'I will close in <b></b> milliseconds.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: async () => {
+        Swal.showLoading();
+        await createOrUpdateCommonResources(user, resourcesList);
+        addResourcesForApp(await getCommonResourcesNames(user));
+        Swal.close();
+      },
+    });
+  }
+
+  if (experimentFile) {
+    // Build an experiment
+  }
+};

@@ -1,0 +1,53 @@
+@import "root.scss";
+
+$table-step-padding: 0.4rem;
+
+.step-table {
+  // padding-left: $table-step-padding !important;
+  // padding-right: $table-step-padding !important;
+
+  .dropzone-around-text {
+    // margin: 0 0 0 calc(1.2rem - $table-step-padding) !important;
+  }
+
+  .resource-button {
+    white-space: nowrap;
+    width: 6rem;
+  }
+
+  .file-zone {
+    display: inline-flex;
+    padding: 0.8rem 0;
+
+    .dropzone {
+      flex-grow: 4;
+    }
+
+    .resource-buttons {
+      display: flex;
+      flex-grow: 1;
+      width: min-content;
+      flex-direction: column;
+      align-items: center;
+      margin-left: 0.3rem;
+
+      .resource-button:not(:first-child) {
+        margin: 0.3rem 0 0 0;
+      }
+    }
+  }
+
+  .dropzone {
+    position: relative;
+    border-radius: calc($step-radius - $table-step-padding);
+    border: none !important;
+    outline: 2px dashed #ccc;
+    outline-offset: -2px;
+    text-align: center;
+
+    .dropzone-sub-text,
+    .dropzone-sub-text * {
+      color: #999;
+    }
+  }
+}

@@ -1,19 +1,43 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable no-undef */
 const webpack = require("webpack");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const path = require("path");
 
 const config = {
-  entry: "./src/index.ts",
+  entry: "./source/index.js",
   module: {
     rules: [
       {
         test: /\.css$/i,
+        exclude: /node_modules/,
         use: ["style-loader", "css-loader"],
       },
       {
-        test: /\.tsx?$/,
+        test: /\.scss$/i,
+        exclude: /node_modules/,
+        use: [
+          "style-loader",
+          {
+            loader: "css-loader",
+            options: {
+              importLoaders: 1,
+            },
+          },
+          "postcss-loader",
+          "sass-loader",
+        ],
+      },
+      {
+        test: /\.tsx?$/i,
         use: "ts-loader",
         exclude: /node_modules/,
+      },
+      {
+        test: /\.(js|jsx)$/i,
+        loader: "babel-loader",
+        exclude: [/node_modules/],
+        options: { presets: ["@babel/env"] },
       },
     ],
   },

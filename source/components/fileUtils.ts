@@ -1,3 +1,26 @@
+import { getAllUserAcceptableFileExtensions } from "./constants";
+
+/**
+ * returns the substring after the last 'period' character in the file name
+ * @param file
+ * @returns file extension
+ */
+export const getFileExtensionFromFileName = (fileName: string): string => {
+  const splitExt = fileName.split(".");
+  if (splitExt.length === 1) return "";
+  return splitExt[splitExt.length - 1].toLowerCase();
+};
+
+export const getFileExtension = (file: File): string => {
+  return getFileExtensionFromFileName(file.name);
+};
+
+export const isAcceptableExtension = (ext: string) => {
+  return getAllUserAcceptableFileExtensions().includes(ext);
+};
+
+/* -------------------------------------------------------------------------- */
+
 /**
  * @param file
  * @returns file string content UTF-8 format
@@ -26,12 +49,12 @@ export const getBase64Data = (file: File): Promise<string> => {
     const fileReader = new FileReader();
     fileReader.readAsDataURL(file);
 
-    fileReader.onload = (e: any) => {
+    fileReader.onload = () => {
       if (
         typeof fileReader.result === "string" &&
         fileReader!.result!.includes(";base64,")
       ) {
-        var splitResult = fileReader!.result!.split(";base64,");
+        const splitResult = fileReader!.result!.split(";base64,");
         resolve(splitResult![1]);
       } else resolve(<string>fileReader.result);
     };
@@ -40,19 +63,4 @@ export const getBase64Data = (file: File): Promise<string> => {
       console.error("Unable to get BINARY data", file, e);
     };
   });
-};
-
-/**
- * returns the substring after the last 'period' character in the file name
- * @param file
- * @returns file extension
- */
-export const getFileExtension = (file: File): string => {
-  return getFileExtensionFromFileName(file.name);
-};
-
-export const getFileExtensionFromFileName = (fileName: string): string => {
-  let splitExt = fileName.split(".");
-  if (splitExt.length === 1) return "";
-  return splitExt[splitExt.length - 1].toLowerCase();
 };

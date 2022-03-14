@@ -1,0 +1,105 @@
+@import "root.scss";
+
+.step {
+  width: 100%;
+  height: min-content;
+  position: relative;
+  background: $step-background;
+  border-radius: $step-radius;
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0;
+
+  p {
+    margin: 0;
+    font-size: $font-reg;
+  }
+
+  p,
+  span {
+    &.bold {
+      font-weight: 700;
+    }
+    &.emphasize {
+      font-weight: 500;
+    }
+    &.success {
+      color: $green;
+    }
+  }
+
+  &.step-current {
+    // background: $step-background-current;
+    outline: $light-green solid 3px;
+  }
+
+  button {
+    border-radius: $icon-radius;
+    color: white;
+    font-size: $font-reg;
+    font-weight: 600;
+    text-align: center;
+    line-height: 100%;
+    cursor: pointer;
+    // transition: all 0.1s ease-in-out;
+    outline: none !important;
+    border: none !important;
+    padding: 0.7rem 1.1rem;
+
+    &.button-small {
+      font-weight: 400;
+      font-size: $font-small;
+      padding: 0.7rem 1rem;
+    }
+
+    &.button-black {
+      background: #333;
+      &:hover {
+        background: #333;
+      }
+      &:active {
+        background: #000;
+      }
+    }
+
+    &.button-grey {
+      background: #999;
+      &:hover {
+        background: #777;
+      }
+      &:active {
+        background: #666;
+      }
+    }
+
+    &.button-green {
+      background: $green;
+      &:hover {
+        background: $light-green;
+      }
+      &:active {
+        background: $green;
+      }
+    }
+  }
+}
+
+.step-completed {
+  background: $step-background-complete;
+
+  * {
+    opacity: 0.8;
+  }
+}
+
+.step-current-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 999px;
+  background: $green;
+  padding: 0.4rem 0.7rem;
+  line-height: 100%;
+  font-size: $font-small !important;
+  color: white;
+  transform: translate(-50%, -50%);
+}
