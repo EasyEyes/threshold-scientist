@@ -56,3 +56,9 @@ export const getFileExtensionFromFileName = (fileName: string): string => {
   if (splitExt.length === 1) return "";
   return splitExt[splitExt.length - 1].toLowerCase();
 };
+
+export const handleZipFileForAudio = (file: File): File[] => {
+  let fileList: File[] = [];
+
+  return fileList;
+};
