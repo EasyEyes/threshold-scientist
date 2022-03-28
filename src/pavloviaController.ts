@@ -381,7 +381,7 @@ const createRequestedResourcesOnRepo = async (
         //requestedFiles = [];
         break;
     }
-    console.log(resourceType, requestedFiles);
+
     for (const fileName of requestedFiles) {
       const resourcesRepoFilePath = encodeGitlabFilePath(
         `${resourceType}/${fileName}`
