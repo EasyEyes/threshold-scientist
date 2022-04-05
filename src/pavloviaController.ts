@@ -208,9 +208,11 @@ export const createOrUpdateCommonResources = async (
 
   // Update each type of resources one by one
   for (let type of resourcesFileTypes) {
+    console.log("type: ", type);
     let filesOfType = resourceFileList.filter((file) =>
       acceptableExtensions[type].includes(getFileExtension(file))
     );
+    console.log(filesOfType);
     for (const file of filesOfType) {
       const useBase64 = !acceptableResourcesExtensionsOfTextDataType.includes(
         getFileExtension(file)
@@ -229,7 +231,7 @@ export const createOrUpdateCommonResources = async (
       });
     }
   }
-
+  console.log(jsonFiles);
   await pushCommits(
     user,
     commonResourcesRepo,
@@ -361,8 +363,8 @@ const createRequestedResourcesOnRepo = async (
   );
   const commitActionList: ICommitAction[] = [];
 
-  for (let resourceType of ["fonts", "forms", "texts"]) {
-    let requestedFiles: string[];
+  for (let resourceType of ["fonts", "forms", "texts", "folders"]) {
+    let requestedFiles: string[] = [];
     switch (resourceType) {
       case "fonts":
         requestedFiles = userRepoFiles.requestedFonts;
@@ -373,8 +375,10 @@ const createRequestedResourcesOnRepo = async (
       case "texts":
         requestedFiles = userRepoFiles.requestedTexts;
         break;
+      case "folders":
+        requestedFiles = userRepoFiles.requestedFolders;
       default:
-        requestedFiles = [];
+        //requestedFiles = [];
         break;
     }
 
@@ -397,7 +401,7 @@ const createRequestedResourcesOnRepo = async (
             );
 
       // Ignore 404s
-      if (content.trim().indexOf(`{"message":"404 File Not Found"}`) != -1)
+      if (content?.trim().indexOf(`{"message":"404 File Not Found"}`) != -1)
         continue;
 
       commitActionList.push({
