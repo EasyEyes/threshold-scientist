@@ -163,7 +163,7 @@ const newDz = new Dropzone("#file-dropzone", {
 
       // preprocess experiment files
       let hideDialogBox = showDialogBox(
-        `The file ${file.name} is being processed ...`,
+        `Compiling ${file.name}...`,
         ``,
         false,
         false,
