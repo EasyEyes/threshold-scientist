@@ -45,3 +45,29 @@ export const acceptableResourcesExtensionsOfTextDataType: string[] = [
   "md",
   "txt",
 ];
+
+export interface ThresholdRepoFiles {
+  experiment: File | null;
+  blockFiles: File[];
+  fonts: File[];
+  forms: File[];
+  texts: File[];
+  folders: File[];
+  requestedForms: string[];
+  requestedFonts: string[];
+  requestedTexts: string[];
+  requestedFolders: string[];
+}
+
+export const userRepoFiles: ThresholdRepoFiles = {
+  experiment: null,
+  blockFiles: [],
+  fonts: [],
+  forms: [],
+  texts: [],
+  folders: [],
+  requestedForms: [],
+  requestedFonts: [],
+  requestedTexts: [],
+  requestedFolders: [],
+};

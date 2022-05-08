@@ -94,10 +94,10 @@ function throughDirectory(directory) {
 const exportWarning = `/*
   Do not modify this file! Run npm \`npm run files\` at ROOT of this project to update
 */\n\n`;
-const exportHandle = `export const _loadDir: string = "/threshold/threshold/"\nexport const _loadFiles: string[] = `;
+const exportHandle = `export const _loadDir = "/threshold/threshold/"\nexport const _loadFiles: string[] = `;
 
 fs.writeFile(
-  `${process.cwd()}/src/files.ts`,
+  `${process.cwd()}/source/components/files.ts`,
   exportWarning +
     exportHandle +
     JSON.stringify(throughDirectory(fetchDir)) +

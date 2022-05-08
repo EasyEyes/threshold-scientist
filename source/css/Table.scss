@@ -6,8 +6,17 @@ $table-step-padding: 0.4rem;
   // padding-left: $table-step-padding !important;
   // padding-right: $table-step-padding !important;
 
+  .table {
+    margin: 0;
+  }
+
   .dropzone-around-text {
     // margin: 0 0 0 calc(1.2rem - $table-step-padding) !important;
+    margin: 0;
+
+    &.has-error {
+      color: $error;
+    }
   }
 
   .resource-button {
@@ -16,6 +25,7 @@ $table-step-padding: 0.4rem;
   }
 
   .file-zone {
+    width: 100%;
     display: inline-flex;
     padding: 0.8rem 0;
 
@@ -25,8 +35,8 @@ $table-step-padding: 0.4rem;
 
     .resource-buttons {
       display: flex;
-      flex-grow: 1;
-      width: min-content;
+      // flex-grow: 1;
+      // width: min-content;
       flex-direction: column;
       align-items: center;
       margin-left: 0.3rem;
@@ -39,15 +49,99 @@ $table-step-padding: 0.4rem;
 
   .dropzone {
     position: relative;
-    border-radius: calc($step-radius - $table-step-padding);
+    border-radius: $icon-radius;
     border: none !important;
-    outline: 2px dashed #ccc;
+    outline: 2px solid #ccc;
     outline-offset: -2px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 
     .dropzone-sub-text,
     .dropzone-sub-text * {
       color: #999;
+      padding: 0;
+    }
+  }
+
+  .errors {
+    max-height: 80vh;
+    overflow-y: scroll;
+
+    .error-item {
+      position: relative;
+      border-radius: $icon-radius;
+      padding: 0.4rem 1rem 0.4rem 1rem;
+      margin: 0.7rem 0;
+
+      &:last-of-type {
+        margin-bottom: 0 !important;
+      }
+
+      * {
+        font-size: 1rem;
+        padding: 0.1rem 0;
+      }
+
+      .error-parameter {
+        font-weight: bold;
+      }
+
+      .error-name {
+        font-weight: bold;
+      }
+
+      .error-hint {
+        &::before {
+          content: "HINT: ";
+          font-weight: bold;
+        }
+      }
+
+      .error-flex {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .error-close {
+        padding: 0;
+        line-height: 100%;
+        font-size: 1.6rem;
+        cursor: pointer;
+      }
+    }
+
+    .error-warning {
+      background-color: #f7881233;
+      border: 2px solid #f78812;
+
+      .error-name,
+      .error-hint::before {
+        color: #f78812;
+      }
+    }
+
+    .error-error {
+      background-color: #fff3f3;
+      border: 2px solid $error;
+
+      .error-name,
+      .error-hint::before {
+        color: $error;
+      }
+    }
+
+    .error-correct {
+      background-color: #f6fff2;
+      border: 2px solid $green;
+
+      .error-name,
+      .error-hint::before {
+        color: $green;
+      }
     }
   }
 }

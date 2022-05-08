@@ -6,11 +6,13 @@ import {
   getCommonResourcesNames,
   User,
 } from "./gitlabUtils";
+import { userRepoFiles } from "./constants";
 
 export const handleDrop = async (
   user: User,
+  files: File[],
   addResourcesForApp: (newResourcesRepo: any) => void,
-  files: File[]
+  handleExperimentFile: (file: File) => void
 ) => {
   const resourcesList: File[] = [];
   let experimentFile = null;
@@ -31,14 +33,16 @@ export const handleDrop = async (
 
   if (resourcesList.length > 0) {
     await Swal.fire({
-      title: "We are uploading your files for you ...",
+      title: "We are uploading files for you ...",
       // html: 'I will close in <b></b> milliseconds.',
       allowOutsideClick: false,
       allowEscapeKey: false,
       didOpen: async () => {
         Swal.showLoading();
+
         await createOrUpdateCommonResources(user, resourcesList);
         addResourcesForApp(await getCommonResourcesNames(user));
+
         Swal.close();
       },
     });
@@ -46,5 +50,7 @@ export const handleDrop = async (
 
   if (experimentFile) {
     // Build an experiment
+    userRepoFiles.experiment = experimentFile;
+    handleExperimentFile(experimentFile);
   }
 };

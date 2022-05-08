@@ -24,11 +24,14 @@ export default class App extends Component {
         texts: [],
         folders: [],
       },
+      projectName: null,
     };
 
     this.functions = {
+      handleNextStep: this.handleNextStep.bind(this),
       handleLogin: this.handleLogin.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
+      handleSetProjectName: this.handleSetProjectName.bind(this),
     };
   }
 
@@ -52,6 +55,12 @@ export default class App extends Component {
 
   /* -------------------------------------------------------------------------- */
 
+  handleNextStep() {
+    this.setState({
+      ...this.nextStepStatus(),
+    });
+  }
+
   handleLogin(user, resources) {
     this.setState({
       user: user,
@@ -61,14 +70,27 @@ export default class App extends Component {
   }
 
   handleAddResources(newResources) {
+    // override the resources in the state
     this.setState({
       resources: { ...newResources },
     });
   }
 
+  handleSetProjectName(projectName) {
+    this.setState({
+      projectName: projectName,
+    });
+  }
+
   render() {
-    const { currentStep, completedSteps, futureSteps, user, resources } =
-      this.state;
+    const {
+      currentStep,
+      completedSteps,
+      futureSteps,
+      user,
+      resources,
+      projectName,
+    } = this.state;
     const steps = [];
 
     for (const stepName of this.allSteps)
@@ -82,6 +104,7 @@ export default class App extends Component {
           functions={this.functions}
           user={user}
           resources={resources}
+          projectName={projectName}
         />
       );
 

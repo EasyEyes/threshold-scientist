@@ -21,10 +21,10 @@ const config = {
           {
             loader: "css-loader",
             options: {
-              importLoaders: 1,
+              importLoaders: true,
             },
           },
-          "postcss-loader",
+          // "postcss-loader",
           "sass-loader",
         ],
       },
@@ -77,8 +77,20 @@ module.exports = (env) => {
           "process.env.GITHUB_PAT": JSON.stringify(""),
         }),
       ],
-      watch: true,
+      // watch: true,
       devtool: "source-map",
+      devServer: {
+        port: 5500,
+        static: {
+          directory: path.join(__dirname, "../"),
+          publicPath: "/",
+        },
+        open: true,
+        hot: true,
+        devMiddleware: {
+          writeToDisk: true,
+        },
+      },
     });
   } else if (env.production) {
     return Object.assign({}, config, {

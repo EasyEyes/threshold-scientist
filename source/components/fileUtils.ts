@@ -64,3 +64,147 @@ export const getBase64Data = (file: File): Promise<string> => {
     };
   });
 };
+
+/* -------------------------------------------------------------------------- */
+
+// now only used for favicon.ico and SOUNDS
+export const assetUsesBase64 = (filePath: string) => {
+  return filePath.includes(".ico") || filePath.includes(".mp3");
+};
+
+export const getAssetFileContentBase64 = async (filePath: string) => {
+  return await fetch(filePath)
+    .then((response) => {
+      return response.blob();
+    })
+    .then((blob) => {
+      return new Promise((resolve) => {
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(blob);
+        fileReader.onload = function () {
+          if (
+            typeof fileReader.result === "string" &&
+            fileReader!.result!.includes(";base64,")
+          ) {
+            const splitResult = fileReader!.result!.split(";base64,");
+            resolve(splitResult![1]);
+          } else resolve(<string>fileReader.result);
+        };
+      });
+    })
+    .catch((error) => {
+      return error;
+    });
+};
+
+export const getAssetFileContent = async (filePath: string) => {
+  return await fetch(filePath)
+    .then((response) => {
+      return response.text();
+    })
+    .then((result) => {
+      return result;
+    })
+    .catch((error) => {
+      return error;
+    });
+};
+
+/* -------------------------------------------------------------------------- */
+
+/**
+ * @param filePath absolute file path in repository
+ * @returns URL-encoded string of given filePath
+ */
+export const encodeGitlabFilePath = (filePath: string): string => {
+  let res = "";
+  for (let i = 0; i < filePath.length; i++) {
+    let c = filePath[i];
+    if (c == "/") c = "%2F";
+    else if (c == ".") c = "%2E";
+    res = res + c;
+  }
+
+  return res;
+};
+
+export const getTextFileDataFromGitLab = (
+  repoID: number,
+  filePath: string,
+  accessToken: string
+): Promise<string> => {
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise<string>(async (resolve) => {
+    const headers: Headers = new Headers();
+    headers.append("Authorization", `bearer ${accessToken}`);
+    headers.append("Content-Type", "text/plain"); // useless?
+
+    const requestOptions: any = {
+      method: "GET",
+      headers: headers,
+      redirect: "follow",
+    };
+
+    const response = await fetch(
+      `https://gitlab.pavlovia.org/api/v4/projects/${repoID}/repository/files/${encodeGitlabFilePath(
+        filePath
+      )}/?ref=master`,
+      requestOptions
+    )
+      .then((response) => {
+        // ? It seems that it also works for text files?
+        return response.text();
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        return error;
+      });
+
+    const content = JSON.parse(response).content;
+    const decodedContent = Buffer.from(content, "base64").toString("utf8");
+    resolve(decodedContent);
+  });
+};
+
+export const getBase64FileDataFromGitLab = (
+  repoID: number,
+  filePath: string,
+  accessToken: string
+): Promise<string> => {
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise<string>(async (resolve) => {
+    // Create auth header
+    const headers: Headers = new Headers();
+    headers.append("Authorization", `bearer ${accessToken}`);
+
+    // Create Gitlab API request options
+    const requestOptions: any = {
+      method: "GET",
+      headers: headers,
+      redirect: "follow",
+    };
+
+    // Convert given filepath to URL-encoded string
+    const encodedFilePath = encodeGitlabFilePath(filePath);
+
+    // Make API call to fetch data
+    const response = await fetch(
+      `https://gitlab.pavlovia.org/api/v4/projects/${repoID}/repository/files/${encodedFilePath}/?ref=master`,
+      requestOptions
+    )
+      .then((response) => {
+        // ? It seems that it also works for text files?
+        return response.text();
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        return error;
+      });
+
+    resolve(JSON.parse(response).content);
+  });
+};

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { PureComponent } from "react";
 
 import Login from "./Login";
 import Deploy from "./Deploy";
@@ -8,13 +8,21 @@ import Upload from "./Upload";
 
 import "./css/Step.scss";
 
-export default class Step extends Component {
+export default class Step extends PureComponent {
   constructor(props) {
     super(props);
 
     this.state = {
       status: "disabled",
     };
+
+    this.ref = React.createRef();
+  }
+
+  scrollToCurrentStep() {
+    if (this.ref.current) {
+      this.ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
 
   render() {
@@ -25,19 +33,44 @@ export default class Step extends Component {
     let component;
     switch (name) {
       case "login":
-        component = <Login {...this.props} />;
+        component = (
+          <Login
+            {...this.props}
+            scrollToCurrentStep={this.scrollToCurrentStep.bind(this)}
+          />
+        );
         break;
       case "table":
-        component = <Table {...this.props} />;
-        break;
-      case "running":
-        component = <Running />;
-        break;
-      case "deploy":
-        component = <Deploy />;
+        component = (
+          <Table
+            {...this.props}
+            scrollToCurrentStep={this.scrollToCurrentStep.bind(this)}
+          />
+        );
         break;
       case "upload":
-        component = <Upload />;
+        component = (
+          <Upload
+            {...this.props}
+            scrollToCurrentStep={this.scrollToCurrentStep.bind(this)}
+          />
+        );
+        break;
+      case "running":
+        component = (
+          <Running
+            {...this.props}
+            scrollToCurrentStep={this.scrollToCurrentStep.bind(this)}
+          />
+        );
+        break;
+      case "deploy":
+        component = (
+          <Deploy
+            {...this.props}
+            scrollToCurrentStep={this.scrollToCurrentStep.bind(this)}
+          />
+        );
         break;
 
       default:
@@ -46,9 +79,10 @@ export default class Step extends Component {
 
     return (
       <div
-        className={`step step-${name}${isCurrentStep ? " step-current" : ""}${
-          isCompletedStep ? " step-completed" : ""
-        }`}
+        className={`animate__animated animate__headShake step step-${name}${
+          isCurrentStep ? " step-current" : ""
+        }${isCompletedStep ? " step-completed" : ""}`}
+        ref={this.ref}
       >
         {isCurrentStep && <p className="step-current-indicator">now</p>}
         {component}

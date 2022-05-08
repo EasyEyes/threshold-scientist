@@ -4,8 +4,21 @@ import {
   acceptableResourcesExtensionsOfTextDataType,
   resourcesFileTypes,
   resourcesRepoName,
+  ThresholdRepoFiles,
+  userRepoFiles,
 } from "./constants";
-import { getBase64Data, getFileExtension, getFileTextData } from "./fileUtils";
+import { _loadDir, _loadFiles } from "./files";
+import {
+  assetUsesBase64,
+  encodeGitlabFilePath,
+  getAssetFileContent,
+  getAssetFileContentBase64,
+  getBase64Data,
+  getBase64FileDataFromGitLab,
+  getFileExtension,
+  getFileTextData,
+  getTextFileDataFromGitLab,
+} from "./fileUtils";
 
 export class User {
   public username = "";
@@ -144,6 +157,14 @@ export const createEmptyRepo = async (
   return await newRepo;
 };
 
+export const setRepoName = (user: User, name: string): string => {
+  if (!isProjectNameExistInProjectList(user.projectList, name)) return name;
+  for (let i = 1; i < 9999999; i++)
+    if (!isProjectNameExistInProjectList(user.projectList, name + "_" + i))
+      return name + "_" + i;
+  return name + "_" + Date.now();
+};
+
 /* -------------------------------------------------------------------------- */
 
 export interface Repository {
@@ -238,7 +259,7 @@ export const createOrUpdateCommonResources = async (
     }
   }
 
-  await pushCommits(
+  return await pushCommits(
     user,
     commonResourcesRepo,
     jsonFiles,
@@ -282,7 +303,8 @@ export const pushCommits = async (
         title: `Uploading Failed.`,
         text: `Please try again. We are working on providing more detailed error messages.`,
       });
-      location.reload();
+      // location.reload();
+      return null;
     }
     return response.json();
   });
@@ -298,3 +320,342 @@ export const commitMessages = {
 };
 
 export const defaultBranch = "master";
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------- CORE CREATE NEW REPO -------------------------- */
+/* -------------------------------------------------------------------------- */
+
+export const getGitlabBodyForThreshold = async (
+  startIndex: number,
+  endIndex: number
+) => {
+  const res: ICommitAction[] = [];
+
+  for (let i = startIndex; i <= endIndex; i++) {
+    const path = _loadFiles[i];
+    const content = assetUsesBase64(path)
+      ? await getAssetFileContentBase64(_loadDir + path)
+      : await getAssetFileContent(_loadDir + path);
+    res.push({
+      action: "create",
+      file_path: path,
+      content,
+      encoding: assetUsesBase64(path) ? "base64" : "text",
+    });
+  }
+  return res;
+};
+
+// helper
+const updateSwalUploadingCount = (count: number, totalCount: number) => {
+  const progressCount = document.getElementById("uploading-count");
+
+  if (progressCount)
+    (progressCount as HTMLSpanElement).innerHTML = `${Math.round(
+      Math.min(count / totalCount, 1) * 100
+    )}`;
+};
+
+/**
+ * creates threshold core files on specified gitlab repository
+ * It assumes that the repository is empty
+ * @param gitlabRepo target repository
+ * @param user gitlabRepo is owned by this user
+ */
+const createThresholdCoreFilesOnRepo = async (
+  gitlabRepo: Repository,
+  user: User,
+  uploadedFileCount: { current: number },
+  totalFileCount: number
+): Promise<any> => {
+  const promiseList = [];
+  const batchSize = 10; // !
+  const results: any[] = [];
+
+  for (let i = 0; i < _loadFiles.length; i += batchSize) {
+    const startIdx = i;
+    const endIdx = Math.min(i + batchSize - 1, _loadFiles.length - 1);
+
+    // eslint-disable-next-line no-async-promise-executor
+    const promise = new Promise(async (resolve) => {
+      const rootContent = await getGitlabBodyForThreshold(startIdx, endIdx);
+
+      pushCommits(
+        user,
+        gitlabRepo,
+        rootContent,
+        commitMessages.thresholdCoreFileUploaded,
+        defaultBranch
+      ).then((commitResponse: any) => {
+        uploadedFileCount.current += endIdx - startIdx + 1;
+        updateSwalUploadingCount(uploadedFileCount.current, totalFileCount);
+
+        resolve(commitResponse);
+        results.push(commitResponse);
+      });
+    });
+
+    promiseList.push(promise);
+  }
+
+  await Promise.all(promiseList);
+  return results;
+};
+
+/**
+ * creates user-uploaded files on specified gitlab repository
+ * @param gitlabRepo target repository
+ * @param user gitlabRepo is owned by this user
+ */
+const createUserUploadedFilesOnRepo = async (
+  gitlabRepo: Repository,
+  user: User,
+  repoFiles: ThresholdRepoFiles,
+  uploadedFileCount: { current: number },
+  totalFileCount: number
+): Promise<void> => {
+  const commitActionList: ICommitAction[] = [];
+
+  // add experiment file to root
+  let fileData = await getFileTextData(repoFiles.experiment!);
+  commitActionList.push({
+    action: "create",
+    file_path: repoFiles.experiment!.name,
+    content: fileData,
+  });
+  uploadedFileCount.current++;
+  updateSwalUploadingCount(uploadedFileCount.current, totalFileCount);
+
+  // add experiment file to conditions
+  commitActionList.push({
+    action: "create",
+    file_path: `conditions/${repoFiles.experiment!.name}`,
+    content: fileData,
+  });
+
+  // add conditions
+  for (let i = 0; i < repoFiles.blockFiles.length; i++) {
+    const file = repoFiles.blockFiles[i];
+    const content: string = await getFileTextData(file);
+
+    commitActionList.push({
+      action: "create",
+      file_path: `conditions/${file.name}`,
+      content,
+      encoding: "text",
+    });
+    uploadedFileCount.current++;
+    updateSwalUploadingCount(uploadedFileCount.current, totalFileCount);
+  }
+
+  return await pushCommits(
+    user,
+    gitlabRepo,
+    commitActionList,
+    commitMessages.addExperimentFile,
+    defaultBranch
+  );
+};
+
+/**
+ * transfers requested resources from EasyEyesResources repository to given repository.
+ * It assumes there are no pre-exisiting resources on destination repository.
+ * @param repo
+ * @param user target user
+ */
+const createRequestedResourcesOnRepo = async (
+  repo: Repository,
+  user: User,
+  uploadedFileCount: { current: number },
+  totalFileCount: number
+): Promise<void> => {
+  if (
+    !userRepoFiles.requestedFonts ||
+    !userRepoFiles.requestedForms ||
+    !userRepoFiles.requestedTexts ||
+    !userRepoFiles.requestedFolders
+  )
+    throw new Error("Requested resource names are undefined.");
+
+  const easyEyesResourcesRepo = getProjectByNameInProjectList(
+    user.projectList,
+    "EasyEyesResources"
+  );
+  const commitActionList: ICommitAction[] = [];
+
+  for (const resourceType of ["fonts", "forms", "texts", "folders"]) {
+    let requestedFiles: string[] = [];
+    switch (resourceType) {
+      case "fonts":
+        requestedFiles = userRepoFiles.requestedFonts;
+        break;
+      case "forms":
+        requestedFiles = userRepoFiles.requestedForms;
+        break;
+      case "texts":
+        requestedFiles = userRepoFiles.requestedTexts;
+        break;
+      case "folders":
+        requestedFiles = userRepoFiles.requestedFolders || [];
+        break;
+      default:
+        requestedFiles = [];
+        break;
+    }
+
+    for (const fileName of requestedFiles) {
+      const resourcesRepoFilePath = encodeGitlabFilePath(
+        `${resourceType}/${fileName}`
+      );
+
+      const content: string =
+        resourceType === "texts"
+          ? await getTextFileDataFromGitLab(
+              parseInt(easyEyesResourcesRepo.id),
+              resourcesRepoFilePath,
+              user.accessToken
+            )
+          : await getBase64FileDataFromGitLab(
+              parseInt(easyEyesResourcesRepo.id),
+              resourcesRepoFilePath,
+              user.accessToken
+            );
+
+      // Ignore 404s
+      if (content?.trim().indexOf(`{"message":"404 File Not Found"}`) != -1)
+        continue;
+
+      commitActionList.push({
+        action: "create",
+        file_path: `${resourceType}/${fileName}`,
+        content,
+        encoding: resourceType === "texts" ? "text" : "base64",
+      });
+      uploadedFileCount.current++;
+      updateSwalUploadingCount(uploadedFileCount.current, totalFileCount);
+    }
+  }
+
+  return await pushCommits(
+    user,
+    repo,
+    commitActionList,
+    commitMessages.resourcesTransferred,
+    defaultBranch
+  );
+};
+
+export const createPavloviaExperiment = async (
+  user: User,
+  projectName: string,
+  callback: () => void
+) => {
+  // auth check
+  if (user.id === undefined) {
+    return;
+  }
+
+  // block files check
+  if (userRepoFiles.blockFiles.length == 0) {
+    Swal.fire({
+      icon: "error",
+      title: `Failed to create block files.`,
+      text: `We failed to create experiment block files from your table. Try refresh the page. If the problem persists, please contact us.`,
+    });
+  }
+
+  // let hideDialogBox = showDialogBox(
+  //   `Creating Experiment`,
+  //   `Uploading experiment files: 0%`,
+  //   false
+  // );
+
+  // unique repo name check
+  const isRepoValid = !isProjectNameExistInProjectList(
+    user.projectList,
+    projectName
+  );
+  if (!isRepoValid) {
+    Swal.fire({
+      icon: "error",
+      title: `Duplicated project name.`,
+      text: `${projectName} has existed in your Pavlovia repository list.`,
+    });
+    return;
+  }
+
+  // create experiment repo
+  const newRepo = await createEmptyRepo(projectName, user);
+  // user.newRepo = newRepo;
+
+  const totalFileCount =
+    _loadFiles.length +
+    1 +
+    userRepoFiles.blockFiles.length +
+    userRepoFiles.requestedFonts.length +
+    userRepoFiles.requestedForms.length +
+    userRepoFiles.requestedTexts.length +
+    userRepoFiles.requestedFolders.length;
+  const uploadedFileCount = { current: 0 };
+
+  await Swal.fire({
+    title: "We are creating Pavlovia project for you ...",
+    html: `<p>Uploaded <span id="uploading-count">${Math.round(
+      Math.min(uploadedFileCount.current / totalFileCount, 1) * 100
+    )}</span>%</p>`,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    didOpen: async () => {
+      Swal.showLoading();
+      let finalClosing = true;
+
+      // create threshold core files
+      // console.log("Creating threshold core files...");
+      const a = await createThresholdCoreFilesOnRepo(
+        { id: newRepo.id },
+        user,
+        uploadedFileCount,
+        totalFileCount
+      );
+      for (const i of a) if (i === null) finalClosing = false;
+
+      // create user-uploaded files
+      // console.log("Creating user-uploaded files...");
+      const b = await createUserUploadedFilesOnRepo(
+        { id: newRepo.id },
+        user,
+        userRepoFiles,
+        uploadedFileCount,
+        totalFileCount
+      );
+      if (b === null) finalClosing = false;
+
+      // transfer resources
+      // console.log("Transferring resources...");
+      const c = await createRequestedResourcesOnRepo(
+        { id: newRepo.id },
+        user,
+        uploadedFileCount,
+        totalFileCount
+      );
+      if (c === null) finalClosing = false;
+
+      if (finalClosing) Swal.close();
+    },
+  });
+
+  callback();
+
+  // display "run" experiement link
+  // let expUrl = `https://run.pavlovia.org/${
+  //   user.username
+  // }/${projectName.toLocaleLowerCase()}`;
+  // // const tryExp: any = document.getElementById("try-study-url");
+
+  // if (user.currentExperiment.participantRecruitmentServiceName == "Prolific") {
+  //   expUrl +=
+  //     "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}";
+  //   handleParticipantRecruitmentUrl();
+  // }
+  // user.currentExperiment.experimentUrl = expUrl;
+};

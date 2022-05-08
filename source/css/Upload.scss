@@ -1,0 +1,21 @@
+@import "root.scss";
+
+.upload-container {
+  display: flex;
+  flex-direction: row;
+  padding-top: 0.8rem;
+
+  .upload-input {
+    flex-grow: 1;
+    font-size: $font-small;
+    padding: 0.7rem 1rem;
+    outline: 2px solid #ccc;
+    outline-offset: -2px;
+    border-radius: $icon-radius;
+    border: none !important;
+  }
+
+  button {
+    margin-left: 0.3rem;
+  }
+}

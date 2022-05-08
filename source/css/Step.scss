@@ -6,7 +6,7 @@
   position: relative;
   background: $step-background;
   border-radius: $step-radius;
-  padding: 1rem 1.2rem;
+  padding: 1.2rem;
   margin: 1.2rem 0;
 
   p {
@@ -30,6 +30,9 @@
   &.step-current {
     // background: $step-background-current;
     outline: $light-green solid 3px;
+    // box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 10px 36px 0px,
+      rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
   }
 
   button {
@@ -49,6 +52,7 @@
       font-weight: 400;
       font-size: $font-small;
       padding: 0.7rem 1rem;
+      width: 7rem;
     }
 
     &.button-black {
@@ -87,7 +91,8 @@
   background: $step-background-complete;
 
   * {
-    opacity: 0.8;
+    pointer-events: none;
+    opacity: 0.9;
   }
 }
 
