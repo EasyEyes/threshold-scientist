@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import Question from "./components";
+import { Question } from "./components";
 import {
   generateAndUploadCompletionURL,
   runExperiment,

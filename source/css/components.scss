@@ -1,3 +1,5 @@
+@import "./root.scss";
+
 .icon-holder {
   border-radius: 50%;
   cursor: pointer;
@@ -19,4 +21,46 @@
 .popup-text-container {
   text-align: left !important;
   line-height: 150%;
+
+  ol,
+  ul {
+    list-style: circle;
+    margin: 0;
+    padding: 0 1rem;
+  }
+
+  a {
+    color: #666;
+  }
+
+  &.smaller-text {
+    font-size: 1rem;
+  }
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: auto;
+  border-radius: $icon-radius;
+  margin: 1rem 0;
+
+  td,
+  th {
+    border-color: #f0f0f0;
+    // border-style: hidden;
+    border-width: 1px;
+    width: 4rem;
+    // font-family: Arial, sans-serif;
+    font-size: 0.85rem;
+    overflow: hidden;
+    padding: 0.1rem 0.2rem;
+    text-align: center;
+    word-break: normal;
+  }
+
+  .left-td {
+    text-align: left !important;
+    width: 30rem;
+  }
 }
