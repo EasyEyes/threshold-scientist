@@ -8,44 +8,62 @@ import {
 import "./css/Running.scss";
 
 export default class Running extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      status: "INACTIVE",
+    };
+  }
+
   componentDidMount() {
     this.props.scrollToCurrentStep();
   }
 
   render() {
     const { user, projectName, newRepo } = this.props;
+    const { status } = this.state;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const that = this;
+
+    const isRunning = status === "RUNNING";
 
     const hasRecruitmentService =
       !!user.currentExperiment.participantRecruitmentServiceName;
     const recruitName =
       user.currentExperiment.participantRecruitmentServiceName;
-    console.log(user.currentExperiment);
 
     return (
       <>
-        <p className="emphasize">Upload successful!</p>
+        <p className="emphasize">
+          Upload successful!
+          {status === "RUNNING" ? " And the experiment is running!" : ""}
+        </p>
         <div className="link-set">
           <div>
             <button
-              className="button-green button-small"
-              onClick={async (e) => {
-                e.target.setAttribute("disabled", true);
-                const result = await runExperiment(
-                  user,
-                  newRepo,
-                  user.currentExperiment.experimentUrl
-                );
+              className={`button-small${
+                isRunning ? " button-disabled" : " button-green"
+              }`}
+              onClick={
+                isRunning
+                  ? null
+                  : async (e) => {
+                      e.target.setAttribute("disabled", true);
+                      const result = await runExperiment(
+                        user,
+                        newRepo,
+                        user.currentExperiment.experimentUrl
+                      );
 
-                if (result.newStatus === "RUNNING") {
-                  e.target.onClick = null;
-                  e.target.innerHTML = "Status set to RUNNING";
-                  e.target.classList.replace("button-green", "button-grey");
-                  e.target.classList.add("button-disabled");
-                  e.target.removeAttribute("disabled");
-                }
-              }}
+                      if (result.newStatus === "RUNNING") {
+                        e.target.removeAttribute("disabled");
+                        that.setState({ status: "RUNNING" });
+                      }
+                    }
+              }
             >
-              Set status to RUNNING
+              {isRunning ? "Status set to RUNNING" : "Set status to RUNNING"}
             </button>
             <button
               className="button-grey button-small"
@@ -66,8 +84,13 @@ export default class Running extends Component {
             text={`In Pavlovia, you need to set the experiment status to RUNNING before you can start the experiment.<br /><br />If your university doesn't have an unlimited Pavlovia license, then Pavlovia will charge you 20 pence per participant. Pavlovia allows you to avoid that fee during evaluation - Go to Pavlovia, hit PILOTING instead of RUNNING, and use their PILOT button, instead of clicking your study URL, to run your study. Their (reasonable) fee cannot be avoided when you run participants on Prolific. In that case use RUNNING.`}
           />
         </div>
-        {hasRecruitmentService && (
-          <div className="recruit-service">
+        {hasRecruitmentService && isRunning && (
+          <div
+            className="recruit-service"
+            style={{
+              marginTop: "1.6rem",
+            }}
+          >
             <p>Use {recruitName} to recruit participants.</p>
             <div className="link-set">
               <div>

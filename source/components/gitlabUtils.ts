@@ -166,11 +166,11 @@ export const createEmptyRepo = async (
 };
 
 export const setRepoName = (user: User, name: string): string => {
-  if (!isProjectNameExistInProjectList(user.projectList, name)) return name;
+  // if (!isProjectNameExistInProjectList(user.projectList, name)) return name;
   for (let i = 1; i < 9999999; i++)
-    if (!isProjectNameExistInProjectList(user.projectList, name + "_" + i))
-      return name + "_" + i;
-  return name + "_" + Date.now();
+    if (!isProjectNameExistInProjectList(user.projectList, `${name}${i}`))
+      return `${name}${i}`;
+  return `${name}${Date.now()}`;
 };
 
 /* -------------------------------------------------------------------------- */
