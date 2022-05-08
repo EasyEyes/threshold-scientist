@@ -51,7 +51,7 @@ $table-step-padding: 0.4rem;
     position: relative;
     border-radius: $icon-radius;
     border: none !important;
-    outline: 2px solid #ccc;
+    outline: 2px solid #aaa;
     outline-offset: -2px;
     text-align: center;
     display: flex;
@@ -82,7 +82,14 @@ $table-step-padding: 0.4rem;
 
       * {
         font-size: 1rem;
-        padding: 0.1rem 0;
+        // padding: 0.1rem 0;
+        padding: 0;
+      }
+
+      ul,
+      ol {
+        margin-bottom: 0 !important;
+        list-style: none;
       }
 
       .error-parameter {

@@ -25,13 +25,17 @@ export default class App extends Component {
         folders: [],
       },
       projectName: null,
+      newRepo: null,
     };
 
     this.functions = {
+      handleReset: this.handleReset.bind(this),
       handleNextStep: this.handleNextStep.bind(this),
       handleLogin: this.handleLogin.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
       handleSetProjectName: this.handleSetProjectName.bind(this),
+      handleSetExperiment: this.handleSetExperiment.bind(this),
+      handleGetNewRepo: this.handleGetNewRepo.bind(this),
     };
   }
 
@@ -54,6 +58,23 @@ export default class App extends Component {
   }
 
   /* -------------------------------------------------------------------------- */
+
+  handleReset() {
+    this.setState({
+      currentStep: "login",
+      completedSteps: [],
+      futureSteps: [...this.allSteps].slice(1),
+      user: null,
+      resources: {
+        fonts: [],
+        forms: [],
+        texts: [],
+        folders: [],
+      },
+      projectName: null,
+      newRepo: null,
+    });
+  }
 
   handleNextStep() {
     this.setState({
@@ -82,6 +103,33 @@ export default class App extends Component {
     });
   }
 
+  handleSetExperiment(experiment) {
+    this.setState({
+      user: {
+        ...this.state.user,
+        currentExperiment: {
+          ...this.state.user.currentExperiment,
+          ...experiment,
+        },
+      },
+    });
+  }
+
+  handleGetNewRepo(newRepo, experimentUrl, serviceUrl) {
+    this.setState({
+      newRepo: newRepo,
+      user: {
+        ...this.state.user,
+        currentExperiment: {
+          ...this.state.user.currentExperiment,
+          experimentUrl,
+          participantRecruitmentServiceUrl: serviceUrl,
+        },
+      },
+      ...this.nextStepStatus(),
+    });
+  }
+
   render() {
     const {
       currentStep,
@@ -90,6 +138,7 @@ export default class App extends Component {
       user,
       resources,
       projectName,
+      newRepo,
     } = this.state;
     const steps = [];
 
@@ -105,6 +154,7 @@ export default class App extends Component {
           user={user}
           resources={resources}
           projectName={projectName}
+          newRepo={newRepo}
         />
       );
 

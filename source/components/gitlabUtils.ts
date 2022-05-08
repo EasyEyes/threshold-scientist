@@ -27,6 +27,14 @@ export class User {
 
   public projectList: any[] = [];
 
+  public currentExperiment = {
+    participantRecruitmentServiceName: "",
+    participantRecruitmentServiceUrl: "",
+    participantRecruitmentServiceCode: "",
+    experimentUrl: "",
+    pavloviaOfferPilotingOptionBool: false, // ?
+  };
+
   constructor(public accessToken: string) {}
 
   async initUserDetails(): Promise<void> {
@@ -548,7 +556,11 @@ const createRequestedResourcesOnRepo = async (
 export const createPavloviaExperiment = async (
   user: User,
   projectName: string,
-  callback: () => void
+  callback: (
+    newRepo: any,
+    experimentUrl: string,
+    serviceUrl: string | null
+  ) => void
 ) => {
   // auth check
   if (user.id === undefined) {
@@ -640,22 +652,112 @@ export const createPavloviaExperiment = async (
       );
       if (c === null) finalClosing = false;
 
-      if (finalClosing) Swal.close();
+      if (finalClosing) {
+        // uploaded without error
+        Swal.close();
+
+        const expUrl = `https://run.pavlovia.org/${
+          user.username
+        }/${projectName.toLocaleLowerCase()}`;
+        let serviceUrl = null;
+
+        if (
+          user.currentExperiment.participantRecruitmentServiceName == "Prolific"
+        ) {
+          serviceUrl =
+            expUrl +
+            "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}";
+        }
+
+        callback(
+          newRepo,
+          `https://run.pavlovia.org/${
+            user.username
+          }/${projectName.toLocaleLowerCase()}`,
+          serviceUrl
+        );
+      }
     },
   });
+};
 
-  callback();
+/* -------------------------------------------------------------------------- */
 
-  // display "run" experiement link
-  // let expUrl = `https://run.pavlovia.org/${
-  //   user.username
-  // }/${projectName.toLocaleLowerCase()}`;
-  // // const tryExp: any = document.getElementById("try-study-url");
+export const runExperiment = async (
+  user: User,
+  newRepo: Repository,
+  experimentUrl: string
+) => {
+  const running = await fetch(
+    "https://pavlovia.org/api/v2/experiments/" + newRepo.id + "/status",
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        oauthToken: user.accessToken,
+      },
 
-  // if (user.currentExperiment.participantRecruitmentServiceName == "Prolific") {
-  //   expUrl +=
-  //     "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}";
-  //   handleParticipantRecruitmentUrl();
-  // }
-  // user.currentExperiment.experimentUrl = expUrl;
+      body: JSON.stringify({
+        newStatus: "RUNNING",
+        recruitment: {
+          policy: { type: "URL", url: experimentUrl },
+        },
+      }),
+    }
+  );
+
+  return await running.json();
+};
+
+/* -------------------------------------------------------------------------- */
+
+export const generateAndUploadCompletionURL = async (
+  user: User,
+  newRepo: any
+) => {
+  if (user.currentExperiment.participantRecruitmentServiceCode == null) {
+    const completionCode: string =
+      "" + Math.floor(Math.random() * (999 - 100) + 100);
+
+    if (completionCode != "") {
+      user.currentExperiment.participantRecruitmentServiceCode = completionCode;
+
+      const completionURL =
+        "https://app.prolific.co/submissions/complete?cc=" + completionCode;
+      const jsonString = `name,${user.currentExperiment.participantRecruitmentServiceName}\ncode,\nurl,${completionURL}`;
+
+      const commitAction = {
+        action: "update",
+        file_path: "recruitmentServiceConfig.csv",
+        content: jsonString,
+      };
+      const commitBody = {
+        branch: "master",
+        commit_message: "EasyEyes initialization",
+        actions: [commitAction],
+      };
+
+      const commitFile = await fetch(
+        "https://gitlab.pavlovia.org/api/v4/projects/" +
+          newRepo.id +
+          "/repository/commits?access_token=" +
+          user.accessToken,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(commitBody),
+        }
+      )
+        .then((response) => {
+          return response.json();
+        })
+        .catch((error) => {
+          alert("Error uploading completion code. Please try again.");
+          location.reload();
+        });
+      await commitFile;
+    }
+  }
 };

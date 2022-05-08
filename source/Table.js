@@ -103,13 +103,8 @@ export default class Table extends Component {
             ],
           });
         }
-        // // set repo name
-        // const gitlabRepoNameEl = document.getElementById(
-        //   "new-gitlab-repo-name"
-        // ) as HTMLInputElement;
-
-        // gitlabRepoNameEl.value = setRepoName(file.name.split(".")[0]);
       }
+      // this.props.functions.handleSetExperiment
     );
 
     this.setState({

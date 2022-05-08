@@ -52,7 +52,7 @@
       font-weight: 400;
       font-size: $font-small;
       padding: 0.7rem 1rem;
-      width: 7rem;
+      min-width: 7rem;
     }
 
     &.button-black {
@@ -68,7 +68,7 @@
     &.button-grey {
       background: #999;
       &:hover {
-        background: #777;
+        background: #aaa;
       }
       &:active {
         background: #666;
@@ -83,6 +83,14 @@
       &:active {
         background: $green;
       }
+      &:disabled {
+        background: $green;
+        cursor: wait;
+      }
+    }
+
+    &.button-disabled {
+      pointer-events: none;
     }
   }
 }

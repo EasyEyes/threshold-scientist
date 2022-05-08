@@ -1,0 +1,22 @@
+.icon-holder {
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0.2rem;
+  margin: 0;
+  line-height: 100%;
+
+  &:hover {
+    background: #fff;
+  }
+}
+
+.icon-i {
+  font-size: 1.2rem;
+  color: #666;
+  line-height: 100%;
+}
+
+.popup-text-container {
+  text-align: left !important;
+  line-height: 150%;
+}

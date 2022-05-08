@@ -22,13 +22,17 @@ export default class Upload extends Component {
             }}
           ></input>
           <button
-            className="button-grey button-small"
-            onClick={() => {
+            className="button-green button-small"
+            onClick={(e) => {
+              e.target.setAttribute("disabled", true);
               createPavloviaExperiment(
                 this.props.user,
                 this.props.projectName,
-                this.props.functions.handleNextStep
+                this.props.functions.handleGetNewRepo
               );
+              setTimeout(() => {
+                e.target.removeAttribute("disabled");
+              }, 1000);
             }}
           >
             Upload
