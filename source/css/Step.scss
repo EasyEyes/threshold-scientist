@@ -100,10 +100,10 @@
 .step-completed {
   background: $step-background-complete;
 
-  * {
-    pointer-events: none;
-    opacity: 0.9;
-  }
+  // * {
+  //   pointer-events: none;
+  //   opacity: 0.9;
+  // }
 }
 
 .step-current-indicator {

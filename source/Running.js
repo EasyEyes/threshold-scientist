@@ -36,8 +36,9 @@ export default class Running extends Component {
     return (
       <>
         <p className="emphasize">
-          Upload successful!
-          {status === "RUNNING" ? " And the experiment is running!" : ""}
+          {status === "RUNNING"
+            ? "Experiment uploaded and in RUNNING mode, ready to run."
+            : "Upload successful!"}
         </p>
         <div className="link-set">
           <div className="link-set-buttons">
@@ -63,7 +64,7 @@ export default class Running extends Component {
                     }
               }
             >
-              {isRunning ? "Status set to RUNNING" : "Set status to RUNNING"}
+              {isRunning ? "Mode set to RUNNING" : "Set mode to RUNNING"}
             </button>
             <button
               className="button-grey button-small"
@@ -99,6 +100,27 @@ export default class Running extends Component {
             text={`In Pavlovia, you need to set the experiment status to RUNNING before you can start the experiment.<br /><br />If your university doesn't have an unlimited Pavlovia license, then Pavlovia will charge you 20 pence per participant. Pavlovia allows you to avoid that fee during evaluation - Go to Pavlovia, hit PILOTING instead of RUNNING, and use their PILOT button, instead of clicking your study URL, to run your study. Their (reasonable) fee cannot be avoided when you run participants on Prolific. In that case use RUNNING.`}
           />
         </div>
+
+        <p
+          style={{
+            fontSize: "1rem",
+          }}
+        >
+          Your study URL:{" "}
+          <a
+            href={`https://run.pavlovia.org/${
+              user.username
+            }/${projectName.toLocaleLowerCase()}`}
+            target="_blank"
+            rel="noopenner noreferrer"
+            style={{
+              color: "#666",
+            }}
+          >{`https://run.pavlovia.org/${
+            user.username
+          }/${projectName.toLocaleLowerCase()}`}</a>
+        </p>
+
         {hasRecruitmentService && isRunning && (
           <div
             className="recruit-service"

@@ -147,7 +147,7 @@ export default class Table extends Component {
                   <i
                     className="bi bi-download download-icon-box"
                     style={{
-                      fontSize: "2rem",
+                      fontSize: "1.8rem",
                     }}
                   ></i>
                   <br /> Drop files here, or click to browse for them.
