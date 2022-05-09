@@ -203,7 +203,7 @@ export default class App extends Component {
               target="_blank"
               >Pavlovia</a
             >
-            and maybe
+            and probably
             <a
               href="https://prolific.co/"
               rel="noopener noreferrer"
@@ -233,7 +233,7 @@ export default class App extends Component {
           <p>
             You can online test yourself, and people you personally recruit, with
             just a Pavlovia account. To recruit and test participants online,
-            you'll need both Pavlovia and Prolific accounts. We plan to offer
+            you'll need both Pavlovia and Prolific accounts. We hope to offer
             MTurk support as well, as an alternative to Prolific.
           </p>`,
                 confirmButtonColor: "#019267",
