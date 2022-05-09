@@ -163,12 +163,13 @@ export default class App extends Component {
 
     return (
       <div className="threshold-app">
-        <button
-          className="intro-button"
-          onClick={() => {
-            Swal.fire({
-              title: "Welcome to EasyEyes!",
-              html: `<p>
+        <div className="buttons">
+          <button
+            className="intro-button"
+            onClick={() => {
+              Swal.fire({
+                title: "Welcome to EasyEyes!",
+                html: `<p>
             All you need to run your experiment is a few accounts (<a
               href="https://pavlovia.org/"
               rel="noopener noreferrer"
@@ -208,30 +209,31 @@ export default class App extends Component {
             you'll need both Pavlovia and Prolific accounts. We plan to offer
             MTurk support as well, as an alternative to Prolific.
           </p>`,
-              confirmButtonColor: "#019267",
-              customClass: {
-                htmlContainer: "popup-text-container smaller-text",
-              },
-            });
-          }}
-        >
-          🤔&nbsp;&nbsp;How to use EasyEyes?
-        </button>
-        <button
-          className="intro-button"
-          onClick={() => {
-            Swal.fire({
-              title: "Compatibility",
-              html: renderToString(<Compatibility />),
-              confirmButtonColor: "#019267",
-              customClass: {
-                htmlContainer: "popup-text-container smaller-text",
-              },
-            });
-          }}
-        >
-          💻📱&nbsp;&nbsp;Our compatibility
-        </button>
+                confirmButtonColor: "#019267",
+                customClass: {
+                  htmlContainer: "popup-text-container smaller-text",
+                },
+              });
+            }}
+          >
+            🤔&nbsp;&nbsp;How to use EasyEyes?
+          </button>
+          <button
+            className="intro-button"
+            onClick={() => {
+              Swal.fire({
+                title: "Compatibility",
+                html: renderToString(<Compatibility />),
+                confirmButtonColor: "#019267",
+                customClass: {
+                  htmlContainer: "popup-text-container smaller-text",
+                },
+              });
+            }}
+          >
+            💻📱&nbsp;&nbsp;Our compatibility
+          </button>
+        </div>
         {steps}
       </div>
     );

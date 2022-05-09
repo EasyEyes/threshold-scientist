@@ -611,7 +611,7 @@ export const createPavloviaExperiment = async (
   const uploadedFileCount = { current: 0 };
 
   await Swal.fire({
-    title: "We are creating Pavlovia project for you ...",
+    title: "Uploading your experiment to Pavlovia ...",
     html: `<p>Uploaded <span id="uploading-count">${Math.round(
       Math.min(uploadedFileCount.current / totalFileCount, 1) * 100
     )}</span>%</p>`,

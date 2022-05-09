@@ -40,7 +40,7 @@ export default class Running extends Component {
           {status === "RUNNING" ? " And the experiment is running!" : ""}
         </p>
         <div className="link-set">
-          <div>
+          <div className="link-set-buttons">
             <button
               className={`button-small${
                 isRunning ? " button-disabled" : " button-green"
@@ -93,7 +93,12 @@ export default class Running extends Component {
           >
             <p>Use {recruitName} to recruit participants.</p>
             <div className="link-set">
-              <div>
+              <div
+                className="link-set-buttons"
+                style={{
+                  flexDirection: "row",
+                }}
+              >
                 <button
                   className="button-grey button-small"
                   onClick={async () => {

@@ -12,6 +12,7 @@
   p {
     margin: 0;
     font-size: $font-reg;
+    line-height: 150%;
   }
 
   p,
@@ -112,7 +113,7 @@
   border-radius: 999px;
   background: $green;
   padding: 0.35rem 0.7rem 0.45rem;
-  line-height: 100%;
+  line-height: 100% !important;
   font-size: $font-small !important;
   color: white;
   transform: translate(-50%, -50%);

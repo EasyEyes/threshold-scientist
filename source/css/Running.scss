@@ -4,12 +4,21 @@
   align-items: center;
   justify-content: space-between;
   margin: 0.8rem 0 0 0;
+  width: 100%;
+  max-width: 100%;
+  gap: 1rem;
+  overflow-x: scroll;
 
   &:not(:last-child) {
     margin: 0.8rem 0 !important;
   }
 
-  button:not(:last-of-type) {
-    margin-right: 0.3rem;
+  .link-set-buttons {
+    display: flex;
+    gap: 0.3rem;
+
+    button {
+      white-space: nowrap;
+    }
   }
 }
