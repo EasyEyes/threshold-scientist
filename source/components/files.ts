@@ -8,6 +8,9 @@ export const _loadFiles: string[] = [
   "README.md",
   "components/images/favicon.ico",
   "index.html",
+  "js/reading-page-flip.mp3",
+  "js/threshold.min.js",
+  "js/threshold.min.js.LICENSE.txt",
   "psychojs/LICENSE.md",
   "recruitmentServiceConfig.csv",
 ];

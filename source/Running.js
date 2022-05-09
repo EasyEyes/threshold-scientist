@@ -78,6 +78,21 @@ export default class Running extends Component {
             >
               Go to Pavlovia
             </button>
+            {isRunning && (
+              <button
+                className="button-grey button-small"
+                onClick={() => {
+                  window.open(
+                    `https://run.pavlovia.org/${
+                      user.username
+                    }/${projectName.toLocaleLowerCase()}`,
+                    "_blank"
+                  );
+                }}
+              >
+                Try the experiment
+              </button>
+            )}
           </div>
           <Question
             title={"Set status to RUNNING"}

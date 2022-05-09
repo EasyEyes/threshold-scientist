@@ -23,6 +23,7 @@ export const handleDrop = async (
         icon: "error",
         title: `${file.name} was discarded.`,
         text: `Sorry, we cannot accept files with extension '.${ext}'.`,
+        confirmButtonColor: "#019267",
       });
       continue;
     }
