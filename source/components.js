@@ -126,7 +126,7 @@ export class Compatibility extends Component {
             fontSize: "1rem",
           }}
         >
-          Please report any exception to denis.pelli@nyu.edu.
+          Please report any exception to denis.pelli AT nyu.edu.
         </p>
       </>
     );
