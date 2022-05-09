@@ -128,25 +128,27 @@ export default class Running extends Component {
           </div>
         </div>
 
-        <p
-          style={{
-            fontSize: "1rem",
-          }}
-        >
-          Your study URL:{" "}
-          <a
-            href={`https://run.pavlovia.org/${
-              user.username
-            }/${projectName.toLocaleLowerCase()}`}
-            target="_blank"
-            rel="noopenner noreferrer"
+        {isRunning && (
+          <p
             style={{
-              color: "#666",
+              fontSize: "1rem",
             }}
-          >{`https://run.pavlovia.org/${
-            user.username
-          }/${projectName.toLocaleLowerCase()}`}</a>
-        </p>
+          >
+            Your study URL:{" "}
+            <a
+              href={`https://run.pavlovia.org/${
+                user.username
+              }/${projectName.toLocaleLowerCase()}`}
+              target="_blank"
+              rel="noopenner noreferrer"
+              style={{
+                color: "#666",
+              }}
+            >{`https://run.pavlovia.org/${
+              user.username
+            }/${projectName.toLocaleLowerCase()}`}</a>
+          </p>
+        )}
 
         {hasRecruitmentService && isRunning && (
           <div
