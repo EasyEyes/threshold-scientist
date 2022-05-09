@@ -8,6 +8,7 @@ import { allSteps } from "./components/steps";
 import "./css/App.scss";
 import Swal from "sweetalert2";
 import { Compatibility } from "./components";
+import { getAllProjects } from "./components/gitlabUtils";
 
 export default class App extends Component {
   constructor(props) {
@@ -34,6 +35,7 @@ export default class App extends Component {
     this.functions = {
       handleReset: this.handleReset.bind(this),
       handleNextStep: this.handleNextStep.bind(this),
+      handleReturnToStep: this.handleReturnToStep.bind(this),
       handleLogin: this.handleLogin.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
       handleSetProjectName: this.handleSetProjectName.bind(this),
@@ -83,6 +85,31 @@ export default class App extends Component {
     this.setState({
       ...this.nextStepStatus(),
     });
+  }
+
+  async handleReturnToStep(step) {
+    if (this.state.currentStep !== step)
+      this.setState({
+        currentStep: step,
+        completedSteps: [...this.allSteps].slice(
+          0,
+          this.allSteps.indexOf(step)
+        ),
+        futureSteps: [...this.allSteps].slice(this.allSteps.indexOf(step) + 1),
+        user: {
+          ...this.state.user,
+          currentExperiment: {
+            participantRecruitmentServiceName: "",
+            participantRecruitmentServiceUrl: "",
+            participantRecruitmentServiceCode: "",
+            experimentUrl: "",
+            pavloviaOfferPilotingOptionBool: false,
+          },
+          projectList: await getAllProjects(this.state.user),
+        },
+        projectName: null,
+        newRepo: null,
+      });
   }
 
   handleLogin(user, resources) {

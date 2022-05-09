@@ -21,6 +21,7 @@ export default class Table extends Component {
     this.onDrop = this.onDrop.bind(this);
 
     this.ref = createRef();
+    this.dropZoneRef = createRef();
   }
 
   onDrop(files) {
@@ -34,7 +35,10 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
-    this.reset();
+    this.dropZoneRef.current.classList.add("drop-disabled");
+    await this.reset();
+    this.dropZoneRef.current.classList.remove("drop-disabled");
+
     this.setState({
       tableName: file.name,
     });
@@ -112,7 +116,8 @@ export default class Table extends Component {
     });
   }
 
-  reset() {
+  async reset() {
+    await this.props.functions.handleReturnToStep("table");
     this.setState({
       tableName: null,
       errors: [],
@@ -140,7 +145,10 @@ export default class Table extends Component {
         <div className="file-zone">
           <Dropzone onDrop={this.onDrop}>
             {({ getRootProps, getInputProps }) => (
-              <div {...getRootProps({ className: "dropzone" })}>
+              <div
+                {...getRootProps({ className: "dropzone" })}
+                ref={this.dropZoneRef}
+              >
                 <input {...getInputProps()} />
                 {/* <p className="dropzone-main-text emphasize"></p> */}
                 <p className="dropzone-sub-text">
@@ -155,6 +163,7 @@ export default class Table extends Component {
               </div>
             )}
           </Dropzone>
+
           <div className="resource-buttons">{resourceButtons}</div>
         </div>
         <p

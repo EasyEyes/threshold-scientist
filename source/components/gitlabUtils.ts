@@ -574,13 +574,8 @@ export const createPavloviaExperiment = async (
       title: `Failed to create block files.`,
       text: `We failed to create experiment block files from your table. Try refresh the page. If the problem persists, please contact us.`,
     });
+    return false;
   }
-
-  // let hideDialogBox = showDialogBox(
-  //   `Creating Experiment`,
-  //   `Uploading experiment files: 0%`,
-  //   false
-  // );
 
   // unique repo name check
   const isRepoValid = !isProjectNameExistInProjectList(
@@ -593,7 +588,7 @@ export const createPavloviaExperiment = async (
       title: `Duplicated project name.`,
       text: `${projectName} has existed in your Pavlovia repository list.`,
     });
-    return;
+    return false;
   }
 
   // create experiment repo
@@ -609,6 +604,8 @@ export const createPavloviaExperiment = async (
     userRepoFiles.requestedTexts.length +
     userRepoFiles.requestedFolders.length;
   const uploadedFileCount = { current: 0 };
+
+  let successful = false;
 
   await Swal.fire({
     title: "Uploading your experiment to Pavlovia ...",
@@ -669,6 +666,8 @@ export const createPavloviaExperiment = async (
             "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}";
         }
 
+        successful = true;
+
         callback(
           newRepo,
           `https://run.pavlovia.org/${
@@ -679,6 +678,8 @@ export const createPavloviaExperiment = async (
       }
     },
   });
+
+  return successful;
 };
 
 /* -------------------------------------------------------------------------- */

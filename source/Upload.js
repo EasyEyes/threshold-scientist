@@ -1,9 +1,14 @@
-import React, { Component } from "react";
+import React, { Component, createRef } from "react";
 import { createPavloviaExperiment } from "./components/gitlabUtils";
 
 import "./css/Upload.scss";
 
 export default class Upload extends Component {
+  constructor(props) {
+    super(props);
+    this.inputRef = createRef();
+  }
+
   componentDidMount() {
     this.props.scrollToCurrentStep();
   }
@@ -20,19 +25,23 @@ export default class Upload extends Component {
             onChange={(e) => {
               this.props.functions.handleSetProjectName(e.target.value);
             }}
+            ref={this.inputRef}
           ></input>
           <button
             className="button-green button-small"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.target.setAttribute("disabled", true);
-              createPavloviaExperiment(
-                this.props.user,
-                this.props.projectName,
-                this.props.functions.handleGetNewRepo
-              );
-              setTimeout(() => {
+              if (
+                await createPavloviaExperiment(
+                  this.props.user,
+                  this.props.projectName,
+                  this.props.functions.handleGetNewRepo
+                )
+              ) {
                 e.target.removeAttribute("disabled");
-              }, 1000);
+                e.target.classList.add("button-disabled");
+                this.inputRef.current.setAttribute("disabled", true);
+              }
             }}
           >
             Upload

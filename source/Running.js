@@ -66,7 +66,7 @@ export default class Running extends Component {
             >
               {isRunning ? "Mode set to RUNNING" : "Set mode to RUNNING"}
             </button>
-            <button
+            {/* <button
               className="button-grey button-small"
               onClick={() => {
                 window.open(
@@ -78,7 +78,7 @@ export default class Running extends Component {
               }}
             >
               Go to Pavlovia
-            </button>
+            </button> */}
             {isRunning && (
               <button
                 className="button-grey button-small"
@@ -95,10 +95,37 @@ export default class Running extends Component {
               </button>
             )}
           </div>
-          <Question
-            title={"Set status to RUNNING"}
-            text={`In Pavlovia, you need to set the experiment status to RUNNING before you can start the experiment.<br /><br />If your university doesn't have an unlimited Pavlovia license, then Pavlovia will charge you 20 pence per participant. Pavlovia allows you to avoid that fee during evaluation - Go to Pavlovia, hit PILOTING instead of RUNNING, and use their PILOT button, instead of clicking your study URL, to run your study. Their (reasonable) fee cannot be avoided when you run participants on Prolific. In that case use RUNNING.`}
-          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.3rem",
+            }}
+          >
+            <button
+              className="button-grey button-small"
+              onClick={() => {
+                window.open(
+                  `https://pavlovia.org/${
+                    user.username
+                  }/${projectName.toLocaleLowerCase()}`,
+                  "_blank"
+                );
+              }}
+              style={{
+                whiteSpace: "nowrap",
+                fontSize: "0.7rem",
+                padding: "0.6rem",
+                borderRadius: "0.3rem",
+              }}
+            >
+              Go to Pavlovia
+            </button>
+            <Question
+              title={"Set status to RUNNING"}
+              text={`In Pavlovia, you need to set the experiment status to RUNNING before you can start the experiment.<br /><br />If your university doesn't have an unlimited Pavlovia license, then Pavlovia will charge you 20 pence per participant. Pavlovia allows you to avoid that fee during evaluation - Go to Pavlovia, hit PILOTING instead of RUNNING, and use their PILOT button, instead of clicking your study URL, to run your study. Their (reasonable) fee cannot be avoided when you run participants on Prolific. In that case use RUNNING.`}
+            />
+          </div>
         </div>
 
         <p

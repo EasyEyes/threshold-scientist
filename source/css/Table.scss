@@ -67,6 +67,10 @@ $table-step-padding: 0.4rem;
       color: #999;
       padding: 0;
     }
+
+    &.drop-disabled {
+      cursor: wait !important;
+    }
   }
 
   .errors {
