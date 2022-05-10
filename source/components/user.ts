@@ -1,6 +1,7 @@
 import {
   createEmptyRepo,
   isProjectNameExistInProjectList,
+  pushCommits,
   User,
 } from "./gitlabUtils";
 import { resourcesRepoName } from "./constants";
@@ -26,7 +27,7 @@ export const getUserInfo = async () => {
   await user.initProjectList();
 
   // if user doesn't have a repo named EasyEyesResources, create one and add folders
-  if (!isProjectNameExistInProjectList(user.projectList, "EasyEyesResources")) {
+  if (!isProjectNameExistInProjectList(user.projectList, resourcesRepoName)) {
     console.log("Creating EasyEyesResources repository...");
     await createEmptyRepo(resourcesRepoName, user);
     await user.initProjectList();

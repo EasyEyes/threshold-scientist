@@ -215,9 +215,9 @@ export const getCommonResourcesNames = async (
         return result;
       })
       .catch((error) => {
-        console.error(error);
+        return new Array<string>();
       });
-    const typeList = JSON.parse(prevFontListResponse);
+    const typeList = JSON.parse(prevFontListResponse) || new Array<string>();
     resourcesNameByType[type] = new Array<string>();
     for (const t of typeList) resourcesNameByType[type].push(t.name);
   }
