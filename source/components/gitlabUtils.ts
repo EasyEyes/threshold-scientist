@@ -556,11 +556,7 @@ const createRequestedResourcesOnRepo = async (
 export const createPavloviaExperiment = async (
   user: User,
   projectName: string,
-  callback: (
-    newRepo: any,
-    experimentUrl: string,
-    serviceUrl: string | null
-  ) => void
+  callback: (newRepo: any, experimentUrl: string, serviceUrl: string) => void
 ) => {
   // auth check
   if (user.id === undefined) {
@@ -656,7 +652,8 @@ export const createPavloviaExperiment = async (
         const expUrl = `https://run.pavlovia.org/${
           user.username
         }/${projectName.toLocaleLowerCase()}`;
-        let serviceUrl = null;
+
+        let serviceUrl = expUrl;
 
         if (
           user.currentExperiment.participantRecruitmentServiceName == "Prolific"

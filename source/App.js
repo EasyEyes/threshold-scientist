@@ -152,7 +152,7 @@ export default class App extends Component {
         ...this.state.user,
         currentExperiment: {
           ...this.state.user.currentExperiment,
-          experimentUrl,
+          experimentUrl: serviceUrl,
           participantRecruitmentServiceUrl: serviceUrl,
         },
       },
