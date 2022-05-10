@@ -716,11 +716,11 @@ export const generateAndUploadCompletionURL = async (
   user: User,
   newRepo: any
 ) => {
-  if (user.currentExperiment.participantRecruitmentServiceCode == null) {
+  if (!user.currentExperiment.participantRecruitmentServiceCode) {
     const completionCode: string =
       "" + Math.floor(Math.random() * (999 - 100) + 100);
 
-    if (completionCode != "") {
+    if (completionCode !== "") {
       user.currentExperiment.participantRecruitmentServiceCode = completionCode;
 
       const completionURL =
