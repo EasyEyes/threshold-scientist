@@ -215,9 +215,14 @@ export const getCommonResourcesNames = async (
         return result;
       })
       .catch((error) => {
-        return new Array<string>();
+        const skipError = (err: any) => {
+          return err;
+        };
+        skipError(error);
       });
-    const typeList = JSON.parse(prevFontListResponse) || new Array<string>();
+    const typeList = !prevFontListResponse.includes(`404 Tree Not Found`)
+      ? JSON.parse(prevFontListResponse)
+      : new Array<string>();
     resourcesNameByType[type] = new Array<string>();
     for (const t of typeList) resourcesNameByType[type].push(t.name);
   }
