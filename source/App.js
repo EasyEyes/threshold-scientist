@@ -258,7 +258,7 @@ export default class App extends Component {
               });
             }}
           >
-            💻📱&nbsp;&nbsp;Our compatibility
+            💻📱&nbsp;&nbsp;Compatibility
           </button>
         </div>
         {steps}
