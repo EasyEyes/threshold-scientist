@@ -43,7 +43,7 @@ export default class Upload extends Component {
         <p className="emphasize">
           {offerPilotingOption
             ? `Name the experiment and upload to Pavlovia.`
-            : `Uploading the experiment to Pavlovia with the following name ...`}
+            : `Uploading the compiled experiment to Pavlovia with the following name ...`}
         </p>
         <div className="upload-container">
           <input

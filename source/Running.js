@@ -59,7 +59,7 @@ export default class Running extends Component {
       <>
         <p className="emphasize">
           {status === "RUNNING"
-            ? "Experiment uploaded and in RUNNING mode, ready to run."
+            ? "Experiment compiled, uploaded, and in RUNNING mode, ready to run."
             : `Upload successful!${
                 offerPilotingOption ? "" : " Setting mode to RUNNING ..."
               }`}

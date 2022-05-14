@@ -61,7 +61,7 @@ export default class Login extends Component {
       node = (
         <p>
           <span className="bold success">
-            Connected to Pavlovia. Ready to upload.
+            Connected to Pavlovia. Ready to compile your experiment.
           </span>{" "}
           <span className="emphasize">Pavlovia account</span> {user.name} (
           {user.username})
