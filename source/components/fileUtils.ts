@@ -1,4 +1,5 @@
 import { getAllUserAcceptableFileExtensions } from "./constants";
+import { Buffer } from "buffer";
 
 /**
  * returns the substring after the last 'period' character in the file name
