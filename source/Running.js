@@ -14,17 +14,36 @@ export default class Running extends Component {
     this.state = {
       status: "INACTIVE",
     };
+
+    this.setModeToRun = this.setModeToRun.bind(this);
   }
 
   componentDidMount() {
     this.props.scrollToCurrentStep();
+
+    if (!this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool) {
+      this.setModeToRun();
+    }
+  }
+
+  async setModeToRun(e = null) {
+    const { user, newRepo } = this.props;
+
+    const result = await runExperiment(
+      user,
+      newRepo,
+      user.currentExperiment.experimentUrl
+    );
+
+    if (result.newStatus === "RUNNING") {
+      if (e !== null) e.target.removeAttribute("disabled");
+      this.setState({ status: "RUNNING" });
+    }
   }
 
   render() {
     const { user, projectName, newRepo } = this.props;
     const { status } = this.state;
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const that = this;
 
     const isRunning = status === "RUNNING";
 
@@ -33,34 +52,32 @@ export default class Running extends Component {
     const recruitName =
       user.currentExperiment.participantRecruitmentServiceName;
 
+    const offerPilotingOption =
+      this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
+
     return (
       <>
         <p className="emphasize">
           {status === "RUNNING"
             ? "Experiment uploaded and in RUNNING mode, ready to run."
-            : "Upload successful!"}
+            : `Upload successful!${
+                offerPilotingOption ? "" : " Setting mode to RUNNING ..."
+              }`}
         </p>
         <div className="link-set">
           <div className="link-set-buttons">
             <button
               className={`button-small${
-                isRunning ? " button-disabled" : " button-green"
+                isRunning || !offerPilotingOption
+                  ? " button-disabled"
+                  : " button-green"
               }`}
               onClick={
                 isRunning
                   ? null
                   : async (e) => {
                       e.target.setAttribute("disabled", true);
-                      const result = await runExperiment(
-                        user,
-                        newRepo,
-                        user.currentExperiment.experimentUrl
-                      );
-
-                      if (result.newStatus === "RUNNING") {
-                        e.target.removeAttribute("disabled");
-                        that.setState({ status: "RUNNING" });
-                      }
+                      await this.setModeToRun(e);
                     }
               }
             >
