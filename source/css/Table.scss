@@ -76,6 +76,12 @@ $table-step-padding: 0.4rem;
   .errors {
     max-height: 80vh;
     overflow-y: scroll;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+      width: 0;
+    }
 
     .error-item {
       position: relative;

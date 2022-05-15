@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
-import { getCommonResourcesNames } from "./components/gitlabUtils";
 
 export default class ResourceButton extends Component {
   render() {

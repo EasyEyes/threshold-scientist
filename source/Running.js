@@ -55,6 +55,10 @@ export default class Running extends Component {
     const offerPilotingOption =
       this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
 
+    console.log("hasRecruitmentService", hasRecruitmentService);
+    console.log("isRunning", isRunning);
+    console.log(user);
+
     return (
       <>
         <p className="emphasize">
@@ -188,7 +192,7 @@ export default class Running extends Component {
                     await generateAndUploadCompletionURL(user, newRepo);
 
                     // hardcoded for Prolific
-                    let url =
+                    const url =
                       "https://app.prolific.co/studies/new?" +
                       "external_study_url=" +
                       encodeURIComponent(user.currentExperiment.experimentUrl) +
