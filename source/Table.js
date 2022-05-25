@@ -22,7 +22,28 @@ export default class Table extends Component {
 
     this.ref = createRef();
     this.dropZoneRef = createRef();
+
+    this.finalSuccessMessage =
+      "Compiled successfully. You can compile a new table anytime, by submitting it to the dropbox.";
   }
+
+  // componentDidUpdate() {
+  //   if (
+  //     this.props.isCompletedStep &&
+  //     this.state.errors.length === 1 &&
+  //     this.state.errors[0].name !== this.finalSuccessMessage
+  //   ) {
+  //     this.setState({
+  //       errors: [
+  //         {
+  //           context: "preprocessor",
+  //           kind: "correct",
+  //           name: this.finalSuccessMessage,
+  //         },
+  //       ],
+  //     });
+  //   }
+  // }
 
   onDrop(files) {
     const { user, functions } = this.props;
@@ -102,7 +123,7 @@ export default class Table extends Component {
               {
                 context: "preprocessor",
                 kind: "correct",
-                name: "The experiment has been compiled, and is ready to upload.",
+                name: this.finalSuccessMessage,
               },
             ],
           });
@@ -111,9 +132,9 @@ export default class Table extends Component {
       // this.props.functions.handleSetExperiment
     );
 
-    this.setState({
-      errors: [...errors],
-    });
+    // this.setState({
+    //   errors: [...errors],
+    // });
   }
 
   async reset() {

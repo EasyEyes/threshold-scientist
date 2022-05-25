@@ -21,27 +21,31 @@ export default class Upload extends Component {
   async upload(e = null) {
     if (e !== null) e.target.setAttribute("disabled", true);
     if (
-      (await createPavloviaExperiment(
+      await createPavloviaExperiment(
         this.props.user,
         this.props.projectName,
         this.props.functions.handleGetNewRepo
-      )) &&
-      e !== null
+      )
     ) {
-      e.target.removeAttribute("disabled");
-      e.target.classList.add("button-disabled");
-      this.inputRef.current.setAttribute("disabled", true);
+      if (e !== null) {
+        e.target.removeAttribute("disabled");
+        e.target.classList.add("button-disabled");
+        this.inputRef.current.setAttribute("disabled", true);
+      }
     }
   }
 
   render() {
+    const { isCompletedStep } = this.props;
     const offerPilotingOption =
       this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
 
     return (
       <>
         <p className="emphasize">
-          {offerPilotingOption
+          {isCompletedStep
+            ? "Your experiment has been uploaded as"
+            : offerPilotingOption
             ? `Name the experiment and upload to Pavlovia.`
             : `Uploading the compiled experiment to Pavlovia with the following name ...`}
         </p>
