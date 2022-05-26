@@ -24,7 +24,7 @@ export default class Table extends Component {
     this.dropZoneRef = createRef();
 
     this.finalSuccessMessage =
-      "Compiled successfully. Compile a new experiment anytime, by submitting it above.";
+      "Compiled successfully. Compile a new experiment, anytime, by submitting it above.";
   }
 
   // componentDidUpdate() {
