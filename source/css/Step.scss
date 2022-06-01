@@ -95,6 +95,10 @@
       pointer-events: none;
       background: #bbb;
     }
+
+    &.button-wait {
+      cursor: wait !important;
+    }
   }
 }
 

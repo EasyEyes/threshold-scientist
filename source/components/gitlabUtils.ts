@@ -33,6 +33,7 @@ export class User {
     participantRecruitmentServiceCode: "",
     experimentUrl: "",
     pavloviaOfferPilotingOptionBool: false, // ?
+    pavloviaPreferRunningModeBool: true, // ?
   };
 
   constructor(public accessToken: string) {}
@@ -710,6 +711,22 @@ export const runExperiment = async (
   );
 
   return await running.json();
+};
+
+export const getExperimentStatus = async (user: User, newRepo: Repository) => {
+  const running = await fetch(
+    "https://pavlovia.org/api/v2/experiments/" + newRepo.id,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        oauthToken: user.accessToken,
+      },
+    }
+  );
+
+  const result = await running.json();
+  return result.experiment.status2;
 };
 
 /* -------------------------------------------------------------------------- */

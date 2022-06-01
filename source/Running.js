@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { Question } from "./components";
 import {
   generateAndUploadCompletionURL,
+  getExperimentStatus,
   runExperiment,
 } from "./components/gitlabUtils";
 
@@ -21,9 +22,11 @@ export default class Running extends Component {
   componentDidMount() {
     this.props.scrollToCurrentStep();
 
-    if (!this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool) {
+    // if (!this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool) {
+    //   this.setModeToRun();
+    // }
+    if (this.props.user.currentExperiment.pavloviaPreferRunningModeBool)
       this.setModeToRun();
-    }
   }
 
   async setModeToRun(e = null) {
@@ -52,55 +55,78 @@ export default class Running extends Component {
     const recruitName =
       user.currentExperiment.participantRecruitmentServiceName;
 
+    // const offerPilotingOption =
+    //   this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
     const offerPilotingOption =
-      this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
+      !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
 
     console.log("hasRecruitmentService", hasRecruitmentService);
     console.log("isRunning", isRunning);
     console.log(user);
 
+    const smallButtonExtraStyle = {
+      whiteSpace: "nowrap",
+      fontSize: "0.7rem",
+      padding: "0.6rem",
+      borderRadius: "0.3rem",
+    };
+
+    const buttonGoToPavlovia = (
+      displayText = "Go to Pavlovia",
+      extraStyle = {}
+    ) => (
+      <button
+        className={`button-grey button-small`}
+        onClick={() => {
+          window.open(
+            `https://pavlovia.org/${
+              user.username
+            }/${projectName.toLocaleLowerCase()}`,
+            "_blank"
+          );
+        }}
+        style={extraStyle}
+      >
+        {displayText}
+      </button>
+    );
+
+    const buttonSetToRunning = (extraStyle = {}) => (
+      <button
+        // className={`button-small${
+        //   isRunning || !offerPilotingOption
+        //     ? " button-disabled"
+        //     : " button-green"
+        // }`}
+        className={`button-grey button-small`}
+        onClick={
+          isRunning
+            ? null
+            : async (e) => {
+                e.target.setAttribute("disabled", true);
+                await this.setModeToRun(e);
+              }
+        }
+        style={extraStyle}
+      >
+        Set to RUNNING mode
+      </button>
+    );
+
     return (
       <>
         <p className="emphasize">
-          {status === "RUNNING"
+          {isRunning
             ? "Experiment compiled, uploaded, and in RUNNING mode, ready to run."
-            : `Upload successful!${
-                offerPilotingOption ? "" : " Setting mode to RUNNING ..."
+            : `Upload successful! ${
+                offerPilotingOption
+                  ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
+                  : "Setting mode to RUNNING ..."
               }`}
         </p>
         <div className="link-set">
           <div className="link-set-buttons">
-            <button
-              className={`button-small${
-                isRunning || !offerPilotingOption
-                  ? " button-disabled"
-                  : " button-green"
-              }`}
-              onClick={
-                isRunning
-                  ? null
-                  : async (e) => {
-                      e.target.setAttribute("disabled", true);
-                      await this.setModeToRun(e);
-                    }
-              }
-            >
-              {isRunning ? "Mode set to RUNNING" : "Set mode to RUNNING"}
-            </button>
-            {/* <button
-              className="button-grey button-small"
-              onClick={() => {
-                window.open(
-                  `https://pavlovia.org/${
-                    user.username
-                  }/${projectName.toLocaleLowerCase()}`,
-                  "_blank"
-                );
-              }}
-            >
-              Go to Pavlovia
-            </button> */}
-            {isRunning && (
+            {isRunning ? (
               <button
                 className="button-grey button-small"
                 onClick={() => {
@@ -112,10 +138,33 @@ export default class Running extends Component {
                   );
                 }}
               >
-                Try the experiment
+                Try the experiment in RUNNING mode
               </button>
+            ) : (
+              <>
+                {buttonGoToPavlovia(
+                  "Go to Pavlovia to run in PILOTING mode",
+                  {}
+                )}
+                <button
+                  className="button-grey button-small"
+                  onClick={async (e) => {
+                    e.target.classList.add("button-disabled");
+                    e.target.classList.add("button-wait");
+                    const result = await getExperimentStatus(user, newRepo);
+                    e.target.classList.remove("button-disabled");
+                    e.target.classList.remove("button-wait");
+
+                    if (result === "RUNNING")
+                      this.setState({ status: "RUNNING" });
+                  }}
+                >
+                  Refresh experiment status
+                </button>
+              </>
             )}
           </div>
+
           <div
             style={{
               display: "flex",
@@ -123,25 +172,10 @@ export default class Running extends Component {
               gap: "0.3rem",
             }}
           >
-            <button
-              className="button-grey button-small"
-              onClick={() => {
-                window.open(
-                  `https://pavlovia.org/${
-                    user.username
-                  }/${projectName.toLocaleLowerCase()}`,
-                  "_blank"
-                );
-              }}
-              style={{
-                whiteSpace: "nowrap",
-                fontSize: "0.7rem",
-                padding: "0.6rem",
-                borderRadius: "0.3rem",
-              }}
-            >
-              Go to Pavlovia
-            </button>
+            {isRunning
+              ? buttonGoToPavlovia("Go to Pavlovia", smallButtonExtraStyle)
+              : buttonSetToRunning(smallButtonExtraStyle)}
+
             <Question
               title={"Set status to RUNNING"}
               text={`In Pavlovia, you need to set the experiment status to RUNNING before you can start the experiment.<br /><br />If your university doesn't have an unlimited Pavlovia license, then Pavlovia will charge you 20 pence per participant. Pavlovia allows you to avoid that fee during evaluation - Go to Pavlovia, hit PILOTING instead of RUNNING, and use their PILOT button, instead of clicking your study URL, to run your study. Their (reasonable) fee cannot be avoided when you run participants on Prolific. In that case use RUNNING.`}

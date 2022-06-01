@@ -13,9 +13,11 @@ export default class Upload extends Component {
   componentDidMount() {
     this.props.scrollToCurrentStep();
 
-    if (!this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool) {
+    // if (!this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool) {
+    //   this.upload();
+    // }
+    if (this.props.user.currentExperiment.pavloviaPreferRunningModeBool)
       this.upload();
-    }
   }
 
   async upload(e = null) {
@@ -37,8 +39,10 @@ export default class Upload extends Component {
 
   render() {
     const { isCompletedStep } = this.props;
+    // const offerPilotingOption =
+    //   this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
     const offerPilotingOption =
-      this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
+      !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
 
     return (
       <>

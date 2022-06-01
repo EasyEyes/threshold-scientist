@@ -103,7 +103,9 @@ export default class App extends Component {
             participantRecruitmentServiceUrl: "",
             participantRecruitmentServiceCode: "",
             experimentUrl: "",
-            pavloviaOfferPilotingOptionBool: false,
+            // by default, we streamline the uploading process
+            pavloviaOfferPilotingOptionBool: false, // deprecated
+            pavloviaPreferRunningModeBool: true,
           },
           projectList: await getAllProjects(this.state.user),
         },
