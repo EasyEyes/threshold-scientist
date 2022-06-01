@@ -431,9 +431,11 @@ const createUserUploadedFilesOnRepo = async (
   const commitActionList: ICommitAction[] = [];
 
   // add experiment file to root
-  let fileData = await getFileTextData(repoFiles.experiment!);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const fileData = await getFileTextData(repoFiles.experiment!);
   commitActionList.push({
     action: "create",
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     file_path: repoFiles.experiment!.name,
     content: fileData,
   });
@@ -443,6 +445,7 @@ const createUserUploadedFilesOnRepo = async (
   // add experiment file to conditions
   commitActionList.push({
     action: "create",
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     file_path: `conditions/${repoFiles.experiment!.name}`,
     content: fileData,
   });
@@ -773,7 +776,7 @@ export const generateAndUploadCompletionURL = async (
         .then((response) => {
           return response.json();
         })
-        .catch((error) => {
+        .catch(() => {
           alert("Error uploading completion code. Please try again.");
           location.reload();
         });
