@@ -44,7 +44,7 @@ const ignorePattern = [
   "debugExperiment.csv",
   "conditions/",
   "init",
-  "map",
+  // "map",
   "eslintrc",
   "examples",
 ];

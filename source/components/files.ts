@@ -11,6 +11,7 @@ export const _loadFiles: string[] = [
   "js/reading-page-flip.mp3",
   "js/threshold.min.js",
   "js/threshold.min.js.LICENSE.txt",
+  "js/threshold.min.js.map",
   "psychojs/LICENSE.md",
   "recruitmentServiceConfig.csv",
 ];
