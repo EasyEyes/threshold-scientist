@@ -14,6 +14,7 @@ export default class Running extends Component {
 
     this.state = {
       status: "INACTIVE",
+      pavloviaIsReady: false,
     };
 
     this.setModeToRun = this.setModeToRun.bind(this);
@@ -22,12 +23,15 @@ export default class Running extends Component {
   componentDidMount() {
     this.props.scrollToCurrentStep();
 
-    // if (!this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool) {
-    //   this.setModeToRun();
-    // }
     if (this.props.user.currentExperiment.pavloviaPreferRunningModeBool)
       this.setModeToRun();
   }
+
+  // componentDidUpdate() {
+  //   new Promise((resolve) => setTimeout(resolve, 100)).then(() => {
+  //     if (!this.state.pavloviaIsReady) this.checkPavloviaReady();
+  //   });
+  // }
 
   async setModeToRun(e = null) {
     const { user, newRepo } = this.props;
@@ -41,7 +45,47 @@ export default class Running extends Component {
     if (result.newStatus === "RUNNING") {
       if (e !== null) e.target.removeAttribute("disabled");
       this.setState({ status: "RUNNING" });
+
+      let tries = 10; // try 10 times
+      const checkPavloviaReadyInterval = setInterval(() => {
+        this.checkPavloviaReady(() => {
+          clearInterval(checkPavloviaReadyInterval);
+        });
+        tries--;
+        if (tries === 0) {
+          clearInterval(checkPavloviaReadyInterval);
+        }
+      }, 2000);
     }
+  }
+
+  _getPavloviaExperimentUrl() {
+    return `https://run.pavlovia.org/${
+      this.props.user.username
+    }/${this.props.projectName.toLocaleLowerCase()}`;
+  }
+
+  checkPavloviaReady(successfulCallback = null) {
+    fetch(this._getPavloviaExperimentUrl())
+      .then((response) => response.text())
+      .then((data) => {
+        if (data.includes("403 Forbidden")) {
+          if (this.state.pavloviaIsReady)
+            this.setState({
+              pavloviaIsReady: false,
+            });
+        } else {
+          if (successfulCallback) successfulCallback();
+          if (!this.state.pavloviaIsReady)
+            this.setState({
+              pavloviaIsReady: true,
+            });
+        }
+      })
+      .catch(() => {
+        if (this.state.pavloviaIsReady)
+          this.setState({ pavloviaIsReady: false });
+      });
   }
 
   render() {
@@ -49,6 +93,7 @@ export default class Running extends Component {
     const { status } = this.state;
 
     const isRunning = status === "RUNNING";
+    const pavloviaIsReady = this.state.pavloviaIsReady;
 
     const hasRecruitmentService =
       !!user.currentExperiment.participantRecruitmentServiceName;
@@ -60,9 +105,9 @@ export default class Running extends Component {
     const offerPilotingOption =
       !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
 
-    console.log("hasRecruitmentService", hasRecruitmentService);
-    console.log("isRunning", isRunning);
-    console.log(user);
+    // console.log("hasRecruitmentService", hasRecruitmentService);
+    // console.log("isRunning", isRunning);
+    // console.log(user);
 
     const smallButtonExtraStyle = {
       whiteSpace: "nowrap",
@@ -117,7 +162,9 @@ export default class Running extends Component {
       <>
         <p className="emphasize">
           {isRunning
-            ? "Experiment compiled, uploaded, and in RUNNING mode, ready to run."
+            ? pavloviaIsReady
+              ? "Experiment compiled, uploaded, and in RUNNING mode, ready to run."
+              : "Experiment compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new experiment, you need to assign tokens to it in Pavlovia."
             : `Upload successful! ${
                 offerPilotingOption
                   ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
@@ -126,21 +173,33 @@ export default class Running extends Component {
         </p>
         <div className="link-set">
           <div className="link-set-buttons">
-            {isRunning ? (
+            {isRunning && pavloviaIsReady && (
               <button
                 className="button-grey button-small"
                 onClick={() => {
-                  window.open(
-                    `https://run.pavlovia.org/${
-                      user.username
-                    }/${projectName.toLocaleLowerCase()}`,
-                    "_blank"
-                  );
+                  window.open(this._getPavloviaExperimentUrl(), "_blank");
                 }}
               >
                 Try the experiment in RUNNING mode
               </button>
-            ) : (
+            )}
+
+            {isRunning && !pavloviaIsReady && (
+              <button
+                className="button-grey button-small"
+                onClick={async (e) => {
+                  e.target.classList.add("button-disabled");
+                  e.target.classList.add("button-wait");
+                  this.checkPavloviaReady();
+                  e.target.classList.remove("button-disabled");
+                  e.target.classList.remove("button-wait");
+                }}
+              >
+                Refresh experiment status
+              </button>
+            )}
+
+            {!isRunning && (
               <>
                 {buttonGoToPavlovia(
                   "Go to Pavlovia to run in PILOTING mode",
@@ -191,9 +250,7 @@ export default class Running extends Component {
           >
             Your study URL:{" "}
             <a
-              href={`https://run.pavlovia.org/${
-                user.username
-              }/${projectName.toLocaleLowerCase()}`}
+              href={this._getPavloviaExperimentUrl()}
               target="_blank"
               rel="noopenner noreferrer"
               style={{
