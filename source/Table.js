@@ -245,7 +245,14 @@ export default class Table extends Component {
                     }}
                   ></p>
                 )}
-                {error.hint ? <p className="error-hint">{error.hint}</p> : null}
+                {error.hint && (
+                  <p
+                    className="error-hint"
+                    dangerouslySetInnerHTML={{
+                      __html: error.hint,
+                    }}
+                  ></p>
+                )}
               </div>
             ))}
           </div>
