@@ -44,7 +44,10 @@ export default class Login extends Component {
             <p className="emphasize">
               Connect your Pavlovia account to upload files.
             </p>
-            <button className="button-green" onClick={this.login}>
+            <button
+              className="button-green connect-to-pav"
+              onClick={this.login}
+            >
               Connect
             </button>
           </>
@@ -58,14 +61,61 @@ export default class Login extends Component {
     }
 
     if (isCompletedStep) {
+      let mostRecentProject = null;
+      if (user.projectList.length) mostRecentProject = user.projectList[0];
+
       node = (
-        <p>
-          <span className="bold success">
-            Connected to Pavlovia. Ready to compile your experiment.
-          </span>{" "}
-          <span className="emphasize">Pavlovia account</span> {user.name} (
-          {user.username})
-        </p>
+        <>
+          <div className="success-message">
+            <p className="bold success">
+              Connected to Pavlovia. Ready to compile your experiment.
+            </p>{" "}
+            <p className="account-info">
+              <span className="pavlovia-account-name">
+                {user.name} ({user.username})
+              </span>
+              <span className="pavlovia-account">Pavlovia account</span>{" "}
+            </p>
+          </div>
+          <div className="link-set">
+            <div className="link-set-buttons">
+              {mostRecentProject !== null && (
+                <button
+                  className="button-small button-black"
+                  onClick={() => {
+                    window.open(
+                      `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
+                      "_blank"
+                    );
+                  }}
+                >
+                  View last project ({mostRecentProject.name})
+                </button>
+              )}
+
+              <button
+                className="button-grey button-small"
+                onClick={() => {
+                  window.open(`https://pavlovia.org/dashboard?tab=1`, "_blank");
+                }}
+              >
+                Pavlovia dashboard
+              </button>
+
+              <button
+                className="button-grey button-small"
+                onClick={() => {
+                  window.open(
+                    `https://gitlab.pavlovia.org/dashboard/projects`,
+                    "_blank"
+                  );
+                }}
+              >
+                GitLab projects
+              </button>
+            </div>
+          </div>
+        </>
       );
     }
 
