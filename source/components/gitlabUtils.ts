@@ -168,10 +168,16 @@ export const createEmptyRepo = async (
 
 export const setRepoName = (user: User, name: string): string => {
   // if (!isProjectNameExistInProjectList(user.projectList, name)) return name;
+  name = complianceProjectName(name);
+
   for (let i = 1; i < 9999999; i++)
     if (!isProjectNameExistInProjectList(user.projectList, `${name}${i}`))
       return `${name}${i}`;
   return `${name}${Date.now()}`;
+};
+
+const complianceProjectName = (name: string): string => {
+  return name.replace(/[^\w\s']|_/g, "").replace(/ /g, "-");
 };
 
 /* -------------------------------------------------------------------------- */
