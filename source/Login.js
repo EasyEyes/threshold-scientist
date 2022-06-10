@@ -42,14 +42,15 @@ export default class Login extends Component {
         node = (
           <>
             <p className="emphasize">
-              Connect your Pavlovia account to upload files.
+              Connect your Pavlovia account to compile experiments.
+              <br />
+              <button
+                className="button-green connect-to-pav"
+                onClick={this.login}
+              >
+                Connect
+              </button>
             </p>
-            <button
-              className="button-green connect-to-pav"
-              onClick={this.login}
-            >
-              Connect
-            </button>
           </>
         );
         break;
