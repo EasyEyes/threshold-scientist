@@ -64,6 +64,13 @@ export default class Login extends Component {
       let mostRecentProject = null;
       if (user.projectList.length) mostRecentProject = user.projectList[0];
 
+      const smallButtonExtraStyle = {
+        whiteSpace: "nowrap",
+        fontSize: "0.7rem",
+        padding: "0.6rem",
+        borderRadius: "0.3rem",
+      };
+
       node = (
         <>
           <div className="success-message">
@@ -82,6 +89,7 @@ export default class Login extends Component {
               {mostRecentProject !== null && (
                 <button
                   className="button-small button-black"
+                  style={smallButtonExtraStyle}
                   onClick={() => {
                     window.open(
                       `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
@@ -89,12 +97,13 @@ export default class Login extends Component {
                     );
                   }}
                 >
-                  View last project ({mostRecentProject.name})
+                  View last experiment ({mostRecentProject.name})
                 </button>
               )}
 
               <button
                 className="button-grey button-small"
+                style={smallButtonExtraStyle}
                 onClick={() => {
                   window.open(`https://pavlovia.org/dashboard?tab=1`, "_blank");
                 }}
@@ -102,7 +111,7 @@ export default class Login extends Component {
                 Pavlovia dashboard
               </button>
 
-              <button
+              {/* <button
                 className="button-grey button-small"
                 onClick={() => {
                   window.open(
@@ -112,7 +121,7 @@ export default class Login extends Component {
                 }}
               >
                 GitLab projects
-              </button>
+              </button> */}
             </div>
           </div>
         </>
