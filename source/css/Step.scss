@@ -80,13 +80,13 @@
     &.button-green {
       background: $green;
       &:hover {
-        background: $light-green;
+        background: $dark-green;
       }
       &:active {
         background: $green;
       }
       &:disabled {
-        background: $green;
+        background: $light-green;
         cursor: wait;
       }
     }
