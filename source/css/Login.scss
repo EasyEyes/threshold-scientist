@@ -1,5 +1,6 @@
 .login {
-  // display: inline-flex;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   overflow: hidden;
 
@@ -7,32 +8,42 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    flex-direction: row;
-  }
-
-  .account-info {
-    display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    // justify-content: flex-end;
+    gap: 1rem;
 
-    .pavlovia-account {
-      font-size: smaller !important;
-      font-weight: 700;
-      color: #999;
-      white-space: nowrap;
-    }
+    .account-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      // justify-content: flex-end;
 
-    .pavlovia-account-name {
-      white-space: nowrap;
+      .pavlovia-account {
+        font-size: smaller !important;
+        font-weight: 700;
+        color: #999;
+        white-space: nowrap;
+        line-height: 120%;
+      }
+
+      .pavlovia-account-name {
+        word-break: break-all;
+        // white-space: nowrap;
+      }
     }
   }
 
-  .connect-to-pav {
-    margin: 1rem 0 0 0;
-  }
+  // .connect-to-pav {
+  //   margin: 1rem 0 0 0;
+  // }
 
-  .link-set {
-    justify-content: flex-end;
+  .link-set-buttons-login {
+    display: flex;
+    flex-direction: column !important;
+    // align-items: center;
+    gap: 0.3rem;
+
+    button {
+      white-space: nowrap;
+    }
   }
 }

@@ -78,40 +78,42 @@ export default class Login extends Component {
               Connected to Pavlovia. Ready to compile your experiment.
             </p>{" "}
             <p className="account-info">
+              <span className="pavlovia-account">Account</span>{" "}
               <span className="pavlovia-account-name">
                 {user.name} ({user.username})
               </span>
-              <span className="pavlovia-account">Pavlovia account</span>{" "}
             </p>
           </div>
-          <div className="link-set">
-            <div className="link-set-buttons">
-              {mostRecentProject !== null && (
-                <button
-                  className="button-small button-black"
-                  style={smallButtonExtraStyle}
-                  onClick={() => {
-                    window.open(
-                      `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
-                      "_blank"
-                    );
-                  }}
-                >
-                  View last experiment ({mostRecentProject.name})
-                </button>
-              )}
 
+          <div className="link-set-buttons-login">
+            {mostRecentProject !== null && (
               <button
-                className="button-grey button-small"
-                style={smallButtonExtraStyle}
+                className="button-small button-grey"
+                style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
                 onClick={() => {
-                  window.open(`https://pavlovia.org/dashboard?tab=1`, "_blank");
+                  window.open(
+                    `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
+                    "_blank"
+                  );
                 }}
               >
-                Pavlovia dashboard
+                View last experiment
+                <br />
+                {mostRecentProject.name}
               </button>
+            )}
 
-              {/* <button
+            <button
+              className="button-grey button-small"
+              style={smallButtonExtraStyle}
+              onClick={() => {
+                window.open(`https://pavlovia.org/dashboard?tab=1`, "_blank");
+              }}
+            >
+              Pavlovia dashboard
+            </button>
+
+            {/* <button
                 className="button-grey button-small"
                 onClick={() => {
                   window.open(
@@ -122,7 +124,6 @@ export default class Login extends Component {
               >
                 GitLab projects
               </button> */}
-            </div>
           </div>
         </>
       );
