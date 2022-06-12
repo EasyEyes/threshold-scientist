@@ -35,6 +35,9 @@ export class User {
     experimentUrl: "",
     pavloviaOfferPilotingOptionBool: false, // ?
     pavloviaPreferRunningModeBool: true, // ?
+    /* -------------------------------------------------------------------------- */
+    prolificWorkspaceModeBool: false,
+    prolificWorkspaceProjectId: "",
   };
 
   constructor(public accessToken: string) {}

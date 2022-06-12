@@ -285,7 +285,12 @@ export default class Running extends Component {
               marginTop: "1.6rem",
             }}
           >
-            <p>Use {recruitName} to recruit participants.</p>
+            <p>
+              Use {recruitName} to recruit participants.
+              {user.currentExperiment.prolificWorkspaceModeBool
+                ? " (Using workspace.)"
+                : ""}
+            </p>
             <div className="link-set">
               <div
                 className="link-set-buttons"
@@ -298,10 +303,8 @@ export default class Running extends Component {
                   onClick={async () => {
                     await generateAndUploadCompletionURL(user, newRepo);
 
-                    // hardcoded for Prolific
-                    const url =
-                      "https://app.prolific.co/studies/new?" +
-                      "external_study_url=" +
+                    const studyParams =
+                      "?external_study_url=" +
                       encodeURIComponent(user.currentExperiment.experimentUrl) +
                       "&completion_code=" +
                       encodeURIComponent(
@@ -309,6 +312,11 @@ export default class Running extends Component {
                       ) +
                       "&completion_option=url" +
                       "&prolific_id_option=url_parameters";
+
+                    // hardcoded for Prolific
+                    const url = user.currentExperiment.prolificWorkspaceModeBool
+                      ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/new-study${studyParams}`
+                      : `https://app.prolific.co/studies/new${studyParams}`;
 
                     window.open(url, "_blank");
                   }}

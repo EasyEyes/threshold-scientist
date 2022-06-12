@@ -1,7 +1,6 @@
 import {
   createEmptyRepo,
   isProjectNameExistInProjectList,
-  pushCommits,
   User,
 } from "./gitlabUtils";
 import { resourcesRepoName } from "./constants";
