@@ -92,7 +92,11 @@ export default class Login extends Component {
             <p className="account-info">
               <span className="pavlovia-account">Account</span>{" "}
               <span className="pavlovia-account-name">
-                <img className="pavlovia-avatar" src={user.avatar_url}></img>
+                <img
+                  className="pavlovia-avatar"
+                  src={user.avatar_url}
+                  alt="Pavlovia Avatar"
+                ></img>
                 {user.name} ({user.username})
               </span>
             </p>
