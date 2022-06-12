@@ -21,11 +21,22 @@ export default class Login extends Component {
       window.location.hash.length &&
       window.location.hash.includes("#access_token")
     ) {
+      const accessToken = window.location.hash
+        .split("&")[0]
+        .split("#access_token=")[1];
+
+      // clear address bar parameters
+      // eslint-disable-next-line no-undef
+      if (!process.env.debug)
+        window.history.replaceState(null, null, window.location.pathname);
+
       this.setState({
         login: "loading",
       });
-      const [user, resources] = await getUserInfo();
-      this.props.functions.handleLogin(user, resources);
+
+      const [user, resources] = await getUserInfo(accessToken);
+
+      this.props.functions.handleLogin(user, resources, accessToken);
     }
   }
 
@@ -81,6 +92,7 @@ export default class Login extends Component {
             <p className="account-info">
               <span className="pavlovia-account">Account</span>{" "}
               <span className="pavlovia-account-name">
+                <img className="pavlovia-avatar" src={user.avatar_url}></img>
                 {user.name} ({user.username})
               </span>
             </p>

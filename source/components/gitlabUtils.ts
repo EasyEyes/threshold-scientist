@@ -24,6 +24,7 @@ export class User {
   public username = "";
   public name = "";
   public id = "";
+  public avatar_url = "";
 
   public projectList: any[] = [];
 
@@ -43,9 +44,11 @@ export class User {
       `https://gitlab.pavlovia.org/api/v4/user?access_token=${this.accessToken}`
     );
     const responseBody = await response.json();
-    this.id = responseBody.id;
+
     this.username = responseBody.username;
     this.name = responseBody.name;
+    this.id = responseBody.id;
+    this.avatar_url = responseBody.avatar_url;
   }
 
   async initProjectList(): Promise<void> {
@@ -320,8 +323,9 @@ export const pushCommits = async (
     if (!response.ok) {
       Swal.fire({
         icon: "error",
-        title: `Uploading Failed.`,
+        title: `Uploading failed.`,
         text: `Please try again. We are working on providing more detailed error messages.`,
+        confirmButtonColor: "#666",
       });
       // location.reload();
       return null;
@@ -584,6 +588,7 @@ export const createPavloviaExperiment = async (
       icon: "error",
       title: `Failed to create block files.`,
       text: `We failed to create experiment block files from your table. Try refresh the page. If the problem persists, please contact us.`,
+      confirmButtonColor: "#666",
     });
     return false;
   }
@@ -598,6 +603,7 @@ export const createPavloviaExperiment = async (
       icon: "error",
       title: `Duplicated project name.`,
       text: `${projectName} has existed in your Pavlovia repository list.`,
+      confirmButtonColor: "#666",
     });
     return false;
   }
@@ -701,25 +707,36 @@ export const runExperiment = async (
   newRepo: Repository,
   experimentUrl: string
 ) => {
-  const running = await fetch(
-    "https://pavlovia.org/api/v2/experiments/" + newRepo.id + "/status",
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        oauthToken: user.accessToken,
-      },
-
-      body: JSON.stringify({
-        newStatus: "RUNNING",
-        recruitment: {
-          policy: { type: "URL", url: experimentUrl },
+  try {
+    const running = await fetch(
+      "https://pavlovia.org/api/v2/experiments/" + newRepo.id + "/status",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          oauthToken: user.accessToken,
         },
-      }),
-    }
-  );
 
-  return await running.json();
+        body: JSON.stringify({
+          newStatus: "RUNNING",
+          recruitment: {
+            policy: { type: "URL", url: experimentUrl },
+          },
+        }),
+      }
+    );
+
+    return await running.json();
+  } catch (error) {
+    await Swal.fire({
+      icon: "error",
+      title: `Failed to change mode.`,
+      text: `We failed to change your experiment mode to RUNNING. There might be a problem when uploading it, or the Pavlovia server is down. Please try to refresh the status in a while, or refresh the page to start again.`,
+      confirmButtonColor: "#666",
+    });
+
+    return null;
+  }
 };
 
 export const getExperimentStatus = async (user: User, newRepo: Repository) => {

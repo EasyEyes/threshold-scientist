@@ -67,4 +67,19 @@ table {
 
 .swal2-popup {
   padding-bottom: 2.25rem !important;
+  border-radius: $step-radius;
+
+  .swal2-html-container {
+    line-height: 150%;
+  }
+
+  .swal2-loader {
+    border-color: $green transparent $green transparent !important;
+  }
+
+  .swal2-confirm {
+    background: #666;
+    padding: 0.875rem 2rem !important;
+    border-radius: $icon-radius;
+  }
 }

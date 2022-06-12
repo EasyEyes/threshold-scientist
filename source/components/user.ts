@@ -13,11 +13,7 @@ export const redirectToOauth2 = () => {
     process.env.REDIRECT_URL! + `&state=${encodeURI(window.location.href)}`;
 };
 
-export const getUserInfo = async () => {
-  const accessToken = window.location.hash
-    .split("&")[0]
-    .split("#access_token=")[1];
-
+export const getUserInfo = async (accessToken: string) => {
   const user = new User(accessToken);
 
   // initialize account details

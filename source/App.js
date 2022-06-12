@@ -22,6 +22,7 @@ export default class App extends Component {
       futureSteps: [...this.allSteps].slice(1),
       // USER
       user: null,
+      accessToken: null,
       resources: {
         fonts: [],
         forms: [],
@@ -70,6 +71,7 @@ export default class App extends Component {
       completedSteps: [],
       futureSteps: [...this.allSteps].slice(1),
       user: null,
+      accessToken: null,
       resources: {
         fonts: [],
         forms: [],
@@ -114,9 +116,10 @@ export default class App extends Component {
       });
   }
 
-  handleLogin(user, resources) {
+  handleLogin(user, resources, accessToken) {
     this.setState({
       user: user,
+      accessToken: accessToken,
       resources: resources,
       ...this.nextStepStatus(),
     });

@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import Swal from "sweetalert2";
 import { Question } from "./components";
 import {
   generateAndUploadCompletionURL,
@@ -42,7 +43,7 @@ export default class Running extends Component {
       user.currentExperiment.experimentUrl
     );
 
-    if (result.newStatus === "RUNNING") {
+    if (result && result.newStatus === "RUNNING") {
       if (e !== null) e.target.removeAttribute("disabled");
       this.setState({ status: "RUNNING" });
 
@@ -74,6 +75,17 @@ export default class Running extends Component {
             this.setState({
               pavloviaIsReady: false,
             });
+        } else if (data.includes("404 Not Found")) {
+          if (this.state.pavloviaIsReady)
+            this.setState({
+              pavloviaIsReady: false,
+            });
+          Swal.fire({
+            icon: "error",
+            title: `Failed to check availability.`,
+            text: `We can't find the experiment on Pavlovia server. There might be a problem when uploading it, or the Pavlovia server is down. Please try to refresh the status in a while, or refresh the page to start again.`,
+            confirmButtonColor: "#666",
+          });
         } else {
           if (successfulCallback) successfulCallback();
           if (!this.state.pavloviaIsReady)
@@ -211,11 +223,15 @@ export default class Running extends Component {
                     e.target.classList.add("button-disabled");
                     e.target.classList.add("button-wait");
                     const result = await getExperimentStatus(user, newRepo);
-                    e.target.classList.remove("button-disabled");
-                    e.target.classList.remove("button-wait");
 
                     if (result === "RUNNING")
                       this.setState({ status: "RUNNING" });
+                    else {
+                      await this.setModeToRun();
+                    }
+
+                    e.target.classList.remove("button-disabled");
+                    e.target.classList.remove("button-wait");
                   }}
                 >
                   Refresh experiment status
