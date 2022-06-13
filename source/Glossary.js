@@ -38,7 +38,7 @@ export default function Glossary({ closeGlossary }) {
     <div className="glossary cover-fadeInUp">
       <div id="header">
         <div id="header-title">
-          <h1>Threshold Input Glossary</h1>
+          <h1>EasyEyes Input Glossary</h1>
         </div>
         {/* <p className="description">
           Welcome to EasyEyes, a PsychoJS-based experiment compiler designed
