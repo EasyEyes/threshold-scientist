@@ -1,4 +1,4 @@
-import React, { Component, Suspense } from "react";
+import React, { Suspense } from "react";
 import { useTable, useFlexLayout } from "react-table";
 
 import { GLOSSARY } from "../threshold/parameters/glossary-full.ts";
