@@ -35,7 +35,7 @@ export default function Glossary({ closeGlossary }) {
     );
 
   return (
-    <div className="glossary">
+    <div className="glossary cover-fadeInUp">
       <div id="header">
         <div id="header-title">
           <h1>Threshold Input Glossary</h1>

@@ -1,5 +1,23 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;500&display=swap");
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.cover-fadeInUp {
+  animation-timing-function: ease;
+  animation-name: fadeInUp;
+  animation-duration: 300ms;
+}
+
 .glossary {
   position: fixed;
   top: 0;
@@ -96,8 +114,7 @@
         font-weight: 500;
         font-size: 0.9rem;
 
-        // overflow-wrap: break-word;
-
+        overflow-y: hidden;
         text-align: left;
       }
 
