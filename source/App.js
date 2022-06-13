@@ -1,7 +1,8 @@
-import React, { Component } from "react";
+import React, { Component, Suspense } from "react";
 import { renderToString } from "react-dom/server";
 
 import Step from "./Step";
+const Glossary = React.lazy(() => import("./Glossary"));
 
 import { allSteps } from "./components/steps";
 
@@ -17,6 +18,8 @@ export default class App extends Component {
     this.allSteps = allSteps();
 
     this.state = {
+      readingGlossary: false,
+      /* -------------------------------------------------------------------------- */
       currentStep: "login", // 'login', 'table', 'upload', 'running', 'deploy', ('download')
       completedSteps: [],
       futureSteps: [...this.allSteps].slice(1),
@@ -43,11 +46,13 @@ export default class App extends Component {
       handleSetExperiment: this.handleSetExperiment.bind(this),
       handleGetNewRepo: this.handleGetNewRepo.bind(this),
     };
+
+    this.closeGlossary = this.closeGlossary.bind(this);
   }
 
   /* -------------------------------------------------------------------------- */
 
-  nextStepStatus() {
+  nextStepStatus(targetNextStep = null) {
     if (this.state.futureSteps.length === 0)
       return {
         currentStep: "",
@@ -56,6 +61,14 @@ export default class App extends Component {
       };
 
     const nextStep = this.state.futureSteps[0];
+    if (targetNextStep && targetNextStep !== nextStep) {
+      return {
+        currentStep: this.state.currentStep,
+        completedSteps: [...this.state.completedSteps],
+        futureSteps: [...this.state.futureSteps],
+      };
+    }
+
     return {
       currentStep: nextStep,
       completedSteps: [...this.state.completedSteps, this.state.currentStep],
@@ -83,9 +96,9 @@ export default class App extends Component {
     });
   }
 
-  handleNextStep() {
+  handleNextStep(targetNextStep = null) {
     this.setState({
-      ...this.nextStepStatus(),
+      ...this.nextStepStatus(targetNextStep),
     });
   }
 
@@ -121,7 +134,7 @@ export default class App extends Component {
       user: user,
       accessToken: accessToken,
       resources: resources,
-      ...this.nextStepStatus(),
+      ...this.nextStepStatus("table"),
     });
   }
 
@@ -151,6 +164,7 @@ export default class App extends Component {
   }
 
   handleGetNewRepo(newRepo, experimentUrl, serviceUrl) {
+    // end of 'upload'
     this.setState({
       newRepo: newRepo,
       user: {
@@ -161,12 +175,19 @@ export default class App extends Component {
           participantRecruitmentServiceUrl: serviceUrl,
         },
       },
-      ...this.nextStepStatus(),
+      ...this.nextStepStatus("running"),
+    });
+  }
+
+  closeGlossary() {
+    this.setState({
+      readingGlossary: false,
     });
   }
 
   render() {
     const {
+      readingGlossary,
       currentStep,
       completedSteps,
       futureSteps,
@@ -194,14 +215,32 @@ export default class App extends Component {
       );
 
     return (
-      <div className="threshold-app">
-        <div className="buttons">
-          <button
-            className="intro-button"
-            onClick={() => {
-              Swal.fire({
-                title: "Welcome to EasyEyes!",
-                html: `<p>
+      <>
+        {readingGlossary && (
+          <Suspense fallback={<></>}>
+            <Glossary closeGlossary={this.closeGlossary} />
+          </Suspense>
+        )}
+
+        <div id="header">
+          <div id="header-title">
+            <h1>EasyEyes Threshold</h1>
+          </div>
+          <p className="description">
+            Welcome to EasyEyes, a PsychoJS-based experiment compiler designed
+            to help you measure perceptual thresholds online.
+          </p>
+        </div>
+
+        <Suspense>
+          <div className="threshold-app">
+            <div className="buttons">
+              <button
+                className="intro-button"
+                onClick={() => {
+                  Swal.fire({
+                    title: "Welcome to EasyEyes!",
+                    html: `<p>
             All you need to run your experiment is a few accounts (<a
               href="https://pavlovia.org/"
               rel="noopener noreferrer"
@@ -241,33 +280,47 @@ export default class App extends Component {
             you'll need both Pavlovia and Prolific accounts. We hope to offer
             MTurk support as well, as an alternative to Prolific.
           </p>`,
-                confirmButtonColor: "#019267",
-                customClass: {
-                  htmlContainer: "popup-text-container smaller-text",
-                },
-              });
-            }}
-          >
-            🤔&nbsp;&nbsp;How to use EasyEyes?
-          </button>
-          <button
-            className="intro-button"
-            onClick={() => {
-              Swal.fire({
-                title: "Compatibility",
-                html: renderToString(<Compatibility />),
-                confirmButtonColor: "#019267",
-                customClass: {
-                  htmlContainer: "popup-text-container smaller-text",
-                },
-              });
-            }}
-          >
-            💻📱&nbsp;&nbsp;Compatibility
-          </button>
-        </div>
-        {steps}
-      </div>
+                    confirmButtonColor: "#019267",
+                    customClass: {
+                      htmlContainer: "popup-text-container smaller-text",
+                    },
+                  });
+                }}
+              >
+                🤔&nbsp;&nbsp;How to use EasyEyes?
+              </button>
+
+              <button
+                className="intro-button"
+                onClick={() => {
+                  this.setState({
+                    readingGlossary: true,
+                  });
+                }}
+              >
+                📘&nbsp;&nbsp;Parameter Glossary
+              </button>
+
+              <button
+                className="intro-button"
+                onClick={() => {
+                  Swal.fire({
+                    title: "Compatibility",
+                    html: renderToString(<Compatibility />),
+                    confirmButtonColor: "#019267",
+                    customClass: {
+                      htmlContainer: "popup-text-container smaller-text",
+                    },
+                  });
+                }}
+              >
+                💻📱&nbsp;&nbsp;Compatibility
+              </button>
+            </div>
+            {steps}
+          </div>
+        </Suspense>
+      </>
     );
   }
 }

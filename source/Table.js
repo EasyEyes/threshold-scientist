@@ -114,7 +114,7 @@ export default class Table extends Component {
             this.props.functions.handleSetProjectName(
               setRepoName(this.props.user, file.name.split(".")[0])
             );
-            this.props.functions.handleNextStep();
+            this.props.functions.handleNextStep("upload");
           }
 
           // show success log

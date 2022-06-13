@@ -5,7 +5,7 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const path = require("path");
 
 const config = {
-  entry: "./source/index.js",
+  entry: path.resolve(__dirname, "source/index.js"),
   module: {
     rules: [
       {
@@ -46,11 +46,13 @@ const config = {
   },
   output: {
     filename: "main.js",
-    path: path.resolve(__dirname, "dist"),
+    path: path.resolve(__dirname, "dist/"),
+    publicPath: "/",
   },
 };
 
-const plugins = [new CleanWebpackPlugin()];
+// const plugins = [new CleanWebpackPlugin()];
+const plugins = [];
 
 const redirect_uri = (uri) =>
   `https://gitlab.pavlovia.org//oauth/authorize`.concat(
@@ -84,12 +86,28 @@ module.exports = (env) => {
         static: {
           directory: path.join(__dirname, "../"),
           publicPath: "/",
+          watch: false,
         },
         open: true,
         hot: true,
-        devMiddleware: {
-          writeToDisk: true,
+        liveReload: true,
+        // devMiddleware: {
+        //   writeToDisk: true,
+        // },
+        watchFiles: {
+          paths: [
+            path.join(__dirname, "source/**/*"),
+            path.join(__dirname, "threshold/**/*"),
+          ],
+          options: {
+            ignored: /dist/,
+          },
         },
+      },
+      output: {
+        filename: "main.js",
+        path: path.resolve(__dirname, "dist/"),
+        publicPath: "/threshold/dist/",
       },
     });
   } else if (env.production) {

@@ -1,0 +1,150 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;500&display=swap");
+
+.glossary {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999999999;
+  background-color: #fff;
+  margin: 0;
+  padding: 0;
+  overflow: scroll;
+
+  #header {
+    margin: 2rem;
+    text-align: center;
+  }
+
+  .tableWrap {
+    display: block;
+    width: 95%;
+    min-width: 640px;
+    max-width: 1440px;
+    margin: 0 auto;
+    overflow: scroll;
+  }
+
+  table {
+    width: 100%;
+    min-width: 1080px !important;
+    max-width: 1440px !important;
+    border: none;
+
+    * {
+      font-size: 0.75rem;
+      border: none;
+    }
+
+    .table-header {
+      th {
+        padding: 1rem;
+      }
+    }
+
+    .table-header {
+      border-bottom: 1px solid #999;
+    }
+
+    tr:not(.table-header) {
+      border-bottom: 1px solid #efefef;
+    }
+
+    .name {
+      flex: 250 !important;
+    }
+
+    .default {
+      flex: 100 !important;
+    }
+
+    .type {
+      flex: 100 !important;
+    }
+
+    .explanation {
+      flex: 500 !important;
+    }
+
+    .categories {
+      flex: 150 !important;
+    }
+
+    .cell {
+      margin: 0.675rem 0 !important;
+      padding: 0 0.675rem;
+      text-align: center;
+      align-items: center;
+
+      max-height: 6.5rem;
+      overflow: scroll;
+
+      p {
+        margin: 0;
+      }
+
+      &:not(:last-child) {
+        border-right: 1px solid #efefef;
+      }
+
+      &.name {
+        justify-content: flex-start !important;
+
+        font-family: Roboto Mono, monospace;
+        font-weight: 500;
+        font-size: 0.875rem;
+
+        // overflow-wrap: break-word;
+
+        text-align: left;
+      }
+
+      &.name,
+      &.default,
+      &.type {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      &.example,
+      &.default,
+      &.categories {
+        font-family: Roboto Mono, monospace;
+        font-weight: 300;
+      }
+
+      &.explanation p,
+      &.categories p {
+        text-align: left;
+        line-height: 130% !important;
+      }
+
+      // &:not(.name) {
+      //   font-size: 0.75rem;
+      // }
+
+      .available {
+        color: #fff;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.5rem;
+      }
+
+      .available-soon {
+        background: #ffc54d;
+      }
+
+      .available-later {
+        background: #f94c66;
+      }
+
+      .default-value {
+        color: #666;
+        font-family: Roboto Mono, monospace;
+        font-weight: 300;
+      }
+    }
+  }
+}
