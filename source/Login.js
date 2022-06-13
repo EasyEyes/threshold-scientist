@@ -127,7 +127,7 @@ export default class Login extends Component {
                 window.open(`https://pavlovia.org/dashboard?tab=1`, "_blank");
               }}
             >
-              Pavlovia dashboard
+              View all experiments in Pavlovia
             </button>
 
             {/* <button
