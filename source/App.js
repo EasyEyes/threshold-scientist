@@ -304,6 +304,18 @@ export default class App extends Component {
               <button
                 className="intro-button"
                 onClick={() => {
+                  window.open(
+                    `https://docs.google.com/document/d/12zZOEN7se437ueBZuGhyBC7HGhwgZe2OROatEyaRvoM/edit`,
+                    "_blank"
+                  );
+                }}
+              >
+                📚&nbsp;&nbsp;Manual
+              </button>
+
+              <button
+                className="intro-button"
+                onClick={() => {
                   Swal.fire({
                     title: "Compatibility",
                     html: renderToString(<Compatibility />),
