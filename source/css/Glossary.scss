@@ -7,7 +7,8 @@
   width: 100%;
   height: 100%;
   z-index: 999999999;
-  background-color: #fff;
+  background-color: #ffffffee;
+  backdrop-filter: blur(7px);
   margin: 0;
   padding: 0;
   overflow: scroll;
@@ -93,7 +94,7 @@
 
         font-family: Roboto Mono, monospace;
         font-weight: 500;
-        font-size: 0.875rem;
+        font-size: 0.9rem;
 
         // overflow-wrap: break-word;
 
@@ -138,6 +139,10 @@
 
       .available-later {
         background: #f94c66;
+      }
+
+      .available-deprecated {
+        background: #bd4291;
       }
 
       .default-value {

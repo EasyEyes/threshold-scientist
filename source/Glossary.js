@@ -90,28 +90,20 @@ export default function Glossary({ closeGlossary }) {
                       const availability = cell.row.original.availability;
                       let availabilityElement = null;
                       switch (availability) {
-                        case "soon":
-                          availabilityElement = (
-                            <>
-                              <br />
-                              <span className="available available-soon">
-                                soon
-                              </span>
-                            </>
-                          );
-                          break;
-                        case "later":
-                          availabilityElement = (
-                            <>
-                              <br />
-                              <span className="available available-later">
-                                later
-                              </span>
-                            </>
-                          );
+                        case "now":
+                          availabilityElement = <></>;
                           break;
                         default:
-                          availabilityElement = <></>;
+                          availabilityElement = (
+                            <>
+                              <br />
+                              <span
+                                className={`available available-${availability}`}
+                              >
+                                {availability}
+                              </span>
+                            </>
+                          );
                       }
 
                       return (
