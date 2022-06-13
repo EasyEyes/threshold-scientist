@@ -47,7 +47,7 @@ const config = {
   output: {
     filename: "main.js",
     path: path.resolve(__dirname, "dist/"),
-    publicPath: "/dist/",
+    publicPath: "/threshold/dist/",
   },
 };
 
@@ -104,11 +104,11 @@ module.exports = (env) => {
           },
         },
       },
-      output: {
-        filename: "main.js",
-        path: path.resolve(__dirname, "dist/"),
-        publicPath: "/threshold/dist/",
-      },
+      // output: {
+      //   filename: "main.js",
+      //   path: path.resolve(__dirname, "dist/"),
+      //   publicPath: "/threshold/dist/",
+      // },
     });
   } else if (env.production) {
     return Object.assign({}, config, {
