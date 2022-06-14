@@ -48,8 +48,9 @@
   table {
     width: 100%;
     min-width: 1080px !important;
-    max-width: 1440px !important;
+    max-width: 1920px !important;
     border: none;
+    margin: 0 auto 5rem auto;
 
     * {
       font-size: 0.75rem;
@@ -71,7 +72,7 @@
     }
 
     .name {
-      flex: 250 !important;
+      flex: 200 !important;
     }
 
     .default {
@@ -79,7 +80,7 @@
     }
 
     .type {
-      flex: 80 !important;
+      flex: 60 !important;
     }
 
     .explanation {
@@ -96,7 +97,7 @@
       text-align: center;
       align-items: center;
 
-      max-height: 6.5rem;
+      max-height: 9.75rem;
       overflow: scroll;
 
       p {
@@ -109,12 +110,14 @@
 
       &.name {
         justify-content: flex-start !important;
+        align-items: flex-start !important;
 
         font-family: Roboto Mono, monospace;
         font-weight: 500;
         font-size: 0.9rem;
 
-        overflow-y: hidden;
+        // overflow-y: hidden;
+        overflow-y: scroll;
         text-align: left;
       }
 
@@ -136,7 +139,7 @@
       &.explanation p,
       &.categories p {
         text-align: left;
-        line-height: 130% !important;
+        line-height: 135% !important;
       }
 
       // &:not(.name) {

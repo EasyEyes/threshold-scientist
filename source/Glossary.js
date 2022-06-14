@@ -9,6 +9,7 @@ export default function Glossary({ closeGlossary }) {
   const columns = React.useMemo(
     () => [
       { accessor: "name", Header: "Name", className: "name" },
+      { accessor: "type", Header: "Type", className: "type" },
       // { accessor: "availability", Header: "Availability" },
       // { accessor: "default", Header: "Default", className: "default" },
       // { accessor: "example", Header: "Example", className: "example" },
@@ -17,8 +18,7 @@ export default function Glossary({ closeGlossary }) {
         Header: "Explanation",
         className: "explanation",
       },
-      { accessor: "type", Header: "Type", className: "type" },
-      { accessor: "categories", Header: "Categories", className: "categories" },
+      // { accessor: "categories", Header: "Categories", className: "categories" },
     ],
     []
   );
@@ -87,6 +87,9 @@ export default function Glossary({ closeGlossary }) {
                   <tr key={`body-${i}`} {...row.getRowProps()}>
                     {row.cells.map((cell, ind) => {
                       const isNameCell = cell.column.className === "name";
+                      const isCategoryParam =
+                        cell.row.original.type.includes("categorical");
+
                       const availability = cell.row.original.availability;
                       let availabilityElement = null;
                       switch (availability) {
@@ -96,12 +99,12 @@ export default function Glossary({ closeGlossary }) {
                         default:
                           availabilityElement = (
                             <>
-                              <br />
                               <span
                                 className={`available available-${availability}`}
                               >
                                 {availability}
                               </span>
+                              <br />
                             </>
                           );
                       }
@@ -115,16 +118,39 @@ export default function Glossary({ closeGlossary }) {
                             },
                           ])}
                         >
-                          <p>
-                            {cell.render("Cell")}
-                            <br />
-                            {isNameCell && (
-                              <span className="default-value">
-                                (default) {cell.row.original.default || "N/A"}
-                              </span>
-                            )}
-                            {isNameCell && availabilityElement}
-                          </p>
+                          {cell.column.className === "type" ? (
+                            cell.render("Cell")
+                          ) : (
+                            <p>
+                              {isNameCell && availabilityElement}
+                              {cell.render("Cell")}
+                              {isNameCell && (
+                                <>
+                                  <br />
+                                  <span className="default-value">
+                                    (default){" "}
+                                    {cell.row.original.default || "N/A"}
+                                  </span>
+                                </>
+                              )}
+                              {isNameCell && isCategoryParam && (
+                                <>
+                                  <br />
+                                  <span
+                                    className="default-value"
+                                    style={{
+                                      display: "inline-block",
+                                      fontSize: "0.75em",
+                                      lineHeight: "135%",
+                                    }}
+                                  >
+                                    (valid categories){" "}
+                                    {cell.row.original.categories || "N/A"}
+                                  </span>
+                                </>
+                              )}
+                            </p>
+                          )}
                         </td>
                       );
                     })}
