@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import "regenerator-runtime";
 
+import { downloadDataFolder } from "./components/gitlabUtils";
 import { getUserInfo, redirectToOauth2 } from "./components/user";
 
 import "./css/Login.scss";
@@ -104,20 +105,34 @@ export default class Login extends Component {
 
           <div className="link-set-buttons-login">
             {mostRecentProject !== null && (
-              <button
-                className="button-small button-grey"
-                style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
-                onClick={() => {
-                  window.open(
-                    `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
-                    "_blank"
-                  );
-                }}
-              >
-                View last experiment
-                <br />
-                {mostRecentProject.name}
-              </button>
+              <>
+                <button
+                  className="button-small button-grey"
+                  style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
+                  onClick={() => {
+                    window.open(
+                      `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
+                      "_blank"
+                    );
+                  }}
+                >
+                  View last experiment
+                  <br />
+                  <b>{mostRecentProject.name}</b>
+                </button>
+
+                <button
+                  className="button-small button-grey"
+                  style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
+                  onClick={async () => {
+                    await downloadDataFolder(user, mostRecentProject);
+                  }}
+                >
+                  Download last experiment data
+                  <br />
+                  <b>{mostRecentProject.name}</b>
+                </button>
+              </>
             )}
 
             <button

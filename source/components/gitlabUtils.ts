@@ -1,4 +1,8 @@
+import { Buffer } from "buffer";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import Swal from "sweetalert2";
+
 import {
   acceptableExtensions,
   acceptableResourcesExtensionsOfTextDataType,
@@ -19,6 +23,7 @@ import {
   getFileTextData,
   getTextFileDataFromGitLab,
 } from "./fileUtils";
+import { getDateAndTimeString } from "./utils";
 
 export class User {
   public username = "";
@@ -241,6 +246,76 @@ export const getCommonResourcesNames = async (
   }
 
   return resourcesNameByType;
+};
+
+/**
+ * Download data folder as a ZIP file from gitlab repository
+ */
+export const downloadDataFolder = async (user: User, project: any) => {
+  const headers = new Headers();
+  headers.append("Authorization", `bearer ${user.accessToken}`);
+  const requestOptions: any = {
+    method: "GET",
+    headers: headers,
+    redirect: "follow",
+  };
+
+  await Swal.fire({
+    title: `Downloading data from ${project.name} ...`,
+    // html: `<p>This might take a while, depending on the number of participants and the length of the experiment.</p>`,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    didOpen: async () => {
+      Swal.showLoading();
+
+      const dataFolder = await fetch(
+        `https://gitlab.pavlovia.org/api/v4/projects/${project.id}/repository/tree/?path=data`,
+        requestOptions
+      )
+        .then((response) => {
+          return response.json();
+        })
+        .then((result) => {
+          return result;
+        });
+
+      if (dataFolder.length === 0) {
+        Swal.close();
+        Swal.fire({
+          icon: "error",
+          title: `No data found for ${project.name}.`,
+          text: `We can't find any data for the experiment. This might due to an error, or the Pavlovia server is down. Please refresh the page or try again later.`,
+          confirmButtonColor: "#666",
+        });
+        return;
+      }
+
+      const zip = new JSZip();
+      const zipFileName = `${project.name}_${getDateAndTimeString()}.zip`;
+
+      for (const file of dataFolder) {
+        const fileName = file.name;
+
+        const fileContent = await fetch(
+          `https://gitlab.pavlovia.org/api/v4/projects/${project.id}/repository/blobs/${file.id}`,
+          requestOptions
+        )
+          .then((response) => {
+            return response.json();
+          })
+          .then((result) => {
+            return Buffer.from(result.content, "base64");
+          });
+
+        zip.file(fileName, fileContent);
+      }
+
+      zip.generateAsync({ type: "blob" }).then((content) => {
+        saveAs(content, zipFileName);
+        Swal.close();
+      });
+    },
+  });
 };
 
 /**

@@ -39,8 +39,8 @@
   .tableWrap {
     display: block;
     width: 95%;
-    min-width: 640px;
-    max-width: 1440px;
+    // min-width: 640px;
+    // max-width: 1440px;
     margin: 0 auto;
     overflow: scroll;
   }
@@ -79,7 +79,7 @@
     }
 
     .type {
-      flex: 100 !important;
+      flex: 80 !important;
     }
 
     .explanation {

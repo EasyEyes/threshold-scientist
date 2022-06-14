@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import Swal from "sweetalert2";
 import { Question } from "./components";
 import {
+  downloadDataFolder,
   generateAndUploadCompletionURL,
   getExperimentStatus,
   runExperiment,
@@ -186,14 +187,24 @@ export default class Running extends Component {
         <div className="link-set">
           <div className="link-set-buttons">
             {isRunning && pavloviaIsReady && (
-              <button
-                className="button-grey button-small"
-                onClick={() => {
-                  window.open(this._getPavloviaExperimentUrl(), "_blank");
-                }}
-              >
-                Try the experiment in RUNNING mode
-              </button>
+              <>
+                <button
+                  className="button-grey button-small"
+                  onClick={() => {
+                    window.open(this._getPavloviaExperimentUrl(), "_blank");
+                  }}
+                >
+                  Try the experiment in RUNNING mode
+                </button>
+                <button
+                  className="button-grey button-small"
+                  onClick={async () => {
+                    await downloadDataFolder(user, newRepo);
+                  }}
+                >
+                  Download experiment data
+                </button>
+              </>
             )}
 
             {isRunning && !pavloviaIsReady && (
@@ -264,7 +275,7 @@ export default class Running extends Component {
               fontSize: "1rem",
             }}
           >
-            Your study URL:{" "}
+            Your experiment URL:{" "}
             <a
               href={this._getPavloviaExperimentUrl()}
               target="_blank"
