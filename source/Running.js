@@ -71,12 +71,12 @@ export default class Running extends Component {
     fetch(this._getPavloviaExperimentUrl())
       .then((response) => response.text())
       .then((data) => {
-        if (data.includes("403 Forbidden")) {
+        if (data.includes("403")) {
           if (this.state.pavloviaIsReady)
             this.setState({
               pavloviaIsReady: false,
             });
-        } else if (data.includes("404 Not Found")) {
+        } else if (data.includes("404")) {
           if (this.state.pavloviaIsReady)
             this.setState({
               pavloviaIsReady: false,
