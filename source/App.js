@@ -224,7 +224,7 @@ export default class App extends Component {
 
         <div id="header">
           <div id="header-title">
-            <h1>EasyEyes Threshold</h1>
+            <h1>EasyEyes</h1>
           </div>
           <p className="description">
             Welcome to EasyEyes, a PsychoJS-based experiment compiler designed
