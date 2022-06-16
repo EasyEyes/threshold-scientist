@@ -47,7 +47,7 @@ const config = {
   output: {
     filename: "main.js",
     path: path.resolve(__dirname, "dist/"),
-    publicPath: "/threshold/dist/",
+    publicPath: "/experiment/dist/",
   },
 };
 
@@ -97,7 +97,7 @@ module.exports = (env) => {
         watchFiles: {
           paths: [
             path.join(__dirname, "source/**/*"),
-            path.join(__dirname, "threshold/**/*"),
+            path.join(__dirname, "experiment/**/*"),
           ],
           options: {
             ignored: /dist/,
@@ -107,7 +107,7 @@ module.exports = (env) => {
       // output: {
       //   filename: "main.js",
       //   path: path.resolve(__dirname, "dist/"),
-      //   publicPath: "/threshold/dist/",
+      //   publicPath: "/experiment/dist/",
       // },
     });
   } else if (env.production) {
