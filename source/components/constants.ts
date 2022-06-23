@@ -21,7 +21,7 @@ export const acceptableExtensions: IUserFileTypes = {
   fonts: ["woff", "woff2", "otf", "ttf", "svg"],
   forms: ["md", "pdf"],
   texts: ["txt"],
-  folders: [""], // ?
+  folders: ["zip"], // ?
 };
 
 export const getAllUserAcceptableFileExtensions = (): string[] => {
@@ -30,6 +30,7 @@ export const getAllUserAcceptableFileExtensions = (): string[] => {
     ...acceptableExtensions.fonts,
     ...acceptableExtensions.forms,
     ...acceptableExtensions.texts,
+    ...acceptableExtensions.folders,
   ];
 };
 
@@ -38,6 +39,7 @@ export const getAllUserAcceptableResourcesExtensions = (): string[] => {
     ...acceptableExtensions.fonts,
     ...acceptableExtensions.forms,
     ...acceptableExtensions.texts,
+    ...acceptableExtensions.folders,
   ];
 };
 
