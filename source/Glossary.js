@@ -9,7 +9,7 @@ export default function Glossary({ closeGlossary }) {
   const columns = React.useMemo(
     () => [
       { accessor: "name", Header: "Name", className: "name" },
-      { accessor: "type", Header: "Type", className: "type" },
+      // { accessor: "type", Header: "Type", className: "type" },
       // { accessor: "availability", Header: "Availability" },
       // { accessor: "default", Header: "Default", className: "default" },
       // { accessor: "example", Header: "Example", className: "example" },
@@ -104,7 +104,7 @@ export default function Glossary({ closeGlossary }) {
                               >
                                 {availability}
                               </span>
-                              <br />
+                              {/* <br /> */}
                             </>
                           );
                       }
@@ -126,26 +126,36 @@ export default function Glossary({ closeGlossary }) {
                               {cell.render("Cell")}
                               {isNameCell && (
                                 <>
-                                  <br />
+                                  {/* <br /> */}
                                   <span className="default-value">
-                                    (default){" "}
-                                    {cell.row.original.default || "N/A"}
+                                    {cell.row.original.type || "NO TYPE"}
+                                    &nbsp;|&nbsp;(default){" "}
+                                    {cell.row.original.default || "EMPTY"}
+                                  </span>
+                                </>
+                              )}
+                              {isNameCell && cell.row.original.example && (
+                                <>
+                                  {/* <br /> */}
+                                  <span className="default-value">
+                                    (example){" "}
+                                    {cell.row.original.example || "EMPTY"}
                                   </span>
                                 </>
                               )}
                               {isNameCell && isCategoryParam && (
                                 <>
-                                  <br />
+                                  {/* <br /> */}
                                   <span
                                     className="default-value"
                                     style={{
                                       display: "inline-block",
-                                      fontSize: "0.75em",
+                                      fontSize: "0.7rem",
                                       lineHeight: "135%",
                                     }}
                                   >
-                                    (valid categories){" "}
-                                    {cell.row.original.categories || "N/A"}
+                                    (categories){" "}
+                                    {cell.row.original.categories || "EMPTY"}
                                   </span>
                                 </>
                               )}
