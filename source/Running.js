@@ -298,9 +298,24 @@ export default class Running extends Component {
           >
             <p>
               Use {recruitName} to recruit participants.
-              {user.currentExperiment.prolificWorkspaceModeBool
-                ? " (Using workspace.)"
-                : ""}
+              {user.currentExperiment.prolificWorkspaceModeBool ? (
+                <>
+                  {`(You are using `}
+                  <a
+                    style={{
+                      color: "#666",
+                    }}
+                    href="https://researcher-help.prolific.co/hc/en-gb/sections/4500136384412-Workspaces"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Prolific Workspace
+                  </a>
+                  {`.)`}
+                </>
+              ) : (
+                ""
+              )}
             </p>
             <div className="link-set">
               <div
