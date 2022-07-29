@@ -223,7 +223,7 @@ export const getCommonResourcesNames = async (
 
   for (const type of resourcesFileTypes) {
     const prevFontListResponse: any = await fetch(
-      `https://gitlab.pavlovia.org/api/v4/projects/${easyEyesResourcesRepo.id}/repository/tree/?path=${type}`,
+      `https://gitlab.pavlovia.org/api/v4/projects/${easyEyesResourcesRepo.id}/repository/tree/?path=${type}&per_page=100`,
       requestOptions
     )
       .then((response) => {
@@ -878,8 +878,13 @@ export const generateAndUploadCompletionURL = async (
           return response.json();
         })
         .catch(() => {
-          alert("Error uploading completion code. Please try again.");
-          location.reload();
+          Swal.fire({
+            icon: "error",
+            title: `Failed to upload completion code.`,
+            text: `We can't upload your completion code. There might be a problem when uploading it, or the Pavlovia server is down. Please refresh the page to start again.`,
+            confirmButtonColor: "#666",
+          });
+          // location.reload();
         });
       await commitFile;
     }
