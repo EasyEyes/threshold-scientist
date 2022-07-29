@@ -40,6 +40,7 @@ export default class App extends Component {
       handleReset: this.handleReset.bind(this),
       handleNextStep: this.handleNextStep.bind(this),
       handleReturnToStep: this.handleReturnToStep.bind(this),
+      handleUpdateUser: this.handleUpdateUser.bind(this),
       handleLogin: this.handleLogin.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
       handleSetProjectName: this.handleSetProjectName.bind(this),
@@ -127,6 +128,12 @@ export default class App extends Component {
         projectName: null,
         newRepo: null,
       });
+  }
+
+  handleUpdateUser(newUser) {
+    this.setState({
+      user: newUser,
+    });
   }
 
   handleLogin(user, resources, accessToken) {

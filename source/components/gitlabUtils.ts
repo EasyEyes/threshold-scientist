@@ -45,7 +45,9 @@ export class User {
     prolificWorkspaceProjectId: "",
   };
 
-  constructor(public accessToken: string) {}
+  constructor(public accessToken: string) {
+    this.accessToken = accessToken;
+  }
 
   async initUserDetails(): Promise<void> {
     const response = await fetch(
@@ -63,6 +65,17 @@ export class User {
     this.projectList = await getAllProjects(this);
   }
 }
+
+export const copyUser = (user: User): User => {
+  const newUser = new User(user.accessToken);
+  newUser.username = user.username;
+  newUser.name = user.name;
+  newUser.id = user.id;
+  newUser.avatar_url = user.avatar_url;
+  newUser.projectList = [...user.projectList];
+  newUser.currentExperiment = { ...user.currentExperiment };
+  return newUser;
+};
 
 export interface ICommitAction {
   action: "create" | "delete" | "move" | "update" | "chmod";
@@ -84,6 +97,7 @@ export const getAllProjects = async (user: User) => {
   const projectList: any[] = [];
 
   // get first page separately to fetch page count
+  console.log(`fetching projects page 1`);
   const firstResponse = await fetch(
     `https://gitlab.pavlovia.org/api/v4/users/${user.id}/projects?access_token=${user.accessToken}&per_page=100`
   );
@@ -100,8 +114,10 @@ export const getAllProjects = async (user: User) => {
 
   // get remaining pages
   const pageCount = parseInt(pageCountHeader);
+
   const pageList: Promise<any>[] = [];
   for (let curPage = 2; curPage <= pageCount; curPage++) {
+    console.log(`fetching projects page ${curPage}`);
     const paginationResponse = fetch(
       `https://gitlab.pavlovia.org/api/v4/users/${user.id}/projects?access_token=${user.accessToken}&page=${curPage}&per_page=100`
     );
@@ -171,18 +187,24 @@ export const createEmptyRepo = async (
     })
     .catch((error) => {
       console.error(error);
+      // TODO switch to Swal interface
       alert("[ERROR] Failed to creat a new repo.");
     });
 
   return await newRepo;
 };
 
-export const setRepoName = (user: User, name: string): string => {
+export const setRepoName = async (
+  user: User,
+  name: string
+): Promise<string> => {
   // if (!isProjectNameExistInProjectList(user.projectList, name)) return name;
   name = complianceProjectName(name);
+  const upToDateProjectList = await getAllProjects(user);
 
   for (let i = 1; i < 9999999; i++)
-    if (!isProjectNameExistInProjectList(user.projectList, `${name}${i}`))
+    // if (!isProjectNameExistInProjectList(user.projectList, `${name}${i}`))
+    if (!isProjectNameExistInProjectList(upToDateProjectList, `${name}${i}`))
       return `${name}${i}`;
   return `${name}${Date.now()}`;
 };

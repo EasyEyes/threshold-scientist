@@ -7,7 +7,7 @@ import ResourceButton from "./ResourceButton";
 
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
 import { userRepoFiles } from "./components/constants";
-import { setRepoName } from "./components/gitlabUtils";
+import { copyUser, setRepoName } from "./components/gitlabUtils";
 
 export default class Table extends Component {
   constructor(props) {
@@ -68,10 +68,11 @@ export default class Table extends Component {
 
     await preprocessExperimentFile(
       file,
-      this.props.user,
+      copyUser(this.props.user),
       errors,
       this.props.resources,
-      (
+      async (
+        user,
         requestedForms, // : any,
         requestedFontList, // : string[],
         requestedTextList, // : string[],
@@ -109,15 +110,16 @@ export default class Table extends Component {
 
           return;
         } else {
-          if (this.props.user.id != undefined) {
+          if (user.id != undefined) {
             // user logged in
             this.props.functions.handleSetProjectName(
-              setRepoName(this.props.user, file.name.split(".")[0])
+              await setRepoName(user, file.name.split(".")[0])
             );
             this.props.functions.handleNextStep("upload");
           }
 
           // show success log
+          this.props.functions.handleUpdateUser(user);
           this.setState({
             errors: [
               {
