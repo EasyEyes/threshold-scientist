@@ -6,6 +6,8 @@ import { getUserInfo, redirectToOauth2 } from "./components/user";
 
 import "./css/Login.scss";
 
+import { TemporaryLog } from "./TemporaryLog";
+
 export default class Login extends Component {
   constructor(props) {
     super(props);
@@ -144,6 +146,9 @@ export default class Login extends Component {
             >
               View all experiments in Pavlovia
             </button>
+            <div>
+              <TemporaryLog style={smallButtonExtraStyle} />
+            </div>
 
             {/* <button
                 className="button-grey button-small"
