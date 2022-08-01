@@ -353,7 +353,9 @@ export default class Running extends Component {
                   className="button-grey button-small"
                   onClick={() => {
                     window.open(
-                      "https://app.prolific.co/researcher/studies/active",
+                      user.currentExperiment.prolificWorkspaceModeBool
+                        ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/active`
+                        : "https://app.prolific.co/researcher/studies/active",
                       "_blank"
                     );
                   }}
