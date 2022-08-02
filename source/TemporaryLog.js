@@ -122,8 +122,8 @@ function ConvertToCSV(objArray) {
       if (array[i][index] instanceof Object) {
         array[i][index] = JSON.stringify(array[i][index]);
         array[i][index] = array[i][index].replace(/,/g, ".");
-      }
-      if (line != "") line += ",";
+      } else line += ",";
+      // if (line != "")
 
       line += array[i][index];
     }
