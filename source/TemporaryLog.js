@@ -3,7 +3,7 @@ import { Button } from "react-bootstrap";
 import { Modal } from "react-bootstrap";
 import { getUserInfo } from "./components/user";
 import { getLogFile } from "../threshold/components/temporaryLogger";
-
+import { tempAccessToken } from "./Login";
 export function TemporaryLog({ style }) {
   const [show, setShow] = useState(false);
   const [user, setUser] = useState(null);
@@ -14,15 +14,14 @@ export function TemporaryLog({ style }) {
 
   useEffect(() => {
     const getUser = async () => {
-      const accessToken = window.location.hash
-        .split("&")[0]
-        .split("#access_token=")[1];
-      const [user] = await getUserInfo(accessToken);
-      // console.log("user", user)
-      setUser(user);
+      if (tempAccessToken.t) {
+        const [user] = await getUserInfo(tempAccessToken.t);
+        // console.log("user", user)
+        setUser(user);
+      }
     };
     getUser();
-  }, []);
+  }, [tempAccessToken.t]);
 
   return (
     <div>
@@ -122,7 +121,7 @@ function ConvertToCSV(objArray) {
     for (var index in array[i]) {
       if (array[i][index] instanceof Object) {
         array[i][index] = JSON.stringify(array[i][index]);
-        array[i][index] = array[i][index].replace(/,/g, "\r\n");
+        array[i][index] = array[i][index].replace(/,/g, ".");
       }
       if (line != "") line += ",";
 

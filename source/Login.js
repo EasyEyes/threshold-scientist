@@ -37,6 +37,9 @@ export default class Login extends Component {
         login: "loading",
       });
 
+      //temporarily assign access token here for temporaryLog
+      tempAccessToken.t = accessToken;
+
       const [user, resources] = await getUserInfo(accessToken);
 
       this.props.functions.handleLogin(user, resources, accessToken);
@@ -169,3 +172,5 @@ export default class Login extends Component {
     return <div className="login">{node}</div>;
   }
 }
+
+export const tempAccessToken = { t: undefined };
