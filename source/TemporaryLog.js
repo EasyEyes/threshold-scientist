@@ -105,7 +105,7 @@ const projectElementStyle = {
 function ConvertToCSV(objArray) {
   var array = typeof objArray != "object" ? JSON.parse(objArray) : objArray;
   var str = "";
-  console.log("array", array);
+  // console.log("array", array);
   var row = "";
 
   //This loop will extract the label from 1st index of on array
@@ -122,10 +122,11 @@ function ConvertToCSV(objArray) {
       if (array[i][index] instanceof Object) {
         array[i][index] = JSON.stringify(array[i][index]);
         array[i][index] = array[i][index].replace(/,/g, ".");
-      } else line += ",";
+      }
+      // else line += ",";
       // if (line != "")
 
-      line += array[i][index];
+      line += array[i][index] + ",";
     }
 
     str += line + "\r\n";
@@ -139,7 +140,7 @@ const parseLogFile = (log) => {
   const logArray = [];
   EasyEyesIds.forEach((id) => {
     const logEntry = log[id];
-    logEntry.EasyEyesId = id;
+    // logEntry.EasyEyesId = id;
     logArray.push(logEntry);
   });
   return logArray;
