@@ -79,7 +79,7 @@ const downloadLog = async (path) => {
   const log = await getLogFile(`https://run.pavlovia.org/${path}/`);
   // console.log("log",log)
   if (log) {
-    alert("loading log file...");
+    // alert("loading log file...");
     const logArray = parseLogFile(log);
     // console.log("logArray",logArray)
     const csv = ConvertToCSV(logArray);
