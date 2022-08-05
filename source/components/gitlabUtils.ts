@@ -919,6 +919,8 @@ export const generateAndUploadCompletionURL = async (
         });
 
       await commitFile;
+
+      return completionCode;
     }
   }
 };

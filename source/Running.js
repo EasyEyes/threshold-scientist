@@ -327,7 +327,7 @@ export default class Running extends Component {
                 <button
                   className="button-grey button-small"
                   onClick={async () => {
-                    await generateAndUploadCompletionURL(
+                    const code = await generateAndUploadCompletionURL(
                       user,
                       newRepo,
                       functions.handleUpdateUser
@@ -337,9 +337,7 @@ export default class Running extends Component {
                       "?external_study_url=" +
                       encodeURIComponent(user.currentExperiment.experimentUrl) +
                       "&completion_code=" +
-                      encodeURIComponent(
-                        user.currentExperiment.participantRecruitmentServiceCode
-                      ) +
+                      encodeURIComponent(code) +
                       "&completion_option=url" +
                       "&prolific_id_option=url_parameters";
 
