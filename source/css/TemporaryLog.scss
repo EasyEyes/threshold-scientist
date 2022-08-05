@@ -1,0 +1,55 @@
+@import "./root.scss";
+
+// .log-modal {
+//   width: 50vw;
+// }
+
+.modal-content {
+  border-radius: 0.7rem !important;
+
+  .modal-header {
+    border-bottom: 0 !important;
+    padding: 1rem 2rem !important;
+  }
+
+  .modal-body {
+    .project-element {
+      display: flex;
+      margin: 1rem 0;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: nowrap !important;
+
+      p {
+        margin: 0;
+        line-height: 100%;
+        font-size: 1rem !important;
+      }
+
+      div {
+        flex: 1;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+      }
+
+      .temp-log-button {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        white-space: nowrap;
+        color: #fff;
+
+        &.temp-log-button-download {
+          background-color: $green;
+        }
+
+        &.temp-log-button-clear {
+          background-color: #999;
+        }
+      }
+    }
+  }
+}

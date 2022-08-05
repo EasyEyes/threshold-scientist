@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "react-bootstrap";
 import { Modal } from "react-bootstrap";
+
 import { getUserInfo } from "./components/user";
 import { getLogFile } from "../threshold/components/temporaryLogger";
-import { tempAccessToken } from "./Login";
+
+import "./css/TemporaryLog.scss";
+
+export const tempAccessToken = { t: undefined };
+
 export function TemporaryLog({ style }) {
   const [show, setShow] = useState(false);
   const [user, setUser] = useState(null);
@@ -24,52 +28,53 @@ export function TemporaryLog({ style }) {
   }, [tempAccessToken.t]);
 
   return (
-    <div>
+    <>
       <button
-        id="tempLogModalButton"
-        className="button-grey button-smal"
+        id="temp-log-modal-button"
+        className="button-grey button-small"
         style={style}
         onClick={toggleModal}
       >
-        temporary log
+        Temporary Log
       </button>
 
-      <Modal show={show} onHide={toggleModal}>
+      <Modal className="log-modal" show={show} onHide={toggleModal}>
         <Modal.Header closeButton>
           <Modal.Title>Temporary Log</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ maxHeight: "80vh", overflowY: "auto" }}>
-          <div>
-            {user?.projectList.map((project) => {
-              return (
-                <div key={project.id}>
-                  <ProjectElement project={project} />
-                </div>
-              );
-            })}
-          </div>
+        <Modal.Body
+          style={{
+            borderRadius: "0.7rem",
+            maxHeight: "80vh",
+            overflowY: "auto",
+          }}
+        >
+          {user?.projectList.map((project) => {
+            return <ProjectElement key={project.id} project={project} />;
+          })}
         </Modal.Body>
       </Modal>
-    </div>
+    </>
   );
 }
 
 function ProjectElement({ project }) {
   return (
-    <div style={projectElementStyle}>
-      <div style={{ flex: 1 }}>{project.name}</div>
-      <button
-        style={{ margin: "7px" }}
-        className="btn btn-success"
-        onClick={() => {
-          downloadLog(project.path_with_namespace);
-        }}
-      >
-        download log
-      </button>
-      <button style={{ margin: "7px" }} className="btn btn-danger">
-        clear log
-      </button>
+    <div className="project-element">
+      <p className="project-name">{project.name}</p>
+      <div>
+        <button
+          className="btn temp-log-button temp-log-button-download"
+          onClick={() => {
+            downloadLog(project.path_with_namespace);
+          }}
+        >
+          Download
+        </button>
+        <button className="btn temp-log-button temp-log-button-clear">
+          Clear
+        </button>
+      </div>
     </div>
   );
 }
@@ -95,12 +100,6 @@ const downloadLog = async (path) => {
   alert("log file not found");
 };
 
-const projectElementStyle = {
-  display: "flex",
-  margin: "10px",
-  alignItems: "center",
-};
-
 // JSON to CSV Converter
 function ConvertToCSV(objArray) {
   var array = typeof objArray != "object" ? JSON.parse(objArray) : objArray;
@@ -110,7 +109,7 @@ function ConvertToCSV(objArray) {
 
   //This loop will extract the label from 1st index of on array
   for (var index in array[0]) {
-    //Now convert each value to string and comma-seprated
+    //Now convert each value to string and comma-separated
     row += index + ",";
   }
   row = row.slice(0, -1);
@@ -118,7 +117,7 @@ function ConvertToCSV(objArray) {
   str += row + "\r\n";
   for (var i = 0; i < array.length; i++) {
     var line = "";
-    for (var index in array[i]) {
+    for (const index in array[i]) {
       if (array[i][index] instanceof Object) {
         array[i][index] = JSON.stringify(array[i][index]);
         array[i][index] = array[i][index].replace(/,/g, ".");
