@@ -72,8 +72,10 @@ export const copyUser = (user: User): User => {
   newUser.name = user.name;
   newUser.id = user.id;
   newUser.avatar_url = user.avatar_url;
-  newUser.projectList = [...user.projectList];
-  newUser.currentExperiment = { ...user.currentExperiment };
+  newUser.projectList = JSON.parse(JSON.stringify(user.projectList));
+  newUser.currentExperiment = JSON.parse(
+    JSON.stringify(user.currentExperiment)
+  );
   return newUser;
 };
 
@@ -859,18 +861,23 @@ export const getExperimentStatus = async (user: User, newRepo: Repository) => {
 
 export const generateAndUploadCompletionURL = async (
   user: User,
-  newRepo: any
+  newRepo: any,
+  handleUpdateUser: (user: User) => void
 ) => {
-  if (!user.currentExperiment.participantRecruitmentServiceCode) {
-    const completionCode: string =
-      "" + Math.floor(Math.random() * (999 - 100) + 100);
+  const newUser: User = copyUser(user);
+
+  if (!newUser.currentExperiment.participantRecruitmentServiceCode) {
+    const completionCode = String(
+      Math.floor(Math.random() * (999 - 100) + 100)
+    );
 
     if (completionCode !== "") {
-      user.currentExperiment.participantRecruitmentServiceCode = completionCode;
+      newUser.currentExperiment.participantRecruitmentServiceCode =
+        completionCode;
 
       const completionURL =
         "https://app.prolific.co/submissions/complete?cc=" + completionCode;
-      const jsonString = `name,${user.currentExperiment.participantRecruitmentServiceName}\ncode,\nurl,${completionURL}`;
+      const jsonString = `name,${user.currentExperiment.participantRecruitmentServiceName}\ncode,${completionCode}\nurl,${completionURL}`;
 
       const commitAction = {
         action: "update",
@@ -883,11 +890,13 @@ export const generateAndUploadCompletionURL = async (
         actions: [commitAction],
       };
 
+      handleUpdateUser(newUser);
+
       const commitFile = await fetch(
         "https://gitlab.pavlovia.org/api/v4/projects/" +
           newRepo.id +
           "/repository/commits?access_token=" +
-          user.accessToken,
+          newUser.accessToken,
         {
           method: "POST",
           headers: {
@@ -908,6 +917,7 @@ export const generateAndUploadCompletionURL = async (
           });
           // location.reload();
         });
+
       await commitFile;
     }
   }

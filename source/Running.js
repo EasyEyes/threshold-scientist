@@ -102,7 +102,7 @@ export default class Running extends Component {
   }
 
   render() {
-    const { user, projectName, newRepo } = this.props;
+    const { user, projectName, newRepo, functions } = this.props;
     const { status } = this.state;
 
     const isRunning = status === "RUNNING";
@@ -327,7 +327,11 @@ export default class Running extends Component {
                 <button
                   className="button-grey button-small"
                   onClick={async () => {
-                    await generateAndUploadCompletionURL(user, newRepo);
+                    await generateAndUploadCompletionURL(
+                      user,
+                      newRepo,
+                      functions.handleUpdateUser
+                    );
 
                     const studyParams =
                       "?external_study_url=" +
