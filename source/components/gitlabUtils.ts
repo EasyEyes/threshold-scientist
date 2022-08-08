@@ -293,7 +293,7 @@ export const downloadDataFolder = async (user: User, project: any) => {
       Swal.showLoading();
 
       const dataFolder = await fetch(
-        `https://gitlab.pavlovia.org/api/v4/projects/${project.id}/repository/tree/?path=data`,
+        `https://gitlab.pavlovia.org/api/v4/projects/${project.id}/repository/tree/?path=data&per_page=100`,
         requestOptions
       )
         .then((response) => {
