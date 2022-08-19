@@ -77,6 +77,7 @@ export default class Table extends Component {
         requestedFontList, // : string[],
         requestedTextList, // : string[],
         requestedFolderList, // : string[],
+        requestedCodeList, // : string[],
         fileList, // : File[],
         errorList // : any[]
       ) => {
@@ -94,6 +95,7 @@ export default class Table extends Component {
         userRepoFiles.requestedFonts = requestedFontList;
         userRepoFiles.requestedTexts = requestedTextList;
         userRepoFiles.requestedFolders = requestedFolderList;
+        userRepoFiles.requestedCode = requestedCodeList;
         userRepoFiles.blockFiles = fileList;
 
         if (errorList.length) {

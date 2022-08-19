@@ -12,6 +12,8 @@ const ignorePattern = [
   ".prettierignore",
   "fonts/",
   "forms/",
+  "folders/",
+  "code/",
   "components",
   "preprocess",
   "addons",
