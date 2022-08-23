@@ -99,7 +99,7 @@ export const getAllProjects = async (user: User) => {
   const projectList: any[] = [];
 
   // get first page separately to fetch page count
-  console.log(`fetching projects page 1`);
+  // console.log(`fetching projects page 1`);
   const firstResponse = await fetch(
     `https://gitlab.pavlovia.org/api/v4/users/${user.id}/projects?access_token=${user.accessToken}&per_page=100`
   );
@@ -119,7 +119,7 @@ export const getAllProjects = async (user: User) => {
 
   const pageList: Promise<any>[] = [];
   for (let curPage = 2; curPage <= pageCount; curPage++) {
-    console.log(`fetching projects page ${curPage}`);
+    // console.log(`fetching projects page ${curPage}`);
     const paginationResponse = fetch(
       `https://gitlab.pavlovia.org/api/v4/users/${user.id}/projects?access_token=${user.accessToken}&page=${curPage}&per_page=100`
     );
