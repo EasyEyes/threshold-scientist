@@ -6,7 +6,7 @@ import { getUserInfo, redirectToOauth2 } from "./components/user";
 
 import "./css/Login.scss";
 
-import { TemporaryLog, tempAccessToken } from "./TemporaryLog";
+// import { TemporaryLog, tempAccessToken } from "./TemporaryLog";
 
 export default class Login extends Component {
   constructor(props) {
@@ -37,8 +37,8 @@ export default class Login extends Component {
         login: "loading",
       });
 
-      // temporarily assign access token here for temporaryLog
-      tempAccessToken.t = accessToken;
+      // // temporarily assign access token here for temporaryLog
+      // tempAccessToken.t = accessToken;
 
       const [user, resources] = await getUserInfo(accessToken);
 
@@ -150,7 +150,7 @@ export default class Login extends Component {
               View all experiments in Pavlovia
             </button>
 
-            <TemporaryLog style={smallButtonExtraStyle} />
+            {/* <TemporaryLog style={smallButtonExtraStyle} /> */}
 
             {/* <button
                 className="button-grey button-small"
