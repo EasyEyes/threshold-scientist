@@ -10,8 +10,10 @@
     "files": "node server/writeAllFilePaths.js && prettier source/components/files.ts --write",
     "start": "webpack serve --env=development",
     "build": "webpack --env=production",
+    "clean": "rm -r node_modules",
+    "build:threshold": "cd threshold && npm run netlify:website",
     "prepare:commit": "npm run files",
-    "netlify": "npm ci && npm run build && cd threshold && npm run netlify:website"
+    "netlify": "run-s build clean build:threshold"
   },
   "keywords": [],
   "author": "",
@@ -54,6 +56,7 @@
     "husky": "^8.0.1",
     "lint-staged": "^13.0.3",
     "mini-css-extract-plugin": "^2.6.1",
+    "npm-run-all": "^4.1.5",
     "postcss-loader": "^7.0.1",
     "prettier": "^2.7.1",
     "sass": "^1.55.0",
