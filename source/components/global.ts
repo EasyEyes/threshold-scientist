@@ -11,3 +11,5 @@ export const experimentRecruitmentAndRunInfo: Experiment = {
   participantRecruitmentServiceCode: "",
   experimentUrl: "",
 };
+
+export const tempAccessToken = { t: undefined };
