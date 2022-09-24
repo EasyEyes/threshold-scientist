@@ -11,7 +11,7 @@
     "start": "webpack serve --env=development",
     "build": "webpack --env=production",
     "prepare:commit": "npm run files",
-    "netlify": "npm ci && npm run build && rm -r node_modules && cd threshold && npm run netlify:website"
+    "netlify": "npm ci && npm run build && cd threshold && npm run netlify:website"
   },
   "keywords": [],
   "author": "",
