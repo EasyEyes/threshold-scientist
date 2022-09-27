@@ -13,7 +13,7 @@
     "clean": "rm -r node_modules",
     "build:threshold": "cd threshold && npm run netlify:website",
     "prepare:commit": "npm run files",
-    "netlify": "run-s build build:threshold"
+    "netlify": "run-s ci build build:threshold"
   },
   "keywords": [],
   "author": "",
