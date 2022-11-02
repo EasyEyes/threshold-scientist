@@ -4,7 +4,11 @@ import { renderToString } from "react-dom/server";
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
 
+import Statusbar from "./Statusbar";
+import StatusLines from "./StatusLines";
+
 import { allSteps } from "./components/steps";
+import { currentStepName } from "./components/steps";
 
 import "./css/App.scss";
 import Swal from "sweetalert2";
@@ -16,6 +20,7 @@ export default class App extends Component {
     super(props);
 
     this.allSteps = allSteps();
+    this.currentStepName = currentStepName();
 
     this.state = {
       readingGlossary: false,
@@ -206,6 +211,9 @@ export default class App extends Component {
       newRepo,
     } = this.state;
     const steps = [];
+    const statusUpdate = [];
+
+    console.log(currentStep);
 
     for (const stepName of this.allSteps)
       steps.push(
@@ -223,6 +231,12 @@ export default class App extends Component {
         />
       );
 
+    // statusUpdate.push(
+    //   <Statusbar
+    //   key={this.allSteps}
+    //   nameTag={this.state.nameTag}
+    //   />
+    // );
     return (
       <>
         {readingGlossary && (
@@ -338,6 +352,17 @@ export default class App extends Component {
                 💻📱&nbsp;&nbsp;Compatibility
               </button>
             </div>
+            <StatusLines
+              key={this.state.currentStep}
+              name={this.state.currentStep}
+              futureSteps={this.state.futureSteps}
+              functions={this.state.functions}
+              user={this.state.user}
+              resources={this.state.resources}
+              projectName={this.state.projectName}
+              newRepo={this.state.newRepo}
+            />
+            <Statusbar currentStep={this.state.currentStep} />
             {steps}
           </div>
         </Suspense>
