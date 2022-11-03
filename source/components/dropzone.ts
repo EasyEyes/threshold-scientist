@@ -34,7 +34,7 @@ export const handleDrop = async (
 
   if (resourcesList.length > 0) {
     await Swal.fire({
-      title: "We are uploading files for you ...",
+      title: "Uploading files for you ...",
       // html: 'I will close in <b></b> milliseconds.',
       allowOutsideClick: false,
       allowEscapeKey: false,
