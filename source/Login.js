@@ -108,63 +108,6 @@ export default class Login extends Component {
               </span>
             </p>
           </div>
-
-          <div className="link-set-buttons-login">
-            {mostRecentProject !== null && (
-              <>
-                <button
-                  className="button-small button-grey"
-                  style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
-                  onClick={() => {
-                    window.open(
-                      `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
-                      "_blank"
-                    );
-                  }}
-                >
-                  View last experiment
-                  <br />
-                  <b>{mostRecentProject.name}</b>
-                </button>
-
-                <button
-                  className="button-small button-grey"
-                  style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
-                  onClick={async () => {
-                    await downloadDataFolder(user, mostRecentProject);
-                  }}
-                >
-                  Download last experiment data
-                  <br />
-                  <b>{mostRecentProject.name}</b>
-                </button>
-              </>
-            )}
-
-            <button
-              className="button-grey button-small"
-              style={smallButtonExtraStyle}
-              onClick={() => {
-                window.open(`https://pavlovia.org/dashboard?tab=1`, "_blank");
-              }}
-            >
-              View all experiments in Pavlovia
-            </button>
-
-            {/* <TemporaryLog style={smallButtonExtraStyle} /> */}
-
-            {/* <button
-                className="button-grey button-small"
-                onClick={() => {
-                  window.open(
-                    `https://gitlab.pavlovia.org/dashboard/projects`,
-                    "_blank"
-                  );
-                }}
-              >
-                GitLab projects
-              </button> */}
-          </div>
         </>
       );
     }

@@ -8,11 +8,15 @@ export default class Statusbar extends Component {
   }
   render() {
     const cStep = this.props.currentStep;
-    console.log(cStep);
+    // console.log(cStep);
     let component;
     switch (cStep) {
       case "login":
-        component = <div className="status-bar">Please Login</div>;
+        component = (
+          <div className="status-bar">
+            Please Connect to Your Pavlovia Account
+          </div>
+        );
         break;
       case "table":
         component = (
@@ -36,7 +40,7 @@ export default class Statusbar extends Component {
       default:
         break;
     }
-    console.log(this.props);
+    // console.log(this.props);
     return <div>{component}</div>;
   }
 }

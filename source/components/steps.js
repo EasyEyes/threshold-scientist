@@ -3,16 +3,16 @@ import { commonSteps } from "./definition";
 var currentStepValue;
 
 export const allSteps = () => {
-  console.log(
-    commonSteps.filter((step) => !step.disabled).map((step) => step.name)
-  );
+  // console.log(
+  //   commonSteps.filter((step) => !step.disabled).map((step) => step.name)
+  // );
   return commonSteps.filter((step) => !step.disabled).map((step) => step.name);
 };
 
 export const currentStepName = () => {
-  console.log(commonSteps);
+  // console.log(commonSteps);
   const currentStep = commonSteps.find((step) => step.name === currentStepName);
-  console.log(currentStep);
+  // console.log(currentStep);
   // return currentStep.name;
 };
 

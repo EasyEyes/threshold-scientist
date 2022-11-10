@@ -200,6 +200,8 @@ export default class App extends Component {
   }
 
   render() {
+    console.log(this.state.futureSteps);
+    console.log(this.state.projectName);
     const {
       readingGlossary,
       currentStep,
@@ -213,7 +215,7 @@ export default class App extends Component {
     const steps = [];
     const statusUpdate = [];
 
-    console.log(currentStep);
+    // console.log(currentStep);
 
     for (const stepName of this.allSteps)
       steps.push(
@@ -230,7 +232,7 @@ export default class App extends Component {
           newRepo={newRepo}
         />
       );
-
+    console.log(completedSteps, currentStep);
     // statusUpdate.push(
     //   <Statusbar
     //   key={this.allSteps}
@@ -357,10 +359,13 @@ export default class App extends Component {
               name={this.state.currentStep}
               futureSteps={this.state.futureSteps}
               functions={this.state.functions}
+              isCompletedStep={completedSteps.includes(this.state.stepName)}
+              completedSteps={completedSteps}
               user={this.state.user}
               resources={this.state.resources}
               projectName={this.state.projectName}
               newRepo={this.state.newRepo}
+              currentStep={this.state.currentStep}
             />
             <Statusbar currentStep={this.state.currentStep} />
             {steps}
