@@ -53,7 +53,7 @@ export default class Upload extends Component {
             ? `Name the experiment and upload to Pavlovia.`
             : `Uploading the compiled experiment to Pavlovia with the following name ...`}
         </p> */}
-        <div className="upload-container">
+        {/* <div className="upload-container">
           <input
             className="upload-input"
             type="text"
@@ -74,7 +74,7 @@ export default class Upload extends Component {
               Upload
             </button>
           )}
-        </div>
+        </div> */}
       </>
     );
   }
