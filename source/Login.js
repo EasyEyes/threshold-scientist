@@ -60,7 +60,7 @@ export default class Login extends Component {
         node = (
           <>
             <p className="emphasize">
-              Connect your Pavlovia account to compile experiments.
+              {/* Connect your Pavlovia account to compile experiments. */}
               <br />
               <button
                 className="button-green connect-to-pav"

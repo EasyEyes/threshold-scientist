@@ -214,25 +214,27 @@ export default class App extends Component {
     } = this.state;
     const steps = [];
     const statusUpdate = [];
+    var i = 0;
 
     // console.log(currentStep);
 
-    for (const stepName of this.allSteps)
-      steps.push(
-        <Step
-          key={stepName}
-          name={stepName}
-          isCurrentStep={currentStep === stepName}
-          isCompletedStep={completedSteps.includes(stepName)}
-          futureSteps={futureSteps}
-          functions={this.functions}
-          user={user}
-          resources={resources}
-          projectName={projectName}
-          newRepo={newRepo}
-        />
-      );
-    console.log(completedSteps, currentStep);
+    // for (const stepName of this.allSteps){
+    steps.push(
+      <Step
+        key={this.state.currentStep}
+        name={this.state.currentStep}
+        isCurrentStep={currentStep === this.state.currentStep}
+        isCompletedStep={completedSteps.includes(this.state.currentStep)}
+        futureSteps={futureSteps}
+        functions={this.functions}
+        user={user}
+        resources={resources}
+        projectName={projectName}
+        newRepo={newRepo}
+      />
+    );
+    // }
+    // console.log(completedSteps, currentStep);
     // statusUpdate.push(
     //   <Statusbar
     //   key={this.allSteps}

@@ -46,13 +46,13 @@ export default class Upload extends Component {
     console.log(this.props.projectName);
     return (
       <>
-        <p className="emphasize">
+        {/* <p className="emphasize">
           {isCompletedStep
             ? "Your experiment has been uploaded as"
             : offerPilotingOption
             ? `Name the experiment and upload to Pavlovia.`
             : `Uploading the compiled experiment to Pavlovia with the following name ...`}
-        </p>
+        </p> */}
         <div className="upload-container">
           <input
             className="upload-input"

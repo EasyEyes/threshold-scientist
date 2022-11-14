@@ -173,7 +173,7 @@ export default class Running extends Component {
 
     return (
       <>
-        <p className="emphasize">
+        {/* <p className="emphasize">
           {isRunning
             ? pavloviaIsReady
               ? "Experiment compiled, uploaded, and in RUNNING mode, ready to run."
@@ -183,9 +183,10 @@ export default class Running extends Component {
                   ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
                   : "Setting mode to RUNNING ..."
               }`}
-        </p>
+        </p> */}
         <div className="link-set">
           <div className="link-set-buttons">
+            <span>Run Locally :</span>
             {isRunning && pavloviaIsReady && (
               <>
                 <button
@@ -195,14 +196,6 @@ export default class Running extends Component {
                   }}
                 >
                   Try the experiment in RUNNING mode
-                </button>
-                <button
-                  className="button-grey button-small"
-                  onClick={async () => {
-                    await downloadDataFolder(user, newRepo);
-                  }}
-                >
-                  Download experiment data
                 </button>
               </>
             )}
@@ -269,7 +262,7 @@ export default class Running extends Component {
           </div>
         </div>
 
-        {isRunning && (
+        {/* {isRunning && (
           <p
             style={{
               fontSize: "1rem",
@@ -287,7 +280,7 @@ export default class Running extends Component {
               user.username
             }/${projectName.toLocaleLowerCase()}`}</a>
           </p>
-        )}
+        )} */}
 
         {hasRecruitmentService && isRunning && (
           <div
@@ -296,7 +289,7 @@ export default class Running extends Component {
               marginTop: "1.6rem",
             }}
           >
-            <p>
+            {/* <p>
               Use {recruitName} to recruit participants.
               {user.currentExperiment.prolificWorkspaceModeBool ? (
                 <>
@@ -316,7 +309,7 @@ export default class Running extends Component {
               ) : (
                 ""
               )}
-            </p>
+            </p> */}
             <div className="link-set">
               <div
                 className="link-set-buttons"
@@ -324,6 +317,7 @@ export default class Running extends Component {
                   flexDirection: "row",
                 }}
               >
+                Run Online:
                 <button
                   className="button-grey button-small"
                   onClick={async () => {
@@ -366,6 +360,15 @@ export default class Running extends Component {
                 </button>
               </div>
             </div>
+            <span>Download Results: </span>
+            <button
+              className="button-grey button-small"
+              onClick={async () => {
+                await downloadDataFolder(user, newRepo);
+              }}
+            >
+              Download experiment data
+            </button>
           </div>
         )}
       </>
