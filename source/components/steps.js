@@ -17,7 +17,7 @@ export const currentStepName = () => {
 };
 
 export const nextStep = (currentStepName) => {
-  console.log(currentStepName);
+  // console.log(currentStepName);
   const currentStep = commonSteps.find((step) => step.name === currentStepName);
   const nextStep = commonSteps.find(
     (step) => step.order === currentStep.order + 1

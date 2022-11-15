@@ -200,8 +200,8 @@ export default class App extends Component {
   }
 
   render() {
-    console.log(this.state.futureSteps);
-    console.log(this.state.projectName);
+    // console.log(this.state.futureSteps);
+    // console.log(this.state.projectName);
     const {
       readingGlossary,
       currentStep,

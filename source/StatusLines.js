@@ -71,7 +71,7 @@ export default class StatusLines extends Component {
   }
 
   handleLogin(user, resources, accessToken) {
-    console.log(user.username);
+    // console.log(user.username);
     this.setState({
       user: user,
       accessToken: accessToken,
@@ -216,14 +216,14 @@ export default class StatusLines extends Component {
 
   render() {
     let node;
-    console.log(this.props.currentStep);
-    console.log(this.state.tableName);
-    console.log(this.state.login);
-    console.log(this.state.user);
-    console.log(this.props.isCompletedStep);
-    console.log(this.props.completedSteps);
-    console.log(this.state.mode);
-    console.log();
+    // console.log(this.props.currentStep);
+    // console.log(this.state.tableName);
+    // console.log(this.state.login);
+    // console.log(this.state.user);
+    // console.log(this.props.isCompletedStep);
+    // console.log(this.props.completedSteps);
+    // console.log(this.state.mode);
+    // console.log();
     let url;
     this.props.projectName && this.state.user
       ? (url =
@@ -232,7 +232,7 @@ export default class StatusLines extends Component {
           "/" +
           this.props.projectName.toLocaleLowerCase())
       : (url = "");
-    console.log(url);
+    // console.log(url);
     return (
       <>
         <div>
