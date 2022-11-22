@@ -1,14 +1,14 @@
-import React, { Component, PureComponent } from "react";
+import React, { Component } from "react";
 import "regenerator-runtime";
 
 import "./css/Statusbar.scss";
 
-import { downloadDataFolder } from "./components/gitlabUtils";
 import { getUserInfo, redirectToOauth2 } from "./components/user";
 import { handleDrop } from "./components/dropzone";
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
 
 import { tempAccessToken } from "./components/global";
+import { copyUser, setRepoName } from "./components/gitlabUtils";
 
 export default class StatusLines extends Component {
   constructor(props) {
@@ -45,7 +45,6 @@ export default class StatusLines extends Component {
   }
 
   nextStepStatus(targetNextStep = null) {
-    console.log(this.props.futureSteps);
     if (this.props.futureSteps.length === 0)
       return {
         currentStep: "",

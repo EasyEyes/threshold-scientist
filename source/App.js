@@ -213,10 +213,6 @@ export default class App extends Component {
       newRepo,
     } = this.state;
     const steps = [];
-    const statusUpdate = [];
-    var i = 0;
-
-    // console.log(currentStep);
 
     // for (const stepName of this.allSteps){
     steps.push(
@@ -234,7 +230,6 @@ export default class App extends Component {
       />
     );
     // }
-    // console.log(completedSteps, currentStep);
     // statusUpdate.push(
     //   <Statusbar
     //   key={this.allSteps}
