@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import Swal from "sweetalert2";
 import { getFileExtension, isAcceptableExtension } from "./fileUtils";
 import { isExpTableFile } from "../../threshold/preprocess/utils";
@@ -39,7 +41,8 @@ export const handleDrop = async (
       allowOutsideClick: false,
       allowEscapeKey: false,
       didOpen: async () => {
-        Swal.showLoading();
+        // @ts-ignore
+        Swal.showLoading(null);
 
         await createOrUpdateCommonResources(user, resourcesList);
         addResourcesForApp(await getCommonResourcesNames(user));

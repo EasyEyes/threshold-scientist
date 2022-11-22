@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import { Buffer } from "buffer";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -290,7 +292,8 @@ export const downloadDataFolder = async (user: User, project: any) => {
     allowOutsideClick: false,
     allowEscapeKey: false,
     didOpen: async () => {
-      Swal.showLoading();
+      // @ts-ignore
+      Swal.showLoading(null);
 
       const dataFolder = await fetch(
         `https://gitlab.pavlovia.org/api/v4/projects/${project.id}/repository/tree/?path=data&per_page=100`,
@@ -739,7 +742,8 @@ export const createPavloviaExperiment = async (
     allowOutsideClick: false,
     allowEscapeKey: false,
     didOpen: async () => {
-      Swal.showLoading();
+      // @ts-ignore
+      Swal.showLoading(null);
       let finalClosing = true;
 
       // create threshold core files
