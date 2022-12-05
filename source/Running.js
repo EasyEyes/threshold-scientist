@@ -17,6 +17,7 @@ export default class Running extends Component {
     this.state = {
       status: "INACTIVE",
       pavloviaIsReady: false,
+      completionCode: undefined,
     };
 
     this.setModeToRun = this.setModeToRun.bind(this);
@@ -103,7 +104,7 @@ export default class Running extends Component {
 
   render() {
     const { user, projectName, newRepo, functions } = this.props;
-    const { status } = this.state;
+    const { status, completionCode } = this.state;
 
     const isRunning = status === "RUNNING";
     const pavloviaIsReady = this.state.pavloviaIsReady;
@@ -324,33 +325,57 @@ export default class Running extends Component {
                   flexDirection: "row",
                 }}
               >
-                <button
-                  className="button-grey button-small"
-                  onClick={async () => {
-                    const code = await generateAndUploadCompletionURL(
-                      user,
-                      newRepo,
-                      functions.handleUpdateUser
-                    );
+                <>
+                  {completionCode ? (
+                    <button
+                      className="button-grey button-small"
+                      onClick={async () => {
+                        // this.state.completionCode = await generateAndUploadCompletionURL(
+                        //   user,
+                        //   newRepo,
+                        //   functions.handleUpdateUser
+                        // );
 
-                    const studyParams =
-                      "?external_study_url=" +
-                      encodeURIComponent(user.currentExperiment.experimentUrl) +
-                      "&completion_code=" +
-                      encodeURIComponent(code) +
-                      "&completion_option=url" +
-                      "&prolific_id_option=url_parameters";
+                        const studyParams =
+                          "?external_study_url=" +
+                          encodeURIComponent(
+                            user.currentExperiment.experimentUrl
+                          ) +
+                          "&completion_code=" +
+                          encodeURIComponent(completionCode) +
+                          "&completion_option=url" +
+                          "&prolific_id_option=url_parameters";
 
-                    // hardcoded for Prolific
-                    const url = user.currentExperiment.prolificWorkspaceModeBool
-                      ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/new-study${studyParams}`
-                      : `https://app.prolific.co/studies/new${studyParams}`;
+                        // hardcoded for Prolific
+                        const url = user.currentExperiment
+                          .prolificWorkspaceModeBool
+                          ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/new-study${studyParams}`
+                          : `https://app.prolific.co/studies/new${studyParams}`;
 
-                    window.open(url, "_blank");
-                  }}
-                >
-                  Go to {recruitName} to finalize and run your study
-                </button>
+                        window.open(url, "_blank");
+                      }}
+                    >
+                      Go to {recruitName} to finalize and run your study
+                    </button>
+                  ) : (
+                    <button
+                      className="button-grey button-small"
+                      onClick={async () => {
+                        const code = await generateAndUploadCompletionURL(
+                          user,
+                          newRepo,
+                          functions.handleUpdateUser
+                        );
+                        this.setState({
+                          completionCode: code,
+                        });
+                      }}
+                    >
+                      Generate completion code
+                    </button>
+                  )}
+                </>
+
                 <button
                   className="button-grey button-small"
                   onClick={() => {
@@ -366,6 +391,51 @@ export default class Running extends Component {
                 </button>
               </div>
             </div>
+            {completionCode ? (
+              <>
+                <p className="smaller-text">
+                  Click to copy the Prolific study URL{" "}
+                  <span
+                    className="text-copy"
+                    onClick={
+                      // copy to clipboard
+                      () => {
+                        navigator.clipboard.writeText(
+                          user.currentExperiment.experimentUrl
+                        );
+                      }
+                    }
+                  >
+                    {user.currentExperiment.experimentUrl}
+                  </span>
+                  .
+                </p>
+                <p className="smaller-text">
+                  The completion code is{" "}
+                  <span
+                    className="text-copy"
+                    onClick={
+                      // copy to clipboard
+                      () => {
+                        navigator.clipboard.writeText(completionCode);
+                      }
+                    }
+                  >
+                    {completionCode}
+                  </span>
+                  .
+                </p>
+              </>
+            ) : (
+              <p
+                style={{
+                  fontSize: "1rem",
+                }}
+              >
+                Please generate the completion code to view the Prolific study
+                URL.
+              </p>
+            )}
           </div>
         )}
       </>
