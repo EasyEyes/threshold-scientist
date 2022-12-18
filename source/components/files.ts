@@ -6,6 +6,7 @@ export const _loadDir = "/experiment/threshold/";
 export const _loadFiles: string[] = [
   "LICENSE",
   "README.md",
+  "coi-serviceworker.js",
   "components/images/favicon.ico",
   "index.html",
   "js/reading-page-flip.mp3",
@@ -14,6 +15,4 @@ export const _loadFiles: string[] = [
   "js/threshold.min.js.map",
   "psychojs/LICENSE.md",
   "recruitmentServiceConfig.csv",
-  "sw-main.js",
-  "sw.js",
 ];
