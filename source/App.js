@@ -200,8 +200,6 @@ export default class App extends Component {
   }
 
   render() {
-    // console.log(this.state.futureSteps);
-    // console.log(this.state.projectName);
     const {
       readingGlossary,
       currentStep,
@@ -214,7 +212,6 @@ export default class App extends Component {
     } = this.state;
     const steps = [];
 
-    // for (const stepName of this.allSteps){
     steps.push(
       <Step
         key={this.state.currentStep}
@@ -229,13 +226,7 @@ export default class App extends Component {
         newRepo={newRepo}
       />
     );
-    // }
-    // statusUpdate.push(
-    //   <Statusbar
-    //   key={this.allSteps}
-    //   nameTag={this.state.nameTag}
-    //   />
-    // );
+
     return (
       <>
         {readingGlossary && (

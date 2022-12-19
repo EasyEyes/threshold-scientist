@@ -5,16 +5,13 @@ import "./css/Statusbar.scss";
 
 import { getUserInfo, redirectToOauth2 } from "./components/user";
 import { handleDrop } from "./components/dropzone";
-import { preprocessExperimentFile } from "../threshold/preprocess/main";
+// import { preprocessExperimentFile } from "../threshold/preprocess/main";
 
 import { tempAccessToken } from "./components/global";
-import { copyUser, setRepoName } from "./components/gitlabUtils";
 
 export default class StatusLines extends Component {
   constructor(props) {
     super(props);
-    //initialise states
-    // console.log(this.props.user);
     this.state = {
       login: null,
     };
@@ -51,9 +48,7 @@ export default class StatusLines extends Component {
         completedSteps: [...this.props.completedSteps, this.props.currentStep],
         futureSteps: [],
       };
-
     const nextStep = this.props.futureSteps[0];
-    console.log(targetNextStep, nextStep);
     if (targetNextStep && targetNextStep !== nextStep) {
       return {
         currentStep: this.props.currentStep,
@@ -69,22 +64,6 @@ export default class StatusLines extends Component {
     };
   }
 
-  handleLogin(user, resources, accessToken) {
-    // console.log(user.username);
-    this.setState({
-      user: user,
-      accessToken: accessToken,
-      resources: resources,
-      ...this.nextStepStatus("table"),
-    });
-  }
-
-  _getPavloviaExperimentUrl() {
-    return `https://run.pavlovia.org/${
-      this.state.user.username
-    }/${this.props.projectName.toLocaleLowerCase()}`;
-  }
-
   onDrop(files) {
     const { user, functions } = this.props;
     handleDrop(
@@ -93,93 +72,12 @@ export default class StatusLines extends Component {
       functions.handleAddResources,
       this.handleTable.bind(this)
     );
-    console.log(this.state.files);
   }
 
   async handleTable(file) {
-    this.dropZoneRef.current.classList.add("drop-disabled");
-    await this.reset();
-    this.dropZoneRef.current.classList.remove("drop-disabled");
-
     this.setState({
       tableName: file.name,
     });
-
-    const errors = [];
-
-    await preprocessExperimentFile(
-      file,
-      copyUser(this.props.user),
-      errors,
-      this.props.resources,
-      async (
-        user,
-        requestedForms, // : any,
-        requestedFontList, // : string[],
-        requestedTextList, // : string[],
-        requestedFolderList, // : string[],
-        requestedCodeList, // : string[],
-        fileList, // : File[],
-        errorList // : any[]
-      ) => {
-        // scroll to the top of the step block
-        this.props.scrollToCurrentStep();
-
-        const formList = [];
-
-        if (requestedForms.debriefForm)
-          formList.push(requestedForms.debriefForm);
-        if (requestedForms.consentForm)
-          formList.push(requestedForms.consentForm);
-
-        userRepoFiles.requestedForms = formList;
-        userRepoFiles.requestedFonts = requestedFontList;
-        userRepoFiles.requestedTexts = requestedTextList;
-        userRepoFiles.requestedFolders = requestedFolderList;
-        userRepoFiles.requestedCode = requestedCodeList;
-        userRepoFiles.blockFiles = fileList;
-
-        if (errorList.length) {
-          // sort errorList according to parameter name
-          errorList.sort((errA, errB) => {
-            if (errA.parameters < errB.parameters) return -1;
-            else return 1;
-          });
-
-          // show errors
-          this.setState({
-            errors: [...errorList],
-          });
-
-          return;
-        } else {
-          if (user.id != undefined) {
-            // user logged in
-            this.props.functions.handleSetProjectName(
-              await setRepoName(user, file.name.split(".")[0])
-            );
-            this.props.functions.handleNextStep("upload");
-          }
-
-          // show success log
-          this.props.functions.handleUpdateUser(user);
-          this.setState({
-            errors: [
-              {
-                context: "preprocessor",
-                kind: "correct",
-                name: this.finalSuccessMessage,
-              },
-            ],
-          });
-        }
-      }
-      // this.props.functions.handleSetExperiment
-    );
-
-    // this.setState({
-    //   errors: [...errors],
-    // });
   }
 
   async componentDidMount() {
@@ -190,7 +88,6 @@ export default class StatusLines extends Component {
       const accessToken = window.location.hash
         .split("&")[0]
         .split("#access_token=")[1];
-      console.log(accessToken);
       // clear address bar parameters
       // eslint-disable-next-line no-undef
       if (!process.env.debug)
@@ -205,7 +102,12 @@ export default class StatusLines extends Component {
 
       const [user, resources] = await getUserInfo(accessToken);
 
-      this.handleLogin(user, resources, accessToken);
+      this.setState({
+        user: user,
+        accessToken: accessToken,
+        resources: resources,
+        ...this.nextStepStatus("table"),
+      });
     }
   }
 
@@ -214,15 +116,6 @@ export default class StatusLines extends Component {
   }
 
   render() {
-    let node;
-    // console.log(this.props.currentStep);
-    // console.log(this.state.tableName);
-    // console.log(this.state.login);
-    // console.log(this.state.user);
-    // console.log(this.props.isCompletedStep);
-    // console.log(this.props.completedSteps);
-    // console.log(this.state.mode);
-    // console.log();
     let url;
     this.props.projectName && this.state.user
       ? (url =
@@ -231,7 +124,6 @@ export default class StatusLines extends Component {
           "/" +
           this.props.projectName.toLocaleLowerCase())
       : (url = "");
-    // console.log(url);
     return (
       <>
         <div>

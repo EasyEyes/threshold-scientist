@@ -8,7 +8,6 @@ export default class Statusbar extends Component {
   }
   render() {
     const cStep = this.props.currentStep;
-    // console.log(cStep);
     let component;
     switch (cStep) {
       case "login":
@@ -40,7 +39,6 @@ export default class Statusbar extends Component {
       default:
         break;
     }
-    // console.log(this.props);
     return <div>{component}</div>;
   }
 }

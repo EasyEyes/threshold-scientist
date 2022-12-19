@@ -20,7 +20,23 @@ export const handleDrop = async (
   let experimentFile = null;
   for (const file of files) {
     const ext = getFileExtension(file);
-    if (!isAcceptableExtension(ext)) {
+    if (isAcceptableExtension(ext)) {
+      await Swal.fire({
+        title: "Uploading files for you ...",
+        // html: 'I will close in <b></b> milliseconds.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: async () => {
+          // @ts-ignore
+          Swal.showLoading(null);
+
+          await createOrUpdateCommonResources(user, resourcesList);
+          addResourcesForApp(await getCommonResourcesNames(user));
+
+          Swal.close();
+        },
+      });
+    } else {
       Swal.fire({
         icon: "error",
         title: `${file.name} was discarded.`,
@@ -34,23 +50,8 @@ export const handleDrop = async (
     else experimentFile = file;
   }
 
-  if (resourcesList.length > 0) {
-    await Swal.fire({
-      title: "Uploading files for you ...",
-      // html: 'I will close in <b></b> milliseconds.',
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      didOpen: async () => {
-        // @ts-ignore
-        Swal.showLoading(null);
-
-        await createOrUpdateCommonResources(user, resourcesList);
-        addResourcesForApp(await getCommonResourcesNames(user));
-
-        Swal.close();
-      },
-    });
-  }
+  // if (resourcesList.length > 0) {
+  // }
 
   if (experimentFile) {
     // Build an experiment
