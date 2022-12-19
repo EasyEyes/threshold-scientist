@@ -1,7 +1,7 @@
 import React, { Component, PureComponent } from "react";
-import "./css/Statusbar.scss";
+import "./css/StatusBar.scss";
 
-export default class Statusbar extends Component {
+export default class StatusBar extends Component {
   constructor(props) {
     super(props);
     //initialise states

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import "regenerator-runtime";
 
-import "./css/Statusbar.scss";
+import "./css/StatusBar.scss";
 
 import { getUserInfo, redirectToOauth2 } from "./components/user";
 import { handleDrop } from "./components/dropzone";

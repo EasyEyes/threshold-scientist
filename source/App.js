@@ -1,26 +1,24 @@
 import React, { Component, Suspense } from "react";
 import { renderToString } from "react-dom/server";
+import Swal from "sweetalert2";
 
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
 
-import Statusbar from "./Statusbar";
+import StatusBar from "./StatusBar";
 import StatusLines from "./StatusLines";
 
 import { allSteps } from "./components/steps";
-import { currentStepName } from "./components/steps";
-
-import "./css/App.scss";
-import Swal from "sweetalert2";
 import { Compatibility } from "./components";
 import { getAllProjects } from "./components/gitlabUtils";
+
+import "./css/App.scss";
 
 export default class App extends Component {
   constructor(props) {
     super(props);
 
     this.allSteps = allSteps();
-    this.currentStepName = currentStepName();
 
     this.state = {
       readingGlossary: false,
@@ -214,10 +212,10 @@ export default class App extends Component {
 
     steps.push(
       <Step
-        key={this.state.currentStep}
-        name={this.state.currentStep}
-        isCurrentStep={currentStep === this.state.currentStep}
-        isCompletedStep={completedSteps.includes(this.state.currentStep)}
+        key={currentStep}
+        name={currentStep}
+        isCurrentStep={currentStep === currentStep}
+        isCompletedStep={completedSteps.includes(currentStep)}
         futureSteps={futureSteps}
         functions={this.functions}
         user={user}
@@ -343,19 +341,19 @@ export default class App extends Component {
               </button>
             </div>
             <StatusLines
-              key={this.state.currentStep}
-              name={this.state.currentStep}
-              futureSteps={this.state.futureSteps}
-              functions={this.state.functions}
-              isCompletedStep={completedSteps.includes(this.state.stepName)}
+              key={currentStep}
+              name={currentStep}
+              futureSteps={futureSteps}
+              functions={this.functions}
+              isCompletedStep={completedSteps.includes(currentStep)}
               completedSteps={completedSteps}
-              user={this.state.user}
-              resources={this.state.resources}
-              projectName={this.state.projectName}
-              newRepo={this.state.newRepo}
-              currentStep={this.state.currentStep}
+              user={user}
+              resources={resources}
+              projectName={projectName}
+              newRepo={newRepo}
+              currentStep={currentStep}
             />
-            <Statusbar currentStep={this.state.currentStep} />
+            <StatusBar currentStep={currentStep} />
             {steps}
           </div>
         </Suspense>
