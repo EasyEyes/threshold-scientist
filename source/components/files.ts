@@ -6,6 +6,7 @@ export const _loadDir = "/experiment/threshold/";
 export const _loadFiles: string[] = [
   "LICENSE",
   "README.md",
+  "coi-serviceworker.js",
   "components/images/favicon.ico",
   "index.html",
   "js/reading-page-flip.mp3",

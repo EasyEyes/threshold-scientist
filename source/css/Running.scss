@@ -28,3 +28,23 @@
     }
   }
 }
+
+/* -------------------------------------------------------------------------- */
+
+.smaller-text {
+  font-size: 1rem !important;
+}
+
+.text-copy {
+  font-weight: 700;
+  color: #666;
+  cursor: pointer;
+
+  &:hover {
+    color: #999;
+  }
+
+  &:active {
+    color: #333;
+  }
+}
