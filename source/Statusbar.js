@@ -1,44 +1,41 @@
 import React, { Component, PureComponent } from "react";
-import "./css/StatusBar.scss";
 
 export default class StatusBar extends Component {
   constructor(props) {
     super(props);
-    //initialise states
   }
+
   render() {
-    const cStep = this.props.currentStep;
-    let component;
-    switch (cStep) {
+    const { currentStep } = this.props;
+
+    switch (currentStep) {
       case "login":
-        component = (
+        return (
           <div className="status-bar">
-            Please Connect to Your Pavlovia Account
+            Please connect to your Pavlovia account
           </div>
         );
-        break;
+
       case "table":
-        component = (
+        return (
           <div className="status-bar">
-            Please Submit Your Files and Experiment Here
+            Please submit your files and experiment table here
           </div>
         );
-        break;
+
       case "upload":
-        component = <div className="status-bar">Uploading..</div>;
-        break;
+        return <div className="status-bar">Uploading ...</div>;
+
       case "running":
-        component = (
-          <div className="status-bar">Your Experiment is Ready to Run</div>
+        return (
+          <div className="status-bar">Your experiment is ready to run</div>
         );
-        break;
+
       case "deploy":
-        component = <div className="status-bar"></div>;
-        break;
+        return <div className="status-bar"></div>;
 
       default:
-        break;
+        return <></>;
     }
-    return <div>{component}</div>;
   }
 }

@@ -342,11 +342,9 @@ export default class App extends Component {
             </div>
             <StatusLines
               key={currentStep}
-              name={currentStep}
               futureSteps={futureSteps}
-              functions={this.functions}
-              isCompletedStep={completedSteps.includes(currentStep)}
               completedSteps={completedSteps}
+              functions={this.functions}
               user={user}
               resources={resources}
               projectName={projectName}
