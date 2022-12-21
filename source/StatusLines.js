@@ -19,12 +19,13 @@ export default class StatusLines extends Component {
       user,
       filename,
       projectName,
+      experimentStatus,
     } = this.props;
 
     return (
       <ul className="status-lines">
         <StatusLine
-          activated={this.isLineActivated("login")}
+          activated={!!user}
           title={"Pavlovia Account"}
           content={
             user ? (
@@ -42,18 +43,19 @@ export default class StatusLines extends Component {
           }
         />
         <StatusLine
-          activated={this.isLineActivated("table")}
+          activated={!!filename}
           title={"Experiment Filename"}
           content={filename}
         />
         <StatusLine
-          activated={this.isLineActivated("upload")}
+          activated={!!projectName}
           title={"Experiment Name"}
           content={projectName}
         />
         <StatusLine
-          activated={this.isLineActivated("running")}
+          activated={!!(user && filename && projectName)}
           title={"Experiment Mode"}
+          content={user && filename && projectName ? experimentStatus : ""}
         />
         <StatusLine
           activated={this.isLineActivated("running")}

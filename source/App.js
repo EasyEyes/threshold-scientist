@@ -39,6 +39,7 @@ export default class App extends Component {
       filename: null,
       projectName: null,
       newRepo: null,
+      experimentStatus: "INACTIVE",
     };
 
     this.functions = {
@@ -52,6 +53,7 @@ export default class App extends Component {
       handleSetProjectName: this.handleSetProjectName.bind(this),
       handleSetExperiment: this.handleSetExperiment.bind(this),
       handleGetNewRepo: this.handleGetNewRepo.bind(this),
+      handleSetExperimentStatus: this.handleSetExperimentStatus.bind(this),
     };
 
     this.closeGlossary = this.closeGlossary.bind(this);
@@ -199,6 +201,12 @@ export default class App extends Component {
     });
   }
 
+  handleSetExperimentStatus(newStatus) {
+    this.setState({
+      experimentStatus: newStatus,
+    });
+  }
+
   closeGlossary() {
     this.setState({
       readingGlossary: false,
@@ -216,6 +224,7 @@ export default class App extends Component {
       filename,
       projectName,
       newRepo,
+      experimentStatus,
     } = this.state;
     const steps = [];
 
@@ -360,6 +369,7 @@ export default class App extends Component {
               projectName={projectName}
               newRepo={newRepo}
               currentStep={currentStep}
+              experimentStatus={experimentStatus}
             />
             {/* <StatusBar currentStep={currentStep} /> */}
             {steps}

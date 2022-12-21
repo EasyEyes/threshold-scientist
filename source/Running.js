@@ -15,7 +15,6 @@ export default class Running extends Component {
     super(props);
 
     this.state = {
-      status: "INACTIVE",
       pavloviaIsReady: false,
       completionCode: undefined,
     };
@@ -37,7 +36,7 @@ export default class Running extends Component {
   // }
 
   async setModeToRun(e = null) {
-    const { user, newRepo } = this.props;
+    const { user, newRepo, functions } = this.props;
 
     const result = await runExperiment(
       user,
@@ -47,7 +46,7 @@ export default class Running extends Component {
 
     if (result && result.newStatus === "RUNNING") {
       if (e !== null) e.target.removeAttribute("disabled");
-      this.setState({ status: "RUNNING" });
+      functions.handleSetExperimentStatus("RUNNING");
 
       let tries = 10; // try 10 times
       const checkPavloviaReadyInterval = setInterval(() => {
@@ -84,8 +83,8 @@ export default class Running extends Component {
             });
           Swal.fire({
             icon: "error",
-            title: `Experiment Unavailable`,
-            text: `Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.`,
+            title: `Failed to check availability.`,
+            text: `We can't find the experiment on Pavlovia server. There might be a problem when uploading it, or the Pavlovia server is down. Please try to refresh the status in a while, or refresh the page to start again.`,
             confirmButtonColor: "#666",
           });
         } else {
@@ -103,10 +102,11 @@ export default class Running extends Component {
   }
 
   render() {
-    const { user, projectName, newRepo, functions } = this.props;
-    const { status, completionCode } = this.state;
+    const { user, projectName, newRepo, functions, experimentStatus } =
+      this.props;
+    const { completionCode } = this.state;
 
-    const isRunning = status === "RUNNING";
+    const isRunning = experimentStatus === "RUNNING";
     const pavloviaIsReady = this.state.pavloviaIsReady;
 
     const hasRecruitmentService =
@@ -174,7 +174,7 @@ export default class Running extends Component {
 
     return (
       <>
-        {/* <p className="emphasize">
+        <p className="emphasize">
           {isRunning
             ? pavloviaIsReady
               ? "Experiment compiled, uploaded, and in RUNNING mode, ready to run."
@@ -184,10 +184,9 @@ export default class Running extends Component {
                   ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
                   : "Setting mode to RUNNING ..."
               }`}
-        </p> */}
+        </p>
         <div className="link-set">
           <div className="link-set-buttons">
-            <span>Run Locally :</span>
             {isRunning && pavloviaIsReady && (
               <>
                 <button
@@ -197,6 +196,14 @@ export default class Running extends Component {
                   }}
                 >
                   Try the experiment in RUNNING mode
+                </button>
+                <button
+                  className="button-grey button-small"
+                  onClick={async () => {
+                    await downloadDataFolder(user, newRepo);
+                  }}
+                >
+                  Download experiment data
                 </button>
               </>
             )}
@@ -230,7 +237,7 @@ export default class Running extends Component {
                     const result = await getExperimentStatus(user, newRepo);
 
                     if (result === "RUNNING")
-                      this.setState({ status: "RUNNING" });
+                      functions.handleSetExperimentStatus("RUNNING");
                     else {
                       await this.setModeToRun();
                     }
@@ -263,7 +270,7 @@ export default class Running extends Component {
           </div>
         </div>
 
-        {/* {isRunning && (
+        {isRunning && (
           <p
             style={{
               fontSize: "1rem",
@@ -281,7 +288,7 @@ export default class Running extends Component {
               user.username
             }/${projectName.toLocaleLowerCase()}`}</a>
           </p>
-        )} */}
+        )}
 
         {hasRecruitmentService && isRunning && (
           <div
@@ -290,7 +297,7 @@ export default class Running extends Component {
               marginTop: "1.6rem",
             }}
           >
-            {/* <p>
+            <p>
               Use {recruitName} to recruit participants.
               {user.currentExperiment.prolificWorkspaceModeBool ? (
                 <>
@@ -310,7 +317,7 @@ export default class Running extends Component {
               ) : (
                 ""
               )}
-            </p> */}
+            </p>
             <div className="link-set">
               <div
                 className="link-set-buttons"
