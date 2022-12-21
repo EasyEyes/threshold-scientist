@@ -1,8 +1,5 @@
 import React, { Component } from "react";
 
-import { getUserInfo, redirectToOauth2 } from "./components/user";
-import { handleDrop } from "./components/dropzone";
-
 import "./css/StatusLines.scss";
 
 export default class StatusLines extends Component {
@@ -15,7 +12,14 @@ export default class StatusLines extends Component {
   }
 
   render() {
-    const { currentStep, completedSteps, futureSteps, user } = this.props;
+    const {
+      currentStep,
+      completedSteps,
+      futureSteps,
+      user,
+      filename,
+      projectName,
+    } = this.props;
 
     return (
       <ul className="status-lines">
@@ -40,10 +44,12 @@ export default class StatusLines extends Component {
         <StatusLine
           activated={this.isLineActivated("table")}
           title={"Experiment Filename"}
+          content={filename}
         />
         <StatusLine
           activated={this.isLineActivated("upload")}
           title={"Experiment Name"}
+          content={projectName}
         />
         <StatusLine
           activated={this.isLineActivated("running")}

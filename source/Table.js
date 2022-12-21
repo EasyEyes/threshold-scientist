@@ -64,6 +64,8 @@ export default class Table extends Component {
       tableName: file.name,
     });
 
+    this.props.functions.handleSetFilename(file.name);
+
     const errors = [];
 
     await preprocessExperimentFile(
@@ -150,16 +152,6 @@ export default class Table extends Component {
   }
 
   render() {
-    const smallButtonExtraStyle = {
-      whiteSpace: "nowrap",
-      fontSize: "0.7rem",
-      padding: "0.6rem",
-      borderRadius: "0.3rem",
-    };
-
-    let mostRecentProject;
-    if (this.props.user.projectList.length)
-      mostRecentProject = this.props.user.projectList[0];
     const resourceButtons = [];
     for (const fileType in this.props.resources) {
       resourceButtons.push(
@@ -172,167 +164,106 @@ export default class Table extends Component {
     }
 
     return (
-      <>
-        <div className="table" ref={this.ref}>
-          <p className="dropzone-around-text emphasize">
-            Submit any missing fonts, consent / debrief forms, and other
-            resources.
-          </p>
-          <div className="file-zone">
-            <Dropzone onDrop={this.onDrop}>
-              {({ getRootProps, getInputProps }) => (
-                <div
-                  {...getRootProps({ className: "dropzone" })}
-                  ref={this.dropZoneRef}
-                >
-                  <input {...getInputProps()} />
-                  {/* <p className="dropzone-main-text emphasize"></p> */}
-                  <p className="dropzone-sub-text">
-                    <i
-                      className="bi bi-download download-icon-box"
-                      style={{
-                        fontSize: "1.8rem",
-                      }}
-                    ></i>
-                    <br /> Drop files here, or click to browse for them.
-                  </p>
-                </div>
-              )}
-            </Dropzone>
-            <div className="resource-buttons">{resourceButtons}</div>
-            {/* <div className="link-set-buttons-login">
-            {mostRecentProject !== null && (
-              <>
-                <button
-                  className="button-small button-grey"
-                  style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
-                  onClick={() => {
-                    window.open(
-                      `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
-                      "_blank"
-                    );
-                  }}
-                >
-                  View last experiment
-                  <br />
-                  <b>{mostRecentProject.name}</b>
-                </button>
-
-                <button
-                  className="button-small button-grey"
-                  style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
-                  onClick={async () => {
-                    await downloadDataFolder(user, mostRecentProject);
-                  }}
-                >
-                  Download last experiment data
-                  <br />
-                  <b>{mostRecentProject.name}</b>
-                </button>
-              </>
-            )}
-
-            <button
-              className="button-grey button-small"
-              style={smallButtonExtraStyle}
-              onClick={() => {
-                window.open(`https://pavlovia.org/dashboard?tab=1`, "_blank");
-              }}
-            >
-              View all experiments in Pavlovia
-            </button>
-
-            {keep below commented }
-            {/* <TemporaryLog style={smallButtonExtraStyle} /> */}
-
-            {/* <button
-                className="button-grey button-small"
-                onClick={() => {
-                  window.open(
-                    `https://gitlab.pavlovia.org/dashboard/projects`,
-                    "_blank"
-                  );
-                }}
+      <div className="table" ref={this.ref}>
+        <p className="dropzone-around-text emphasize">
+          Submit any missing fonts, consent / debrief forms, and other
+          resources.
+        </p>
+        <div className="file-zone">
+          <Dropzone onDrop={this.onDrop}>
+            {({ getRootProps, getInputProps }) => (
+              <div
+                {...getRootProps({ className: "dropzone" })}
+                ref={this.dropZoneRef}
               >
-                GitLab projects
-              </button> */}
-            {/* uncomment div below*/}
-            {/* </div> */}
-          </div>
-          <p
-            className={`dropzone-around-text emphasize${
-              this.state.errors.filter(
-                (err) => err.context === "preprocessor" && err.kind === "error"
-              ).length
-                ? " has-error"
-                : ""
-            }`}
-          >
-            {this.state.tableName
-              ? this.state.tableName
-              : "Then, submit ↑ your experiment table, to be checked now."}
-          </p>
+                <input {...getInputProps()} />
+                {/* <p className="dropzone-main-text emphasize"></p> */}
+                <p className="dropzone-sub-text">
+                  <i
+                    className="bi bi-download download-icon-box"
+                    style={{
+                      fontSize: "1.8rem",
+                    }}
+                  ></i>
+                  <br /> Drop files here, or click to browse for them.
+                </p>
+              </div>
+            )}
+          </Dropzone>
 
-          {this.state.errors.length !== 0 && (
-            <div className="errors">
-              {this.state.errors.map((error, index) => (
-                <div
-                  className={`error-item error-${error.kind}`}
-                  key={`error-${index}`}
-                >
-                  <div className="error-flex">
-                    <p>
-                      {error.parameters ? (
-                        <>
-                          <span className="error-parameter">
-                            {error.parameters.join("<br/>")}
-                          </span>
-                          <br />
-                        </>
-                      ) : null}
-                      <span className={`error-name error-name-${error.kind}`}>
-                        {error.name}
-                      </span>
-                    </p>
-                    <i
-                      className="bi bi-x error-close"
-                      onClick={() => {
-                        const newErrors = this.state.errors.filter(
-                          (err, i) => i !== index
-                        );
-                        const newName = newErrors.length
-                          ? this.state.name
-                          : null;
-                        this.setState({
-                          errors: newErrors,
-                          tableName: newName,
-                        });
-                      }}
-                    ></i>
-                  </div>
-
-                  {error.message && (
-                    <p
-                      className="error-message"
-                      dangerouslySetInnerHTML={{
-                        __html: error.message,
-                      }}
-                    ></p>
-                  )}
-                  {error.hint && (
-                    <p
-                      className="error-hint"
-                      dangerouslySetInnerHTML={{
-                        __html: error.hint,
-                      }}
-                    ></p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="resource-buttons">{resourceButtons}</div>
         </div>
-      </>
+        <p
+          className={`dropzone-around-text emphasize${
+            this.state.errors.filter(
+              (err) => err.context === "preprocessor" && err.kind === "error"
+            ).length
+              ? " has-error"
+              : ""
+          }`}
+        >
+          {this.state.tableName
+            ? this.state.tableName
+            : "Then, submit ↑ your experiment table, to be checked now."}
+        </p>
+
+        {this.state.errors.length !== 0 && (
+          <div className="errors">
+            {this.state.errors.map((error, index) => (
+              <div
+                className={`error-item error-${error.kind}`}
+                key={`error-${index}`}
+              >
+                <div className="error-flex">
+                  <p>
+                    {error.parameters ? (
+                      <>
+                        <span className="error-parameter">
+                          {error.parameters.join("<br/>")}
+                        </span>
+                        <br />
+                      </>
+                    ) : null}
+                    <span className={`error-name error-name-${error.kind}`}>
+                      {error.name}
+                    </span>
+                  </p>
+                  <i
+                    className="bi bi-x error-close"
+                    onClick={() => {
+                      const newErrors = this.state.errors.filter(
+                        (err, i) => i !== index
+                      );
+                      const newName = newErrors.length ? this.state.name : null;
+                      this.setState({
+                        errors: newErrors,
+                        tableName: newName,
+                      });
+                    }}
+                  ></i>
+                </div>
+
+                {error.message && (
+                  <p
+                    className="error-message"
+                    dangerouslySetInnerHTML={{
+                      __html: error.message,
+                    }}
+                  ></p>
+                )}
+                {error.hint && (
+                  <p
+                    className="error-hint"
+                    dangerouslySetInnerHTML={{
+                      __html: error.hint,
+                    }}
+                  ></p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     );
   }
 }

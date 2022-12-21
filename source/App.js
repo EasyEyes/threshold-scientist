@@ -36,6 +36,7 @@ export default class App extends Component {
         folders: [],
         code: [],
       },
+      filename: null,
       projectName: null,
       newRepo: null,
     };
@@ -47,6 +48,7 @@ export default class App extends Component {
       handleUpdateUser: this.handleUpdateUser.bind(this),
       handleLogin: this.handleLogin.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
+      handleSetFilename: this.handleSetFilename.bind(this),
       handleSetProjectName: this.handleSetProjectName.bind(this),
       handleSetExperiment: this.handleSetExperiment.bind(this),
       handleGetNewRepo: this.handleGetNewRepo.bind(this),
@@ -157,6 +159,12 @@ export default class App extends Component {
     });
   }
 
+  handleSetFilename(filename) {
+    this.setState({
+      filename: filename,
+    });
+  }
+
   handleSetProjectName(projectName) {
     this.setState({
       projectName: projectName,
@@ -205,6 +213,7 @@ export default class App extends Component {
       futureSteps,
       user,
       resources,
+      filename,
       projectName,
       newRepo,
     } = this.state;
@@ -347,11 +356,12 @@ export default class App extends Component {
               functions={this.functions}
               user={user}
               resources={resources}
+              filename={filename}
               projectName={projectName}
               newRepo={newRepo}
               currentStep={currentStep}
             />
-            <StatusBar currentStep={currentStep} />
+            {/* <StatusBar currentStep={currentStep} /> */}
             {steps}
           </div>
         </Suspense>

@@ -60,13 +60,13 @@ export default class Login extends Component {
         node = (
           <>
             {/* <p className="emphasize"> */}
-            {/* Connect your Pavlovia account to compile experiments. */}
             <button
               className="button-green connect-to-pav"
               onClick={this.login}
             >
               Connect
             </button>
+            Connect to Pavlovia account to compile experiments
             {/* </p> */}
           </>
         );
