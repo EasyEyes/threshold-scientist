@@ -1,4 +1,4 @@
-import React, { Component, PureComponent } from "react";
+import React, { Component } from "react";
 
 export default class StatusBar extends Component {
   constructor(props) {
