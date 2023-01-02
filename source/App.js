@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
 
-import StatusBar from "./StatusBar";
+// import StatusBar from "./StatusBar";
 import StatusLines from "./StatusLines";
 
 import { allSteps } from "./components/steps";
@@ -240,6 +240,7 @@ export default class App extends Component {
         resources={resources}
         projectName={projectName}
         newRepo={newRepo}
+        experimentStatus={experimentStatus}
       />
     );
 

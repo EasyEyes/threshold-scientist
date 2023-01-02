@@ -58,8 +58,26 @@ export default class StatusLines extends Component {
           content={user && filename && projectName ? experimentStatus : ""}
         />
         <StatusLine
-          activated={this.isLineActivated("running")}
+          activated={!!(user && projectName && experimentStatus === "RUNNING")}
           title={"Experiment URL"}
+          content={
+            user && projectName && experimentStatus === "RUNNING" ? (
+              <a
+                href={`https://run.pavlovia.org/${
+                  user.username
+                }/${projectName.toLocaleLowerCase()}`}
+                target="_blank"
+                rel="noopenner noreferrer"
+                style={{
+                  color: "#666",
+                }}
+              >{`https://run.pavlovia.org/${
+                user.username
+              }/${projectName.toLocaleLowerCase()}`}</a>
+            ) : (
+              ""
+            )
+          }
         />
       </ul>
     );
