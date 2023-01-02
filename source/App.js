@@ -1,15 +1,18 @@
 import React, { Component, Suspense } from "react";
 import { renderToString } from "react-dom/server";
+import Swal from "sweetalert2";
 
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
 
-import { allSteps } from "./components/steps";
+// import StatusBar from "./StatusBar";
+import StatusLines from "./StatusLines";
 
-import "./css/App.scss";
-import Swal from "sweetalert2";
+import { allSteps } from "./components/steps";
 import { Compatibility } from "./components";
 import { getAllProjects } from "./components/gitlabUtils";
+
+import "./css/App.scss";
 
 export default class App extends Component {
   constructor(props) {
@@ -33,8 +36,10 @@ export default class App extends Component {
         folders: [],
         code: [],
       },
+      filename: null,
       projectName: null,
       newRepo: null,
+      experimentStatus: "INACTIVE",
     };
 
     this.functions = {
@@ -44,9 +49,11 @@ export default class App extends Component {
       handleUpdateUser: this.handleUpdateUser.bind(this),
       handleLogin: this.handleLogin.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
+      handleSetFilename: this.handleSetFilename.bind(this),
       handleSetProjectName: this.handleSetProjectName.bind(this),
       handleSetExperiment: this.handleSetExperiment.bind(this),
       handleGetNewRepo: this.handleGetNewRepo.bind(this),
+      handleSetExperimentStatus: this.handleSetExperimentStatus.bind(this),
     };
 
     this.closeGlossary = this.closeGlossary.bind(this);
@@ -154,6 +161,12 @@ export default class App extends Component {
     });
   }
 
+  handleSetFilename(filename) {
+    this.setState({
+      filename: filename,
+    });
+  }
+
   handleSetProjectName(projectName) {
     this.setState({
       projectName: projectName,
@@ -188,6 +201,12 @@ export default class App extends Component {
     });
   }
 
+  handleSetExperimentStatus(newStatus) {
+    this.setState({
+      experimentStatus: newStatus,
+    });
+  }
+
   closeGlossary() {
     this.setState({
       readingGlossary: false,
@@ -202,26 +221,28 @@ export default class App extends Component {
       futureSteps,
       user,
       resources,
+      filename,
       projectName,
       newRepo,
+      experimentStatus,
     } = this.state;
     const steps = [];
 
-    for (const stepName of this.allSteps)
-      steps.push(
-        <Step
-          key={stepName}
-          name={stepName}
-          isCurrentStep={currentStep === stepName}
-          isCompletedStep={completedSteps.includes(stepName)}
-          futureSteps={futureSteps}
-          functions={this.functions}
-          user={user}
-          resources={resources}
-          projectName={projectName}
-          newRepo={newRepo}
-        />
-      );
+    steps.push(
+      <Step
+        key={currentStep}
+        name={currentStep}
+        isCurrentStep={currentStep === currentStep}
+        isCompletedStep={completedSteps.includes(currentStep)}
+        futureSteps={futureSteps}
+        functions={this.functions}
+        user={user}
+        resources={resources}
+        projectName={projectName}
+        newRepo={newRepo}
+        experimentStatus={experimentStatus}
+      />
+    );
 
     return (
       <>
@@ -338,6 +359,20 @@ export default class App extends Component {
                 💻📱&nbsp;&nbsp;Compatibility
               </button>
             </div>
+            <StatusLines
+              key={currentStep}
+              futureSteps={futureSteps}
+              completedSteps={completedSteps}
+              functions={this.functions}
+              user={user}
+              resources={resources}
+              filename={filename}
+              projectName={projectName}
+              newRepo={newRepo}
+              currentStep={currentStep}
+              experimentStatus={experimentStatus}
+            />
+            {/* <StatusBar currentStep={currentStep} /> */}
             {steps}
           </div>
         </Suspense>

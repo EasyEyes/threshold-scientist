@@ -84,7 +84,7 @@ export default class Step extends PureComponent {
         }${isCompletedStep ? " step-completed" : ""}`}
         ref={this.ref}
       >
-        {isCurrentStep && <p className="step-current-indicator">now</p>}
+        {/* {isCurrentStep && <p className="step-current-indicator">now</p>} */}
         {component}
       </div>
     );

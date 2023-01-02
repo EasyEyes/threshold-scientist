@@ -112,6 +112,9 @@ export default class Table extends Component {
 
           return;
         } else {
+          // only accept the filename as official when there are no errors
+          this.props.functions.handleSetFilename(file.name);
+
           if (user.id != undefined) {
             // user logged in
             this.props.functions.handleSetProjectName(
@@ -133,6 +136,7 @@ export default class Table extends Component {
           });
         }
       }
+
       // this.props.functions.handleSetExperiment
     );
 

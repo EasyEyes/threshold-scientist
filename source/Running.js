@@ -15,7 +15,6 @@ export default class Running extends Component {
     super(props);
 
     this.state = {
-      status: "INACTIVE",
       pavloviaIsReady: false,
       completionCode: undefined,
     };
@@ -37,7 +36,7 @@ export default class Running extends Component {
   // }
 
   async setModeToRun(e = null) {
-    const { user, newRepo } = this.props;
+    const { user, newRepo, functions } = this.props;
 
     const result = await runExperiment(
       user,
@@ -47,7 +46,7 @@ export default class Running extends Component {
 
     if (result && result.newStatus === "RUNNING") {
       if (e !== null) e.target.removeAttribute("disabled");
-      this.setState({ status: "RUNNING" });
+      functions.handleSetExperimentStatus("RUNNING");
 
       let tries = 10; // try 10 times
       const checkPavloviaReadyInterval = setInterval(() => {
@@ -103,10 +102,11 @@ export default class Running extends Component {
   }
 
   render() {
-    const { user, projectName, newRepo, functions } = this.props;
-    const { status, completionCode } = this.state;
+    const { user, projectName, newRepo, functions, experimentStatus } =
+      this.props;
+    const { completionCode } = this.state;
 
-    const isRunning = status === "RUNNING";
+    const isRunning = experimentStatus === "RUNNING";
     const pavloviaIsReady = this.state.pavloviaIsReady;
 
     const hasRecruitmentService =
@@ -237,7 +237,7 @@ export default class Running extends Component {
                     const result = await getExperimentStatus(user, newRepo);
 
                     if (result === "RUNNING")
-                      this.setState({ status: "RUNNING" });
+                      functions.handleSetExperimentStatus("RUNNING");
                     else {
                       await this.setModeToRun();
                     }
@@ -270,7 +270,7 @@ export default class Running extends Component {
           </div>
         </div>
 
-        {isRunning && (
+        {/* {isRunning && (
           <p
             style={{
               fontSize: "1rem",
@@ -288,155 +288,158 @@ export default class Running extends Component {
               user.username
             }/${projectName.toLocaleLowerCase()}`}</a>
           </p>
-        )}
+        )} */}
 
         {hasRecruitmentService && isRunning && (
-          <div
-            className="recruit-service"
-            style={{
-              marginTop: "1.6rem",
-            }}
-          >
-            <p>
-              Use {recruitName} to recruit participants.
-              {user.currentExperiment.prolificWorkspaceModeBool ? (
-                <>
-                  {`(You are using `}
-                  <a
-                    style={{
-                      color: "#666",
-                    }}
-                    href="https://researcher-help.prolific.co/hc/en-gb/sections/4500136384412-Workspaces"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Prolific Workspace
-                  </a>
-                  {`.)`}
-                </>
-              ) : (
-                ""
-              )}
-            </p>
-            <div className="link-set">
-              <div
-                className="link-set-buttons"
-                style={{
-                  flexDirection: "row",
-                }}
-              >
-                <>
-                  {completionCode ? (
-                    <button
-                      className="button-grey button-small"
-                      onClick={async () => {
-                        // this.state.completionCode = await generateAndUploadCompletionURL(
-                        //   user,
-                        //   newRepo,
-                        //   functions.handleUpdateUser
-                        // );
-
-                        const studyParams =
-                          "?external_study_url=" +
-                          encodeURIComponent(
-                            user.currentExperiment.experimentUrl
-                          ) +
-                          "&completion_code=" +
-                          encodeURIComponent(completionCode) +
-                          "&completion_option=url" +
-                          "&prolific_id_option=url_parameters";
-
-                        // hardcoded for Prolific
-                        const url = user.currentExperiment
-                          .prolificWorkspaceModeBool
-                          ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/new-study${studyParams}`
-                          : `https://app.prolific.co/studies/new${studyParams}`;
-
-                        window.open(url, "_blank");
+          <>
+            <hr />
+            <div
+              className="recruit-service"
+              style={{
+                marginTop: "1.6rem",
+              }}
+            >
+              <p>
+                Use {recruitName} to recruit participants.
+                {user.currentExperiment.prolificWorkspaceModeBool ? (
+                  <>
+                    {`(You are using `}
+                    <a
+                      style={{
+                        color: "#666",
                       }}
+                      href="https://researcher-help.prolific.co/hc/en-gb/sections/4500136384412-Workspaces"
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      Go to {recruitName} to finalize and run your study
-                    </button>
-                  ) : (
-                    <button
-                      className="button-grey button-small"
-                      onClick={async () => {
-                        const code = await generateAndUploadCompletionURL(
-                          user,
-                          newRepo,
-                          functions.handleUpdateUser
-                        );
-                        this.setState({
-                          completionCode: code,
-                        });
-                      }}
-                    >
-                      Generate completion code
-                    </button>
-                  )}
-                </>
-
-                <button
-                  className="button-grey button-small"
-                  onClick={() => {
-                    window.open(
-                      user.currentExperiment.prolificWorkspaceModeBool
-                        ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/active`
-                        : "https://app.prolific.co/researcher/studies/active",
-                      "_blank"
-                    );
+                      Prolific Workspace
+                    </a>
+                    {`.)`}
+                  </>
+                ) : (
+                  ""
+                )}
+              </p>
+              <div className="link-set">
+                <div
+                  className="link-set-buttons"
+                  style={{
+                    flexDirection: "row",
                   }}
                 >
-                  Go to {recruitName} to view active studies
-                </button>
+                  <>
+                    {completionCode ? (
+                      <button
+                        className="button-grey button-small"
+                        onClick={async () => {
+                          // this.state.completionCode = await generateAndUploadCompletionURL(
+                          //   user,
+                          //   newRepo,
+                          //   functions.handleUpdateUser
+                          // );
+
+                          const studyParams =
+                            "?external_study_url=" +
+                            encodeURIComponent(
+                              user.currentExperiment.experimentUrl
+                            ) +
+                            "&completion_code=" +
+                            encodeURIComponent(completionCode) +
+                            "&completion_option=url" +
+                            "&prolific_id_option=url_parameters";
+
+                          // hardcoded for Prolific
+                          const url = user.currentExperiment
+                            .prolificWorkspaceModeBool
+                            ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/new-study${studyParams}`
+                            : `https://app.prolific.co/studies/new${studyParams}`;
+
+                          window.open(url, "_blank");
+                        }}
+                      >
+                        Go to {recruitName} to finalize and run your study
+                      </button>
+                    ) : (
+                      <button
+                        className="button-grey button-small"
+                        onClick={async () => {
+                          const code = await generateAndUploadCompletionURL(
+                            user,
+                            newRepo,
+                            functions.handleUpdateUser
+                          );
+                          this.setState({
+                            completionCode: code,
+                          });
+                        }}
+                      >
+                        Generate completion code
+                      </button>
+                    )}
+                  </>
+
+                  <button
+                    className="button-grey button-small"
+                    onClick={() => {
+                      window.open(
+                        user.currentExperiment.prolificWorkspaceModeBool
+                          ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/active`
+                          : "https://app.prolific.co/researcher/studies/active",
+                        "_blank"
+                      );
+                    }}
+                  >
+                    Go to {recruitName} to view active studies
+                  </button>
+                </div>
               </div>
+              {completionCode ? (
+                <>
+                  <p className="smaller-text">
+                    Click to copy the Prolific study URL{" "}
+                    <span
+                      className="text-copy"
+                      onClick={
+                        // copy to clipboard
+                        () => {
+                          navigator.clipboard.writeText(
+                            user.currentExperiment.experimentUrl
+                          );
+                        }
+                      }
+                    >
+                      {user.currentExperiment.experimentUrl}
+                    </span>
+                    .
+                  </p>
+                  <p className="smaller-text">
+                    The completion code is{" "}
+                    <span
+                      className="text-copy"
+                      onClick={
+                        // copy to clipboard
+                        () => {
+                          navigator.clipboard.writeText(completionCode);
+                        }
+                      }
+                    >
+                      {completionCode}
+                    </span>
+                    .
+                  </p>
+                </>
+              ) : (
+                <p
+                  style={{
+                    fontSize: "1rem",
+                  }}
+                >
+                  Please generate the completion code to view the Prolific study
+                  URL.
+                </p>
+              )}
             </div>
-            {completionCode ? (
-              <>
-                <p className="smaller-text">
-                  Click to copy the Prolific study URL{" "}
-                  <span
-                    className="text-copy"
-                    onClick={
-                      // copy to clipboard
-                      () => {
-                        navigator.clipboard.writeText(
-                          user.currentExperiment.experimentUrl
-                        );
-                      }
-                    }
-                  >
-                    {user.currentExperiment.experimentUrl}
-                  </span>
-                  .
-                </p>
-                <p className="smaller-text">
-                  The completion code is{" "}
-                  <span
-                    className="text-copy"
-                    onClick={
-                      // copy to clipboard
-                      () => {
-                        navigator.clipboard.writeText(completionCode);
-                      }
-                    }
-                  >
-                    {completionCode}
-                  </span>
-                  .
-                </p>
-              </>
-            ) : (
-              <p
-                style={{
-                  fontSize: "1rem",
-                }}
-              >
-                Please generate the completion code to view the Prolific study
-                URL.
-              </p>
-            )}
-          </div>
+          </>
         )}
       </>
     );

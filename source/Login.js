@@ -59,16 +59,15 @@ export default class Login extends Component {
       case null: // no login
         node = (
           <>
-            <p className="emphasize">
-              Connect your Pavlovia account to compile experiments.
-              <br />
-              <button
-                className="button-green connect-to-pav"
-                onClick={this.login}
-              >
-                Connect
-              </button>
-            </p>
+            {/* <p className="emphasize"> */}
+            <button
+              className="button-green connect-to-pav"
+              onClick={this.login}
+            >
+              Connect
+            </button>
+            <p>Connect to Pavlovia account to compile experiments</p>
+            {/* </p> */}
           </>
         );
         break;
@@ -150,20 +149,6 @@ export default class Login extends Component {
             >
               View all experiments in Pavlovia
             </button>
-
-            {/* <TemporaryLog style={smallButtonExtraStyle} /> */}
-
-            {/* <button
-                className="button-grey button-small"
-                onClick={() => {
-                  window.open(
-                    `https://gitlab.pavlovia.org/dashboard/projects`,
-                    "_blank"
-                  );
-                }}
-              >
-                GitLab projects
-              </button> */}
           </div>
         </>
       );
