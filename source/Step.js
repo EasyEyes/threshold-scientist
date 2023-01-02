@@ -29,7 +29,7 @@ export default class Step extends PureComponent {
     const { name, isCurrentStep, isCompletedStep } = this.props;
     if (isCurrentStep && isCompletedStep) throw "STEP ERROR";
     if (!isCurrentStep && !isCompletedStep) return <></>;
-    sessionStorage.setItem("phase", name);
+
     let component;
     switch (name) {
       case "login":

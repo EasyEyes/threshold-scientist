@@ -66,7 +66,7 @@ export default class Login extends Component {
             >
               Connect
             </button>
-            Connect to Pavlovia account to compile experiments
+            <p>Connect to Pavlovia account to compile experiments</p>
             {/* </p> */}
           </>
         );

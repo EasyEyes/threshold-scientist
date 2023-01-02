@@ -18,31 +18,20 @@ export const handleDrop = async (
 ) => {
   const resourcesList: File[] = [];
   let experimentFile = null;
+
   for (const file of files) {
+    // get extension
     const ext = getFileExtension(file);
-    if (isAcceptableExtension(ext)) {
+    // check if we accept this kind of file by extension
+    if (!isAcceptableExtension(ext)) {
+      // give an error warning for the file if it's not supported
       await Swal.fire({
-        title: "Uploading files for you ...",
-        // html: 'I will close in <b></b> milliseconds.',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: async () => {
-          // @ts-ignore
-          Swal.showLoading(null);
-
-          await createOrUpdateCommonResources(user, resourcesList);
-          addResourcesForApp(await getCommonResourcesNames(user));
-
-          Swal.close();
-        },
-      });
-    } else {
-      Swal.fire({
         icon: "error",
         title: `${file.name} was discarded.`,
         text: `Sorry, we cannot accept files with extension '.${ext}'.`,
         confirmButtonColor: "#666",
       });
+      // continue to check the next file
       continue;
     }
 
@@ -50,9 +39,25 @@ export const handleDrop = async (
     else experimentFile = file;
   }
 
-  // if (resourcesList.length > 0) {
-  // }
+  // handle valid resource files
+  if (resourcesList.length > 0) {
+    await Swal.fire({
+      title: "Uploading files for you ...",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: async () => {
+        // @ts-ignore
+        Swal.showLoading(null);
 
+        await createOrUpdateCommonResources(user, resourcesList);
+        addResourcesForApp(await getCommonResourcesNames(user));
+
+        Swal.close();
+      },
+    });
+  }
+
+  // handle experiment file
   if (experimentFile) {
     // Build an experiment
     userRepoFiles.experiment = experimentFile;

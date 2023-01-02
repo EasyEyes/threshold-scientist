@@ -43,6 +43,7 @@ export default class Upload extends Component {
     //   this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
     const offerPilotingOption =
       !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
+
     return (
       <>
         <p className="emphasize">
