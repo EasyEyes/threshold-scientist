@@ -16,6 +16,13 @@
       align-items: center;
       justify-content: flex-start;
       flex: 1;
+
+      .status-line-content {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.3rem;
+      }
     }
 
     // login
@@ -42,7 +49,7 @@
 
   .status-line-inactivated {
     * {
-      color: #999;
+      color: #ccc;
     }
   }
 }

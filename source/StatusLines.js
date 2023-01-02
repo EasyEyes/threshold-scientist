@@ -11,11 +11,39 @@ export default class StatusLines extends Component {
     return this.props.completedSteps.includes(step);
   }
 
+  getStatusLineFilename(filename) {
+    return (
+      <span className="status-line-content">
+        {filename}
+        <button
+          className="button-small button-grey"
+          style={{
+            whiteSpace: "nowrap",
+            fontSize: "0.7em",
+            padding: "0.6em",
+            borderRadius: "0.3em",
+            color: "#fff",
+          }}
+          onClick={async (e) => {
+            // change this button class to button-wait
+            e.target.classList.add("button-wait");
+
+            await this.props.functions.handleReturnToStep("table");
+            this.props.functions.handleSetFilename("");
+            this.props.functions.handleSetProjectName("");
+          }}
+        >
+          Upload a new file
+        </button>
+      </span>
+    );
+  }
+
   render() {
     const {
-      currentStep,
-      completedSteps,
-      futureSteps,
+      // currentStep,
+      // completedSteps,
+      // futureSteps,
       user,
       filename,
       projectName,
@@ -38,14 +66,14 @@ export default class StatusLines extends Component {
                 {user.name} ({user.username})
               </span>
             ) : (
-              ""
+              "Unconnected"
             )
           }
         />
         <StatusLine
           activated={!!filename}
-          title={"Experiment Filename"}
-          content={filename}
+          title={"Experiment File"}
+          content={filename ? this.getStatusLineFilename(filename) : ""}
         />
         <StatusLine
           activated={!!projectName}
