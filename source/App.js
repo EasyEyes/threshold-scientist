@@ -2,6 +2,7 @@ import React, { Component, Suspense } from "react";
 import { renderToString } from "react-dom/server";
 import Swal from "sweetalert2";
 
+import History from "./History";
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
 
@@ -227,6 +228,8 @@ export default class App extends Component {
       experimentStatus,
     } = this.state;
     const steps = [];
+
+    if (user) steps.push(<History key={"history"} user={user} />);
 
     steps.push(
       <Step
