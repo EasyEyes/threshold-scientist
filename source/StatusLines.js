@@ -54,7 +54,7 @@ export default class StatusLines extends Component {
       <ul className="status-lines">
         <StatusLine
           activated={!!user}
-          title={"Pavlovia Account"}
+          title={"Pavlovia account"}
           content={
             user ? (
               <span className="pavlovia-account-name">
@@ -72,17 +72,17 @@ export default class StatusLines extends Component {
         />
         <StatusLine
           activated={!!filename}
-          title={"Experiment File"}
+          title={"Experiment file"}
           content={filename ? this.getStatusLineFilename(filename) : ""}
         />
         <StatusLine
           activated={!!projectName}
-          title={"Experiment Name"}
+          title={"Experiment name"}
           content={projectName}
         />
         <StatusLine
           activated={!!(user && filename && projectName)}
-          title={"Experiment Mode"}
+          title={"Experiment mode"}
           content={user && filename && projectName ? experimentStatus : ""}
         />
         <StatusLine
@@ -126,8 +126,8 @@ class StatusLine extends Component {
           activated ? "status-line-activated" : "status-line-inactivated"
         }`}
       >
-        <span className="line-title">{title}</span>
-        <span> : </span>
+        <span className="line-title">{title}:</span>
+        {/* <span>: </span> */}
         <span className="line-content">{content}</span>
       </li>
     );

@@ -197,14 +197,6 @@ export default class Running extends Component {
                 >
                   Try the experiment in RUNNING mode
                 </button>
-                <button
-                  className="button-grey button-small"
-                  onClick={async () => {
-                    await downloadDataFolder(user, newRepo);
-                  }}
-                >
-                  Download experiment data
-                </button>
               </>
             )}
 
@@ -295,9 +287,9 @@ export default class Running extends Component {
             <hr />
             <div
               className="recruit-service"
-              style={{
-                marginTop: "1.6rem",
-              }}
+              // style={{
+              //   marginTop: "1.6rem",
+              // }}
             >
               <p>
                 Use {recruitName} to recruit participants.
@@ -438,6 +430,22 @@ export default class Running extends Component {
                   URL.
                 </p>
               )}
+            </div>
+          </>
+        )}
+
+        {isRunning && pavloviaIsReady && (
+          <>
+            <hr />
+            <div className="link-set-buttons">
+              <button
+                className="button-grey button-small"
+                onClick={async () => {
+                  await downloadDataFolder(user, newRepo);
+                }}
+              >
+                Download results
+              </button>
             </div>
           </>
         )}
