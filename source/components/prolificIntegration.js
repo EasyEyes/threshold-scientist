@@ -93,8 +93,7 @@ export const prolificCreateDraftOnClick = async (
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        Authorization:
-          "Token XlJQZJfE1vbw3nDXvrL64p1cFuvEgnDTr1eo1WzhiZ-XCNCt9wsqXomi7nhUba6UVsvRXedtvUcTzFTAyaScwQvY5e_nvgxfX_6QnXHeECchPcWOULjg9rGJ",
+        Authorization: "Token token",
       },
     }
   );
