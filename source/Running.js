@@ -11,7 +11,6 @@ import {
 import { prolificCreateDraftOnClick } from "./components/prolificIntegration";
 
 import "./css/Running.scss";
-
 export default class Running extends Component {
   constructor(props) {
     super(props);
@@ -130,6 +129,115 @@ export default class Running extends Component {
       fontSize: "0.7rem",
       padding: "0.6rem",
       borderRadius: "0.3rem",
+    };
+
+    const prolificLangType = {
+      NATIVE: "NATIVE",
+      FLUENT: "FLUENT",
+    };
+
+    const findProlificLanguageAttributes = (
+      field,
+      type = prolificLangType.NATIVE
+    ) => {
+      const result = [];
+      const languages = field?.split(",") ?? [];
+      languages.forEach((element) => {
+        element = element?.trim();
+        const v = { ...LANGUAGE_INDEX_PROLIFIC_MAPPING[element] };
+        v["index"] =
+          type === prolificLangType.FLUENT ? v["index"] + 1 : v["index"];
+        v["value"] = true;
+        result.push(v);
+      });
+      return result;
+    };
+
+    const prolificCreateDraftOnClick = async () => {
+      const prolificStudyDraftApiUrl =
+        "https://api.prolific.co/api/v1/studies/";
+      const payload = {
+        name: user.currentExperiment.titleOfStudy ?? "",
+        internal_name: this._getPavloviaExperimentUrl(),
+        description: user.currentExperiment.descriptionOfStudy ?? "",
+        external_study_url: user.currentExperiment.experimentUrl,
+        prolific_id_option: "url_parameters",
+        completion_code: completionCode,
+        completion_option: "url",
+        total_available_places:
+          user.currentExperiment._participantsHowMany ?? 10,
+        estimated_completion_time:
+          user.currentExperiment._participantDurationMinutes ?? 1,
+        reward: user.currentExperiment._online2Pay,
+        device_compatibility:
+          user.currentExperiment._online3DeviceKind?.split(",") ?? [],
+        peripheral_requirements:
+          user.currentExperiment._online3RequiredServices?.split(",") ?? [],
+        eligibility_requirements: [
+          {
+            id: null,
+            type: "SelectAnswer",
+            attributes: findProlificLanguageAttributes(
+              user.currentExperiment._online5LanguageFirst
+            ),
+            query: {
+              id: "54ac6ea9fdf99b2204feb899",
+              question: "What is your first language?",
+              description: "",
+              title: "First Language",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: ["onboarding-2", "core-5", "default_export_language"],
+            },
+          },
+          {
+            id: null,
+            type: "MultiSelectAnswer",
+            attributes: findProlificLanguageAttributes(
+              user.currentExperiment._online5LanguageFluent,
+              prolificLangType.FLUENT
+            ),
+            query: {
+              id: "58c6b44ea4dd0a4799361afc",
+              question: "Which of the following languages are you fluent in?",
+              description: "Select the languages that you are fluent in.",
+              title: "Fluent languages",
+              help_text:
+                "<b>Please note</b>: when selecting multiple languages, participants who are fluent in any one of those languages will be eligible for your study. e.g. the study will recruit participants who are fluent in English <b>OR</b> German, not both.",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: ["rep_sample_language", "core-13"],
+            },
+          },
+        ],
+      };
+
+      const response = await axios.post(
+        prolificStudyDraftApiUrl,
+        JSON.stringify(payload),
+        {
+          withCredentials: false,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            Authorization: "Token token",
+          },
+        }
+      );
+      if (response.status !== 201) {
+        console.log("error:" + response);
+      } else {
+        window
+          .open(
+            "https://app.prolific.co/researcher/workspaces/studies/" +
+              response.data.id,
+            "_blank"
+          )
+          .focus();
+      }
     };
 
     const buttonGoToPavlovia = (
