@@ -169,7 +169,8 @@ export default class Table extends Component {
       <div className="table" ref={this.ref}>
         <p className="dropzone-around-text emphasize">
           Submit any missing fonts, consent / debrief forms, and other
-          resources.
+          resources. Then submit your experiment table, to be checked and
+          compiled now.
         </p>
         <div className="file-zone">
           <Dropzone onDrop={this.onDrop}>
@@ -181,13 +182,13 @@ export default class Table extends Component {
                 <input {...getInputProps()} />
                 {/* <p className="dropzone-main-text emphasize"></p> */}
                 <p className="dropzone-sub-text">
-                  <i
+                  {/* <i
                     className="bi bi-download download-icon-box"
                     style={{
                       fontSize: "1.8rem",
                     }}
-                  ></i>
-                  <br /> Drop files here, or click to browse for them.
+                  ></i> */}
+                  Click to browse for the files, or drop them here.
                 </p>
               </div>
             )}
@@ -195,19 +196,20 @@ export default class Table extends Component {
 
           <div className="resource-buttons">{resourceButtons}</div>
         </div>
-        <p
-          className={`dropzone-around-text emphasize${
-            this.state.errors.filter(
-              (err) => err.context === "preprocessor" && err.kind === "error"
-            ).length
-              ? " has-error"
-              : ""
-          }`}
-        >
-          {this.state.tableName
-            ? this.state.tableName
-            : "Then, submit ↑ your experiment table, to be checked now."}
-        </p>
+
+        {this.state.tableName ? (
+          <p
+            className={`dropzone-around-text emphasize${
+              this.state.errors.filter(
+                (err) => err.context === "preprocessor" && err.kind === "error"
+              ).length
+                ? " has-error"
+                : ""
+            }`}
+          >
+            {this.state.tableName}
+          </p>
+        ) : null}
 
         {this.state.errors.length !== 0 && (
           <div className="errors">
