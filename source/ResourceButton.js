@@ -18,6 +18,11 @@ const matchIcon = (name) => {
   }
 };
 
+const processNameForSinglePlural = (name, length) => {
+  // ! dangerous assumption: no 's' in any of the names
+  return length <= 1 ? name.replace("s", "") : name;
+};
+
 export default class ResourceButton extends Component {
   render() {
     const { resourceList, name } = this.props;
@@ -47,7 +52,8 @@ export default class ResourceButton extends Component {
       >
         <i className={`resource-button-icon ${matchIcon(name)}`}></i>
         <span>
-          {resourceList.length} {name}
+          {resourceList.length}{" "}
+          {processNameForSinglePlural(name, resourceList.length)}
         </span>
       </button>
     );
