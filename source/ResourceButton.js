@@ -50,7 +50,7 @@ export default class ResourceButton extends Component {
           });
         }}
       >
-        <i className={`resource-button-icon ${matchIcon(name)}`}></i>
+        {/* <i className={`resource-button-icon ${matchIcon(name)}`}></i> */}
         <span>
           {resourceList.length}{" "}
           {processNameForSinglePlural(name, resourceList.length)}
