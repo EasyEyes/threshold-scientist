@@ -28,8 +28,8 @@ export default class Dropdown extends Component {
         {projectList.map((project) => {
           return (
             <option key={project.id} value={project.id}>
-              {`${this.shortenProjectName(project.name)}`} (
-              {project.created_at.split("T")[0]})
+              {/* {`${this.shortenProjectName(project.name)}`} ( */}
+              {`${project.name}`} ({project.created_at.split("T")[0]})
             </option>
           );
         })}

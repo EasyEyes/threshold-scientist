@@ -168,9 +168,8 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <p className="dropzone-around-text emphasize">
-          Submit any missing fonts, consent / debrief forms, and other
-          resources. Then submit your experiment table, to be checked and
-          compiled now.
+          Submit any missing fonts, consent/debrief forms, and other resources.
+          Then submit your experiment table, to be checked and compiled now.
         </p>
         <div className="file-zone">
           <Dropzone onDrop={this.onDrop}>
@@ -188,7 +187,7 @@ export default class Table extends Component {
                       fontSize: "1.8rem",
                     }}
                   ></i> */}
-                  Click to browse for the files, or drop them here.
+                  Click to browse files, or drop them here
                 </p>
               </div>
             )}
