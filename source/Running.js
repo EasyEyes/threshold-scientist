@@ -83,8 +83,8 @@ export default class Running extends Component {
             });
           Swal.fire({
             icon: "error",
-            title: `Failed to check availability.`,
-            text: `We can't find the experiment on Pavlovia server. There might be a problem when uploading it, or the Pavlovia server is down. Please try to refresh the status in a while, or refresh the page to start again.`,
+            title: `Experiment unavailable`,
+            text: `Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.`,
             confirmButtonColor: "#666",
           });
         } else {
