@@ -710,8 +710,8 @@ export const createPavloviaExperiment = async (
   if (!isRepoValid) {
     Swal.fire({
       icon: "error",
-      title: `Duplicate Experiment Name`,
-      text: `${projectName} already exists in your Pavlovia repository`,
+      title: `Duplicate experiment name`,
+      text: `${projectName} already exists in your Pavlovia repository.`,
       confirmButtonColor: "#666",
     });
     return false;
