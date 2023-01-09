@@ -169,7 +169,7 @@ export default class Table extends Component {
       <div className="table" ref={this.ref}>
         <p className="dropzone-around-text emphasize">
           Submit any missing fonts, consent/debrief forms, and other resources.
-          Then submit your experiment table, to be checked and compiled now.
+          Then submit the experiment spreadsheet to compile.
         </p>
         <div className="file-zone">
           <Dropzone onDrop={this.onDrop}>
