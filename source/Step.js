@@ -60,18 +60,31 @@ export default class Step extends PureComponent {
         component = (
           <Running
             {...this.props}
+            previousExperimentViewed={{
+              previousRecruitmentInformation: null,
+            }}
+            viewingPreviousExperiment={false}
             scrollToCurrentStep={this.scrollToCurrentStep.bind(this)}
           />
         );
         break;
-      case "deploy":
+      case "prev-running":
         component = (
-          <Deploy
+          <Running
             {...this.props}
+            viewingPreviousExperiment={true}
             scrollToCurrentStep={this.scrollToCurrentStep.bind(this)}
           />
         );
         break;
+      // case "deploy":
+      //   component = (
+      //     <Deploy
+      //       {...this.props}
+      //       scrollToCurrentStep={this.scrollToCurrentStep.bind(this)}
+      //     />
+      //   );
+      //   break;
 
       default:
         break;

@@ -3,13 +3,26 @@
 .status-lines {
   list-style: none;
   padding: 0;
-  line-height: 150%;
+  line-height: 180%;
 
   .status-line {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 0.3rem;
+
+    .line-title {
+      display: flex;
+      align-items: center;
+
+      .line-title-icon {
+        height: 2rem;
+
+        // * {
+        //   fill: #999 !important;
+        // }
+      }
+    }
 
     .line-content {
       display: flex;

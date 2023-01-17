@@ -39,6 +39,10 @@ const config = {
         exclude: [/node_modules/],
         options: { presets: ["@babel/env"] },
       },
+      {
+        test: /\.svg$/,
+        use: "@svgr/webpack",
+      },
     ],
   },
   resolve: {

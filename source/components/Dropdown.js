@@ -19,20 +19,35 @@ export default class Dropdown extends Component {
         id="projects"
         defaultValue={selected?.id || undefined}
         onChange={(e) => {
+          if (e.target.value === "__NEW_EXPERIMENT__") {
+            setSelectedProject(null);
+            return;
+          }
+
           const selectedProject = projectList.find((project) => {
             return project.id.toString() === e.target.value;
           });
           setSelectedProject(selectedProject);
         }}
       >
-        {projectList.map((project) => {
-          return (
-            <option key={project.id} value={project.id}>
-              {`${this.shortenProjectName(project.name)}`} (
-              {project.created_at.split("T")[0]})
+        {(function () {
+          const optionList = projectList.map((project) => {
+            return (
+              <option key={project.id} value={project.id}>
+                {/* {`${this.shortenProjectName(project.name)}`} ( */}
+                {`${project.name}`} ({project.created_at.split("T")[0]})
+              </option>
+            );
+          });
+
+          optionList.unshift(
+            <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
+              📑 New experiment
             </option>
           );
-        })}
+
+          return optionList;
+        })()}
       </select>
     );
   }

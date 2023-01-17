@@ -1,6 +1,28 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
 
+const matchIcon = (name) => {
+  switch (name) {
+    case "fonts":
+      return "bi bi-fonts";
+    case "forms":
+      return "bi bi-file-pdf";
+    case "texts":
+      return "bi bi-blockquote-left";
+    case "folders":
+      return "bi bi-file-zip";
+    case "code":
+      return "bi bi-file-code";
+    default:
+      return "bi bi-question-circle";
+  }
+};
+
+const processNameForSinglePlural = (name, length) => {
+  // ! dangerous assumption: no 's' in any of the names
+  return length <= 1 ? name.replace("s", "") : name;
+};
+
 export default class ResourceButton extends Component {
   render() {
     const { resourceList, name } = this.props;
@@ -28,7 +50,11 @@ export default class ResourceButton extends Component {
           });
         }}
       >
-        {this.props.resourceList.length} {this.props.name}
+        {/* <i className={`resource-button-icon ${matchIcon(name)}`}></i> */}
+        <span>
+          {resourceList.length}{" "}
+          {processNameForSinglePlural(name, resourceList.length)}
+        </span>
       </button>
     );
   }

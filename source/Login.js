@@ -64,9 +64,9 @@ export default class Login extends Component {
               className="button-green connect-to-pav"
               onClick={this.login}
             >
-              Connect
+              Connect to Pavlovia account
             </button>
-            <p>Connect to Pavlovia account to compile experiments</p>
+            {/* <p>to compile and deploy experiments</p> */}
             {/* </p> */}
           </>
         );

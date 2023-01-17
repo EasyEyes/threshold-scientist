@@ -16,7 +16,8 @@ export default class Running extends Component {
     super(props);
 
     this.state = {
-      pavloviaIsReady: false,
+      pavloviaIsReady:
+        props.previousExperiment || props.experimentStatus === "RUNNING",
       completionCode: undefined,
     };
 
@@ -26,7 +27,10 @@ export default class Running extends Component {
   componentDidMount() {
     this.props.scrollToCurrentStep();
 
-    if (this.props.user.currentExperiment.pavloviaPreferRunningModeBool)
+    if (
+      !this.props.previousExperiment &&
+      this.props.user.currentExperiment.pavloviaPreferRunningModeBool
+    )
       this.setModeToRun();
   }
 
@@ -84,8 +88,8 @@ export default class Running extends Component {
             });
           Swal.fire({
             icon: "error",
-            title: `Failed to check availability.`,
-            text: `We can't find the experiment on Pavlovia server. There might be a problem when uploading it, or the Pavlovia server is down. Please try to refresh the status in a while, or refresh the page to start again.`,
+            title: `Experiment unavailable`,
+            text: `Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.`,
             confirmButtonColor: "#666",
           });
         } else {
@@ -103,22 +107,40 @@ export default class Running extends Component {
   }
 
   render() {
-    const { user, projectName, newRepo, functions, experimentStatus } =
-      this.props;
-    const { completionCode } = this.state;
+    const {
+      user,
+      projectName,
+      newRepo,
+      functions,
+      experimentStatus,
+      previousExperimentViewed: { previousRecruitmentInformation },
+      viewingPreviousExperiment,
+    } = this.props;
+    const { pavloviaIsReady, completionCode } = this.state;
 
     const isRunning = experimentStatus === "RUNNING";
-    const pavloviaIsReady = this.state.pavloviaIsReady;
 
-    const hasRecruitmentService =
-      !!user.currentExperiment.participantRecruitmentServiceName;
-    const recruitName =
-      user.currentExperiment.participantRecruitmentServiceName;
+    const hasRecruitmentService = viewingPreviousExperiment
+      ? previousRecruitmentInformation.recruitmentServiceName !== null
+      : !!user.currentExperiment.participantRecruitmentServiceName;
+    const recruitName = viewingPreviousExperiment
+      ? previousRecruitmentInformation.recruitmentServiceName
+      : user.currentExperiment.participantRecruitmentServiceName;
 
     // const offerPilotingOption =
     //   this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
-    const offerPilotingOption =
-      !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
+    const offerPilotingOption = viewingPreviousExperiment
+      ? false
+      : !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
+
+    const effectiveCompletionCode =
+      viewingPreviousExperiment && hasRecruitmentService
+        ? previousRecruitmentInformation.recruitmentServiceCompletionCode
+        : completionCode;
+    const effectiveUsingProlificWorkspace =
+      viewingPreviousExperiment && hasRecruitmentService
+        ? previousRecruitmentInformation.recruitmentProlificWorkspace
+        : user.currentExperiment.prolificWorkspaceModeBool;
 
     // console.log("hasRecruitmentService", hasRecruitmentService);
     // console.log("isRunning", isRunning);
@@ -294,7 +316,7 @@ export default class Running extends Component {
             >
               <p>
                 Use {recruitName} to recruit participants.
-                {user.currentExperiment.prolificWorkspaceModeBool ? (
+                {effectiveUsingProlificWorkspace ? (
                   <>
                     {`(You are using `}
                     <a
@@ -321,7 +343,7 @@ export default class Running extends Component {
                   }}
                 >
                   <>
-                    {completionCode ? (
+                    {effectiveCompletionCode ? (
                       <button
                         className="button-grey button-small"
                         onClick={async () =>
@@ -368,7 +390,7 @@ export default class Running extends Component {
                   </button>
                 </div>
               </div>
-              {completionCode ? (
+              {effectiveCompletionCode ? (
                 <>
                   <p className="smaller-text">
                     Click to copy the Prolific study URL{" "}
@@ -378,12 +400,18 @@ export default class Running extends Component {
                         // copy to clipboard
                         () => {
                           navigator.clipboard.writeText(
-                            user.currentExperiment.experimentUrl
+                            viewingPreviousExperiment
+                              ? this._getPavloviaExperimentUrl() +
+                                  "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}"
+                              : user.currentExperiment.experimentUrl
                           );
                         }
                       }
                     >
-                      {user.currentExperiment.experimentUrl}
+                      {viewingPreviousExperiment
+                        ? this._getPavloviaExperimentUrl() +
+                          "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}"
+                        : user.currentExperiment.experimentUrl}
                     </span>
                     .
                   </p>
@@ -394,11 +422,13 @@ export default class Running extends Component {
                       onClick={
                         // copy to clipboard
                         () => {
-                          navigator.clipboard.writeText(completionCode);
+                          navigator.clipboard.writeText(
+                            effectiveCompletionCode
+                          );
                         }
                       }
                     >
-                      {completionCode}
+                      {effectiveCompletionCode}
                     </span>
                     .
                   </p>
