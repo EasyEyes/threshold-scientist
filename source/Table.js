@@ -187,7 +187,7 @@ export default class Table extends Component {
                       fontSize: "1.8rem",
                     }}
                   ></i> */}
-                  Click to browse files, or drop them here
+                  Select files
                 </p>
               </div>
             )}

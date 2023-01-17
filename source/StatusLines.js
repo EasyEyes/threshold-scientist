@@ -163,12 +163,12 @@ export default class StatusLines extends Component {
           }
         />
 
-        <hr
+        {/* <hr
           style={{
             margin: "0.75rem 0",
             opacity: "0.15",
           }}
-        />
+        /> */}
 
         <StatusLine
           activated={false}
