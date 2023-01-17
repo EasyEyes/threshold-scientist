@@ -59,12 +59,12 @@ export default class StatusLines extends Component {
       showLoaderOnConfirm: true,
       preConfirm: async (token) => {
         await createOrUpdateProlificToken(this.props.user, token);
-        return {};
+        return token;
       },
       allowOutsideClick: () => !Swal.isLoading(),
     }).then((result) => {
-      console.log(result);
       if (result.isConfirmed) {
+        this.props.functions.handleUploadProlificToken(result.value);
         Swal.fire({
           title: "Success!",
           text: "Your Prolific token has been uploaded",
@@ -218,7 +218,7 @@ export default class StatusLines extends Component {
                     style={inlineButtonStyle}
                     onClick={async (e) => {
                       // change this button class to button-wait
-                      e.target.classList.add("button-wait");
+                      // e.target.classList.add("button-wait");
                       this.popToUploadProlificToken();
                     }}
                   >

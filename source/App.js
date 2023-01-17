@@ -70,6 +70,7 @@ export default class App extends Component {
       handleReturnToStep: this.handleReturnToStep.bind(this),
       handleUpdateUser: this.handleUpdateUser.bind(this),
       handleLogin: this.handleLogin.bind(this),
+      handleUploadProlificToken: this.handleUploadProlificToken.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
       handleSetFilename: this.handleSetFilename.bind(this),
       handleSetProjectName: this.handleSetProjectName.bind(this),
@@ -228,6 +229,15 @@ export default class App extends Component {
         : null,
       resources: resources,
       ...this.nextStepStatus("table"),
+    });
+  }
+
+  async handleUploadProlificToken(prolificToken) {
+    this.setState({
+      prolificToken: prolificToken,
+      prolificAccount: prolificToken
+        ? await getProlificAccount(prolificToken)
+        : null,
     });
   }
 
