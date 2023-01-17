@@ -181,13 +181,15 @@ export default class Table extends Component {
                 <input {...getInputProps()} />
                 {/* <p className="dropzone-main-text emphasize"></p> */}
                 <p className="dropzone-sub-text">
-                  {/* <i
-                    className="bi bi-download download-icon-box"
+                  <i
+                    className="bi bi-cloud-upload-fill"
                     style={{
-                      fontSize: "1.8rem",
+                      fontSize: "1.4rem",
+                      verticalAlign: "bottom",
+                      marginRight: "0.5rem",
                     }}
-                  ></i> */}
-                  Select files
+                  ></i>
+                  Select file
                 </p>
               </div>
             )}
