@@ -217,7 +217,7 @@ export default class StatusLines extends Component {
                   <button
                     className="button-small button-grey"
                     style={inlineButtonStyle}
-                    onClick={async (e) => {
+                    onClick={async () => {
                       // change this button class to button-wait
                       // e.target.classList.add("button-wait");
                       this.popToUploadProlificToken();
