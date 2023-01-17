@@ -1,6 +1,7 @@
 .login {
-  display: flex;
-  justify-content: space-between;
+  display: inline-flex;
+  justify-content: flex-start;
+  gap: 0.5rem;
   align-items: center;
   overflow: hidden;
 

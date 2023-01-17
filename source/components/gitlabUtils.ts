@@ -274,6 +274,139 @@ export const getCommonResourcesNames = async (
   return resourcesNameByType;
 };
 
+export const getOriginalFileNameForProject = async (
+  user: User,
+  repoName: string
+): Promise<string> => {
+  const repo = getProjectByNameInProjectList(user.projectList, repoName);
+
+  const headers = new Headers();
+  headers.append("Authorization", `bearer ${user.accessToken}`);
+
+  const requestOptions: any = {
+    method: "GET",
+    headers: headers,
+    redirect: "follow",
+  };
+
+  const response =
+    (await fetch(
+      `https://gitlab.pavlovia.org/api/v4/projects/${repo.id}/repository/tree/?path=%2E&per_page=100`,
+      requestOptions
+    )
+      .then((response) => {
+        return response.text();
+      })
+      .catch((error) => {
+        console.error(error);
+      })) || "[]";
+
+  const fileList = JSON.parse(response);
+  const originalFile = fileList.find(
+    (i: any) =>
+      (i.name.includes(".csv") || i.name.includes(".xlsx")) &&
+      i.name !== "recruitmentServiceConfig.csv"
+  );
+
+  return originalFile.name;
+};
+
+interface RecruitmentServiceInformation {
+  recruitmentServiceName: string | null;
+  recruitmentServiceCompletionCode: string | null;
+  recruitmentServiceURL: string | null;
+  recruitmentProlificWorkspace: boolean | null;
+}
+
+export const getRecruitmentServiceConfig = async (
+  user: User,
+  repoName: string
+): Promise<any> => {
+  const repo = getProjectByNameInProjectList(user.projectList, repoName);
+
+  const headers = new Headers();
+  headers.append("Authorization", `bearer ${user.accessToken}`);
+
+  const requestOptions: any = {
+    method: "GET",
+    headers: headers,
+    redirect: "follow",
+  };
+
+  const response = await fetch(
+    `https://gitlab.pavlovia.org/api/v4/projects/${repo.id}/repository/files/recruitmentServiceConfig%2Ecsv?ref=master`,
+    requestOptions
+  )
+    .then((response) => {
+      return response.body;
+    })
+    .then((body) => {
+      const reader = body?.getReader();
+      return new ReadableStream({
+        start(controller) {
+          return pump();
+          function pump(): any {
+            return reader?.read().then(({ done, value }) => {
+              if (done) {
+                controller.close();
+                return;
+              }
+              controller.enqueue(value);
+              return pump();
+            });
+          }
+        },
+      });
+    })
+    .then((stream) => {
+      return new Response(stream, { headers: { "Content-Type": "text/csv" } });
+    })
+    .then((response) => {
+      return response.text();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+
+  if (!response) return null;
+
+  const result = JSON.parse(response);
+  const fields = Buffer.from(result.content, "base64").toString().split("\n");
+
+  const serviceInformation: RecruitmentServiceInformation = {
+    recruitmentServiceName: null,
+    recruitmentServiceCompletionCode: null,
+    recruitmentServiceURL: null,
+    recruitmentProlificWorkspace: true, // ! dangerously set to true by default
+  };
+
+  if (fields.length === 1) return serviceInformation;
+
+  for (const field of fields) {
+    const fieldDetail = field.split(",");
+    switch (fieldDetail[0]) {
+      case "name":
+        serviceInformation.recruitmentServiceName = fieldDetail[1];
+        break;
+      case "code":
+        serviceInformation.recruitmentServiceCompletionCode = fieldDetail[1];
+        break;
+      case "url":
+        serviceInformation.recruitmentServiceURL = fieldDetail[1];
+        break;
+      case "prolificWorkspace":
+        serviceInformation.recruitmentProlificWorkspace = JSON.parse(
+          fieldDetail[1]
+        ) as boolean;
+        break;
+      default:
+        break;
+    }
+  }
+
+  return serviceInformation;
+};
+
 /**
  * Download data folder as a ZIP file from gitlab repository
  */
@@ -446,6 +579,7 @@ export const commitMessages = {
   resourcesTransferred: "📦 load EasyEyes resources from resources repo",
   thresholdCoreFileUploaded: "🔮 create threshold core components",
   addExperimentFile: "🖼️ add experiment file",
+  addRecruitmentService: "📝 add recruitment service",
 };
 
 export const defaultBranch = "master";
@@ -886,7 +1020,9 @@ export const generateAndUploadCompletionURL = async (
 
       const completionURL =
         "https://app.prolific.co/submissions/complete?cc=" + completionCode;
-      const jsonString = `name,${user.currentExperiment.participantRecruitmentServiceName}\ncode,${completionCode}\nurl,${completionURL}`;
+      const jsonString = `name,${
+        user.currentExperiment.participantRecruitmentServiceName
+      }\ncode,${completionCode}\nurl,${completionURL}\nprolificWorkspace,${user.currentExperiment.prolificWorkspaceModeBool.toString()}`;
 
       const commitAction = {
         action: "update",
@@ -895,7 +1031,7 @@ export const generateAndUploadCompletionURL = async (
       };
       const commitBody = {
         branch: "master",
-        commit_message: "EasyEyes initialization",
+        commit_message: commitMessages.addRecruitmentService,
         actions: [commitAction],
       };
 

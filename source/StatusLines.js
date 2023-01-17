@@ -1,4 +1,6 @@
 import React, { Component } from "react";
+import Dropdown from "./components/Dropdown";
+// import PavloviaIcon from './media/pavlovia.svg';
 
 import "./css/StatusLines.scss";
 
@@ -41,6 +43,8 @@ export default class StatusLines extends Component {
 
   render() {
     const {
+      activeExperiment,
+      previousExperimentViewed: { originalFileName, previousExperimentStatus },
       // currentStep,
       // completedSteps,
       // futureSteps,
@@ -48,7 +52,17 @@ export default class StatusLines extends Component {
       filename,
       projectName,
       experimentStatus,
+      functions,
     } = this.props;
+
+    const viewingPreviousExperiment = activeExperiment !== "new";
+
+    const showExperimentURL =
+      !!(user && projectName && experimentStatus === "RUNNING") ||
+      (viewingPreviousExperiment && previousExperimentStatus === "RUNNING");
+    const effectiveProjectNameLowerCase = viewingPreviousExperiment
+      ? activeExperiment.name?.toLocaleLowerCase()
+      : projectName?.toLocaleLowerCase();
 
     return (
       <ul className="status-lines">
@@ -70,42 +84,95 @@ export default class StatusLines extends Component {
             )
           }
         />
-        <StatusLine
+        {/* <StatusLine
           activated={!!filename}
+          title={(
+            <>
+              <PavloviaIcon className="line-title-icon" />
+              <span>Pavlovia account</span>
+            </>
+          )}
+          content={"Unconnected"}
+        /> */}
+
+        <StatusLine
+          activated={!!user}
+          title={"Experiment"}
+          content={
+            user ? (
+              <Dropdown
+                selected={activeExperiment}
+                setSelectedProject={functions.handleSetActivateExperiment}
+                projectList={user.projectList}
+              />
+            ) : (
+              ""
+            )
+          }
+        />
+        <StatusLine
+          activated={!!filename || viewingPreviousExperiment}
           title={"Experiment file"}
-          content={filename ? this.getStatusLineFilename(filename) : ""}
+          content={
+            viewingPreviousExperiment
+              ? originalFileName
+              : filename
+              ? this.getStatusLineFilename(filename)
+              : ""
+          }
         />
         <StatusLine
-          activated={!!projectName}
+          activated={!!projectName || viewingPreviousExperiment}
           title={"Experiment name"}
-          content={projectName}
+          content={
+            viewingPreviousExperiment ? activeExperiment.name : projectName
+          }
         />
         <StatusLine
-          activated={!!(user && filename && projectName)}
+          activated={
+            !!(user && filename && projectName) || viewingPreviousExperiment
+          }
           title={"Experiment mode"}
-          content={user && filename && projectName ? experimentStatus : ""}
+          content={
+            viewingPreviousExperiment
+              ? previousExperimentStatus
+              : user && filename && projectName
+              ? experimentStatus
+              : ""
+          }
         />
         <StatusLine
-          activated={!!(user && projectName && experimentStatus === "RUNNING")}
+          activated={showExperimentURL}
           title={"Experiment URL"}
           content={
-            user && projectName && experimentStatus === "RUNNING" ? (
+            (user && projectName && experimentStatus === "RUNNING") ||
+            (viewingPreviousExperiment &&
+              previousExperimentStatus === "RUNNING") ? (
               <a
-                href={`https://run.pavlovia.org/${
-                  user.username
-                }/${projectName.toLocaleLowerCase()}`}
+                href={`https://run.pavlovia.org/${user.username}/${effectiveProjectNameLowerCase}`}
                 target="_blank"
                 rel="noopenner noreferrer"
                 style={{
                   color: "#666",
                 }}
-              >{`https://run.pavlovia.org/${
-                user.username
-              }/${projectName.toLocaleLowerCase()}`}</a>
+              >{`https://run.pavlovia.org/${user.username}/${effectiveProjectNameLowerCase}`}</a>
             ) : (
               ""
             )
           }
+        />
+
+        <hr
+          style={{
+            margin: "0.75rem 0",
+            opacity: "0.15",
+          }}
+        />
+
+        <StatusLine
+          activated={false}
+          title={"Prolific account"}
+          content={"Please connect to Pavlovia first"}
         />
       </ul>
     );

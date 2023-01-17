@@ -11,7 +11,12 @@ import StatusLines from "./StatusLines";
 
 import { allSteps } from "./components/steps";
 import { Compatibility } from "./components";
-import { getAllProjects } from "./components/gitlabUtils";
+import {
+  getAllProjects,
+  getExperimentStatus,
+  getOriginalFileNameForProject,
+  getRecruitmentServiceConfig,
+} from "./components/gitlabUtils";
 
 import "./css/App.scss";
 
@@ -23,6 +28,18 @@ export default class App extends Component {
 
     this.state = {
       readingGlossary: false,
+      /* -------------------------------------------------------------------------- */
+      activeExperiment: "new",
+      previousExperimentViewed: {
+        originalFileName: null,
+        previousExperimentStatus: null,
+        previousRecruitmentInformation: {
+          recruitmentServiceName: null,
+          recruitmentServiceCompletionCode: null,
+          recruitmentServiceURL: null,
+          recruitmentProlificWorkspace: null,
+        },
+      },
       /* -------------------------------------------------------------------------- */
       currentStep: "login", // 'login', 'table', 'upload', 'running', 'deploy', ('download')
       completedSteps: [],
@@ -44,6 +61,7 @@ export default class App extends Component {
     };
 
     this.functions = {
+      handleSetActivateExperiment: this.handleSetActivateExperiment.bind(this),
       handleReset: this.handleReset.bind(this),
       handleNextStep: this.handleNextStep.bind(this),
       handleReturnToStep: this.handleReturnToStep.bind(this),
@@ -58,6 +76,57 @@ export default class App extends Component {
     };
 
     this.closeGlossary = this.closeGlossary.bind(this);
+  }
+
+  /* -------------------------------------------------------------------------- */
+
+  async handleSetActivateExperiment(activeExperiment) {
+    activeExperiment = activeExperiment || "new";
+
+    let originalFileName = null;
+    let previousExperimentStatus = null;
+    let previousRecruitmentInformation = {
+      recruitmentServiceName: null,
+      recruitmentServiceCompletionCode: null,
+      recruitmentServiceURL: null,
+      recruitmentProlificWorkspace: null,
+    };
+    if (activeExperiment !== "new") {
+      // viewing a previous experiment
+      const { user } = this.state;
+
+      await Swal.fire({
+        title: "Retrieving information for you ...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: async () => {
+          Swal.showLoading(null);
+
+          originalFileName = await getOriginalFileNameForProject(
+            user,
+            activeExperiment.name
+          );
+          previousExperimentStatus = await getExperimentStatus(user, {
+            id: activeExperiment.id,
+          });
+          previousRecruitmentInformation = await getRecruitmentServiceConfig(
+            user,
+            activeExperiment.name
+          );
+
+          Swal.close();
+        },
+      });
+    }
+
+    this.setState({
+      activeExperiment,
+      previousExperimentViewed: {
+        originalFileName,
+        previousExperimentStatus,
+        previousRecruitmentInformation,
+      },
+    });
   }
 
   /* -------------------------------------------------------------------------- */
@@ -217,6 +286,8 @@ export default class App extends Component {
   render() {
     const {
       readingGlossary,
+      activeExperiment,
+      previousExperimentViewed,
       currentStep,
       completedSteps,
       futureSteps,
@@ -229,23 +300,43 @@ export default class App extends Component {
     } = this.state;
     const steps = [];
 
-    if (user) steps.push(<History key={"history"} user={user} />);
+    const viewingPreviousExperiment = activeExperiment !== "new";
 
-    steps.push(
-      <Step
-        key={currentStep}
-        name={currentStep}
-        isCurrentStep={currentStep === currentStep}
-        isCompletedStep={completedSteps.includes(currentStep)}
-        futureSteps={futureSteps}
-        functions={this.functions}
-        user={user}
-        resources={resources}
-        projectName={projectName}
-        newRepo={newRepo}
-        experimentStatus={experimentStatus}
-      />
-    );
+    // if (user) steps.push(<History key={"history"} user={user} />);
+
+    if (viewingPreviousExperiment)
+      steps.push(
+        <Step
+          key={"prev-running"}
+          name={"prev-running"}
+          isCurrentStep={true}
+          isCompletedStep={false}
+          futureSteps={futureSteps}
+          functions={this.functions}
+          user={user}
+          resources={resources}
+          projectName={activeExperiment.name}
+          newRepo={activeExperiment}
+          experimentStatus={previousExperimentViewed.previousExperimentStatus}
+          previousExperimentViewed={previousExperimentViewed}
+        />
+      );
+    else
+      steps.push(
+        <Step
+          key={currentStep}
+          name={currentStep}
+          isCurrentStep={currentStep === currentStep}
+          isCompletedStep={completedSteps.includes(currentStep)}
+          futureSteps={futureSteps}
+          functions={this.functions}
+          user={user}
+          resources={resources}
+          projectName={projectName}
+          newRepo={newRepo}
+          experimentStatus={experimentStatus}
+        />
+      );
 
     return (
       <>
@@ -364,6 +455,9 @@ export default class App extends Component {
             </div>
             <StatusLines
               key={currentStep}
+              activeExperiment={activeExperiment}
+              previousExperimentViewed={previousExperimentViewed}
+              /* -------------------------------------------------------------------------- */
               futureSteps={futureSteps}
               completedSteps={completedSteps}
               functions={this.functions}
