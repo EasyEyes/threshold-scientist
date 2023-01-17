@@ -1,4 +1,3 @@
-// import axios from "axios";
 import { LANGUAGE_INDEX_PROLIFIC_MAPPING } from "../Constants";
 
 const prolificLangType = {

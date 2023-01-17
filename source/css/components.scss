@@ -78,8 +78,14 @@ table {
   }
 
   .swal2-confirm {
-    background: #666;
+    background: $green !important;
     padding: 0.875rem 2rem !important;
-    border-radius: $icon-radius;
+    border-radius: $icon-radius !important;
+  }
+
+  .swal2-cancel {
+    background: #666 !important;
+    padding: 0.875rem 2rem !important;
+    border-radius: $icon-radius !important;
   }
 }

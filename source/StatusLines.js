@@ -1,11 +1,7 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
 import Dropdown from "./components/Dropdown";
-import {
-  createOrUpdateProlificToken,
-  getProlificToken,
-} from "./components/gitlabUtils";
-import { getProlificAccount } from "./components/prolificIntegration";
+import { createOrUpdateProlificToken } from "./components/gitlabUtils";
 // import PavloviaIcon from './media/pavlovia.svg';
 
 import "./css/StatusLines.scss";
