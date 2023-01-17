@@ -274,6 +274,38 @@ export const getCommonResourcesNames = async (
   return resourcesNameByType;
 };
 
+export const getProlificToken = async (user: User): Promise<string> => {
+  const easyEyesResourcesRepo = getProjectByNameInProjectList(
+    user.projectList,
+    resourcesRepoName
+  );
+
+  // init api options
+  const headers = new Headers();
+  headers.append("Authorization", `bearer ${user.accessToken}`);
+
+  const requestOptions: any = {
+    method: "GET",
+    headers: headers,
+    redirect: "follow",
+  };
+
+  const response =
+    (await fetch(
+      `https://gitlab.pavlovia.org/api/v4/projects/${easyEyesResourcesRepo.id}/repository/files/PROLIFIC_TOKEN/raw?ref=master`,
+      requestOptions
+    )
+      .then((response) => {
+        return response.text();
+      })
+      .catch((error) => {
+        console.error(error);
+      })) || "";
+
+  if (response.includes("404 File Not Found")) return "";
+  else return response;
+};
+
 export const getOriginalFileNameForProject = async (
   user: User,
   repoName: string
@@ -529,6 +561,35 @@ export const createOrUpdateCommonResources = async (
   );
 };
 
+export const createOrUpdateProlificToken = async (
+  user: User,
+  token: string
+): Promise<void> => {
+  const easyEyesResourcesRepo: any = getProjectByNameInProjectList(
+    user.projectList,
+    resourcesRepoName
+  );
+  const commonResourcesRepo: Repository = { id: easyEyesResourcesRepo.id };
+  const existingToken = await getProlificToken(user);
+
+  const jsonFiles: ICommitAction[] = [
+    {
+      action: existingToken ? "update" : "create",
+      file_path: "PROLIFIC_TOKEN",
+      content: token,
+      encoding: "text",
+    },
+  ];
+
+  return await pushCommits(
+    user,
+    commonResourcesRepo,
+    jsonFiles,
+    commitMessages.addProlificToken,
+    defaultBranch
+  );
+};
+
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -580,6 +641,7 @@ export const commitMessages = {
   thresholdCoreFileUploaded: "🔮 create threshold core components",
   addExperimentFile: "🖼️ add experiment file",
   addRecruitmentService: "📝 add recruitment service",
+  addProlificToken: "🔑 add Prolific token",
 };
 
 export const defaultBranch = "master";

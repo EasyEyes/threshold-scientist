@@ -1,9 +1,43 @@
-import axios from "axios";
+// import axios from "axios";
 import { LANGUAGE_INDEX_PROLIFIC_MAPPING } from "../Constants";
 
 const prolificLangType = {
   NATIVE: "NATIVE",
   FLUENT: "FLUENT",
+};
+
+export const getProlificAccount = async (token) => {
+  const headers = new Headers();
+  headers.append("Authorization", `Token ${token}`);
+
+  const requestOptions = {
+    method: "GET",
+    headers: headers,
+    redirect: "follow",
+  };
+
+  const response = await fetch(
+    "https://api.prolific.co/api/v1/users/me/",
+    requestOptions
+  )
+    .then((response) => {
+      return response.text();
+    })
+    .catch((error) => console.log(error));
+
+  // const response = await axios.get(
+  //   "https://api.prolific.co/api/v1/users/me",
+  //   {
+  //     withCredentials: false,
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       "Access-Control-Allow-Origin": "*",
+  //       Authorization: `Token ${token}`,
+  //     },
+  //   }
+  // );
+
+  return JSON.parse(response);
 };
 
 const findProlificLanguageAttributes = (
@@ -25,9 +59,11 @@ const findProlificLanguageAttributes = (
 export const prolificCreateDraftOnClick = async (
   user,
   internalName,
-  completionCode
+  completionCode,
+  token
 ) => {
   const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
+
   const payload = {
     name: user.currentExperiment.titleOfStudy ?? "",
     // internal_name: this._getPavloviaExperimentUrl(),
@@ -85,26 +121,29 @@ export const prolificCreateDraftOnClick = async (
     ],
   };
 
-  const response = await axios.post(
-    prolificStudyDraftApiUrl,
-    JSON.stringify(payload),
-    {
-      withCredentials: false,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        Authorization: "Token token",
-      },
-    }
-  );
+  const response = await fetch(prolificStudyDraftApiUrl, {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: {
+      "Content-Type": "application/json",
+      // "Access-Control-Allow-Origin": "*",
+      Authorization: `Token ${token}`,
+    },
+  })
+    .then((response) => {
+      return response.text();
+    })
+    .catch((error) => console.log(error));
 
-  if (response.status !== 201) {
-    console.log("Error:" + response);
+  const result = JSON.parse(response);
+
+  if (result.status !== 201) {
+    console.error(result);
   } else {
     window
       .open(
         "https://app.prolific.co/researcher/workspaces/studies/" +
-          response.data.id,
+          result.data.id,
         "_blank"
       )
       ?.focus();

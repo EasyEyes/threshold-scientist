@@ -1,5 +1,6 @@
 import {
   createEmptyRepo,
+  getProlificToken,
   isProjectNameExistInProjectList,
   User,
 } from "./gitlabUtils";
@@ -12,7 +13,9 @@ export const redirectToOauth2 = () => {
     process.env.REDIRECT_URL! + `&state=${encodeURI(window.location.href)}`;
 };
 
-export const getUserInfo = async (accessToken: string) => {
+export const getUserInfo = async (
+  accessToken: string
+): Promise<[User, { [key: string]: string[] }, string]> => {
   const user = new User(accessToken);
 
   // initialize account details
@@ -30,8 +33,11 @@ export const getUserInfo = async (accessToken: string) => {
 
   // Fetch common resources
   const resources = await getCommonResourcesNames(user);
+  // Fetch Prolific token
+  const prolificToken = await getProlificToken(user);
+
   // Update resources buttons
   // for (const cat of resourcesFileTypes) setTab(cat.substring(0, cat.length - 1));
 
-  return [user, resources];
+  return [user, resources, prolificToken];
 };

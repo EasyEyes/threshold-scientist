@@ -109,6 +109,7 @@ export default class Running extends Component {
   render() {
     const {
       user,
+      prolificToken,
       projectName,
       newRepo,
       functions,
@@ -350,7 +351,8 @@ export default class Running extends Component {
                           await prolificCreateDraftOnClick(
                             user,
                             this._getPavloviaExperimentUrl(),
-                            completionCode
+                            completionCode,
+                            prolificToken
                           )
                         }
                       >
