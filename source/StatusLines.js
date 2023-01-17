@@ -140,6 +140,7 @@ export default class StatusLines extends Component {
                 selected={activeExperiment}
                 setSelectedProject={functions.handleSetActivateExperiment}
                 projectList={user.projectList}
+                newExperimentProjectName={projectName}
               />
             ) : (
               ""
@@ -157,13 +158,13 @@ export default class StatusLines extends Component {
               : ""
           }
         />
-        <StatusLine
+        {/* <StatusLine
           activated={!!projectName || viewingPreviousExperiment}
           title={"Experiment name"}
           content={
             viewingPreviousExperiment ? activeExperiment.name : projectName
           }
-        />
+        /> */}
         <StatusLine
           activated={
             !!(user && filename && projectName) || viewingPreviousExperiment

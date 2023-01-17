@@ -100,7 +100,7 @@ export default class App extends Component {
       const { user } = this.state;
 
       await Swal.fire({
-        title: "Retrieving information for you ...",
+        title: "Retrieving experiment ...",
         allowOutsideClick: false,
         allowEscapeKey: false,
         didOpen: async () => {

@@ -10,7 +10,12 @@ export default class Dropdown extends Component {
   }
 
   render() {
-    const { selected, setSelectedProject, projectList } = this.props;
+    const {
+      selected,
+      setSelectedProject,
+      projectList,
+      newExperimentProjectName,
+    } = this.props;
 
     return (
       <select
@@ -43,7 +48,7 @@ export default class Dropdown extends Component {
 
           optionList.unshift(
             <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
-              📑 New experiment
+              📑 {newExperimentProjectName ?? `[New experiment]`}
             </option>
           );
 
