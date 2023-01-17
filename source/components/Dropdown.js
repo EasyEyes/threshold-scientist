@@ -35,7 +35,8 @@ export default class Dropdown extends Component {
             return (
               <option key={project.id} value={project.id}>
                 {/* {`${this.shortenProjectName(project.name)}`} ( */}
-                {`${project.name}`} ({project.created_at.split("T")[0]})
+                {`${project.name}`} (
+                {new Date(project.created_at).toLocaleString()})
               </option>
             );
           });
