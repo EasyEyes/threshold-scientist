@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
+
 import { Question } from "./components";
 import {
   downloadDataFolder,
@@ -7,9 +8,9 @@ import {
   getExperimentStatus,
   runExperiment,
 } from "./components/gitlabUtils";
+import { prolificCreateDraftOnClick } from "./components/prolificIntegration";
 
 import "./css/Running.scss";
-
 export default class Running extends Component {
   constructor(props) {
     super(props);
@@ -108,6 +109,7 @@ export default class Running extends Component {
   render() {
     const {
       user,
+      prolificToken,
       projectName,
       newRepo,
       functions,
@@ -132,10 +134,10 @@ export default class Running extends Component {
       ? false
       : !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
 
-    const effectiveCompletionCode =
-      viewingPreviousExperiment && hasRecruitmentService
-        ? previousRecruitmentInformation.recruitmentServiceCompletionCode
-        : completionCode;
+    // const effectiveCompletionCode =
+    //   viewingPreviousExperiment && hasRecruitmentService
+    //     ? previousRecruitmentInformation.recruitmentServiceCompletionCode
+    //     : completionCode;
     const effectiveUsingProlificWorkspace =
       viewingPreviousExperiment && hasRecruitmentService
         ? previousRecruitmentInformation.recruitmentProlificWorkspace
@@ -342,37 +344,53 @@ export default class Running extends Component {
                   }}
                 >
                   <>
-                    {effectiveCompletionCode ? (
-                      <button
-                        className="button-grey button-small"
-                        onClick={async () => {
-                          // this.state.completionCode = await generateAndUploadCompletionURL(
-                          //   user,
-                          //   newRepo,
-                          //   functions.handleUpdateUser
-                          // );
+                    <button
+                      className="button-grey button-small"
+                      onClick={async (e) => {
+                        e.target.classList.add("button-disabled");
+                        e.target.classList.add("button-wait");
 
-                          const studyParams =
-                            "?external_study_url=" +
-                            encodeURIComponent(
-                              user.currentExperiment.experimentUrl
-                            ) +
-                            "&completion_code=" +
-                            encodeURIComponent(effectiveCompletionCode) +
-                            "&completion_option=url" +
-                            "&prolific_id_option=url_parameters";
+                        // ! generate completion code
+                        const hasCompletionCode = !!completionCode;
+                        const code =
+                          completionCode ??
+                          (await generateAndUploadCompletionURL(
+                            user,
+                            newRepo,
+                            functions.handleUpdateUser
+                          ));
 
-                          // hardcoded for Prolific
-                          const url = user.currentExperiment
-                            .prolificWorkspaceModeBool
-                            ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/new-study${studyParams}`
-                            : `https://app.prolific.co/studies/new${studyParams}`;
+                        if (!hasCompletionCode)
+                          this.setState({
+                            completionCode: code,
+                          });
 
-                          window.open(url, "_blank");
-                        }}
-                      >
-                        Go to {recruitName} to finalize and run your study
-                      </button>
+                        // ! create draft study on prolific
+                        const result = await prolificCreateDraftOnClick(
+                          user,
+                          `${this.props.user.username}/${this.props.projectName}`,
+                          code,
+                          prolificToken
+                        );
+
+                        if (result.status === "UNPUBLISHED") {
+                          window
+                            .open(
+                              "https://app.prolific.co/researcher/workspaces/studies/" +
+                                result.id,
+                              "_blank"
+                            )
+                            ?.focus();
+                        }
+
+                        e.target.classList.remove("button-disabled");
+                        e.target.classList.remove("button-wait");
+                      }}
+                    >
+                      Create a new study on {recruitName}
+                    </button>
+                    {/* {effectiveCompletionCode ? (
+                      
                     ) : (
                       <button
                         className="button-grey button-small"
@@ -389,7 +407,7 @@ export default class Running extends Component {
                       >
                         Generate completion code
                       </button>
-                    )}
+                    )} */}
                   </>
 
                   <button
@@ -407,7 +425,7 @@ export default class Running extends Component {
                   </button>
                 </div>
               </div>
-              {effectiveCompletionCode ? (
+              {/* {effectiveCompletionCode ? (
                 <>
                   <p className="smaller-text">
                     Click to copy the Prolific study URL{" "}
@@ -459,7 +477,7 @@ export default class Running extends Component {
                   Please generate the completion code to view the Prolific study
                   URL.
                 </p>
-              )}
+              )} */}
             </div>
           </>
         )}

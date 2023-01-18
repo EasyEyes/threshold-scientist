@@ -39,7 +39,8 @@
 }
 
 .step,
-.status-line-content {
+.status-line-content,
+.line-content {
   button {
     border-radius: $icon-radius;
     color: white;

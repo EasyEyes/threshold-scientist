@@ -41,9 +41,14 @@ export default class Login extends Component {
       // // temporarily assign access token here for temporaryLog
       tempAccessToken.t = accessToken;
 
-      const [user, resources] = await getUserInfo(accessToken);
+      const [user, resources, prolificToken] = await getUserInfo(accessToken);
 
-      this.props.functions.handleLogin(user, resources, accessToken);
+      this.props.functions.handleLogin(
+        user,
+        resources,
+        accessToken,
+        prolificToken
+      );
     }
   }
 

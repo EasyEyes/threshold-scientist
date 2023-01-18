@@ -19,6 +19,7 @@ import {
 } from "./components/gitlabUtils";
 
 import "./css/App.scss";
+import { getProlificAccount } from "./components/prolificIntegration";
 
 export default class App extends Component {
   constructor(props) {
@@ -47,6 +48,8 @@ export default class App extends Component {
       // USER
       user: null,
       accessToken: null,
+      prolificToken: null,
+      prolificAccount: null,
       resources: {
         fonts: [],
         forms: [],
@@ -67,6 +70,7 @@ export default class App extends Component {
       handleReturnToStep: this.handleReturnToStep.bind(this),
       handleUpdateUser: this.handleUpdateUser.bind(this),
       handleLogin: this.handleLogin.bind(this),
+      handleUploadProlificToken: this.handleUploadProlificToken.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
       handleSetFilename: this.handleSetFilename.bind(this),
       handleSetProjectName: this.handleSetProjectName.bind(this),
@@ -215,12 +219,25 @@ export default class App extends Component {
     });
   }
 
-  handleLogin(user, resources, accessToken) {
+  async handleLogin(user, resources, accessToken, prolificToken) {
     this.setState({
       user: user,
       accessToken: accessToken,
+      prolificToken: prolificToken,
+      prolificAccount: prolificToken
+        ? await getProlificAccount(prolificToken)
+        : null,
       resources: resources,
       ...this.nextStepStatus("table"),
+    });
+  }
+
+  async handleUploadProlificToken(prolificToken) {
+    this.setState({
+      prolificToken: prolificToken,
+      prolificAccount: prolificToken
+        ? await getProlificAccount(prolificToken)
+        : null,
     });
   }
 
@@ -292,6 +309,8 @@ export default class App extends Component {
       completedSteps,
       futureSteps,
       user,
+      prolificToken,
+      prolificAccount,
       resources,
       filename,
       projectName,
@@ -314,6 +333,7 @@ export default class App extends Component {
           futureSteps={futureSteps}
           functions={this.functions}
           user={user}
+          prolificToken={prolificToken}
           resources={resources}
           projectName={activeExperiment.name}
           newRepo={activeExperiment}
@@ -331,6 +351,7 @@ export default class App extends Component {
           futureSteps={futureSteps}
           functions={this.functions}
           user={user}
+          prolificToken={prolificToken}
           resources={resources}
           projectName={projectName}
           newRepo={newRepo}
@@ -462,6 +483,8 @@ export default class App extends Component {
               completedSteps={completedSteps}
               functions={this.functions}
               user={user}
+              prolificToken={prolificToken}
+              prolificAccount={prolificAccount}
               resources={resources}
               filename={filename}
               projectName={projectName}

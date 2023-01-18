@@ -1,12 +1,24 @@
 import React, { Component } from "react";
+import Swal from "sweetalert2";
 import Dropdown from "./components/Dropdown";
+import { createOrUpdateProlificToken } from "./components/gitlabUtils";
 // import PavloviaIcon from './media/pavlovia.svg';
 
 import "./css/StatusLines.scss";
 
+const inlineButtonStyle = {
+  whiteSpace: "nowrap",
+  fontSize: "0.7rem",
+  padding: "0.6rem",
+  // borderRadius: "0.3rem",
+  color: "#fff",
+};
+
 export default class StatusLines extends Component {
   constructor(props) {
     super(props);
+
+    this.popToUploadProlificToken = this.popToUploadProlificToken.bind(this);
   }
 
   isLineActivated(step) {
@@ -17,6 +29,34 @@ export default class StatusLines extends Component {
     return <span className="status-line-content">{filename}</span>;
   }
 
+  popToUploadProlificToken() {
+    Swal.fire({
+      title: "Upload your Prolific token",
+      input: "text",
+      inputAttributes: {
+        autocapitalize: "off",
+      },
+      showCancelButton: true,
+      confirmButtonText: "Upload",
+      showLoaderOnConfirm: true,
+      preConfirm: async (token) => {
+        await createOrUpdateProlificToken(this.props.user, token);
+        return token;
+      },
+      allowOutsideClick: () => !Swal.isLoading(),
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.props.functions.handleUploadProlificToken(result.value);
+        Swal.fire({
+          title: "Success!",
+          text: "Your Prolific token has been uploaded",
+          icon: "success",
+          confirmButtonText: "OK",
+        });
+      }
+    });
+  }
+
   render() {
     const {
       activeExperiment,
@@ -25,6 +65,8 @@ export default class StatusLines extends Component {
       // completedSteps,
       // futureSteps,
       user,
+      prolificToken,
+      prolificAccount,
       filename,
       projectName,
       experimentStatus,
@@ -87,13 +129,7 @@ export default class StatusLines extends Component {
                   viewingPreviousExperiment) && (
                   <button
                     className="button-small button-grey"
-                    style={{
-                      whiteSpace: "nowrap",
-                      fontSize: "0.7rem",
-                      padding: "0.6rem",
-                      // borderRadius: "0.3rem",
-                      color: "#fff",
-                    }}
+                    style={inlineButtonStyle}
                     onClick={async (e) => {
                       // change this button class to button-wait
                       e.target.classList.add("button-wait");
@@ -174,9 +210,42 @@ export default class StatusLines extends Component {
         /> */}
 
         <StatusLine
-          activated={false}
+          activated={!!user}
           title={"Prolific account"}
-          content={"Please connect to Pavlovia first"}
+          content={
+            user ? (
+              prolificToken ? (
+                <span className="status-line-content">
+                  {`${prolificAccount?.name} (${prolificAccount?.email})`}
+                  <button
+                    className="button-small button-grey"
+                    style={inlineButtonStyle}
+                    onClick={async () => {
+                      // change this button class to button-wait
+                      // e.target.classList.add("button-wait");
+                      this.popToUploadProlificToken();
+                    }}
+                  >
+                    Update your Prolific token
+                  </button>
+                </span>
+              ) : (
+                <button
+                  className="button-small button-grey"
+                  style={inlineButtonStyle}
+                  onClick={async (e) => {
+                    // change this button class to button-wait
+                    e.target.classList.add("button-wait");
+                    this.popToUploadProlificToken();
+                  }}
+                >
+                  Upload your Prolific token to access
+                </button>
+              )
+            ) : (
+              "Please connect to Pavlovia first"
+            )
+          }
         />
       </ul>
     );
