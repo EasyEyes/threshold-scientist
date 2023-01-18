@@ -117,7 +117,7 @@ export default class Running extends Component {
       previousExperimentViewed: { previousRecruitmentInformation },
       viewingPreviousExperiment,
     } = this.props;
-    const { pavloviaIsReady, completionCode } = this.state;
+    const { pavloviaIsReady } = this.state;
 
     const isRunning = experimentStatus === "RUNNING";
 
@@ -134,10 +134,10 @@ export default class Running extends Component {
       ? false
       : !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
 
-    const effectiveCompletionCode =
-      viewingPreviousExperiment && hasRecruitmentService
-        ? previousRecruitmentInformation.recruitmentServiceCompletionCode
-        : completionCode;
+    // const effectiveCompletionCode =
+    //   viewingPreviousExperiment && hasRecruitmentService
+    //     ? previousRecruitmentInformation.recruitmentServiceCompletionCode
+    //     : completionCode;
     const effectiveUsingProlificWorkspace =
       viewingPreviousExperiment && hasRecruitmentService
         ? previousRecruitmentInformation.recruitmentProlificWorkspace
@@ -344,20 +344,43 @@ export default class Running extends Component {
                   }}
                 >
                   <>
-                    {effectiveCompletionCode ? (
-                      <button
-                        className="button-grey button-small"
-                        onClick={async () =>
-                          await prolificCreateDraftOnClick(
-                            user,
-                            this._getPavloviaExperimentUrl(),
-                            completionCode,
-                            prolificToken
-                          )
+                    <button
+                      className="button-grey button-small"
+                      onClick={async () => {
+                        // ! generate completion code
+                        const code = await generateAndUploadCompletionURL(
+                          user,
+                          newRepo,
+                          functions.handleUpdateUser
+                        );
+
+                        this.setState({
+                          completionCode: code,
+                        });
+
+                        // ! create draft study on prolific
+                        const result = await prolificCreateDraftOnClick(
+                          user,
+                          `${this.props.user.username}/${this.props.projectName}`,
+                          code,
+                          prolificToken
+                        );
+
+                        if (result.status === "UNPUBLISHED") {
+                          window
+                            .open(
+                              "https://app.prolific.co/researcher/workspaces/studies/" +
+                                result.id,
+                              "_blank"
+                            )
+                            ?.focus();
                         }
-                      >
-                        Create a new study on {recruitName}
-                      </button>
+                      }}
+                    >
+                      Create a new study on {recruitName}
+                    </button>
+                    {/* {effectiveCompletionCode ? (
+                      
                     ) : (
                       <button
                         className="button-grey button-small"
@@ -374,7 +397,7 @@ export default class Running extends Component {
                       >
                         Generate completion code
                       </button>
-                    )}
+                    )} */}
                   </>
 
                   <button
@@ -392,7 +415,7 @@ export default class Running extends Component {
                   </button>
                 </div>
               </div>
-              {effectiveCompletionCode ? (
+              {/* {effectiveCompletionCode ? (
                 <>
                   <p className="smaller-text">
                     Click to copy the Prolific study URL{" "}
@@ -444,7 +467,7 @@ export default class Running extends Component {
                   Please generate the completion code to view the Prolific study
                   URL.
                 </p>
-              )}
+              )} */}
             </div>
           </>
         )}

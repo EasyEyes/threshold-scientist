@@ -65,8 +65,7 @@ export const prolificCreateDraftOnClick = async (
 
   const payload = {
     name: user.currentExperiment.titleOfStudy ?? "",
-    // internal_name: this._getPavloviaExperimentUrl(),
-    internal_name: internalName,
+    internal_name: internalName, // ! Looks weird
     description: user.currentExperiment.descriptionOfStudy ?? "",
     external_study_url: user.currentExperiment.experimentUrl,
     prolific_id_option: "url_parameters",
@@ -75,15 +74,17 @@ export const prolificCreateDraftOnClick = async (
     total_available_places: user.currentExperiment._participantsHowMany ?? 10,
     estimated_completion_time:
       user.currentExperiment._participantDurationMinutes ?? 1,
-    reward: 1,
-    device_compatibility: [],
-    peripheral_requirements: [],
+    reward: user.currentExperiment._online2Pay,
+    device_compatibility:
+      user.currentExperiment._online3DeviceKind?.split(",") ?? [],
+    peripheral_requirements:
+      user.currentExperiment._online3RequiredServices?.split(",") ?? [],
     eligibility_requirements: [
       {
         id: null,
         type: "SelectAnswer",
         attributes: findProlificLanguageAttributes(
-          user.currentExperiment._participantLanguageNative
+          user.currentExperiment._online5LanguageFirst
         ),
         query: {
           id: "54ac6ea9fdf99b2204feb899",
@@ -101,7 +102,7 @@ export const prolificCreateDraftOnClick = async (
         id: null,
         type: "MultiSelectAnswer",
         attributes: findProlificLanguageAttributes(
-          user.currentExperiment._participantLanguageFluent,
+          user.currentExperiment._online5LanguageFluent,
           prolificLangType.FLUENT
         ),
         query: {
@@ -118,6 +119,7 @@ export const prolificCreateDraftOnClick = async (
         },
       },
     ],
+    project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
   };
 
   const response = await fetch(prolificStudyDraftApiUrl, {
@@ -136,15 +138,9 @@ export const prolificCreateDraftOnClick = async (
 
   const result = JSON.parse(response);
 
-  if (result.status !== 201) {
+  if (result.status !== "UNPUBLISHED") {
     console.error(result);
-  } else {
-    window
-      .open(
-        "https://app.prolific.co/researcher/workspaces/studies/" +
-          result.data.id,
-        "_blank"
-      )
-      ?.focus();
   }
+
+  return result;
 };
