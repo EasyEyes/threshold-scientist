@@ -117,7 +117,7 @@ export default class Running extends Component {
       previousExperimentViewed: { previousRecruitmentInformation },
       viewingPreviousExperiment,
     } = this.props;
-    const { pavloviaIsReady } = this.state;
+    const { pavloviaIsReady, completionCode } = this.state;
 
     const isRunning = experimentStatus === "RUNNING";
 
@@ -346,17 +346,24 @@ export default class Running extends Component {
                   <>
                     <button
                       className="button-grey button-small"
-                      onClick={async () => {
-                        // ! generate completion code
-                        const code = await generateAndUploadCompletionURL(
-                          user,
-                          newRepo,
-                          functions.handleUpdateUser
-                        );
+                      onClick={async (e) => {
+                        e.target.classList.add("button-disabled");
+                        e.target.classList.add("button-wait");
 
-                        this.setState({
-                          completionCode: code,
-                        });
+                        // ! generate completion code
+                        const hasCompletionCode = !!completionCode;
+                        const code =
+                          completionCode ??
+                          (await generateAndUploadCompletionURL(
+                            user,
+                            newRepo,
+                            functions.handleUpdateUser
+                          ));
+
+                        if (!hasCompletionCode)
+                          this.setState({
+                            completionCode: code,
+                          });
 
                         // ! create draft study on prolific
                         const result = await prolificCreateDraftOnClick(
@@ -375,6 +382,9 @@ export default class Running extends Component {
                             )
                             ?.focus();
                         }
+
+                        e.target.classList.remove("button-disabled");
+                        e.target.classList.remove("button-wait");
                       }}
                     >
                       Create a new study on {recruitName}
