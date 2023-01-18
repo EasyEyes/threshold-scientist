@@ -14,31 +14,7 @@ export default class StatusLines extends Component {
   }
 
   getStatusLineFilename(filename) {
-    return (
-      <span className="status-line-content">
-        {filename}
-        <button
-          className="button-small button-grey"
-          style={{
-            whiteSpace: "nowrap",
-            fontSize: "0.7em",
-            padding: "0.6em",
-            borderRadius: "0.3em",
-            color: "#fff",
-          }}
-          onClick={async (e) => {
-            // change this button class to button-wait
-            e.target.classList.add("button-wait");
-
-            await this.props.functions.handleReturnToStep("table");
-            this.props.functions.handleSetFilename("");
-            this.props.functions.handleSetProjectName("");
-          }}
-        >
-          Upload a new file
-        </button>
-      </span>
-    );
+    return <span className="status-line-content">{filename}</span>;
   }
 
   render() {
@@ -100,12 +76,39 @@ export default class StatusLines extends Component {
           title={"Experiment"}
           content={
             user ? (
-              <Dropdown
-                selected={activeExperiment}
-                setSelectedProject={functions.handleSetActivateExperiment}
-                projectList={user.projectList}
-                newExperimentProjectName={projectName}
-              />
+              <span className="status-line-content">
+                <Dropdown
+                  selected={activeExperiment}
+                  setSelectedProject={functions.handleSetActivateExperiment}
+                  projectList={user.projectList}
+                  newExperimentProjectName={projectName}
+                />
+                {((!viewingPreviousExperiment && filename) ||
+                  viewingPreviousExperiment) && (
+                  <button
+                    className="button-small button-grey"
+                    style={{
+                      whiteSpace: "nowrap",
+                      fontSize: "0.7rem",
+                      padding: "0.6rem",
+                      // borderRadius: "0.3rem",
+                      color: "#fff",
+                    }}
+                    onClick={async (e) => {
+                      // change this button class to button-wait
+                      e.target.classList.add("button-wait");
+
+                      await this.props.functions.handleReturnToStep("table");
+                      this.props.functions.handleSetFilename(null);
+                      this.props.functions.handleSetProjectName(null);
+
+                      functions.handleSetActivateExperiment("new");
+                    }}
+                  >
+                    Create a new experiment
+                  </button>
+                )}
+              </span>
             ) : (
               ""
             )
