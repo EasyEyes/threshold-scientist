@@ -22,7 +22,7 @@ export default class Dropdown extends Component {
         className="history-dropdown"
         name="projects"
         id="projects"
-        defaultValue={selected?.id || undefined}
+        value={selected === "new" ? "__NEW_EXPERIMENT__" : selected?.id}
         onChange={(e) => {
           if (e.target.value === "__NEW_EXPERIMENT__") {
             setSelectedProject(null);
