@@ -216,7 +216,9 @@ export default class StatusLines extends Component {
             user ? (
               prolificToken ? (
                 <span className="status-line-content">
-                  {`${prolificAccount?.name} (${prolificAccount?.email})`}
+                  {prolificAccount
+                    ? `${prolificAccount.name} (${prolificAccount.email})`
+                    : "Failed to connect, please check if your Prolific token is correct."}
                   <button
                     className="button-small button-grey"
                     style={inlineButtonStyle}

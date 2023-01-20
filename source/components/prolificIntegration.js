@@ -36,7 +36,8 @@ export const getProlificAccount = async (token) => {
   //   }
   // );
 
-  return JSON.parse(response);
+  if (response) return JSON.parse(response);
+  else return;
 };
 
 const findProlificLanguageAttributes = (
