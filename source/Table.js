@@ -182,7 +182,7 @@ export default class Table extends Component {
                 {/* <p className="dropzone-main-text emphasize"></p> */}
                 <p className="dropzone-sub-text">
                   <i
-                    className="bi bi-cloud-upload-fill"
+                    className="bi bi-file-earmark-plus"
                     style={{
                       fontSize: "1.4rem",
                       verticalAlign: "bottom",

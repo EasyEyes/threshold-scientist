@@ -117,7 +117,6 @@ export const prolificCreateDraftOnClick = async (
     body: JSON.stringify(payload),
     headers: {
       "Content-Type": "application/json",
-      // "Access-Control-Allow-Origin": "*",
       authorization: `Token ${token}`,
     },
   })
