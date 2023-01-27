@@ -16,7 +16,7 @@ export const getProlificAccount = async (token) => {
   };
 
   const response = await fetch(
-    "/netlify/functions/prolific/users/me/",
+    "/.netlify/functions/prolific/users/me/",
     requestOptions
   )
     .then((response) => {
@@ -36,7 +36,7 @@ export const getProlificAccount = async (token) => {
   //   }
   // );
 
-  if (response) return response;
+  if (response) return response.body;
   else return;
 };
 
@@ -63,7 +63,7 @@ export const prolificCreateDraftOnClick = async (
   token
 ) => {
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
-  const prolificStudyDraftApiUrl = "/netlify/functions/prolific/studies/";
+  const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
 
   const payload = {
     name: user.currentExperiment.titleOfStudy ?? "",
@@ -138,7 +138,7 @@ export const prolificCreateDraftOnClick = async (
     })
     .catch((error) => console.log(error));
 
-  const result = response;
+  const result = response.body;
 
   if (result.status !== "UNPUBLISHED") {
     console.error(result);

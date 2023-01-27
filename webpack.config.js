@@ -113,11 +113,11 @@ module.exports = (env) => {
           "Access-Control-Allow-Methods": "*",
         },
       },
-      // output: {
-      //   filename: "main.js",
-      //   path: path.resolve(__dirname, "dist/"),
-      //   publicPath: "/experiment/dist/",
-      // },
+      output: {
+        filename: "main.js",
+        path: path.resolve(__dirname, "dist/"),
+        publicPath: "/experiment/dist/",
+      },
     });
   } else if (env.production) {
     return Object.assign({}, config, {
