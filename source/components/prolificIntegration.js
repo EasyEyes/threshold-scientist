@@ -7,7 +7,7 @@ const prolificLangType = {
 
 export const getProlificAccount = async (token) => {
   const headers = new Headers();
-  headers.append("Authorization", `Token ${token}`);
+  headers.append("authorization", `Token ${token}`);
 
   const requestOptions = {
     method: "GET",
@@ -24,19 +24,7 @@ export const getProlificAccount = async (token) => {
     })
     .catch((error) => console.log(error));
 
-  // const response = await axios.get(
-  //   "https://api.prolific.co/api/v1/users/me",
-  //   {
-  //     withCredentials: false,
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       "Access-Control-Allow-Origin": "*",
-  //       Authorization: `Token ${token}`,
-  //     },
-  //   }
-  // );
-
-  if (response) return response.body;
+  if (response) return response;
   else return;
 };
 
@@ -130,7 +118,7 @@ export const prolificCreateDraftOnClick = async (
     headers: {
       "Content-Type": "application/json",
       // "Access-Control-Allow-Origin": "*",
-      Authorization: `Token ${token}`,
+      authorization: `Token ${token}`,
     },
   })
     .then((response) => {
@@ -138,7 +126,7 @@ export const prolificCreateDraftOnClick = async (
     })
     .catch((error) => console.log(error));
 
-  const result = response.body;
+  const result = response;
 
   if (result.status !== "UNPUBLISHED") {
     console.error(result);
