@@ -59,6 +59,9 @@ export const prolificCreateDraftOnClick = async (
     participantsDurationHours,
     user.currentExperiment._online2Pay,
     user.currentExperiment._online2PayPerHour,
+    participantsDurationHours * user.currentExperiment._online2PayPerHour,
+    user.currentExperiment._online2Pay +
+      participantsDurationHours * user.currentExperiment._online2PayPerHour,
     user.currentExperiment._online2Pay +
       participantsDurationHours * user.currentExperiment._online2PayPerHour,
     (user.currentExperiment._online2Pay +
