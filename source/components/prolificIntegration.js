@@ -58,7 +58,6 @@ export const prolificCreateDraftOnClick = async (
   const pay = parseFloat(user.currentExperiment._online2Pay);
   const payPerHour = parseFloat(user.currentExperiment._online2PayPerHour);
   const reward = (pay + payPerHour * hours) * 100;
-  console.log(hours, pay, payPerHour, reward, payPerHour * hours);
 
   const payload = {
     name: user.currentExperiment.titleOfStudy ?? "",
