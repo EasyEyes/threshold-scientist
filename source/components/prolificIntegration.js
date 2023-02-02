@@ -52,6 +52,9 @@ export const prolificCreateDraftOnClick = async (
 ) => {
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
+  const participantsDurationHours = (
+    user.currentExperiment._participantDurationMinutes / 60
+  ).toFixed(2);
 
   const payload = {
     name: user.currentExperiment.titleOfStudy ?? "",
@@ -64,7 +67,10 @@ export const prolificCreateDraftOnClick = async (
     total_available_places: user.currentExperiment._participantsHowMany ?? 10,
     estimated_completion_time:
       user.currentExperiment._participantDurationMinutes ?? 1,
-    reward: user.currentExperiment._online2Pay,
+    reward:
+      (user.currentExperiment._online2Pay +
+        participantsDurationHours * user.currentExperiment._online2PayPerHour) *
+      100,
     device_compatibility:
       user.currentExperiment._online3DeviceKind?.split(",") ?? [],
     peripheral_requirements:
