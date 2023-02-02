@@ -55,6 +55,11 @@ export const prolificCreateDraftOnClick = async (
   const participantsDurationHours = (
     user.currentExperiment._participantDurationMinutes / 60
   ).toFixed(2);
+  console.log(
+    participantsDurationHours,
+    user.currentExperiment._online2Pay,
+    user.currentExperiment._online2PayPerHour
+  );
 
   const payload = {
     name: user.currentExperiment.titleOfStudy ?? "",
@@ -70,7 +75,7 @@ export const prolificCreateDraftOnClick = async (
     reward:
       (user.currentExperiment._online2Pay +
         participantsDurationHours * user.currentExperiment._online2PayPerHour) *
-      100,
+        100 ?? 10,
     device_compatibility:
       user.currentExperiment._online3DeviceKind?.split(",") ?? [],
     peripheral_requirements:
