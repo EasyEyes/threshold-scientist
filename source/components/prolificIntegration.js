@@ -52,9 +52,9 @@ export const prolificCreateDraftOnClick = async (
 ) => {
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
-  const participantsDurationHours = (
-    user.currentExperiment._participantDurationMinutes / 60
-  ).toFixed(2);
+  const participantsDurationHours = parseFloat(
+    (user.currentExperiment._participantDurationMinutes / 60).toFixed(2)
+  );
   console.log(
     participantsDurationHours,
     user.currentExperiment._online2Pay,
