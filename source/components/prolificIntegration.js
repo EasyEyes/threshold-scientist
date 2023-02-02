@@ -55,8 +55,9 @@ export const prolificCreateDraftOnClick = async (
   const hours = parseFloat(
     (user.currentExperiment._participantDurationMinutes / 60).toFixed(2)
   );
-  const pay = parseFloat(user.currentExperiment._online2Pay);
-  const payPerHour = parseFloat(user.currentExperiment._online2PayPerHour);
+  const pay = parseFloat(user.currentExperiment?._online2Pay) ?? 0;
+  const payPerHour =
+    parseFloat(user.currentExperiment?._online2PayPerHour) ?? 0;
   const reward = (pay + payPerHour * hours) * 100;
 
   const payload = {
@@ -70,7 +71,7 @@ export const prolificCreateDraftOnClick = async (
     total_available_places: user.currentExperiment._participantsHowMany ?? 10,
     estimated_completion_time:
       user.currentExperiment._participantDurationMinutes ?? 1,
-    reward: reward ?? 10,
+    reward: reward ?? 0,
     device_compatibility:
       user.currentExperiment._online3DeviceKind?.split(",") ?? [],
     peripheral_requirements:
