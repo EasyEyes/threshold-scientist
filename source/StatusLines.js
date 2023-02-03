@@ -31,15 +31,28 @@ export default class StatusLines extends Component {
 
   popToUploadProlificToken() {
     Swal.fire({
-      title: "Upload your Prolific token",
-      input: "text",
+      title: "Connect Prolific account",
+      html:
+        '<input id="prolific-token-text-input" class="swal2-input">' +
+        `<div style="margin-top: 20px;">  Prolific integration requires that you get a 
+    token from the Prolific website and save it in your Pavlovia account. 
+    When you log into your Prolific account, you'll see a blue navigation bar on the left of the screen. 
+    At the bottom, click "Settings". On the Settings page, scroll down to the bottom, 
+    and click the "Go to API token page" button. There, hit  the "Create API token" 
+    and the "Copy" buttons to copy the Prolific token. Then paste that token into the text box above, 
+    and click "Save". Your Pavlovia account will retain this link to your Prolific account, 
+    offering tight EasyEyes integration. 
+    You can change it at any time by again using the "Connect Prolific account" button.</div>`,
       inputAttributes: {
         autocapitalize: "off",
       },
       showCancelButton: true,
-      confirmButtonText: "Upload",
+      confirmButtonText: "Save",
       showLoaderOnConfirm: true,
-      preConfirm: async (token) => {
+      preConfirm: async () => {
+        const token = document.getElementById(
+          "prolific-token-text-input"
+        ).value;
         await createOrUpdateProlificToken(this.props.user, token);
         return token;
       },
@@ -228,7 +241,7 @@ export default class StatusLines extends Component {
                       this.popToUploadProlificToken();
                     }}
                   >
-                    Update your Prolific token
+                    Connect to Prolific
                   </button>
                 </span>
               ) : (
@@ -241,7 +254,7 @@ export default class StatusLines extends Component {
                     this.popToUploadProlificToken();
                   }}
                 >
-                  Upload your Prolific token to access
+                  Connect to Prolific
                 </button>
               )
             ) : (
