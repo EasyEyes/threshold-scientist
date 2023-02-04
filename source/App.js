@@ -27,6 +27,7 @@ export default class App extends Component {
     this.allSteps = allSteps();
 
     this.state = {
+      websiteRepoLastCommit: null,
       readingGlossary: false,
       /* -------------------------------------------------------------------------- */
       activeExperiment: "new",
@@ -79,6 +80,18 @@ export default class App extends Component {
     };
 
     this.closeGlossary = this.closeGlossary.bind(this);
+  }
+
+  async componentDidMount() {
+    // get github last commit time
+    const websiteRepoCommits = await fetch(
+      "https://api.github.com/repos/EasyEyes/website/commits"
+    );
+    websiteRepoCommits.json().then((data) => {
+      this.setState({
+        websiteRepoLastCommit: data[0].commit.author.date,
+      });
+    });
   }
 
   /* -------------------------------------------------------------------------- */
@@ -311,6 +324,7 @@ export default class App extends Component {
 
   render() {
     const {
+      websiteRepoLastCommit,
       readingGlossary,
       activeExperiment,
       previousExperimentViewed,
@@ -327,6 +341,8 @@ export default class App extends Component {
       experimentStatus,
     } = this.state;
     const steps = [];
+
+    console.log(websiteRepoLastCommit);
 
     const viewingPreviousExperiment = activeExperiment !== "new";
 
@@ -504,6 +520,13 @@ export default class App extends Component {
             {/* <StatusBar currentStep={currentStep} /> */}
             {steps}
           </div>
+
+          {websiteRepoLastCommit && (
+            <p className="last-commit-date">
+              The compiler was last updated at{" "}
+              {new Date(websiteRepoLastCommit).toLocaleString()}.
+            </p>
+          )}
         </Suspense>
       </>
     );
