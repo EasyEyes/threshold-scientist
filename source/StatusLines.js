@@ -138,7 +138,7 @@ export default class StatusLines extends Component {
                   projectList={user.projectList}
                   newExperimentProjectName={projectName}
                 />
-                {((!viewingPreviousExperiment && filename) ||
+                {/* {((!viewingPreviousExperiment && filename) ||
                   viewingPreviousExperiment) && (
                   <button
                     className="button-small button-grey"
@@ -156,7 +156,7 @@ export default class StatusLines extends Component {
                   >
                     Create a new experiment
                   </button>
-                )}
+                )} */}
               </span>
             ) : (
               ""

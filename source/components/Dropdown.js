@@ -27,6 +27,9 @@ export default class Dropdown extends Component {
           if (e.target.value === "__NEW_EXPERIMENT__") {
             setSelectedProject(null);
             return;
+          } else if (e.target.value === "__FRESH_NEW_EXPERIMENT__") {
+            setSelectedProject("REFRESH");
+            return;
           }
 
           const selectedProject = projectList.find((project) => {
@@ -48,9 +51,22 @@ export default class Dropdown extends Component {
 
           optionList.unshift(
             <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
-              📑 {newExperimentProjectName ?? `[New experiment]`}
+              {newExperimentProjectName
+                ? `📝 ${newExperimentProjectName}`
+                : `📑 [New experiment]`}
             </option>
           );
+
+          if (newExperimentProjectName) {
+            optionList.unshift(
+              <option
+                key={"__FRESH_NEW_EXPERIMENT__"}
+                value={"__FRESH_NEW_EXPERIMENT__"}
+              >
+                {`📑 [New experiment]`}
+              </option>
+            );
+          }
 
           return optionList;
         })()}

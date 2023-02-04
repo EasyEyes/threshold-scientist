@@ -2,7 +2,6 @@ import React, { Component, Suspense } from "react";
 import { renderToString } from "react-dom/server";
 import Swal from "sweetalert2";
 
-import History from "./History";
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
 
@@ -86,6 +85,16 @@ export default class App extends Component {
 
   async handleSetActivateExperiment(activeExperiment) {
     activeExperiment = activeExperiment || "new";
+
+    if (activeExperiment === "REFRESH") {
+      await this.handleReturnToStep("table");
+      this.handleSetFilename(null);
+      this.handleSetProjectName(null);
+
+      this.functions.handleSetActivateExperiment("new");
+
+      return;
+    }
 
     let originalFileName = null;
     let previousExperimentStatus = null;
