@@ -84,7 +84,7 @@ export default class App extends Component {
   }
 
   async componentDidMount() {
-    // get github last commit time
+    // get the actual changes from GitHub
     const websiteGitHubRepo = await fetch(
       "https://api.github.com/repos/EasyEyes/website/commits"
     );
@@ -94,12 +94,13 @@ export default class App extends Component {
       });
     });
 
+    // get the deployed time from Netlify
     const websiteNetlifySite = await fetch(
       "https://api.netlify.com/api/v1/sites/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/"
     );
     websiteNetlifySite.json().then((data) => {
       this.setState({
-        websiteRepoLastCommitDeploy: data.published_deploy.updated_at,
+        websiteRepoLastCommitDeploy: data.published_deploy.published_at,
       });
     });
   }
@@ -532,7 +533,7 @@ export default class App extends Component {
 
           {websiteRepoLastCommitDeploy && websiteRepoLastCommitURL && (
             <p className="last-commit-date">
-              The compiler was last updated at{" "}
+              Compiler updated{" "}
               <a
                 href={websiteRepoLastCommitURL}
                 style={{
