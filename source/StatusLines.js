@@ -128,7 +128,7 @@ export default class StatusLines extends Component {
 
         <StatusLine
           activated={!!user}
-          title={"Experiment"}
+          title={"Select experiment"}
           content={
             user ? (
               <span className="status-line-content">

@@ -201,8 +201,8 @@ export default class Running extends Component {
         <p className="emphasize">
           {isRunning
             ? pavloviaIsReady
-              ? "Experiment compiled, uploaded, and in RUNNING mode, ready to run."
-              : "Experiment compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new experiment, you need to assign tokens to it in Pavlovia."
+              ? "Local. Experiment compiled, uploaded, and in RUNNING mode, ready to run."
+              : "Local. Experiment compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new experiment, you need to assign tokens to it in Pavlovia."
             : `Upload successful! ${
                 offerPilotingOption
                   ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
@@ -316,10 +316,10 @@ export default class Running extends Component {
               // }}
             >
               <p>
-                Use {recruitName} to recruit participants.
+                Online. Use {recruitName} to recruit participants.
                 {effectiveUsingProlificWorkspace ? (
                   <>
-                    {`(You are using `}
+                    {` (You are using `}
                     <a
                       style={{
                         color: "#666",
