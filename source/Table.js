@@ -224,7 +224,7 @@ export default class Table extends Component {
                     {error.parameters ? (
                       <>
                         <span className="error-parameter">
-                          {error.parameters.join("<br/>")}
+                          {error.parameters.join(" ")}
                         </span>
                         <br />
                       </>
