@@ -27,7 +27,7 @@ export default class App extends Component {
     this.allSteps = allSteps();
 
     this.state = {
-      websiteRepoLastCommit: null,
+      websiteRepoLastCommitDeploy: null,
       websiteRepoLastCommitURL: null,
       readingGlossary: false,
       /* -------------------------------------------------------------------------- */
@@ -85,14 +85,21 @@ export default class App extends Component {
 
   async componentDidMount() {
     // get github last commit time
-    const websiteRepoCommits = await fetch(
+    const websiteGitHubRepo = await fetch(
       "https://api.github.com/repos/EasyEyes/website/commits"
     );
-    websiteRepoCommits.json().then((data) => {
-      console.log(data[0]);
+    websiteGitHubRepo.json().then((data) => {
       this.setState({
-        websiteRepoLastCommit: data[0].commit,
         websiteRepoLastCommitURL: data[0].html_url,
+      });
+    });
+
+    const websiteNetlifySite = await fetch(
+      "https://api.netlify.com/api/v1/sites/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/"
+    );
+    websiteNetlifySite.json().then((data) => {
+      this.setState({
+        websiteRepoLastCommitDeploy: data.published_deploy.updated_at,
       });
     });
   }
@@ -327,7 +334,7 @@ export default class App extends Component {
 
   render() {
     const {
-      websiteRepoLastCommit,
+      websiteRepoLastCommitDeploy,
       websiteRepoLastCommitURL,
       readingGlossary,
       activeExperiment,
@@ -523,7 +530,7 @@ export default class App extends Component {
             {steps}
           </div>
 
-          {websiteRepoLastCommit && (
+          {websiteRepoLastCommitDeploy && websiteRepoLastCommitURL && (
             <p className="last-commit-date">
               The compiler was last updated at{" "}
               <a
@@ -537,13 +544,13 @@ export default class App extends Component {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {new Date(websiteRepoLastCommit.author.date).toLocaleDateString(
+                {new Date(websiteRepoLastCommitDeploy).toLocaleDateString(
                   undefined,
                   {
                     dateStyle: "medium",
                   }
                 )}{" "}
-                {new Date(websiteRepoLastCommit.author.date).toLocaleString(
+                {new Date(websiteRepoLastCommitDeploy).toLocaleString(
                   undefined,
                   {
                     timeStyle: "short",
