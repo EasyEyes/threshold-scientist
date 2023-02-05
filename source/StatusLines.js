@@ -115,6 +115,48 @@ export default class StatusLines extends Component {
             )
           }
         />
+
+        <StatusLine
+          activated={!!user}
+          title={"Prolific account"}
+          content={
+            user ? (
+              prolificToken ? (
+                <span className="status-line-content">
+                  {prolificAccount
+                    ? `${prolificAccount.name} (${prolificAccount.email})`
+                    : "Failed to connect, please check if your Prolific token is correct."}
+                  <button
+                    className="button-small button-grey"
+                    style={inlineButtonStyle}
+                    onClick={async () => {
+                      // change this button class to button-wait
+                      // e.target.classList.add("button-wait");
+                      this.popToUploadProlificToken();
+                    }}
+                  >
+                    Connect to Prolific
+                  </button>
+                </span>
+              ) : (
+                <button
+                  className="button-small button-grey"
+                  style={inlineButtonStyle}
+                  onClick={async (e) => {
+                    // change this button class to button-wait
+                    e.target.classList.add("button-wait");
+                    this.popToUploadProlificToken();
+                  }}
+                >
+                  Connect to Prolific
+                </button>
+              )
+            ) : (
+              "Please connect to Pavlovia first"
+            )
+          }
+        />
+
         {/* <StatusLine
           activated={!!filename}
           title={(
@@ -221,47 +263,6 @@ export default class StatusLines extends Component {
             opacity: "0.15",
           }}
         /> */}
-
-        <StatusLine
-          activated={!!user}
-          title={"Prolific account"}
-          content={
-            user ? (
-              prolificToken ? (
-                <span className="status-line-content">
-                  {prolificAccount
-                    ? `${prolificAccount.name} (${prolificAccount.email})`
-                    : "Failed to connect, please check if your Prolific token is correct."}
-                  <button
-                    className="button-small button-grey"
-                    style={inlineButtonStyle}
-                    onClick={async () => {
-                      // change this button class to button-wait
-                      // e.target.classList.add("button-wait");
-                      this.popToUploadProlificToken();
-                    }}
-                  >
-                    Connect to Prolific
-                  </button>
-                </span>
-              ) : (
-                <button
-                  className="button-small button-grey"
-                  style={inlineButtonStyle}
-                  onClick={async (e) => {
-                    // change this button class to button-wait
-                    e.target.classList.add("button-wait");
-                    this.popToUploadProlificToken();
-                  }}
-                >
-                  Connect to Prolific
-                </button>
-              )
-            ) : (
-              "Please connect to Pavlovia first"
-            )
-          }
-        />
       </ul>
     );
   }
