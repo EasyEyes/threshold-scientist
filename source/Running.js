@@ -225,7 +225,7 @@ export default class Running extends Component {
         <p className="compile-count">
           <i className="bi bi-stars"></i>
           <span>
-            The {ordinalSuffixOf(totalCompileCounts)} experiment compiled with
+            {ordinalSuffixOf(totalCompileCounts)} experiment compiled by
             EasyEyes
           </span>
         </p>
