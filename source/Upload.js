@@ -29,6 +29,9 @@ export default class Upload extends Component {
         this.props.functions.handleGetNewRepo
       )
     ) {
+      // update firebase compile count
+      this.props.functions.handleUpdateCompileCount();
+
       if (e !== null) {
         e.target.removeAttribute("disabled");
         e.target.classList.add("button-disabled");

@@ -21,11 +21,35 @@
     &.bold {
       font-weight: 700;
     }
+
     &.emphasize {
       font-weight: 500;
     }
+
     &.success {
       color: $green;
+    }
+
+    &.compile-count {
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.3rem;
+
+      color: #57068c;
+      font-size: 0.7rem;
+      line-height: 100%;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      border: 1px solid #57068c;
+      border-radius: $icon-radius;
+
+      * {
+        font-size: 0.7rem;
+        line-height: 100%;
+        color: #57068c !important;
+      }
     }
   }
 

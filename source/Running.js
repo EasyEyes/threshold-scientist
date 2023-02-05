@@ -1,14 +1,17 @@
 import React, { Component } from "react";
+import { get, ref } from "firebase/database";
 import Swal from "sweetalert2";
 
 import { Question } from "./components";
+import { db } from "./components/firebase";
+import { prolificCreateDraftOnClick } from "./components/prolificIntegration";
 import {
   downloadDataFolder,
   generateAndUploadCompletionURL,
   getExperimentStatus,
   runExperiment,
 } from "./components/gitlabUtils";
-import { prolificCreateDraftOnClick } from "./components/prolificIntegration";
+import { ordinalSuffixOf } from "./components/utils";
 
 import "./css/Running.scss";
 export default class Running extends Component {
@@ -19,6 +22,7 @@ export default class Running extends Component {
       pavloviaIsReady:
         props.previousExperiment || props.experimentStatus === "RUNNING",
       completionCode: undefined,
+      totalCompileCounts: 0,
     };
 
     this.setModeToRun = this.setModeToRun.bind(this);
@@ -26,6 +30,15 @@ export default class Running extends Component {
 
   componentDidMount() {
     this.props.scrollToCurrentStep();
+
+    // get total compile counts
+    get(ref(db, "compileCounts/")).then((snapshot) => {
+      const compileCounts = snapshot.val();
+      // sum all values
+      const totalCompileCounts =
+        Object.values(compileCounts).reduce((a, b) => a + b, 0) + 1;
+      this.setState({ totalCompileCounts });
+    });
 
     if (
       !this.props.previousExperiment &&
@@ -117,7 +130,7 @@ export default class Running extends Component {
       previousExperimentViewed: { previousRecruitmentInformation },
       viewingPreviousExperiment,
     } = this.props;
-    const { pavloviaIsReady, completionCode } = this.state;
+    const { pavloviaIsReady, completionCode, totalCompileCounts } = this.state;
 
     const isRunning = experimentStatus === "RUNNING";
 
@@ -203,11 +216,18 @@ export default class Running extends Component {
             ? pavloviaIsReady
               ? "Local. Experiment compiled, uploaded, and in RUNNING mode, ready to run."
               : "Local. Experiment compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new experiment, you need to assign tokens to it in Pavlovia."
-            : `Upload successful! ${
+            : `Local. Upload successful! ${
                 offerPilotingOption
                   ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
                   : "Setting mode to RUNNING ..."
               }`}
+        </p>
+        <p className="compile-count">
+          <i className="bi bi-stars"></i>
+          <span>
+            The {ordinalSuffixOf(totalCompileCounts)} experiment compiled with
+            EasyEyes
+          </span>
         </p>
         <div className="link-set">
           <div className="link-set-buttons">
@@ -315,7 +335,7 @@ export default class Running extends Component {
               //   marginTop: "1.6rem",
               // }}
             >
-              <p>
+              <p className="emphasize">
                 Online. Use {recruitName} to recruit participants.
                 {effectiveUsingProlificWorkspace ? (
                   <>

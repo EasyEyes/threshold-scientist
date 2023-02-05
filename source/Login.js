@@ -6,7 +6,6 @@ import { getUserInfo, redirectToOauth2 } from "./components/user";
 
 import "./css/Login.scss";
 
-// import { TemporaryLog, tempAccessToken } from "./TemporaryLog";
 import { tempAccessToken } from "./components/global";
 
 export default class Login extends Component {

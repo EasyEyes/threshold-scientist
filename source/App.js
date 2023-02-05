@@ -1,5 +1,7 @@
 import React, { Component, Suspense } from "react";
 import { renderToString } from "react-dom/server";
+import { set, ref, get } from "firebase/database";
+import { uuidv4 } from "@firebase/util";
 import Swal from "sweetalert2";
 
 import Step from "./Step";
@@ -16,9 +18,10 @@ import {
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
 } from "./components/gitlabUtils";
+import { db } from "./components/firebase";
+import { getProlificAccount } from "./components/prolificIntegration";
 
 import "./css/App.scss";
-import { getProlificAccount } from "./components/prolificIntegration";
 
 export default class App extends Component {
   constructor(props) {
@@ -78,6 +81,8 @@ export default class App extends Component {
       handleSetExperiment: this.handleSetExperiment.bind(this),
       handleGetNewRepo: this.handleGetNewRepo.bind(this),
       handleSetExperimentStatus: this.handleSetExperimentStatus.bind(this),
+      /* -------------------------------------------------------------------------- */
+      handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
     };
 
     this.closeGlossary = this.closeGlossary.bind(this);
@@ -326,6 +331,32 @@ export default class App extends Component {
       experimentStatus: newStatus,
     });
   }
+
+  /* -------------------------------------------------------------------------- */
+
+  handleUpdateCompileCount() {
+    const compileId = uuidv4();
+    const user = this.state.user.username;
+
+    set(ref(db, "compiles/" + compileId), {
+      id: compileId,
+      user: user,
+      timestamp: Date.now().toString(),
+      timeZone: getTimezoneName(),
+    });
+
+    // update compileCounts by 1
+    get(ref(db, "compileCounts/" + user)).then((snapshot) => {
+      if (snapshot.exists()) {
+        const count = snapshot.val();
+        set(ref(db, "compileCounts/" + user), count + 1);
+      } else {
+        set(ref(db, "compileCounts/" + user), 1);
+      }
+    });
+  }
+
+  /* -------------------------------------------------------------------------- */
 
   closeGlossary() {
     this.setState({
