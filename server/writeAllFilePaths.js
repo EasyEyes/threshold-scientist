@@ -57,28 +57,28 @@ const containPattern = [];
 const matchPattern = ["js/threshold.min.js", "components/images/favicon.ico"];
 
 const inIgnore = (f) => {
-  for (let ig of ignorePattern) {
+  for (const ig of ignorePattern) {
     if (f.includes(ig)) return true;
   }
   return false;
 };
 
 const inContain = (f) => {
-  for (let ig of containPattern) {
+  for (const ig of containPattern) {
     if (f.includes(ig)) return true;
   }
   return false;
 };
 
 const inMatch = (f) => {
-  for (let ig of matchPattern) {
+  for (const ig of matchPattern) {
     if (f === ig) return true;
   }
   return false;
 };
 
 function throughDirectory(directory) {
-  let files = [];
+  const files = [];
   fs.readdirSync(directory).forEach((file) => {
     const absolute = path.join(directory, file);
 
