@@ -31,7 +31,7 @@ export default class StatusLines extends Component {
 
   popToUploadProlificToken() {
     Swal.fire({
-      title: "Connect Prolific account",
+      title: "Paste Prolific token string here",
       html:
         '<input id="prolific-token-text-input" class="swal2-input">' +
         `<div style="margin-top: 20px;">  Prolific integration requires that you get a 
@@ -47,7 +47,8 @@ export default class StatusLines extends Component {
         autocapitalize: "off",
       },
       showCancelButton: true,
-      confirmButtonText: "Save",
+      confirmButtonText: "OK",
+      cancelButtonText: "CANCEL",
       showLoaderOnConfirm: true,
       preConfirm: async () => {
         const token = document.getElementById(
