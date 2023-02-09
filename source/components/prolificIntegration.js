@@ -50,7 +50,6 @@ export const prolificCreateDraftOnClick = async (
   completionCode,
   token
 ) => {
-  // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
   const hours = parseFloat(
     (user.currentExperiment._participantDurationMinutes / 60).toFixed(2)
@@ -59,6 +58,15 @@ export const prolificCreateDraftOnClick = async (
   const payPerHour =
     parseFloat(user.currentExperiment?._online2PayPerHour) ?? 0;
   const reward = (pay + payPerHour * hours) * 100;
+  let completionCodeAction = "MANUALLY_REVIEW";
+  if (
+    user.currentExperiment &&
+    user.currentExperiment._online2SubmissionApproval == "automatic"
+  ) {
+    completionCodeAction = "AUTOMATICALLY_APPROVE";
+  } else {
+    completionCodeAction = "MANUALLY_REVIEW";
+  }
 
   const payload = {
     name: user.currentExperiment.titleOfStudy ?? "",
@@ -67,6 +75,7 @@ export const prolificCreateDraftOnClick = async (
     external_study_url: user.currentExperiment.experimentUrl,
     prolific_id_option: "url_parameters",
     completion_code: completionCode,
+    completion_code_action: completionCodeAction,
     completion_option: "url",
     total_available_places: user.currentExperiment._participantsHowMany ?? 10,
     estimated_completion_time:
