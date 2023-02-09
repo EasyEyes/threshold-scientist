@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import Swal from "sweetalert2";
 import Dropdown from "./components/Dropdown";
 import { createOrUpdateProlificToken } from "./components/gitlabUtils";
+import { compatibilityRequirements } from "./components/global";
+
 // import PavloviaIcon from './media/pavlovia.svg';
 
 import "./css/StatusLines.scss";
@@ -73,7 +75,11 @@ export default class StatusLines extends Component {
   render() {
     const {
       activeExperiment,
-      previousExperimentViewed: { originalFileName, previousExperimentStatus },
+      previousExperimentViewed: {
+        originalFileName,
+        previousExperimentStatus,
+        previousCompatibilityRequirements,
+      },
       // currentStep,
       // completedSteps,
       // futureSteps,
@@ -256,7 +262,16 @@ export default class StatusLines extends Component {
             )
           }
         />
-
+        {/* Status Line for Compatibility Requirements */}
+        <StatusLine
+          activated={!!filename || viewingPreviousExperiment}
+          title={"Compatibility Requirements"}
+          content={
+            viewingPreviousExperiment
+              ? previousCompatibilityRequirements
+              : compatibilityRequirements.t
+          }
+        />
         {/* <hr
           style={{
             margin: "0.75rem 0",

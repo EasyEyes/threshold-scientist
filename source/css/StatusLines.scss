@@ -7,14 +7,13 @@
 
   .status-line {
     display: flex;
-    align-items: center;
+    // align-items: center;
     justify-content: flex-start;
     gap: 0.3rem;
 
     .line-title {
       display: flex;
-      align-items: center;
-
+      // align-items: center;
       .line-title-icon {
         height: 2rem;
 

@@ -26,6 +26,7 @@ import {
   getTextFileDataFromGitLab,
 } from "./fileUtils";
 import { getDateAndTimeString } from "./utils";
+import { compatibilityRequirements } from "./global";
 
 export class User {
   public username = "";
@@ -304,6 +305,37 @@ export const getProlificToken = async (user: User): Promise<string> => {
 
   if (response.includes("404 File Not Found")) return "";
   else return response;
+};
+
+export const getCompatibilityRequirementsForProject = async (
+  user: User,
+  repoName: string
+): Promise<string> => {
+  const repo = getProjectByNameInProjectList(user.projectList, repoName);
+
+  const headers = new Headers();
+  headers.append("Authorization", `bearer ${user.accessToken}`);
+
+  const requestOptions: any = {
+    method: "GET",
+    headers: headers,
+    redirect: "follow",
+  };
+  const response = await fetch(
+    "https://gitlab.pavlovia.org/api/v4/projects/" +
+      repo.id +
+      "/repository/files/CompatibilityRequirements.txt/raw?ref=master",
+    requestOptions
+  )
+    .then((response) => {
+      if (!response?.ok) return "";
+      return response.text();
+    })
+    .catch((error) => {
+      console.log(error);
+      return "";
+    });
+  return response;
 };
 
 export const getOriginalFileNameForProject = async (
@@ -671,6 +703,18 @@ export const getGitlabBodyForThreshold = async (
   return res;
 };
 
+export const getGitlabBodyForCompatibilityRequirementFile = (req: string) => {
+  const res: ICommitAction[] = [];
+  const content = req ? req : "";
+  res.push({
+    action: "create",
+    file_path: "CompatibilityRequirements.txt",
+    content,
+    encoding: "text",
+  });
+  return res;
+};
+
 // helper
 const updateSwalUploadingCount = (count: number, totalCount: number) => {
   const progressCount = document.getElementById("uploading-count");
@@ -697,6 +741,8 @@ const createThresholdCoreFilesOnRepo = async (
   const batchSize = 10; // !
   const results: any[] = [];
 
+  totalFileCount += 1; // add 1 for compatibility file
+
   for (let i = 0; i < _loadFiles.length; i += batchSize) {
     const startIdx = i;
     const endIdx = Math.min(i + batchSize - 1, _loadFiles.length - 1);
@@ -704,7 +750,6 @@ const createThresholdCoreFilesOnRepo = async (
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise(async (resolve) => {
       const rootContent = await getGitlabBodyForThreshold(startIdx, endIdx);
-
       pushCommits(
         user,
         gitlabRepo,
@@ -724,6 +769,27 @@ const createThresholdCoreFilesOnRepo = async (
   }
 
   await Promise.all(promiseList);
+
+  // add compatibility file (fails if added to promiseList)
+  const compatibilityPromise = new Promise(async (resolve) => {
+    const rootContent = getGitlabBodyForCompatibilityRequirementFile(
+      compatibilityRequirements.t
+    );
+    pushCommits(
+      user,
+      gitlabRepo,
+      rootContent,
+      commitMessages.thresholdCoreFileUploaded,
+      defaultBranch
+    ).then((commitResponse: any) => {
+      uploadedFileCount.current += 1;
+      updateSwalUploadingCount(uploadedFileCount.current, totalFileCount);
+      resolve(commitResponse);
+      results.push(commitResponse);
+    });
+  });
+  await compatibilityPromise; // fails if added to promiseList
+
   return results;
 };
 
@@ -834,7 +900,7 @@ const createRequestedResourcesOnRepo = async (
         requestedFiles = [];
         break;
     }
-    // console.log(`requested ${resourceType}`, requestedFiles);
+
     for (const fileName of requestedFiles) {
       const resourcesRepoFilePath = encodeGitlabFilePath(
         `${resourceType}/${fileName}`

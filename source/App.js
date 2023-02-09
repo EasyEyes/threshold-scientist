@@ -14,6 +14,7 @@ import { allSteps } from "./components/steps";
 import { Compatibility } from "./components";
 import {
   getAllProjects,
+  getCompatibilityRequirementsForProject,
   getExperimentStatus,
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
@@ -44,6 +45,7 @@ export default class App extends Component {
           recruitmentServiceURL: null,
           recruitmentProlificWorkspace: null,
         },
+        previousCompatibilityRequirements: null,
       },
       /* -------------------------------------------------------------------------- */
       currentStep: "login", // 'login', 'table', 'upload', 'running', 'deploy', ('download')
@@ -65,9 +67,12 @@ export default class App extends Component {
       projectName: null,
       newRepo: null,
       experimentStatus: "INACTIVE",
+      compatibilityRequirements: "",
     };
 
     this.functions = {
+      handleSetCompatibilityRequirements:
+        this.handleSetCompatibilityRequirements.bind(this),
       handleSetActivateExperiment: this.handleSetActivateExperiment.bind(this),
       handleReset: this.handleReset.bind(this),
       handleNextStep: this.handleNextStep.bind(this),
@@ -119,7 +124,7 @@ export default class App extends Component {
       await this.handleReturnToStep("table");
       this.handleSetFilename(null);
       this.handleSetProjectName(null);
-
+      this.handleSetCompatibilityRequirements("");
       this.functions.handleSetActivateExperiment("new");
 
       return;
@@ -133,6 +138,7 @@ export default class App extends Component {
       recruitmentServiceURL: null,
       recruitmentProlificWorkspace: null,
     };
+    let previousCompatibilityRequirements = null;
     if (activeExperiment !== "new") {
       // viewing a previous experiment
       const { user } = this.state;
@@ -144,6 +150,11 @@ export default class App extends Component {
         didOpen: async () => {
           Swal.showLoading(null);
 
+          previousCompatibilityRequirements =
+            await getCompatibilityRequirementsForProject(
+              user,
+              activeExperiment.name
+            );
           originalFileName = await getOriginalFileNameForProject(
             user,
             activeExperiment.name
@@ -167,6 +178,7 @@ export default class App extends Component {
         originalFileName,
         previousExperimentStatus,
         previousRecruitmentInformation,
+        previousCompatibilityRequirements: previousCompatibilityRequirements,
       },
     });
   }
@@ -215,6 +227,7 @@ export default class App extends Component {
       },
       projectName: null,
       newRepo: null,
+      compatibilityRequirements: "",
     });
   }
 
@@ -248,6 +261,7 @@ export default class App extends Component {
         },
         projectName: null,
         newRepo: null,
+        compatibilityRequirements: "",
       });
   }
 
@@ -286,6 +300,11 @@ export default class App extends Component {
     });
   }
 
+  handleSetCompatibilityRequirements(req) {
+    this.setState({
+      compatibilityRequirements: req,
+    });
+  }
   handleSetFilename(filename) {
     this.setState({
       filename: filename,
