@@ -23,6 +23,9 @@ import { db } from "./components/firebase";
 import { getProlificAccount } from "./components/prolificIntegration";
 
 import "./css/App.scss";
+import { getCompatibilityRequirements } from "../threshold/components/compatibilityCheck";
+
+import { compatibilityRequirements } from "./components/global";
 
 export default class App extends Component {
   constructor(props) {
@@ -67,10 +70,13 @@ export default class App extends Component {
       projectName: null,
       newRepo: null,
       experimentStatus: "INACTIVE",
-      compatibilityRequirements: "",
+      compatibilityRequirements: compatibilityRequirements.t,
+      compatibilityLanguage: "en-US",
     };
 
     this.functions = {
+      handleSetCompatibilityLanguage:
+        this.handleSetCompatibilityLanguage.bind(this),
       handleSetCompatibilityRequirements:
         this.handleSetCompatibilityRequirements.bind(this),
       handleSetActivateExperiment: this.handleSetActivateExperiment.bind(this),
@@ -180,6 +186,7 @@ export default class App extends Component {
         previousRecruitmentInformation,
         previousCompatibilityRequirements: previousCompatibilityRequirements,
       },
+      compatibilityLanguage: "en-US",
     });
   }
 
@@ -300,6 +307,37 @@ export default class App extends Component {
     });
   }
 
+  handleSetCompatibilityLanguage(
+    language,
+    isViewingPreviousExperiment = false
+  ) {
+    compatibilityRequirements.L = language;
+    const parsed = isViewingPreviousExperiment
+      ? compatibilityRequirements.previousParsedInfo
+      : compatibilityRequirements.parsedInfo;
+    const text = getCompatibilityRequirements(
+      null,
+      language,
+      true,
+      null,
+      parsed
+    ).compatibilityRequirements[0];
+    if (!isViewingPreviousExperiment) {
+      compatibilityRequirements.t = text;
+      this.handleSetCompatibilityRequirements(text);
+    } else {
+      compatibilityRequirements.previousT = text;
+      this.setState({
+        previousExperimentViewed: {
+          ...this.state.previousExperimentViewed,
+          previousCompatibilityRequirements: text,
+        },
+      });
+    }
+    this.setState({
+      compatibilityLanguage: language,
+    });
+  }
   handleSetCompatibilityRequirements(req) {
     this.setState({
       compatibilityRequirements: req,

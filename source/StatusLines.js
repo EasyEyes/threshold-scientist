@@ -2,7 +2,8 @@ import React, { Component } from "react";
 import Swal from "sweetalert2";
 import Dropdown from "./components/Dropdown";
 import { createOrUpdateProlificToken } from "./components/gitlabUtils";
-import { compatibilityRequirements } from "./components/global";
+import { compatibilityRequirements as globalCompatibilityReq } from "./components/global";
+import LanguageDropdown from "./components/LanguageDropdown";
 
 // import PavloviaIcon from './media/pavlovia.svg';
 
@@ -90,6 +91,8 @@ export default class StatusLines extends Component {
       projectName,
       experimentStatus,
       functions,
+      compatibilityRequirements,
+      compatibilityLanguage,
     } = this.props;
 
     const viewingPreviousExperiment = activeExperiment !== "new";
@@ -265,11 +268,24 @@ export default class StatusLines extends Component {
         {/* Status Line for Compatibility Requirements */}
         <StatusLine
           activated={!!filename || viewingPreviousExperiment}
-          title={"Compatibility Requirements"}
+          title={"Experiment requirements"}
           content={
-            viewingPreviousExperiment
-              ? previousCompatibilityRequirements
-              : compatibilityRequirements.t
+            <span>
+              {viewingPreviousExperiment
+                ? previousCompatibilityRequirements
+                : globalCompatibilityReq.t}
+              {(!!filename && compatibilityRequirements !== "") ||
+              (viewingPreviousExperiment &&
+                previousCompatibilityRequirements !== "") ? (
+                <LanguageDropdown
+                  selected={compatibilityLanguage}
+                  setSelectedLanguage={functions.handleSetCompatibilityLanguage}
+                  isViewingPreviousExperiment={viewingPreviousExperiment}
+                />
+              ) : (
+                ""
+              )}
+            </span>
           }
         />
         {/* <hr

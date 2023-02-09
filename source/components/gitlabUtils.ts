@@ -27,6 +27,7 @@ import {
 } from "./fileUtils";
 import { getDateAndTimeString } from "./utils";
 import { compatibilityRequirements } from "./global";
+import { getCompatibilityRequirements } from "../../threshold/components/compatibilityCheck";
 
 export class User {
   public username = "";
@@ -329,12 +330,28 @@ export const getCompatibilityRequirementsForProject = async (
   )
     .then((response) => {
       if (!response?.ok) return "";
-      return response.text();
+      return response.json();
+    })
+    .then((result) => {
+      if (result !== "") {
+        if (!result.language) return "";
+        compatibilityRequirements.previousParsedInfo = result;
+        const text = getCompatibilityRequirements(
+          null,
+          compatibilityRequirements.L || "en-US",
+          true,
+          null,
+          compatibilityRequirements.previousParsedInfo
+        ).compatibilityRequirements[0];
+        return text;
+      }
+      return "";
     })
     .catch((error) => {
       console.log(error);
       return "";
     });
+
   return response;
 };
 
@@ -703,9 +720,9 @@ export const getGitlabBodyForThreshold = async (
   return res;
 };
 
-export const getGitlabBodyForCompatibilityRequirementFile = (req: string) => {
+export const getGitlabBodyForCompatibilityRequirementFile = (req: object) => {
   const res: ICommitAction[] = [];
-  const content = req ? req : "";
+  const content = JSON.stringify(req);
   res.push({
     action: "create",
     file_path: "CompatibilityRequirements.txt",
@@ -773,7 +790,7 @@ const createThresholdCoreFilesOnRepo = async (
   // add compatibility file (fails if added to promiseList)
   const compatibilityPromise = new Promise(async (resolve) => {
     const rootContent = getGitlabBodyForCompatibilityRequirementFile(
-      compatibilityRequirements.t
+      compatibilityRequirements.parsedInfo
     );
     pushCommits(
       user,

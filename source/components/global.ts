@@ -14,4 +14,10 @@ export const experimentRecruitmentAndRunInfo: Experiment = {
 
 export const tempAccessToken = { t: undefined };
 
-export const compatibilityRequirements = { t: "" };
+export const compatibilityRequirements = {
+  t: "",
+  parsedInfo: {},
+  L: "",
+  previousParsedInfo: {},
+  previousT: "",
+};
