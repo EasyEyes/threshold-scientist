@@ -292,7 +292,7 @@ export default class Running extends Component {
             <hr />
             <div className="recruit-service">
               <p className="emphasize">
-                Online. Use {recruitName} to recruit participants.
+                Run online. Use {recruitName} to recruit participants.
                 {effectiveUsingProlificWorkspace ? (
                   <>
                     {` (You are using `}
@@ -367,7 +367,13 @@ export default class Running extends Component {
                     </button>
                   </>
                 </div>
-                <div style={{ marginRight: "32px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
+                  }}
+                >
                   <button
                     className="button-grey button-small"
                     style={smallButtonExtraStyle}
@@ -382,6 +388,16 @@ export default class Running extends Component {
                   >
                     Go to {recruitName}
                   </button>
+                  <Question
+                    title={"Why go to Prolific?"}
+                    text={`Prolific can recruit participants to take your study. 
+              The EasyEyes "Create Prolific study" button creates a new study in Prolific and fills in as many fields as possible for your experiment, 
+              using your experiment URL and values for _onlineXXX parameters specified in your experiment. 
+              It also takes you to Prolific, allowing you to publish the study to recruit participants, 
+              who Prolific will pay and charge you for. Once the study has begun, 
+              you might want to use the "Go to Prolific" button to check your study's progress. 
+              You'll soon be able to monitor progress here (with less detail) through a file counter next to the "Download results" button at the bottom of the page.`}
+                  />
                 </div>
               </div>
             </div>

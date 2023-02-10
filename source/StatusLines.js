@@ -50,8 +50,8 @@ export default class StatusLines extends Component {
         autocapitalize: "off",
       },
       showCancelButton: true,
-      confirmButtonText: "SAVE",
-      cancelButtonText: "CANCEL",
+      confirmButtonText: "Save",
+      cancelButtonText: "Cancel",
       showLoaderOnConfirm: true,
       preConfirm: async () => {
         const token = document.getElementById(
