@@ -47,12 +47,6 @@ export default class Running extends Component {
       this.setModeToRun();
   }
 
-  // componentDidUpdate() {
-  //   new Promise((resolve) => setTimeout(resolve, 100)).then(() => {
-  //     if (!this.state.pavloviaIsReady) this.checkPavloviaReady();
-  //   });
-  // }
-
   async setModeToRun(e = null) {
     const { user, newRepo, functions } = this.props;
 
@@ -147,18 +141,10 @@ export default class Running extends Component {
       ? false
       : !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
 
-    // const effectiveCompletionCode =
-    //   viewingPreviousExperiment && hasRecruitmentService
-    //     ? previousRecruitmentInformation.recruitmentServiceCompletionCode
-    //     : completionCode;
     const effectiveUsingProlificWorkspace =
       viewingPreviousExperiment && hasRecruitmentService
         ? previousRecruitmentInformation.recruitmentProlificWorkspace
         : user.currentExperiment.prolificWorkspaceModeBool;
-
-    // console.log("hasRecruitmentService", hasRecruitmentService);
-    // console.log("isRunning", isRunning);
-    // console.log(user);
 
     const smallButtonExtraStyle = {
       whiteSpace: "nowrap",
@@ -189,11 +175,6 @@ export default class Running extends Component {
 
     const buttonSetToRunning = (extraStyle = {}) => (
       <button
-        // className={`button-small${
-        //   isRunning || !offerPilotingOption
-        //     ? " button-disabled"
-        //     : " button-green"
-        // }`}
         className={`button-grey button-small`}
         onClick={
           isRunning
@@ -306,35 +287,10 @@ export default class Running extends Component {
           </div>
         </div>
 
-        {/* {isRunning && (
-          <p
-            style={{
-              fontSize: "1rem",
-            }}
-          >
-            Your experiment URL:{" "}
-            <a
-              href={this._getPavloviaExperimentUrl()}
-              target="_blank"
-              rel="noopenner noreferrer"
-              style={{
-                color: "#666",
-              }}
-            >{`https://run.pavlovia.org/${
-              user.username
-            }/${projectName.toLocaleLowerCase()}`}</a>
-          </p>
-        )} */}
-
         {hasRecruitmentService && isRunning && (
           <>
             <hr />
-            <div
-              className="recruit-service"
-              // style={{
-              //   marginTop: "1.6rem",
-              // }}
-            >
+            <div className="recruit-service">
               <p className="emphasize">
                 Online. Use {recruitName} to recruit participants.
                 {effectiveUsingProlificWorkspace ? (
@@ -409,29 +365,12 @@ export default class Running extends Component {
                     >
                       Create a new study on {recruitName}
                     </button>
-                    {/* {effectiveCompletionCode ? (
-                      
-                    ) : (
-                      <button
-                        className="button-grey button-small"
-                        onClick={async () => {
-                          const code = await generateAndUploadCompletionURL(
-                            user,
-                            newRepo,
-                            functions.handleUpdateUser
-                          );
-                          this.setState({
-                            completionCode: code,
-                          });
-                        }}
-                      >
-                        Generate completion code
-                      </button>
-                    )} */}
                   </>
-
+                </div>
+                <div style={{ marginRight: "32px" }}>
                   <button
                     className="button-grey button-small"
+                    style={smallButtonExtraStyle}
                     onClick={() => {
                       window.open(
                         user.currentExperiment.prolificWorkspaceModeBool
@@ -441,63 +380,10 @@ export default class Running extends Component {
                       );
                     }}
                   >
-                    Go to {recruitName} to view active studies
+                    Go to {recruitName}
                   </button>
                 </div>
               </div>
-              {/* {effectiveCompletionCode ? (
-                <>
-                  <p className="smaller-text">
-                    Click to copy the Prolific study URL{" "}
-                    <span
-                      className="text-copy"
-                      onClick={
-                        // copy to clipboard
-                        () => {
-                          navigator.clipboard.writeText(
-                            viewingPreviousExperiment
-                              ? this._getPavloviaExperimentUrl() +
-                                  "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}"
-                              : user.currentExperiment.experimentUrl
-                          );
-                        }
-                      }
-                    >
-                      {viewingPreviousExperiment
-                        ? this._getPavloviaExperimentUrl() +
-                          "?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}"
-                        : user.currentExperiment.experimentUrl}
-                    </span>
-                    .
-                  </p>
-                  <p className="smaller-text">
-                    The completion code is{" "}
-                    <span
-                      className="text-copy"
-                      onClick={
-                        // copy to clipboard
-                        () => {
-                          navigator.clipboard.writeText(
-                            effectiveCompletionCode
-                          );
-                        }
-                      }
-                    >
-                      {effectiveCompletionCode}
-                    </span>
-                    .
-                  </p>
-                </>
-              ) : (
-                <p
-                  style={{
-                    fontSize: "1rem",
-                  }}
-                >
-                  Please generate the completion code to view the Prolific study
-                  URL.
-                </p>
-              )} */}
             </div>
           </>
         )}
