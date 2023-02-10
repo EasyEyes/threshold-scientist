@@ -27,7 +27,7 @@ import {
 } from "./fileUtils";
 import { getDateAndTimeString } from "./utils";
 import { compatibilityRequirements } from "./global";
-import { getCompatibilityRequirements } from "../../threshold/components/compatibilityCheck";
+// import { getCompatibilityRequirements } from "../../threshold/components/compatibilityCheck";
 
 export class User {
   public username = "";
@@ -308,52 +308,52 @@ export const getProlificToken = async (user: User): Promise<string> => {
   else return response;
 };
 
-export const getCompatibilityRequirementsForProject = async (
-  user: User,
-  repoName: string
-): Promise<string> => {
-  const repo = getProjectByNameInProjectList(user.projectList, repoName);
+// export const getCompatibilityRequirementsForProject = async (
+//   user: User,
+//   repoName: string
+// ): Promise<string> => {
+//   const repo = getProjectByNameInProjectList(user.projectList, repoName);
 
-  const headers = new Headers();
-  headers.append("Authorization", `bearer ${user.accessToken}`);
+//   const headers = new Headers();
+//   headers.append("Authorization", `bearer ${user.accessToken}`);
 
-  const requestOptions: any = {
-    method: "GET",
-    headers: headers,
-    redirect: "follow",
-  };
-  const response = await fetch(
-    "https://gitlab.pavlovia.org/api/v4/projects/" +
-      repo.id +
-      "/repository/files/CompatibilityRequirements.txt/raw?ref=master",
-    requestOptions
-  )
-    .then((response) => {
-      if (!response?.ok) return "";
-      return response.json();
-    })
-    .then((result) => {
-      if (result !== "") {
-        if (!result.language) return "";
-        compatibilityRequirements.previousParsedInfo = result;
-        const text = getCompatibilityRequirements(
-          null,
-          compatibilityRequirements.L || "en-US",
-          true,
-          null,
-          compatibilityRequirements.previousParsedInfo
-        ).compatibilityRequirements[0];
-        return text;
-      }
-      return "";
-    })
-    .catch((error) => {
-      console.log(error);
-      return "";
-    });
+//   const requestOptions: any = {
+//     method: "GET",
+//     headers: headers,
+//     redirect: "follow",
+//   };
+//   const response = await fetch(
+//     "https://gitlab.pavlovia.org/api/v4/projects/" +
+//       repo.id +
+//       "/repository/files/CompatibilityRequirements.txt/raw?ref=master",
+//     requestOptions
+//   )
+//     .then((response) => {
+//       if (!response?.ok) return "";
+//       return response.json();
+//     })
+//     .then((result) => {
+//       if (result !== "") {
+//         if (!result.language) return "";
+//         compatibilityRequirements.previousParsedInfo = result;
+//         const text = getCompatibilityRequirements(
+//           null,
+//           compatibilityRequirements.L || "en-US",
+//           true,
+//           null,
+//           compatibilityRequirements.previousParsedInfo
+//         ).compatibilityRequirements[0];
+//         return text;
+//       }
+//       return "";
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//       return "";
+//     });
 
-  return response;
-};
+//   return response;
+// };
 
 export const getOriginalFileNameForProject = async (
   user: User,

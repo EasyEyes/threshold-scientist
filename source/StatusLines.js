@@ -275,7 +275,7 @@ export default class StatusLines extends Component {
               {viewingPreviousExperiment
                 ? previousCompatibilityRequirements
                 : globalCompatibilityReq.t}
-              {(!!filename && compatibilityRequirements !== "") ||
+              {/* {(!!filename && compatibilityRequirements !== "") ||
               (viewingPreviousExperiment &&
                 previousCompatibilityRequirements !== "") ? (
                 <LanguageDropdown
@@ -285,7 +285,7 @@ export default class StatusLines extends Component {
                 />
               ) : (
                 ""
-              )}
+              )} */}
             </span>
           }
         />

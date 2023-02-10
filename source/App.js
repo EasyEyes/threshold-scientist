@@ -14,7 +14,7 @@ import { allSteps } from "./components/steps";
 import { Compatibility } from "./components";
 import {
   getAllProjects,
-  getCompatibilityRequirementsForProject,
+  // getCompatibilityRequirementsForProject,
   getExperimentStatus,
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
@@ -156,11 +156,11 @@ export default class App extends Component {
         didOpen: async () => {
           Swal.showLoading(null);
 
-          previousCompatibilityRequirements =
-            await getCompatibilityRequirementsForProject(
-              user,
-              activeExperiment.name
-            );
+          // previousCompatibilityRequirements =
+          //   await getCompatibilityRequirementsForProject(
+          //     user,
+          //     activeExperiment.name
+          //   );
           originalFileName = await getOriginalFileNameForProject(
             user,
             activeExperiment.name
