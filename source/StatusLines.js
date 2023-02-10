@@ -41,16 +41,16 @@ export default class StatusLines extends Component {
     token from the Prolific website and save it in your Pavlovia account. 
     When you log into your Prolific account, you'll see a blue navigation bar on the left of the screen. 
     At the bottom, click "Settings". On the Settings page, scroll down to the bottom, 
-    and click the "Go to API token page" button. There, hit  the "Create API token" 
-    and the "Copy" buttons to copy the Prolific token. Then paste that token into the text box above, 
+    and click the "Go to API token page" button. There, hit the "Create API token" 
+    and "Copy" buttons to copy the Prolific token. Then paste that token into the text box above, 
     and click "Save". Your Pavlovia account will retain this link to your Prolific account, 
     offering tight EasyEyes integration. 
-    You can change it at any time by again using the "Connect Prolific account" button.</div>`,
+    You can change it at any time by again using the "Update Prolific account" button.</div>`,
       inputAttributes: {
         autocapitalize: "off",
       },
       showCancelButton: true,
-      confirmButtonText: "OK",
+      confirmButtonText: "SAVE",
       cancelButtonText: "CANCEL",
       showLoaderOnConfirm: true,
       preConfirm: async () => {
