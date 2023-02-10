@@ -195,7 +195,7 @@ export default class Running extends Component {
         <p className="emphasize">
           {isRunning
             ? pavloviaIsReady
-              ? "Local. Experiment compiled, uploaded, and in RUNNING mode, ready to run."
+              ? "Experiment ready to run."
               : "Local. Experiment compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new experiment, you need to assign tokens to it in Pavlovia."
             : `Local. Upload successful! ${
                 offerPilotingOption
@@ -220,7 +220,7 @@ export default class Running extends Component {
                     window.open(this._getPavloviaExperimentUrl(), "_blank");
                   }}
                 >
-                  Try the experiment in RUNNING mode
+                  Run here
                 </button>
               </>
             )}
@@ -363,7 +363,7 @@ export default class Running extends Component {
                         e.target.classList.remove("button-wait");
                       }}
                     >
-                      Create a new study on {recruitName}
+                      Create {recruitName} study
                     </button>
                   </>
                 </div>
