@@ -1,4 +1,7 @@
-import { LANGUAGE_INDEX_PROLIFIC_MAPPING } from "../Constants";
+import {
+  LANGUAGE_INDEX_PROLIFIC_MAPPING,
+  LOCATION_INDEX_PROLIFIC_MAPPING,
+} from "../Constants";
 
 const prolificLangType = {
   NATIVE: "NATIVE",
@@ -41,6 +44,17 @@ const findProlificLanguageAttributes = (
     v["value"] = true;
     result.push(v);
   });
+  return result;
+};
+
+const findProlificLocationEligibilityAttributes = (field) => {
+  const result = [];
+  if (!field || field == "All countries available") {
+    return result;
+  }
+  const loc = { ...LOCATION_INDEX_PROLIFIC_MAPPING[field] };
+  loc["value"] = true;
+  result.push(loc);
   return result;
 };
 
@@ -136,6 +150,29 @@ export const prolificCreateDraft = async (
           researcher_help_text: "",
           is_new: false,
           tags: ["rep_sample_language", "core-13"],
+        },
+      },
+      {
+        id: null,
+        type: "SelectAnswer",
+        attributes: findProlificLocationEligibilityAttributes(
+          user.currentExperiment._online4Location
+        ),
+        query: {
+          id: "54bef0fafdf99b15608c504e",
+          question: "In what country do you currently reside?",
+          description: "",
+          title: "Current Country of Residence",
+          help_text:
+            "Please note that Prolific is currently only available for participants who live in OECD countries. <a href='https://researcher-help.prolific.co/hc/en-gb/articles/360009220833-Who-are-the-people-in-your-participant-pool' target='_blank'>Read more about this</a>",
+          participant_help_text: "",
+          researcher_help_text: "",
+          is_new: false,
+          tags: [
+            "rep_sample_country",
+            "core-7",
+            "default_export_country_of_residence",
+          ],
         },
       },
     ],
