@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 
 import { Question } from "./components";
 import { db } from "./components/firebase";
-import { prolificCreateDraftOnClick } from "./components/prolificIntegration";
+import { prolificCreateDraft } from "./components/prolificIntegration";
 import {
   downloadDataFolder,
   generateAndUploadCompletionURL,
@@ -342,7 +342,7 @@ export default class Running extends Component {
                           });
 
                         // ! create draft study on prolific
-                        const result = await prolificCreateDraftOnClick(
+                        const result = await prolificCreateDraft(
                           user,
                           `${this.props.user.username}/${this.props.projectName}`,
                           code,

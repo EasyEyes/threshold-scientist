@@ -44,7 +44,21 @@ const findProlificLanguageAttributes = (
   return result;
 };
 
-export const prolificCreateDraftOnClick = async (
+const selectedLocation = {
+  "All countries available": "all",
+  USA: "usa",
+  UK: "uk",
+};
+
+const findProlificLocationAttributes = (field) => {
+  if (field in selectedLocation) {
+    return selectedLocation[field];
+  } else {
+    return "more";
+  }
+};
+
+export const prolificCreateDraft = async (
   user,
   internalName,
   completionCode,
@@ -126,6 +140,9 @@ export const prolificCreateDraftOnClick = async (
       },
     ],
     project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
+    selected_location: [
+      findProlificLocationAttributes(user.currentExperiment._online4Location),
+    ],
   };
 
   const response = await fetch(prolificStudyDraftApiUrl, {
