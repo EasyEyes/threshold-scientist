@@ -14,7 +14,7 @@ import { allSteps } from "./components/steps";
 import { Compatibility } from "./components";
 import {
   getAllProjects,
-  // getCompatibilityRequirementsForProject,
+  getCompatibilityRequirementsForProject,
   getExperimentStatus,
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
@@ -156,11 +156,11 @@ export default class App extends Component {
         didOpen: async () => {
           Swal.showLoading(null);
 
-          // previousCompatibilityRequirements =
-          //   await getCompatibilityRequirementsForProject(
-          //     user,
-          //     activeExperiment.name
-          //   );
+          previousCompatibilityRequirements =
+            await getCompatibilityRequirementsForProject(
+              user,
+              activeExperiment.name
+            );
           originalFileName = await getOriginalFileNameForProject(
             user,
             activeExperiment.name
@@ -311,7 +311,6 @@ export default class App extends Component {
     language,
     isViewingPreviousExperiment = false
   ) {
-    compatibilityRequirements.L = language;
     const parsed = isViewingPreviousExperiment
       ? compatibilityRequirements.previousParsedInfo
       : compatibilityRequirements.parsedInfo;
@@ -324,9 +323,11 @@ export default class App extends Component {
     ).compatibilityRequirements[0];
     if (!isViewingPreviousExperiment) {
       compatibilityRequirements.t = text;
+      compatibilityRequirements.L = language;
       this.handleSetCompatibilityRequirements(text);
     } else {
       compatibilityRequirements.previousT = text;
+      compatibilityRequirements.previousL = language;
       this.setState({
         previousExperimentViewed: {
           ...this.state.previousExperimentViewed,

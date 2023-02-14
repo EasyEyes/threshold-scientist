@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 import Dropdown from "./components/Dropdown";
 import { createOrUpdateProlificToken } from "./components/gitlabUtils";
 import { compatibilityRequirements as globalCompatibilityReq } from "./components/global";
-import LanguageDropdown from "./components/LanguageDropdown";
+import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 
 // import PavloviaIcon from './media/pavlovia.svg';
 
@@ -226,6 +226,27 @@ export default class StatusLines extends Component {
               : ""
           }
         />
+        {/* Status Line for Compatibility Requirements */}
+        <StatusLine
+          activated={!!filename || viewingPreviousExperiment}
+          title={"Experiment needs"}
+          content={
+            <span
+              className="experiment-needs"
+              onClick={() =>
+                displayExperimentNeedsPopup(
+                  previousCompatibilityRequirements,
+                  functions.handleSetCompatibilityLanguage,
+                  viewingPreviousExperiment
+                )
+              }
+            >
+              {viewingPreviousExperiment
+                ? previousCompatibilityRequirements
+                : globalCompatibilityReq.t}
+            </span>
+          }
+        />
         {/* <StatusLine
           activated={!!projectName || viewingPreviousExperiment}
           title={"Experiment name"}
@@ -266,29 +287,7 @@ export default class StatusLines extends Component {
             )
           }
         />
-        {/* Status Line for Compatibility Requirements */}
-        <StatusLine
-          activated={!!filename || viewingPreviousExperiment}
-          title={"Experiment requirements"}
-          content={
-            <span>
-              {viewingPreviousExperiment
-                ? previousCompatibilityRequirements
-                : globalCompatibilityReq.t}
-              {/* {(!!filename && compatibilityRequirements !== "") ||
-              (viewingPreviousExperiment &&
-                previousCompatibilityRequirements !== "") ? (
-                <LanguageDropdown
-                  selected={compatibilityLanguage}
-                  setSelectedLanguage={functions.handleSetCompatibilityLanguage}
-                  isViewingPreviousExperiment={viewingPreviousExperiment}
-                />
-              ) : (
-                ""
-              )} */}
-            </span>
-          }
-        />
+
         {/* <hr
           style={{
             margin: "0.75rem 0",

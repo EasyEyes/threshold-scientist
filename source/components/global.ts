@@ -20,4 +20,6 @@ export const compatibilityRequirements = {
   L: "",
   previousParsedInfo: {},
   previousT: "",
+  selected: "English",
+  previousL: "",
 };
