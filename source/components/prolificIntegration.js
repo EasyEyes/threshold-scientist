@@ -49,12 +49,15 @@ const findProlificLanguageAttributes = (
 
 const findProlificLocationEligibilityAttributes = (field) => {
   const result = [];
+  console.log(field, "field");
   if (!field || field == "All countries available") {
     return result;
   }
   const loc = { ...LOCATION_INDEX_PROLIFIC_MAPPING[field] };
+  console.log(loc, "loc");
   loc["value"] = true;
   result.push(loc);
+  console.log(result, "loc");
   return result;
 };
 
