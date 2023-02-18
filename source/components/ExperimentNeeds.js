@@ -1,4 +1,3 @@
-import { React } from "react";
 import Swal from "sweetalert2";
 import "../css/ExperimentNeeds.css";
 import { compatibilityRequirements } from "./global";
