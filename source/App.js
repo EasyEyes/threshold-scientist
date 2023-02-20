@@ -18,6 +18,7 @@ import {
   getExperimentStatus,
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
+  getDurationForProject,
 } from "./components/gitlabUtils";
 import { db } from "./components/firebase";
 import { getProlificAccount } from "./components/prolificIntegration";
@@ -49,6 +50,7 @@ export default class App extends Component {
           recruitmentProlificWorkspace: null,
         },
         previousCompatibilityRequirements: null,
+        previousExperimentDuration: null,
       },
       /* -------------------------------------------------------------------------- */
       currentStep: "login", // 'login', 'table', 'upload', 'running', 'deploy', ('download')
@@ -72,6 +74,7 @@ export default class App extends Component {
       experimentStatus: "INACTIVE",
       compatibilityRequirements: compatibilityRequirements.t,
       compatibilityLanguage: "en-US",
+      previousExperimentDuration: null,
     };
 
     this.functions = {
@@ -92,6 +95,7 @@ export default class App extends Component {
       handleSetExperiment: this.handleSetExperiment.bind(this),
       handleGetNewRepo: this.handleGetNewRepo.bind(this),
       handleSetExperimentStatus: this.handleSetExperimentStatus.bind(this),
+      handleSetExperimentDuration: this.handleSetExperimentDuration.bind(this),
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
     };
@@ -131,6 +135,7 @@ export default class App extends Component {
       this.handleSetFilename(null);
       this.handleSetProjectName(null);
       this.handleSetCompatibilityRequirements("");
+      this.handleSetExperimentDuration(null);
       this.functions.handleSetActivateExperiment("new");
 
       return;
@@ -145,6 +150,7 @@ export default class App extends Component {
       recruitmentProlificWorkspace: null,
     };
     let previousCompatibilityRequirements = null;
+    let previousExperimentDuration = null;
     if (activeExperiment !== "new") {
       // viewing a previous experiment
       const { user } = this.state;
@@ -155,7 +161,10 @@ export default class App extends Component {
         allowEscapeKey: false,
         didOpen: async () => {
           Swal.showLoading(null);
-
+          previousExperimentDuration = await getDurationForProject(
+            user,
+            activeExperiment.name
+          );
           previousCompatibilityRequirements =
             await getCompatibilityRequirementsForProject(
               user,
@@ -185,6 +194,7 @@ export default class App extends Component {
         previousExperimentStatus,
         previousRecruitmentInformation,
         previousCompatibilityRequirements: previousCompatibilityRequirements,
+        previousExperimentDuration,
       },
       compatibilityLanguage: "en-US",
     });
@@ -235,6 +245,7 @@ export default class App extends Component {
       projectName: null,
       newRepo: null,
       compatibilityRequirements: "",
+      previousExperimentDuration: null,
     });
   }
 
@@ -387,6 +398,12 @@ export default class App extends Component {
   handleSetExperimentStatus(newStatus) {
     this.setState({
       experimentStatus: newStatus,
+    });
+  }
+
+  handleSetExperimentDuration(newDuration) {
+    this.setState({
+      previousExperimentDuration: newDuration,
     });
   }
 

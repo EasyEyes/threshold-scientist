@@ -27,6 +27,7 @@ import {
 } from "./fileUtils";
 import { getDateAndTimeString } from "./utils";
 import { compatibilityRequirements } from "./global";
+import { durations } from "./getDuration";
 import {
   convertLanguageToLanguageCode,
   getCompatibilityRequirements,
@@ -358,6 +359,51 @@ export const getCompatibilityRequirementsForProject = async (
       return "";
     });
 
+  return response;
+};
+
+export const getDurationForProject = async (
+  user: User,
+  repoName: string
+): Promise<string> => {
+  const repo = getProjectByNameInProjectList(user.projectList, repoName);
+
+  const headers = new Headers();
+  headers.append("Authorization", `bearer ${user.accessToken}`);
+
+  const requestOptions: any = {
+    method: "GET",
+    headers: headers,
+    redirect: "follow",
+  };
+  const response = await fetch(
+    "https://gitlab.pavlovia.org/api/v4/projects/" +
+      repo.id +
+      "/repository/files/Duration.txt/raw?ref=master",
+    requestOptions
+  )
+    .then((response) => {
+      if (!response?.ok) return "";
+      return response.json();
+    })
+    .then((result) => {
+      if (result != "") {
+        // console.log("duration in secs: ", result);
+        const durationInMin = Math.round(result / 60);
+        if (durationInMin > 1) {
+          return durationInMin + " minutes";
+        } else if (durationInMin == 1) {
+          return durationInMin + " minute";
+        } else {
+          return "less than 1 minute";
+        }
+      }
+      return "";
+    })
+    .catch((error) => {
+      console.log(error);
+      return "";
+    });
   return response;
 };
 
@@ -738,6 +784,18 @@ export const getGitlabBodyForCompatibilityRequirementFile = (req: object) => {
   return res;
 };
 
+export const getGitlabBodyForDurationText = (req: number) => {
+  const res: ICommitAction[] = [];
+  const content = JSON.stringify(req);
+  res.push({
+    action: "create",
+    file_path: "Duration.txt",
+    content,
+    encoding: "text",
+  });
+  return res;
+};
+
 // helper
 const updateSwalUploadingCount = (count: number, totalCount: number) => {
   const progressCount = document.getElementById("uploading-count");
@@ -764,7 +822,7 @@ const createThresholdCoreFilesOnRepo = async (
   const batchSize = 10; // !
   const results: any[] = [];
 
-  totalFileCount += 1; // add 1 for compatibility file
+  totalFileCount += 2; // add 1 for compatibility file and 1 for duration file
 
   for (let i = 0; i < _loadFiles.length; i += batchSize) {
     const startIdx = i;
@@ -812,6 +870,23 @@ const createThresholdCoreFilesOnRepo = async (
     });
   });
   await compatibilityPromise; // fails if added to promiseList
+
+  const durationPromise = new Promise(async (resolve) => {
+    const rootContent = getGitlabBodyForDurationText(durations.currentDuration);
+    pushCommits(
+      user,
+      gitlabRepo,
+      rootContent,
+      commitMessages.thresholdCoreFileUploaded,
+      defaultBranch
+    ).then((commitResponse: any) => {
+      uploadedFileCount.current += 1;
+      updateSwalUploadingCount(uploadedFileCount.current, totalFileCount);
+      resolve(commitResponse);
+      results.push(commitResponse);
+    });
+  });
+  await durationPromise;
 
   return results;
 };

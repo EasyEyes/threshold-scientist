@@ -4,6 +4,7 @@ import Dropdown from "./components/Dropdown";
 import { createOrUpdateProlificToken } from "./components/gitlabUtils";
 import { compatibilityRequirements as globalCompatibilityReq } from "./components/global";
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
+import { durations } from "./components/getDuration";
 
 // import PavloviaIcon from './media/pavlovia.svg';
 
@@ -81,6 +82,7 @@ export default class StatusLines extends Component {
         originalFileName,
         previousExperimentStatus,
         previousCompatibilityRequirements,
+        previousExperimentDuration,
       },
       // currentStep,
       // completedSteps,
@@ -254,6 +256,22 @@ export default class StatusLines extends Component {
             viewingPreviousExperiment ? activeExperiment.name : projectName
           }
         /> */}
+        {/* Status Line for Duration */}
+        <StatusLine
+          activated={
+            !!(user && filename && experimentStatus === "RUNNING") ||
+            viewingPreviousExperiment
+          }
+          title={"Experiment est. duration"}
+          content={
+            viewingPreviousExperiment
+              ? previousExperimentDuration
+              : user && filename && experimentStatus === "RUNNING"
+              ? durations.durationForStatusline
+              : ""
+          }
+        />
+
         <StatusLine
           activated={
             !!(user && filename && projectName) || viewingPreviousExperiment
