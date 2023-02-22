@@ -231,8 +231,12 @@ export const getProlificStudySubmissions = async (
   const study = result?.results?.filter(
     (r) => r.internal_name === internalProjectName
   );
-  if (!study?.length) {
-    return "";
-  }
-  return `${study[0].status}. ${study[0].number_of_submissions}/${study[0].total_available_places} completed`;
+  return !study?.length
+    ? ""
+    : `${
+        study[0].status.charAt(0).toUpperCase() +
+        study[0].status.slice(1).toLowerCase()
+      }. ${study[0].number_of_submissions}/${
+        study[0].total_available_places
+      } completed`;
 };
