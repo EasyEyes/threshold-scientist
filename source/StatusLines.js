@@ -46,7 +46,8 @@ export default class StatusLines extends Component {
 
   async componentDidUpdate(prevProps) {
     if (this.props.activeExperiment !== prevProps.activeExperiment) {
-      const { user, activeExperiment, previousExperimentViewed } = this.props;
+      const { user, activeExperiment, previousExperimentViewed, projectName } =
+        this.props;
       const prolificProjectId =
         activeExperiment !== "new"
           ? await getPastProlificIdFromExperimentTables(
@@ -55,10 +56,12 @@ export default class StatusLines extends Component {
               previousExperimentViewed.originalFileName
             )
           : user.currentExperiment.prolificWorkspaceProjectId;
-      await this.getProlificStudyStatus(
-        prolificProjectId,
-        activeExperiment.name
-      );
+      activeExperiment !== "new"
+        ? await this.getProlificStudyStatus(
+            prolificProjectId,
+            activeExperiment.name
+          )
+        : await this.getProlificStudyStatus(prolificProjectId, projectName);
     }
   }
 

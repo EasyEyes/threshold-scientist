@@ -348,7 +348,6 @@ export default class Running extends Component {
                           code,
                           prolificToken
                         );
-                        console.log(this.props.user, "cfvghbjklcvbnm,");
 
                         if (result.status === "UNPUBLISHED") {
                           window
