@@ -9,8 +9,6 @@ import { compatibilityRequirements as globalCompatibilityReq } from "./component
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 import { durations } from "./components/getDuration";
 
-// import PavloviaIcon from './media/pavlovia.svg';
-
 import "./css/StatusLines.scss";
 
 const inlineButtonStyle = {
@@ -49,13 +47,16 @@ export default class StatusLines extends Component {
   async componentDidUpdate(prevProps) {
     if (this.props.activeExperiment !== prevProps.activeExperiment) {
       const { user, activeExperiment, previousExperimentViewed } = this.props;
-      const pastProlificProjectId = await getPastProlificIdFromExperimentTables(
-        user,
-        activeExperiment?.name,
-        previousExperimentViewed.originalFileName
-      );
+      const prolificProjectId =
+        activeExperiment !== "new"
+          ? await getPastProlificIdFromExperimentTables(
+              user,
+              activeExperiment?.name,
+              previousExperimentViewed.originalFileName
+            )
+          : user.currentExperiment.prolificWorkspaceProjectId;
       await this.getProlificStudyStatus(
-        pastProlificProjectId,
+        prolificProjectId,
         activeExperiment.name
       );
     }

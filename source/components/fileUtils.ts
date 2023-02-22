@@ -118,7 +118,6 @@ export const getAssetFileContent = async (filePath: string) => {
  * @returns URL-encoded string of given filePath
  */
 export const encodeGitlabFilePath = (filePath: string): string => {
-  console.log(filePath, "ritika");
   let res = "";
   for (let i = 0; i < filePath.length; i++) {
     let c = filePath[i];
@@ -165,7 +164,6 @@ export const getTextFileDataFromGitLab = (
       });
 
     const content = JSON.parse(response).content;
-    console.log(content, "ritika");
     const decodedContent = Buffer.from(content, "base64").toString("utf8");
     resolve(decodedContent);
   });

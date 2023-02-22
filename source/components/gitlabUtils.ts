@@ -458,6 +458,10 @@ export const getPastProlificIdFromExperimentTables = async (
 ): Promise<any> => {
   const repo = getProjectByNameInProjectList(user.projectList, repoName);
 
+  if (!repo) {
+    return null;
+  }
+
   const headers = new Headers();
   headers.append("Authorization", `bearer ${user.accessToken}`);
 
