@@ -203,3 +203,36 @@ export const prolificCreateDraft = async (
 
   return result;
 };
+
+const fetchProlificProjectStudies = async (token, prolificProjectId) => {
+  const prolificFetchStudiesUrl = `/.netlify/functions/prolific/projects/${prolificProjectId}/studies/`;
+  const response = await fetch(prolificFetchStudiesUrl, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Token ${token}`,
+    },
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .catch((error) => console.log(error));
+
+  const result = response;
+  return result;
+};
+
+export const getProlificStudySubmissions = async (
+  token,
+  internalProjectName,
+  prolificProjectId
+) => {
+  const result = await fetchProlificProjectStudies(token, prolificProjectId);
+  const study = result?.results?.filter(
+    (r) => r.internal_name === internalProjectName
+  );
+  if (!study?.length) {
+    return "";
+  }
+  return `${study[0].status}. ${study[0].number_of_submissions}/${study[0].total_available_places} completed`;
+};

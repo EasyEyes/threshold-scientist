@@ -1,7 +1,10 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
 import Dropdown from "./components/Dropdown";
-import { createOrUpdateProlificToken } from "./components/gitlabUtils";
+import {
+  createOrUpdateProlificToken,
+  getPastProlificIdFromExperimentTables,
+} from "./components/gitlabUtils";
 import { compatibilityRequirements as globalCompatibilityReq } from "./components/global";
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 import { durations } from "./components/getDuration";
@@ -31,6 +34,31 @@ export default class StatusLines extends Component {
 
   getStatusLineFilename(filename) {
     return <span className="status-line-content">{filename}</span>;
+  }
+
+  getProlificStudyStatus = async (prolificProjectId, projectName) => {
+    const { prolificToken, user } = this.props;
+    await this.props.functions.getProlificStudySubmissionDetails(
+      user,
+      prolificToken,
+      projectName,
+      prolificProjectId
+    );
+  };
+
+  async componentDidUpdate(prevProps) {
+    if (this.props.activeExperiment !== prevProps.activeExperiment) {
+      const { user, activeExperiment, previousExperimentViewed } = this.props;
+      const pastProlificProjectId = await getPastProlificIdFromExperimentTables(
+        user,
+        activeExperiment?.name,
+        previousExperimentViewed.originalFileName
+      );
+      await this.getProlificStudyStatus(
+        pastProlificProjectId,
+        activeExperiment.name
+      );
+    }
   }
 
   popToUploadProlificToken() {
@@ -96,6 +124,7 @@ export default class StatusLines extends Component {
       functions,
       compatibilityRequirements,
       compatibilityLanguage,
+      prolificStudyStatus,
     } = this.props;
 
     const viewingPreviousExperiment = activeExperiment !== "new";
@@ -303,6 +332,18 @@ export default class StatusLines extends Component {
             ) : (
               ""
             )
+          }
+        />
+
+        <StatusLine
+          activated={showExperimentURL}
+          title={"Prolific"}
+          content={
+            (user && projectName && experimentStatus === "RUNNING") ||
+            (viewingPreviousExperiment &&
+              previousExperimentStatus === "RUNNING")
+              ? prolificStudyStatus
+              : ""
           }
         />
 

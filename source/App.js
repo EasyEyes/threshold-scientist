@@ -21,7 +21,10 @@ import {
   getDurationForProject,
 } from "./components/gitlabUtils";
 import { db } from "./components/firebase";
-import { getProlificAccount } from "./components/prolificIntegration";
+import {
+  getProlificAccount,
+  getProlificStudySubmissions,
+} from "./components/prolificIntegration";
 
 import "./css/App.scss";
 import { getCompatibilityRequirements } from "../threshold/components/compatibilityCheck";
@@ -75,6 +78,7 @@ export default class App extends Component {
       compatibilityRequirements: compatibilityRequirements.t,
       compatibilityLanguage: "en-US",
       previousExperimentDuration: null,
+      prolificStudyStatus: "",
     };
 
     this.functions = {
@@ -96,6 +100,8 @@ export default class App extends Component {
       handleGetNewRepo: this.handleGetNewRepo.bind(this),
       handleSetExperimentStatus: this.handleSetExperimentStatus.bind(this),
       handleSetExperimentDuration: this.handleSetExperimentDuration.bind(this),
+      getProlificStudySubmissionDetails:
+        this.getProlificStudySubmissionDetails.bind(this),
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
     };
@@ -246,6 +252,7 @@ export default class App extends Component {
       newRepo: null,
       compatibilityRequirements: "",
       previousExperimentDuration: null,
+      prolificStudyStatus: "",
     });
   }
 
@@ -309,6 +316,21 @@ export default class App extends Component {
         ? await getProlificAccount(prolificToken)
         : null,
     });
+  }
+
+  async getProlificStudySubmissionDetails(
+    user,
+    prolificToken,
+    projectName,
+    prolificProjectId
+  ) {
+    const internalName = `${user.username}/${projectName}`;
+    const submissionDetails = await getProlificStudySubmissions(
+      prolificToken,
+      internalName,
+      prolificProjectId
+    );
+    this.setState({ prolificStudyStatus: submissionDetails });
   }
 
   handleAddResources(newResources) {
@@ -457,6 +479,7 @@ export default class App extends Component {
       projectName,
       newRepo,
       experimentStatus,
+      prolificStudyStatus,
     } = this.state;
     const steps = [];
 
@@ -480,6 +503,7 @@ export default class App extends Component {
           newRepo={activeExperiment}
           experimentStatus={previousExperimentViewed.previousExperimentStatus}
           previousExperimentViewed={previousExperimentViewed}
+          prolificStudyStatus={prolificStudyStatus}
         />
       );
     else
@@ -497,6 +521,7 @@ export default class App extends Component {
           projectName={projectName}
           newRepo={newRepo}
           experimentStatus={experimentStatus}
+          prolificStudyStatus={prolificStudyStatus}
         />
       );
 
@@ -632,6 +657,7 @@ export default class App extends Component {
               newRepo={newRepo}
               currentStep={currentStep}
               experimentStatus={experimentStatus}
+              prolificStudyStatus={prolificStudyStatus}
             />
             {/* <StatusBar currentStep={currentStep} /> */}
             {steps}

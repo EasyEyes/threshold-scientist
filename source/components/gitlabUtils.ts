@@ -451,6 +451,53 @@ interface RecruitmentServiceInformation {
   recruitmentProlificWorkspace: boolean | null;
 }
 
+export const getPastProlificIdFromExperimentTables = async (
+  user: User,
+  repoName: string,
+  fileName: string
+): Promise<any> => {
+  const repo = getProjectByNameInProjectList(user.projectList, repoName);
+
+  const headers = new Headers();
+  headers.append("Authorization", `bearer ${user.accessToken}`);
+
+  const requestOptions: any = {
+    method: "GET",
+    headers: headers,
+    redirect: "follow",
+  };
+
+  const response = await fetch(
+    `https://gitlab.pavlovia.org/api/v4/projects/${repo.id}/repository/files/${fileName}?ref=master`,
+    requestOptions
+  )
+    .then((response) => {
+      return response.body;
+    })
+    .then((stream) => {
+      return new Response(stream, { headers: { "Content-Type": "text/csv" } });
+    })
+    .then((response) => {
+      return response.text();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+
+  if (!response) return null;
+
+  const result = JSON.parse(response);
+  const fields = Buffer.from(result.content, "base64").toString().split("\n");
+  let prolificProjectId = "";
+  for (const field of fields) {
+    const fieldDetail = field.split(",");
+    if (fieldDetail[0] === "_online2ProlificProjectID") {
+      prolificProjectId = fieldDetail[1];
+    }
+  }
+  return prolificProjectId;
+};
+
 export const getRecruitmentServiceConfig = async (
   user: User,
   repoName: string
@@ -1107,7 +1154,6 @@ export const createPavloviaExperiment = async (
       let finalClosing = true;
 
       // create threshold core files
-      // console.log("Creating threshold core files...");
       const a = await createThresholdCoreFilesOnRepo(
         { id: newRepo.id },
         user,
