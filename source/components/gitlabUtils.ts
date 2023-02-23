@@ -662,6 +662,29 @@ export const downloadDataFolder = async (user: User, project: any) => {
   });
 };
 
+export const getDataFolderLength = async (user: User, project: any) => {
+  const headers = new Headers();
+  headers.append("Authorization", `bearer ${user.accessToken}`);
+  const requestOptions: any = {
+    method: "GET",
+    headers: headers,
+    redirect: "follow",
+  };
+
+  const dataFolder = await fetch(
+    `https://gitlab.pavlovia.org/api/v4/projects/${project.id}/repository/tree/?path=data&per_page=120`,
+    requestOptions
+  )
+    .then((response) => {
+      return response.json();
+    })
+    .then((result) => {
+      return result;
+    });
+
+  return dataFolder ? dataFolder.length : 0;
+};
+
 /**
  * creates or overrides resources in EasyEyesResources repository
  * @param user target user

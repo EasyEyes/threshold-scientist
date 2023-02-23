@@ -8,6 +8,7 @@ import { prolificCreateDraft } from "./components/prolificIntegration";
 import {
   downloadDataFolder,
   generateAndUploadCompletionURL,
+  getDataFolderLength,
   getExperimentStatus,
   runExperiment,
 } from "./components/gitlabUtils";
@@ -23,13 +24,20 @@ export default class Running extends Component {
         props.previousExperiment || props.experimentStatus === "RUNNING",
       completionCode: undefined,
       totalCompileCounts: 0,
+      dataFolderLength: 0,
     };
 
     this.setModeToRun = this.setModeToRun.bind(this);
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.props.scrollToCurrentStep();
+
+    const dataFolderLength = await getDataFolderLength(
+      this.props.user,
+      this.props.newRepo
+    );
+    this.setState({ dataFolderLength });
 
     // get total compile counts
     get(ref(db, "compileCounts/")).then((snapshot) => {
@@ -45,6 +53,16 @@ export default class Running extends Component {
       this.props.user.currentExperiment.pavloviaPreferRunningModeBool
     )
       this.setModeToRun();
+  }
+
+  async componentDidUpdate(prevProps) {
+    if (this.props.newRepo !== prevProps.newRepo) {
+      const dataFolderLength = await getDataFolderLength(
+        this.props.user,
+        this.props.newRepo
+      );
+      this.setState({ dataFolderLength });
+    }
   }
 
   async setModeToRun(e = null) {
@@ -124,7 +142,12 @@ export default class Running extends Component {
       previousExperimentViewed: { previousRecruitmentInformation },
       viewingPreviousExperiment,
     } = this.props;
-    const { pavloviaIsReady, completionCode, totalCompileCounts } = this.state;
+    const {
+      pavloviaIsReady,
+      completionCode,
+      totalCompileCounts,
+      dataFolderLength,
+    } = this.state;
 
     const isRunning = experimentStatus === "RUNNING";
 
@@ -414,7 +437,7 @@ export default class Running extends Component {
                   await downloadDataFolder(user, newRepo);
                 }}
               >
-                Download results
+                Download results: {`${dataFolderLength}`} file(s) ready
               </button>
             </div>
           </>
