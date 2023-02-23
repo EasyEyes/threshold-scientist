@@ -662,7 +662,8 @@ export const downloadDataFolder = async (user: User, project: any) => {
   });
 };
 
-export const getDataFolderLength = async (user: User, project: any) => {
+// fetch data folder
+export const getdataFolder = async (user: User, project: any) => {
   const headers = new Headers();
   headers.append("Authorization", `bearer ${user.accessToken}`);
   const requestOptions: any = {
@@ -682,6 +683,14 @@ export const getDataFolderLength = async (user: User, project: any) => {
       return result;
     });
 
+  return dataFolder;
+};
+
+export const getDataFolderCsvLength = async (user: User, project: any) => {
+  let dataFolder = await getdataFolder(user, project);
+  dataFolder = dataFolder.filter((file: { name: string }) =>
+    file.name.includes("csv")
+  );
   return dataFolder ? dataFolder.length : 0;
 };
 

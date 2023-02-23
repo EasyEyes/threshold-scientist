@@ -8,7 +8,7 @@ import { prolificCreateDraft } from "./components/prolificIntegration";
 import {
   downloadDataFolder,
   generateAndUploadCompletionURL,
-  getDataFolderLength,
+  getDataFolderCsvLength,
   getExperimentStatus,
   runExperiment,
 } from "./components/gitlabUtils";
@@ -33,7 +33,7 @@ export default class Running extends Component {
   async componentDidMount() {
     this.props.scrollToCurrentStep();
 
-    const dataFolderLength = await getDataFolderLength(
+    const dataFolderLength = await getDataFolderCsvLength(
       this.props.user,
       this.props.newRepo
     );
@@ -57,7 +57,7 @@ export default class Running extends Component {
 
   async componentDidUpdate(prevProps) {
     if (this.props.newRepo !== prevProps.newRepo) {
-      const dataFolderLength = await getDataFolderLength(
+      const dataFolderLength = await getDataFolderCsvLength(
         this.props.user,
         this.props.newRepo
       );
@@ -437,7 +437,7 @@ export default class Running extends Component {
                   await downloadDataFolder(user, newRepo);
                 }}
               >
-                Download results: {`${dataFolderLength}`} file(s) ready
+                Download results: {`${dataFolderLength}`} CSV file(s) ready
               </button>
             </div>
           </>
