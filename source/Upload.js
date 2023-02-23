@@ -1,5 +1,6 @@
 import React, { Component, createRef } from "react";
-import { createPavloviaExperiment } from "./components/gitlabUtils";
+
+import { createPavloviaExperiment } from "../threshold/preprocess/gitlabUtils";
 
 import "./css/Upload.scss";
 

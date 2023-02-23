@@ -1,6 +1,8 @@
 import Swal from "sweetalert2";
+
+import { compatibilityRequirements } from "../../threshold/preprocess/global";
+
 import "../css/ExperimentNeeds.css";
-import { compatibilityRequirements } from "./global";
 
 export const displayExperimentNeedsPopup = (
   previousT = "",

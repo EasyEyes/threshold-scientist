@@ -11,10 +11,11 @@ import {
   getDataFolderCsvLength,
   getExperimentStatus,
   runExperiment,
-} from "./components/gitlabUtils";
+} from "../threshold/preprocess/gitlabUtils";
 import { ordinalSuffixOf } from "./components/utils";
 
 import "./css/Running.scss";
+
 export default class Running extends Component {
   constructor(props) {
     super(props);

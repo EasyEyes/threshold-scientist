@@ -1,12 +1,11 @@
 import React, { Component } from "react";
 import "regenerator-runtime";
 
-import { downloadDataFolder } from "./components/gitlabUtils";
-import { getUserInfo, redirectToOauth2 } from "./components/user";
+import { downloadDataFolder } from "../threshold/preprocess/gitlabUtils";
+import { getUserInfo, redirectToOauth2 } from "../threshold/preprocess/user";
+import { tempAccessToken } from "../threshold/preprocess/global";
 
 import "./css/Login.scss";
-
-import { tempAccessToken } from "./components/global";
 
 export default class Login extends Component {
   constructor(props) {

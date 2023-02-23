@@ -1,7 +1,7 @@
 import React, { PureComponent } from "react";
 
 import Login from "./Login";
-import Deploy from "./Deploy";
+// import Deploy from "./Deploy";
 import Running from "./Running";
 import Table from "./Table";
 import Upload from "./Upload";

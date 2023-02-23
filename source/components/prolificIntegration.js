@@ -1,7 +1,7 @@
 import {
   LANGUAGE_INDEX_PROLIFIC_MAPPING,
   LOCATION_INDEX_PROLIFIC_MAPPING,
-} from "../Constants";
+} from "./prolificConstants";
 
 const prolificLangType = {
   NATIVE: "NATIVE",

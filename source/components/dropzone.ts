@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import Swal from "sweetalert2";
-import { getFileExtension, isAcceptableExtension } from "./fileUtils";
+
+import {
+  getFileExtension,
+  isAcceptableExtension,
+} from "../../threshold/preprocess/fileUtils";
 import { isExpTableFile } from "../../threshold/preprocess/utils";
 import {
   createOrUpdateCommonResources,
   getCommonResourcesNames,
   User,
-} from "./gitlabUtils";
-import { userRepoFiles } from "./constants";
+} from "../../threshold/preprocess/gitlabUtils";
+import { userRepoFiles } from "../../threshold/preprocess/constants";
 
 export const handleDrop = async (
   user: User,

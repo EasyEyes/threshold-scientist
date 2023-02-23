@@ -1,13 +1,14 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
+
 import Dropdown from "./components/Dropdown";
 import {
   createOrUpdateProlificToken,
   getPastProlificIdFromExperimentTables,
-} from "./components/gitlabUtils";
-import { compatibilityRequirements as globalCompatibilityReq } from "./components/global";
+} from "../threshold/preprocess/gitlabUtils";
+import { compatibilityRequirements as globalCompatibilityReq } from "../threshold/preprocess/global";
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
-import { durations } from "./components/getDuration";
+import { durations } from "../threshold/preprocess/getDuration";
 
 import "./css/StatusLines.scss";
 
@@ -126,8 +127,8 @@ export default class StatusLines extends Component {
       projectName,
       experimentStatus,
       functions,
-      compatibilityRequirements,
-      compatibilityLanguage,
+      // compatibilityRequirements,
+      // compatibilityLanguage,
       prolificStudyStatus,
     } = this.props;
 

@@ -19,17 +19,17 @@ import {
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
   getDurationForProject,
-} from "./components/gitlabUtils";
+} from "../threshold/preprocess/gitlabUtils";
 import { db } from "./components/firebase";
 import {
   getProlificAccount,
   getProlificStudySubmissions,
 } from "./components/prolificIntegration";
 
-import "./css/App.scss";
 import { getCompatibilityRequirements } from "../threshold/components/compatibilityCheck";
+import { compatibilityRequirements } from "../threshold/preprocess/global";
 
-import { compatibilityRequirements } from "./components/global";
+import "./css/App.scss";
 
 export default class App extends Component {
   constructor(props) {

@@ -1,13 +1,13 @@
 import React, { Component, createRef } from "react";
 import Dropzone from "react-dropzone";
+
 import { handleDrop } from "./components/dropzone";
+import ResourceButton from "./ResourceButton";
+import { preprocessExperimentFile } from "../threshold/preprocess/main";
+import { userRepoFiles } from "../threshold/preprocess/constants";
+import { copyUser, setRepoName } from "../threshold/preprocess/gitlabUtils";
 
 import "./css/Table.scss";
-import ResourceButton from "./ResourceButton";
-
-import { preprocessExperimentFile } from "../threshold/preprocess/main";
-import { userRepoFiles } from "./components/constants";
-import { copyUser, setRepoName } from "./components/gitlabUtils";
 
 export default class Table extends Component {
   constructor(props) {
