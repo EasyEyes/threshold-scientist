@@ -11,6 +11,7 @@ import {
   getDataFolderCsvLength,
   getExperimentStatus,
   runExperiment,
+  getPastProlificIdFromExperimentTables,
 } from "../threshold/preprocess/gitlabUtils";
 import { ordinalSuffixOf } from "./components/utils";
 
@@ -131,6 +132,16 @@ export default class Running extends Component {
           this.setState({ pavloviaIsReady: false });
       });
   }
+
+  getProlificStudyStatus = async (prolificProjectId, projectName) => {
+    const { prolificToken, user } = this.props;
+    await this.props.functions.getProlificStudySubmissionDetails(
+      user,
+      prolificToken,
+      projectName,
+      prolificProjectId
+    );
+  };
 
   render() {
     const {
@@ -454,11 +465,35 @@ export default class Running extends Component {
                   className="button-grey button-small"
                   style={smallButtonExtraStyle}
                   onClick={async () => {
+                    const {
+                      user,
+                      activeExperiment,
+                      previousExperimentViewed,
+                      projectName,
+                    } = this.props;
                     const dataFolderLength = await getDataFolderCsvLength(
                       this.props.user,
                       this.props.newRepo
                     );
                     this.setState({ dataFolderLength });
+
+                    const prolificProjectId =
+                      activeExperiment !== "new"
+                        ? await getPastProlificIdFromExperimentTables(
+                            user,
+                            activeExperiment?.name,
+                            previousExperimentViewed.originalFileName
+                          )
+                        : user.currentExperiment.prolificWorkspaceProjectId;
+                    activeExperiment !== "new"
+                      ? await this.getProlificStudyStatus(
+                          prolificProjectId,
+                          activeExperiment.name
+                        )
+                      : await this.getProlificStudyStatus(
+                          prolificProjectId,
+                          projectName
+                        );
                   }}
                 >
                   Refresh

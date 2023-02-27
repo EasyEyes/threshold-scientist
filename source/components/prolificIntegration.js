@@ -197,7 +197,7 @@ export const prolificCreateDraft = async (
 
   const result = response;
 
-  if (result.status !== "UNPUBLISHED") {
+  if (result?.status !== "UNPUBLISHED") {
     console.error(result);
   }
 

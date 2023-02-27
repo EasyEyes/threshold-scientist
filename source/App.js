@@ -501,6 +501,7 @@ export default class App extends Component {
           resources={resources}
           projectName={activeExperiment.name}
           newRepo={activeExperiment}
+          activeExperiment={activeExperiment}
           experimentStatus={previousExperimentViewed.previousExperimentStatus}
           previousExperimentViewed={previousExperimentViewed}
           prolificStudyStatus={prolificStudyStatus}
@@ -522,6 +523,7 @@ export default class App extends Component {
           newRepo={newRepo}
           experimentStatus={experimentStatus}
           prolificStudyStatus={prolificStudyStatus}
+          activeExperiment={activeExperiment}
         />
       );
 
