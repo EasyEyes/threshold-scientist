@@ -431,15 +431,44 @@ export default class Running extends Component {
         {isRunning && pavloviaIsReady && (
           <>
             <hr />
-            <div className="link-set-buttons">
-              <button
-                className="button-grey button-small"
-                onClick={async () => {
-                  await downloadDataFolder(user, newRepo);
+            <div className="link-set">
+              <div className="link-set-buttons">
+                <button
+                  className="button-grey button-small"
+                  onClick={async () => {
+                    await downloadDataFolder(user, newRepo);
+                  }}
+                >
+                  Download results: {`${dataFolderLength}`} CSV file(s) ready
+                </button>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
                 }}
               >
-                Download results: {`${dataFolderLength}`} CSV file(s) ready
-              </button>
+                <button
+                  className="button-grey button-small"
+                  style={smallButtonExtraStyle}
+                  onClick={async () => {
+                    const dataFolderLength = await getDataFolderCsvLength(
+                      this.props.user,
+                      this.props.newRepo
+                    );
+                    this.setState({ dataFolderLength });
+                  }}
+                >
+                  Refresh
+                </button>
+
+                <Question
+                  title={"Refresh Button"}
+                  text={`Every 10 sec, EasyEyes counts the number of result files ready for download from Pavlovia and checks the status of the Prolific study, if any. Press Refresh to count and check now. Note that the file count can exceed the request because the (Pavlovia) file count includes local runs and the (Prolific) request does not.`}
+                />
+              </div>
             </div>
           </>
         )}
