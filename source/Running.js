@@ -240,10 +240,7 @@ export default class Running extends Component {
         </p>
         <p className="compile-count">
           <i className="bi bi-stars"></i>
-          <span>
-            {ordinalSuffixOf(totalCompileCounts)} experiment compiled by
-            EasyEyes
-          </span>
+          <span>{ordinalSuffixOf(totalCompileCounts)} experiment compiled</span>
         </p>
         <div className="link-set">
           <div className="link-set-buttons">
@@ -324,12 +321,11 @@ export default class Running extends Component {
 
         {hasRecruitmentService && isRunning && (
           <>
-            <hr />
             <div className="recruit-service">
               <p className="emphasize">
-                Run online. Use {recruitName} to recruit participants.
+                Run online, using {recruitName} to recruit participants.
                 {effectiveUsingProlificWorkspace ? (
-                  <>
+                  <span style={{ fontSize: "0.9rem" }}>
                     {` (You are using `}
                     <a
                       style={{
@@ -342,7 +338,7 @@ export default class Running extends Component {
                       Prolific Workspace
                     </a>
                     {`.)`}
-                  </>
+                  </span>
                 ) : (
                   ""
                 )}
@@ -441,7 +437,6 @@ export default class Running extends Component {
 
         {isRunning && pavloviaIsReady && (
           <>
-            <hr />
             <div className="link-set">
               <div className="link-set-buttons">
                 <button
