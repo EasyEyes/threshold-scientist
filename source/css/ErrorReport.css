@@ -1,0 +1,26 @@
+.textArea {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #000;
+  padding: 5px;
+  overflow: auto;
+  margin-bottom: 10px;
+}
+
+.swalFullPage {
+  width: 100% !important;
+}
+
+.table th {
+  border: 1px solid black; /* optional, to add cell borders */
+  padding: 0px; /* optional, to add cell padding */
+}
+
+.table td {
+  border: 1px solid black; /* optional, to add cell borders */
+  padding: 0px; /* optional, to add cell padding */
+}
+
+.table tr td:nth-child(2) {
+  width: 400px;
+}

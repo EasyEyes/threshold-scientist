@@ -12,7 +12,9 @@ import {
   getExperimentStatus,
   runExperiment,
   getPastProlificIdFromExperimentTables,
+  getExperimentDataFrames,
 } from "../threshold/preprocess/gitlabUtils";
+import { displayExperimentNeedsPopup } from "./components/ErrorReport";
 import { ordinalSuffixOf } from "./components/utils";
 
 import "./css/Running.scss";
@@ -449,6 +451,41 @@ export default class Running extends Component {
                   }}
                 >
                   Download results
+                </button>
+
+                <button
+                  style={{ marginLeft: "10px" }}
+                  className="button-grey button-small"
+                  onClick={async () => {
+                    if (dataFolderLength == 0) {
+                      Swal.fire({
+                        icon: "error",
+                        title: `No data found for ${newRepo.name}.`,
+                        text: `We can't find any data for the experiment. This might due to an error, or the Pavlovia server is down. Please refresh the page or try again later.`,
+                        confirmButtonColor: "#666",
+                      });
+                    } else {
+                      Swal.fire({
+                        title: `Reading data ...`,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: async () => {
+                          Swal.showLoading(null);
+                          const dataframes = await getExperimentDataFrames(
+                            this.props.user,
+                            this.props.newRepo
+                          );
+                          displayExperimentNeedsPopup(
+                            dataframes,
+                            this.props.newRepo
+                          );
+                          Swal.close();
+                        },
+                      });
+                    }
+                  }}
+                >
+                  Show error report
                 </button>
 
                 <span style={{ marginLeft: "10px" }}>
