@@ -438,15 +438,22 @@ export default class Running extends Component {
         {isRunning && pavloviaIsReady && (
           <>
             <div className="link-set">
-              <div className="link-set-buttons">
+              <div
+                className="link-set-buttons"
+                style={{ display: "inline-block" }}
+              >
                 <button
                   className="button-grey button-small"
                   onClick={async () => {
                     await downloadDataFolder(user, newRepo);
                   }}
                 >
-                  Download results: {`${dataFolderLength}`} CSV file(s) ready
+                  Download results
                 </button>
+
+                <span style={{ marginLeft: "10px" }}>
+                  {`${dataFolderLength}`} CSV file(s) ready
+                </span>
               </div>
 
               <div
