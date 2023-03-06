@@ -132,7 +132,7 @@ const generateErrorDataframe = async (dataframes) => {
     .sortBy("ok");
 };
 
-export const displayExperimentNeedsPopup = async (dataframes, project) => {
+export const displayErrorReportPopup = async (dataframes, project) => {
   dataframes = await generateErrorDataframe(dataframes);
   const headers = dataframes.listColumns();
   const dataArray = [headers, ...dataframes.toArray()];

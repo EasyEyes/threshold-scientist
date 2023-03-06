@@ -14,7 +14,7 @@ import {
   getPastProlificIdFromExperimentTables,
   getExperimentDataFrames,
 } from "../threshold/preprocess/gitlabUtils";
-import { displayExperimentNeedsPopup } from "./components/ErrorReport";
+import { displayErrorReportPopup } from "./components/ErrorReport";
 import { ordinalSuffixOf } from "./components/utils";
 
 import "./css/Running.scss";
@@ -475,7 +475,7 @@ export default class Running extends Component {
                             this.props.user,
                             this.props.newRepo
                           );
-                          displayExperimentNeedsPopup(
+                          displayErrorReportPopup(
                             dataframes,
                             this.props.newRepo
                           );
