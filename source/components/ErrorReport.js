@@ -1,18 +1,6 @@
 import Swal from "sweetalert2";
 import "../css/ErrorReport.css";
 
-export const preprocessDataframe = (df) => {
-  if (!df.listColumns().includes("error")) {
-    return df.head(1);
-  }
-  df = df.filter((row) => row.get("error") !== "");
-  if (df.count() > 0) {
-    console.log("found error");
-    return df;
-  }
-  return df.head(1);
-};
-
 const generateErrorDataframe = async (dataframes) => {
   let processedDataframes = [];
   let maxTrials = 0;
