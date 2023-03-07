@@ -191,7 +191,7 @@ export const displayErrorReportPopup = async (dataframes, project) => {
   }
 
   Swal.fire({
-    title: `Experiment: ${project.name}`,
+    title: `${project.name}`,
     html: createTableFromArray(dataArray),
     showCloseButton: true,
     showCancelButton: false,

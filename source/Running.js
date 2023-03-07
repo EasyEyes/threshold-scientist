@@ -485,7 +485,7 @@ export default class Running extends Component {
                     }
                   }}
                 >
-                  Show error report
+                  Summary
                 </button>
 
                 <span style={{ marginLeft: "10px" }}>
