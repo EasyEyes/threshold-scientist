@@ -79,12 +79,13 @@ export const prolificCreateDraft = async (
   token
 ) => {
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
-  const hours = parseFloat(
-    (user.currentExperiment._participantDurationMinutes / 60).toFixed(2)
-  );
-  const pay = parseFloat(user.currentExperiment?._online2Pay) ?? 0;
+  const hours =
+    parseFloat(
+      (user.currentExperiment._participantDurationMinutes / 60).toFixed(2)
+    ) || 0;
+  const pay = parseFloat(user.currentExperiment?._online2Pay) || 0;
   const payPerHour =
-    parseFloat(user.currentExperiment?._online2PayPerHour) ?? 0;
+    parseFloat(user.currentExperiment?._online2PayPerHour) || 0;
   const reward = (pay + payPerHour * hours) * 100;
   let completionCodeAction = "MANUALLY_REVIEW";
   if (
