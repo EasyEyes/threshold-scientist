@@ -36,6 +36,9 @@ const findProlificLanguageAttributes = (
   type = prolificLangType.NATIVE
 ) => {
   const result = [];
+  if (!field) {
+    return result;
+  }
   const languages = field?.split(",") ?? [];
   languages.forEach((element) => {
     element = element?.trim();
