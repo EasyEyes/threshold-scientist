@@ -467,8 +467,8 @@ export default class Running extends Component {
                     } else {
                       Swal.fire({
                         title: `Reading data ...`,
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
+                        allowOutsideClick: true,
+                        allowEscapeKey: true,
                         didOpen: async () => {
                           Swal.showLoading(null);
                           const dataframes = await getExperimentDataFrames(
