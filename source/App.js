@@ -105,6 +105,7 @@ export default class App extends Component {
         this.getProlificStudySubmissionDetails.bind(this),
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
+      handleSetCompileCount: this.handleSetCompileCount.bind(this),
     };
 
     this.closeGlossary = this.closeGlossary.bind(this);
@@ -430,6 +431,13 @@ export default class App extends Component {
   handleSetExperimentStatus(newStatus) {
     this.setState({
       experimentStatus: newStatus,
+    });
+  }
+
+  handleSetCompileCount(count) {
+    const totalCompileCounts = count;
+    this.setState({
+      totalCompileCounts,
     });
   }
 

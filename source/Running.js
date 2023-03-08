@@ -49,7 +49,8 @@ export default class Running extends Component {
       // sum all values
       const totalCompileCounts =
         Object.values(compileCounts).reduce((a, b) => a + b, 0) + 1;
-      this.setState({ totalCompileCounts });
+      // this.setState({ totalCompileCounts });
+      this.props.functions.handleSetCompileCount(totalCompileCounts);
     });
 
     if (
