@@ -15,7 +15,6 @@ import {
   getExperimentDataFrames,
 } from "../threshold/preprocess/gitlabUtils";
 import { displayErrorReportPopup } from "./components/ErrorReport";
-import { ordinalSuffixOf } from "./components/utils";
 
 import "./css/Running.scss";
 
@@ -27,7 +26,6 @@ export default class Running extends Component {
       pavloviaIsReady:
         props.previousExperiment || props.experimentStatus === "RUNNING",
       completionCode: undefined,
-      totalCompileCounts: 0,
       dataFolderLength: 0,
     };
 
@@ -49,7 +47,6 @@ export default class Running extends Component {
       // sum all values
       const totalCompileCounts =
         Object.values(compileCounts).reduce((a, b) => a + b, 0) + 1;
-      // this.setState({ totalCompileCounts });
       this.props.functions.handleSetCompileCount(totalCompileCounts);
     });
 
@@ -157,12 +154,7 @@ export default class Running extends Component {
       previousExperimentViewed: { previousRecruitmentInformation },
       viewingPreviousExperiment,
     } = this.props;
-    const {
-      pavloviaIsReady,
-      completionCode,
-      totalCompileCounts,
-      dataFolderLength,
-    } = this.state;
+    const { pavloviaIsReady, completionCode, dataFolderLength } = this.state;
 
     const isRunning = experimentStatus === "RUNNING";
 
@@ -240,10 +232,6 @@ export default class Running extends Component {
                   ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
                   : "Setting mode to RUNNING ..."
               }`}
-        </p>
-        <p className="compile-count">
-          <i className="bi bi-stars"></i>
-          <span>{ordinalSuffixOf(totalCompileCounts)} experiment compiled</span>
         </p>
         <div className="link-set">
           <div className="link-set-buttons">
