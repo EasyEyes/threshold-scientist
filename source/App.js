@@ -79,6 +79,7 @@ export default class App extends Component {
       compatibilityLanguage: "en-US",
       previousExperimentDuration: null,
       prolificStudyStatus: "",
+      totalCompileCounts: 0,
     };
 
     this.functions = {
@@ -128,6 +129,15 @@ export default class App extends Component {
       this.setState({
         websiteRepoLastCommitDeploy: data.published_deploy.published_at,
       });
+    });
+
+    // get total compile counts
+    get(ref(db, "compileCounts/")).then((snapshot) => {
+      const compileCounts = snapshot.val();
+      // sum all values
+      const totalCompileCounts =
+        Object.values(compileCounts).reduce((a, b) => a + b, 0) + 1;
+      this.setState({ totalCompileCounts });
     });
   }
 
@@ -480,6 +490,7 @@ export default class App extends Component {
       newRepo,
       experimentStatus,
       prolificStudyStatus,
+      totalCompileCounts,
     } = this.state;
     const steps = [];
 
@@ -666,35 +677,41 @@ export default class App extends Component {
           </div>
 
           {websiteRepoLastCommitDeploy && websiteRepoLastCommitURL && (
-            <p className="last-commit-date">
-              Compiler updated{" "}
-              <a
-                href={websiteRepoLastCommitURL}
-                style={{
-                  color: "inherit",
-                  textDecoration: "none",
-                  fontWeight: "500",
-                  borderBottom: "1px solid #ddd",
-                }}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {new Date(websiteRepoLastCommitDeploy).toLocaleDateString(
-                  undefined,
-                  {
-                    dateStyle: "medium",
-                  }
-                )}{" "}
-                {new Date(websiteRepoLastCommitDeploy).toLocaleString(
-                  undefined,
-                  {
-                    timeStyle: "short",
-                  }
-                )}{" "}
-                {getTimezoneName()}
-              </a>
-              .
-            </p>
+            <>
+              <div className="last-commit-date">
+                Compiler updated{" "}
+                <a
+                  href={websiteRepoLastCommitURL}
+                  style={{
+                    color: "inherit",
+                    textDecoration: "none",
+                    fontWeight: "500",
+                    borderBottom: "1px solid #ddd",
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {new Date(websiteRepoLastCommitDeploy).toLocaleDateString(
+                    undefined,
+                    {
+                      dateStyle: "medium",
+                    }
+                  )}{" "}
+                  {new Date(websiteRepoLastCommitDeploy).toLocaleString(
+                    undefined,
+                    {
+                      timeStyle: "short",
+                    }
+                  )}{" "}
+                  {getTimezoneName()}
+                </a>
+                .
+              </div>
+              <div className="experiment-compiled-line">
+                <i className="bi bi-stars"></i>
+                {totalCompileCounts} experiments compiled
+              </div>
+            </>
           )}
         </Suspense>
       </>
