@@ -38,12 +38,6 @@ const generateErrorDataframe = async (dataframes) => {
     if (!df.listColumns().includes("deviceLanguage")) {
       df = df.withColumn("deviceLanguage", () => "");
     }
-    if (!df.listColumns().includes("screenHeightPx")) {
-      df = df.withColumn("screenHeightPx", () => NaN);
-    }
-    if (!df.listColumns().includes("screenWidthPx")) {
-      df = df.withColumn("screenWidthPx", () => NaN);
-    }
     if (!df.listColumns().includes("deviceBrowser")) {
       df = df.withColumn("deviceBrowser", () => "");
     }
