@@ -181,7 +181,7 @@ export default class StatusLines extends Component {
                       this.popToUploadProlificToken();
                     }}
                   >
-                    Connect to Prolific
+                    Update Prolific
                   </button>
                 </span>
               ) : (

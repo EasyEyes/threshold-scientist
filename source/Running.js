@@ -238,7 +238,7 @@ export default class Running extends Component {
             {isRunning && pavloviaIsReady && (
               <>
                 <button
-                  className="button-grey button-small"
+                  className="button-green button-small"
                   onClick={() => {
                     window.open(this._getPavloviaExperimentUrl(), "_blank");
                   }}
@@ -343,7 +343,7 @@ export default class Running extends Component {
                 >
                   <>
                     <button
-                      className="button-grey button-small"
+                      className="button-green button-small"
                       onClick={async (e) => {
                         e.target.classList.add("button-disabled");
                         e.target.classList.add("button-wait");
@@ -434,7 +434,7 @@ export default class Running extends Component {
                 style={{ display: "inline-block" }}
               >
                 <button
-                  className="button-grey button-small"
+                  className="button-green button-small"
                   onClick={async () => {
                     await downloadDataFolder(user, newRepo);
                   }}
