@@ -48,21 +48,8 @@ const generateErrorDataframe = async (dataframes) => {
       df.select("deviceBrowser").toArray()[0][0] +
       " " +
       df.select("deviceBrowserVersion").toArray()[0][0].split(".")[0];
-    const resolution =
-      df.select("screenWidthPx").toArray()[0][0].toString() +
-      "x" +
-      df.select("screenHeightPx").toArray()[0][0].toString();
     df = df
-      .withColumn(
-        "screenWidthPx",
-        () => df.select("screenWidthPx").toArray()[0][0]
-      )
-      .withColumn(
-        "screenHeightPx",
-        () => df.select("screenHeightPx").toArray()[0][0]
-      )
       .withColumn("browser", () => browser)
-      .withColumn("resolution", () => resolution)
       .rename("hardwareConcurrency", "cores")
       .rename("ProlificParticipantID", "Prolific ID")
       .rename("participant", "Pavlovia ID");
