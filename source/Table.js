@@ -178,17 +178,7 @@ export default class Table extends Component {
                 ref={this.dropZoneRef}
               >
                 <input {...getInputProps()} />
-                <p className="dropzone-sub-text">
-                  <i
-                    className="bi bi-file-earmark-plus"
-                    style={{
-                      fontSize: "1.4rem",
-                      verticalAlign: "bottom",
-                      marginRight: "0.5rem",
-                    }}
-                  ></i>
-                  Select file
-                </p>
+                <p className="dropzone-sub-text">Select file</p>
               </div>
             )}
           </Dropzone>

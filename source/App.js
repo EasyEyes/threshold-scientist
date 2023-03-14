@@ -558,21 +558,13 @@ export default class App extends Component {
           <div id="header-title">
             <h1>EasyEyes</h1>
           </div>
-          <p className="description">
-            Welcome to EasyEyes, a PsychoJS-based experiment compiler designed
-            to help you measure perceptual thresholds online.
-          </p>
-        </div>
-
-        <Suspense>
-          <div className="threshold-app">
-            <div className="buttons">
-              <button
-                className="intro-button"
-                onClick={() => {
-                  Swal.fire({
-                    title: "Welcome to EasyEyes!",
-                    html: `<p>
+          <div className="buttons">
+            <button
+              className="intro-button"
+              onClick={() => {
+                Swal.fire({
+                  title: "Welcome to EasyEyes!",
+                  html: `<p>
             All you need to run your experiment is a few accounts (<a
               href="https://pavlovia.org/"
               rel="noopener noreferrer"
@@ -612,55 +604,64 @@ export default class App extends Component {
             you'll need both Pavlovia and Prolific accounts. We hope to offer
             MTurk support as well, as an alternative to Prolific.
           </p>`,
-                    confirmButtonColor: "#019267",
-                    customClass: {
-                      htmlContainer: "popup-text-container smaller-text",
-                    },
-                  });
-                }}
-              >
-                🤔&nbsp;&nbsp;How to use EasyEyes?
-              </button>
+                  confirmButtonColor: "#019267",
+                  customClass: {
+                    htmlContainer: "popup-text-container smaller-text",
+                  },
+                });
+              }}
+            >
+              Getting Started
+            </button>
 
-              <button
-                className="intro-button"
-                onClick={() => {
-                  this.setState({
-                    readingGlossary: true,
-                  });
-                }}
-              >
-                📘&nbsp;&nbsp;Parameter Glossary
-              </button>
+            <button
+              className="intro-button"
+              onClick={() => {
+                this.setState({
+                  readingGlossary: true,
+                });
+              }}
+            >
+              Parameter Glossary
+            </button>
 
-              <button
-                className="intro-button"
-                onClick={() => {
-                  window.open(
-                    `https://docs.google.com/document/d/12zZOEN7se437ueBZuGhyBC7HGhwgZe2OROatEyaRvoM/edit`,
-                    "_blank"
-                  );
-                }}
-              >
-                📚&nbsp;&nbsp;Manual
-              </button>
+            <button
+              className="intro-button"
+              onClick={() => {
+                window.open(
+                  `https://docs.google.com/document/d/12zZOEN7se437ueBZuGhyBC7HGhwgZe2OROatEyaRvoM/edit`,
+                  "_blank"
+                );
+              }}
+            >
+              Manual
+            </button>
 
-              <button
-                className="intro-button"
-                onClick={() => {
-                  Swal.fire({
-                    title: "Compatibility",
-                    html: renderToString(<Compatibility />),
-                    confirmButtonColor: "#019267",
-                    customClass: {
-                      htmlContainer: "popup-text-container smaller-text",
-                    },
-                  });
-                }}
-              >
-                💻📱&nbsp;&nbsp;Compatibility
-              </button>
-            </div>
+            <button
+              className="intro-button"
+              onClick={() => {
+                Swal.fire({
+                  title: "Compatibility",
+                  html: renderToString(<Compatibility />),
+                  confirmButtonColor: "#019267",
+                  customClass: {
+                    htmlContainer: "popup-text-container smaller-text",
+                  },
+                });
+              }}
+            >
+              Compatibility
+            </button>
+          </div>
+        </div>
+
+        <div className="description">
+          Welcome to EasyEyes, a PsychoJS-based experiment compiler designed to
+          help you measure perceptual thresholds online.
+        </div>
+
+        <Suspense>
+          <div className="threshold-app">
             <StatusLines
               key={currentStep}
               activeExperiment={activeExperiment}

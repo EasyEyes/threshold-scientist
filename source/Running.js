@@ -317,7 +317,7 @@ export default class Running extends Component {
                 Run online, using {recruitName} to recruit participants.
                 {effectiveUsingProlificWorkspace ? (
                   <span style={{ fontSize: "0.9rem" }}>
-                    {` (You are using `}
+                    {` (Using `}
                     <a
                       style={{
                         color: "#666",
@@ -385,7 +385,7 @@ export default class Running extends Component {
                         e.target.classList.remove("button-wait");
                       }}
                     >
-                      Create {recruitName} study
+                      Create {recruitName} study to run online
                     </button>
                   </>
                 </div>
@@ -528,8 +528,8 @@ export default class Running extends Component {
                 </button>
 
                 <Question
-                  title={"Refresh Button"}
-                  text={`Every 10 sec, EasyEyes counts the number of result files ready for download from Pavlovia and checks the status of the Prolific study, if any. Press Refresh to count and check now. Note that the file count can exceed the request because the (Pavlovia) file count includes local runs and the (Prolific) request does not.`}
+                  title={"Refresh button"}
+                  text={`Every 10 sec, EasyEyes counts the number of result files ready for download from Pavlovia and checks the status of the Prolific study, if any. Press Refresh to count and check now. Note that the file count can exceed the request for two reasons. Firstly, the (Pavlovia) file count includes local runs and the (Prolific) request does not. Secondly, if an experiment terminates prematurely, the participant might try again, generating several CSV files with the same Prolific ID and unique Pavlovia IDs.`}
                 />
               </div>
             </div>
