@@ -168,10 +168,12 @@ export default class StatusLines extends Component {
           content={
             user ? (
               prolificToken ? (
-                <span className="status-line-content">
-                  {prolificAccount
-                    ? `${prolificAccount.name} (${prolificAccount.email})`
-                    : "Failed to connect, please check if your Prolific token is correct."}
+                <>
+                  <span className="status-line-content">
+                    {prolificAccount
+                      ? `${prolificAccount.name} (${prolificAccount.email})`
+                      : "Failed to connect, please check if your Prolific token is correct."}
+                  </span>
                   <button
                     className="button-small button-grey"
                     style={inlineButtonStyle}
@@ -183,7 +185,7 @@ export default class StatusLines extends Component {
                   >
                     Update Prolific
                   </button>
-                </span>
+                </>
               ) : (
                 <button
                   className="button-small button-grey"
