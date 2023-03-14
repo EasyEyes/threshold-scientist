@@ -171,11 +171,6 @@ export default class Running extends Component {
       ? false
       : !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
 
-    const effectiveUsingProlificWorkspace =
-      viewingPreviousExperiment && hasRecruitmentService
-        ? previousRecruitmentInformation.recruitmentProlificWorkspace
-        : user.currentExperiment.prolificWorkspaceModeBool;
-
     const smallButtonExtraStyle = {
       whiteSpace: "nowrap",
       fontSize: "0.7rem",
@@ -313,27 +308,6 @@ export default class Running extends Component {
         {hasRecruitmentService && isRunning && (
           <>
             <div className="recruit-service">
-              <p className="emphasize">
-                Run online, using {recruitName} to recruit participants.
-                {effectiveUsingProlificWorkspace ? (
-                  <span style={{ fontSize: "0.9rem" }}>
-                    {` (Using `}
-                    <a
-                      style={{
-                        color: "#666",
-                      }}
-                      href="https://researcher-help.prolific.co/hc/en-gb/sections/4500136384412-Workspaces"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Prolific Workspace
-                    </a>
-                    {`.)`}
-                  </span>
-                ) : (
-                  ""
-                )}
-              </p>
               <div className="link-set">
                 <div
                   className="link-set-buttons"

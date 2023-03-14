@@ -116,6 +116,7 @@ export default class StatusLines extends Component {
         previousExperimentStatus,
         previousCompatibilityRequirements,
         previousExperimentDuration,
+        previousRecruitmentInformation,
       },
       // currentStep,
       // completedSteps,
@@ -140,6 +141,14 @@ export default class StatusLines extends Component {
     const effectiveProjectNameLowerCase = viewingPreviousExperiment
       ? activeExperiment.name?.toLocaleLowerCase()
       : projectName?.toLocaleLowerCase();
+    const hasRecruitmentService = viewingPreviousExperiment
+      ? previousRecruitmentInformation.recruitmentServiceName !== null
+      : !!user?.currentExperiment?.participantRecruitmentServiceName;
+
+    const effectiveUsingProlificWorkspace =
+      viewingPreviousExperiment && hasRecruitmentService
+        ? previousRecruitmentInformation.recruitmentProlificWorkspace
+        : user?.currentExperiment?.prolificWorkspaceModeBool;
 
     return (
       <ul className="status-lines">
@@ -173,13 +182,29 @@ export default class StatusLines extends Component {
                     {prolificAccount
                       ? `${prolificAccount.name} (${prolificAccount.email})`
                       : "Failed to connect, please check if your Prolific token is correct."}
+                    {effectiveUsingProlificWorkspace ? (
+                      <span style={{ fontSize: "0.9rem" }}>
+                        {` (Using `}
+                        <a
+                          style={{
+                            color: "#666",
+                          }}
+                          href="https://researcher-help.prolific.co/hc/en-gb/sections/4500136384412-Workspaces"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Prolific Workspace
+                        </a>
+                        {`.)`}
+                      </span>
+                    ) : (
+                      ""
+                    )}
                   </span>
                   <button
                     className="button-small button-grey"
                     style={inlineButtonStyle}
                     onClick={async () => {
-                      // change this button class to button-wait
-                      // e.target.classList.add("button-wait");
                       this.popToUploadProlificToken();
                     }}
                   >
