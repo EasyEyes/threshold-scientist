@@ -499,6 +499,7 @@ export default class App extends Component {
       experimentStatus,
       prolificStudyStatus,
       totalCompileCounts,
+      accessToken,
     } = this.state;
     const steps = [];
 
@@ -655,10 +656,12 @@ export default class App extends Component {
           </div>
         </div>
 
-        <div className="description">
-          Welcome to EasyEyes, a PsychoJS-based experiment compiler designed to
-          help you measure perceptual thresholds online.
-        </div>
+        {!accessToken && (
+          <div className="description">
+            Welcome to EasyEyes, a PsychoJS-based experiment compiler designed
+            to help you measure perceptual thresholds online.
+          </div>
+        )}
 
         <Suspense>
           <div className="threshold-app">
@@ -718,7 +721,8 @@ export default class App extends Component {
               </div>
               <div className="experiment-compiled-line">
                 <i className="bi bi-stars"></i>
-                {totalCompileCounts} experiments compiled
+                {totalCompileCounts} experiments compiled since February 1,
+                2023.
               </div>
             </>
           )}
