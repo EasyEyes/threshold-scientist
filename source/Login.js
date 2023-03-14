@@ -61,21 +61,23 @@ export default class Login extends Component {
     switch (this.state.login) {
       case null: // no login
         node = (
-          <>
-            {/* <p className="emphasize"> */}
+          <div>
+            <div className="green-status-banner">
+              Connect to your Pavlovia account:
+            </div>
             <button
               className="button-green connect-to-pav"
               onClick={this.login}
             >
-              Connect to Pavlovia account
+              Connect to Pavlovia
             </button>
-            {/* <p>to compile and deploy experiments</p> */}
-            {/* </p> */}
-          </>
+          </div>
         );
         break;
       case "loading": // fetching user info
-        node = <p className="emphasize">Connecting to Pavlovia ...</p>;
+        node = (
+          <div className="green-status-banner">Connecting to Pavlovia ...</div>
+        );
         break;
       default:
         break;

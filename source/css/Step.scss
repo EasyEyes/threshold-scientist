@@ -1,15 +1,6 @@
 @import "root.scss";
 
 .step {
-  width: 100%;
-  height: min-content;
-  position: relative;
-  background: $step-background;
-  border-radius: $step-radius;
-  padding: 1.2rem;
-  margin: 1.2rem 0;
-  transform: translateZ(0); // ?
-
   p {
     margin: 0;
     font-size: $font-reg;
@@ -51,14 +42,6 @@
         color: #57068c !important;
       }
     }
-  }
-
-  &.step-current {
-    // background: $step-background-current;
-    // outline: $light-green solid 2px;
-    // box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
-    box-shadow: rgba(0, 0, 0, 0.25) 0px 10px 36px 0px,
-      rgba(0, 0, 0, 0.08) 0px 0px 6px 1px;
   }
 }
 
@@ -181,4 +164,12 @@
 .history-time {
   // font-size: $font-small;
   color: #666;
+}
+
+.green-status-banner {
+  background-color: #e1efd8;
+  padding: 0.7rem 1.1rem;
+  color: #019267;
+  font-weight: 600;
+  font-size: 1.2rem;
 }

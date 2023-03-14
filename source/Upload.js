@@ -50,13 +50,13 @@ export default class Upload extends Component {
 
     return (
       <>
-        <p className="emphasize">
+        <div className="green-status-banner">
           {isCompletedStep
             ? "Your experiment has been uploaded as"
             : offerPilotingOption
             ? `Name the experiment and upload to Pavlovia.`
             : `Uploading the compiled experiment to Pavlovia with the following name ...`}
-        </p>
+        </div>
         <div className="upload-container">
           <input
             className="upload-input"

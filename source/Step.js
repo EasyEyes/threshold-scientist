@@ -93,11 +93,10 @@ export default class Step extends PureComponent {
     return (
       <div
         className={`animate__animated animate__headShake step step-${name}${
-          isCurrentStep ? " step-current" : ""
+          isCurrentStep ? "" : ""
         }${isCompletedStep ? " step-completed" : ""}`}
         ref={this.ref}
       >
-        {/* {isCurrentStep && <p className="step-current-indicator">now</p>} */}
         {component}
       </div>
     );

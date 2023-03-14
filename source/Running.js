@@ -222,7 +222,7 @@ export default class Running extends Component {
 
     return (
       <>
-        <p className="emphasize">
+        <div className="green-status-banner">
           {isRunning
             ? pavloviaIsReady
               ? "Experiment ready to run."
@@ -232,7 +232,7 @@ export default class Running extends Component {
                   ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
                   : "Setting mode to RUNNING ..."
               }`}
-        </p>
+        </div>
         <div className="link-set">
           <div className="link-set-buttons">
             {isRunning && pavloviaIsReady && (

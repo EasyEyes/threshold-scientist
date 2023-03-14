@@ -167,10 +167,9 @@ export default class Table extends Component {
 
     return (
       <div className="table" ref={this.ref}>
-        <p className="dropzone-around-text emphasize">
-          Submit any missing fonts, consent/debrief forms, and other resources.
-          Then submit the experiment spreadsheet to compile.
-        </p>
+        <div className="green-status-banner">
+          Submit any missing resources and then the experiment:
+        </div>
         <div className="file-zone">
           <Dropzone onDrop={this.onDrop}>
             {({ getRootProps, getInputProps }) => (
@@ -179,7 +178,6 @@ export default class Table extends Component {
                 ref={this.dropZoneRef}
               >
                 <input {...getInputProps()} />
-                {/* <p className="dropzone-main-text emphasize"></p> */}
                 <p className="dropzone-sub-text">
                   <i
                     className="bi bi-file-earmark-plus"
