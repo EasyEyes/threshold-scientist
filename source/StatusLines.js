@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import Swal from "sweetalert2";
 
 import Dropdown from "./components/Dropdown";
+import { Question } from "./components";
 import {
   createOrUpdateProlificToken,
   getPastProlificIdFromExperimentTables,
@@ -201,15 +202,26 @@ export default class StatusLines extends Component {
                       ""
                     )}
                   </span>
-                  <button
-                    className="button-small button-grey"
-                    style={inlineButtonStyle}
-                    onClick={async () => {
-                      this.popToUploadProlificToken();
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
                     }}
                   >
-                    Update Prolific
-                  </button>
+                    <button
+                      className="button-small button-grey"
+                      style={inlineButtonStyle}
+                      onClick={async () => {
+                        this.popToUploadProlificToken();
+                      }}
+                    >
+                      Update Prolific
+                    </button>
+                    <div style={{ visibility: "hidden" }}>
+                      <Question title={""} text={``} />
+                    </div>
+                  </div>
                 </>
               ) : (
                 <button
