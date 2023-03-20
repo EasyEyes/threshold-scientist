@@ -420,32 +420,33 @@ export default class Running extends Component {
                   style={{ marginLeft: "10px" }}
                   className="button-grey button-small"
                   onClick={async () => {
-                    if (dataFolderLength == 0) {
-                      Swal.fire({
-                        icon: "error",
-                        title: `No data found for ${newRepo.name}.`,
-                        text: `We can't find any data for the experiment. This might due to an error, or the Pavlovia server is down. Please refresh the page or try again later.`,
-                        confirmButtonColor: "#666",
-                      });
-                    } else {
-                      Swal.fire({
-                        title: `Reading data ...`,
-                        allowOutsideClick: true,
-                        allowEscapeKey: true,
-                        didOpen: async () => {
-                          Swal.showLoading(null);
-                          const dataframes = await getExperimentDataFrames(
-                            this.props.user,
-                            this.props.newRepo
-                          );
-                          displayErrorReportPopup(
-                            dataframes,
-                            this.props.newRepo
-                          );
-                          Swal.close();
-                        },
-                      });
-                    }
+                    window.open(" https://easyeyes.shinyapps.io/easyeyes_app/");
+                    // if (dataFolderLength == 0) {
+                    //   Swal.fire({
+                    //     icon: "error",
+                    //     title: `No data found for ${newRepo.name}.`,
+                    //     text: `We can't find any data for the experiment. This might due to an error, or the Pavlovia server is down. Please refresh the page or try again later.`,
+                    //     confirmButtonColor: "#666",
+                    //   });
+                    // } else {
+                    //   Swal.fire({
+                    //     title: `Reading data ...`,
+                    //     allowOutsideClick: true,
+                    //     allowEscapeKey: true,
+                    //     didOpen: async () => {
+                    //       Swal.showLoading(null);
+                    //       const dataframes = await getExperimentDataFrames(
+                    //         this.props.user,
+                    //         this.props.newRepo
+                    //       );
+                    //       displayErrorReportPopup(
+                    //         dataframes,
+                    //         this.props.newRepo
+                    //       );
+                    //       Swal.close();
+                    //     },
+                    //   });
+                    // }
                   }}
                 >
                   Summary
