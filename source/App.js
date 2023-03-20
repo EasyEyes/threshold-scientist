@@ -20,7 +20,7 @@ import {
   getRecruitmentServiceConfig,
   getDurationForProject,
 } from "../threshold/preprocess/gitlabUtils";
-import { db } from "./components/firebase";
+import { auth, db } from "./components/firebase";
 import {
   getProlificAccount,
   getProlificStudySubmissions,
@@ -30,6 +30,7 @@ import { getCompatibilityRequirements } from "../threshold/components/compatibil
 import { compatibilityRequirements } from "../threshold/preprocess/global";
 
 import "./css/App.scss";
+import { signInAnonymously } from "firebase/auth";
 
 export default class App extends Component {
   constructor(props) {
@@ -132,14 +133,21 @@ export default class App extends Component {
       });
     });
 
-    // get total compile counts
-    get(ref(db, "compileCounts/")).then((snapshot) => {
-      const compileCounts = snapshot.val();
-      // sum all values
-      const totalCompileCounts =
-        Object.values(compileCounts).reduce((a, b) => a + b, 0) + 1;
-      this.setState({ totalCompileCounts });
-    });
+    // auth anonymous user for firebase
+    signInAnonymously(auth)
+      .then(() => {
+        // get total compile counts
+        get(ref(db, "compileCounts/")).then((snapshot) => {
+          const compileCounts = snapshot.val();
+          // sum all values
+          const totalCompileCounts =
+            Object.values(compileCounts).reduce((a, b) => a + b, 0) + 1;
+          this.setState({ totalCompileCounts });
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
   /* -------------------------------------------------------------------------- */
