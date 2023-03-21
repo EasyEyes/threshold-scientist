@@ -449,7 +449,7 @@ export default class Running extends Component {
                     // }
                   }}
                 >
-                  Summary
+                  Analyze
                 </button>
 
                 <span style={{ marginLeft: "10px" }}>
