@@ -59,6 +59,13 @@ export const handleDrop = async (
         Swal.close();
       },
     });
+  } else {
+    Swal.fire({
+      title: "Compiling ...",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+    });
   }
 
   // handle experiment file
