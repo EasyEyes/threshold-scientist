@@ -80,7 +80,7 @@ export default class StatusLines extends Component {
     and "Copy" buttons to copy the Prolific token. Then paste that token into the text box above, 
     and click "Save". Your Pavlovia account will retain this link to your Prolific account, 
     offering tight EasyEyes integration. 
-    You can change it at any time by again using the "Update Prolific account" button.</div>`,
+    You can change it at any time by again using the "Change account" button.</div>`,
       inputAttributes: {
         autocapitalize: "off",
       },
