@@ -216,7 +216,7 @@ export default class StatusLines extends Component {
                         this.popToUploadProlificToken();
                       }}
                     >
-                      Update Prolific
+                      Change account
                     </button>
                     <div style={{ visibility: "hidden" }}>
                       <Question title={""} text={``} />

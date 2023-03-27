@@ -675,8 +675,9 @@ export default class App extends Component {
 
         {!accessToken && (
           <div className="description">
-            Welcome to EasyEyes, a PsychoJS-based experiment compiler designed
-            to help you measure perceptual thresholds online.
+            Welcome to EasyEyes, an experiment compiler that helps you
+            accurately test vision and hearing online, especially sensitivity,
+            crowding, and reading.
           </div>
         )}
 
