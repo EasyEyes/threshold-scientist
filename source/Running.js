@@ -13,6 +13,7 @@ import {
   runExperiment,
   getPastProlificIdFromExperimentTables,
   getExperimentDataFrames,
+  createProlificStudyIdFile,
 } from "../threshold/preprocess/gitlabUtils";
 import { displayErrorReportPopup } from "./components/ErrorReport";
 
@@ -353,8 +354,12 @@ export default class Running extends Component {
                               "_blank"
                             )
                             ?.focus();
+                          await createProlificStudyIdFile(
+                            newRepo,
+                            user,
+                            result.id
+                          );
                         }
-
                         e.target.classList.remove("button-disabled");
                         e.target.classList.remove("button-wait");
                       }}
