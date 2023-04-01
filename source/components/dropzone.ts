@@ -62,7 +62,7 @@ export const handleDrop = async (
   } else {
     Swal.fire({
       title: "Compiling ...",
-      allowOutsideClick: false,
+      allowOutsideClick: true,
       allowEscapeKey: false,
       showConfirmButton: false,
     });
