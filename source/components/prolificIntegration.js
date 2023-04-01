@@ -238,5 +238,5 @@ export const getProlificStudySubmissions = async (token, prolificStudyId) => {
         study.status.slice(1).toLowerCase()
       }. ${study.number_of_submissions}/${
         study.total_available_places
-      } completed`;
+      } in progress`;
 };
