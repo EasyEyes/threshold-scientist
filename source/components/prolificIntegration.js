@@ -208,39 +208,35 @@ export const prolificCreateDraft = async (
   return result;
 };
 
-const fetchProlificProjectStudies = async (token, prolificProjectId) => {
-  const prolificFetchStudiesUrl = `/.netlify/functions/prolific/projects/${prolificProjectId}/studies/`;
-  const response = await fetch(prolificFetchStudiesUrl, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Token ${token}`,
-    },
-  })
-    .then((response) => {
-      return response.json();
+const fetchProlificProjectStudies = async (token, prolificStudyId) => {
+  const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/`;
+  const response =
+    (await fetch(prolificFetchStudiesUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Token ${token}`,
+      },
     })
-    .catch((error) => console.log(error));
-
-  const result = response;
-  return result;
+      .then((response) => {
+        return response.json();
+      })
+      .catch((error) => {
+        console.log(error, "error");
+        return "";
+      })) || "";
+  return response;
 };
 
-export const getProlificStudySubmissions = async (
-  token,
-  internalProjectName,
-  prolificProjectId
-) => {
-  const result = await fetchProlificProjectStudies(token, prolificProjectId);
-  const study = result?.results?.filter(
-    (r) => r.internal_name === internalProjectName
-  );
-  return !study?.length
+export const getProlificStudySubmissions = async (token, prolificStudyId) => {
+  const result = await fetchProlificProjectStudies(token, prolificStudyId);
+  const study = result;
+  return !("status" in study)
     ? ""
     : `${
-        study[0].status.charAt(0).toUpperCase() +
-        study[0].status.slice(1).toLowerCase()
-      }. ${study[0].number_of_submissions}/${
-        study[0].total_available_places
+        study.status.charAt(0).toUpperCase() +
+        study.status.slice(1).toLowerCase()
+      }. ${study.number_of_submissions}/${
+        study.total_available_places
       } completed`;
 };

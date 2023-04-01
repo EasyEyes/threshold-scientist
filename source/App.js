@@ -19,6 +19,7 @@ import {
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
   getDurationForProject,
+  getProlificStudyId,
 } from "../threshold/preprocess/gitlabUtils";
 import { auth, db } from "./components/firebase";
 import {
@@ -337,17 +338,11 @@ export default class App extends Component {
     });
   }
 
-  async getProlificStudySubmissionDetails(
-    user,
-    prolificToken,
-    projectName,
-    prolificProjectId
-  ) {
-    const internalName = `${user.username}/${projectName}`;
+  async getProlificStudySubmissionDetails(user, prolificToken, repoId) {
+    const prolificStudyId = await getProlificStudyId(user, repoId);
     const submissionDetails = await getProlificStudySubmissions(
       prolificToken,
-      internalName,
-      prolificProjectId
+      prolificStudyId
     );
     this.setState({ prolificStudyStatus: submissionDetails });
   }

@@ -3,10 +3,7 @@ import Swal from "sweetalert2";
 
 import Dropdown from "./components/Dropdown";
 import { Question } from "./components";
-import {
-  createOrUpdateProlificToken,
-  getPastProlificIdFromExperimentTables,
-} from "../threshold/preprocess/gitlabUtils";
+import { createOrUpdateProlificToken } from "../threshold/preprocess/gitlabUtils";
 import { compatibilityRequirements as globalCompatibilityReq } from "../threshold/preprocess/global";
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 import { durations } from "../threshold/preprocess/getDuration";
@@ -36,34 +33,19 @@ export default class StatusLines extends Component {
     return <span className="status-line-content">{filename}</span>;
   }
 
-  getProlificStudyStatus = async (prolificProjectId, projectName) => {
-    const { prolificToken, user } = this.props;
+  getProlificStudyStatus = async () => {
+    const { prolificToken, user, activeExperiment } = this.props;
+    const repo = activeExperiment !== "new" ? activeExperiment : null;
     await this.props.functions.getProlificStudySubmissionDetails(
       user,
       prolificToken,
-      projectName,
-      prolificProjectId
+      repo?.id
     );
   };
 
   async componentDidUpdate(prevProps) {
     if (this.props.activeExperiment !== prevProps.activeExperiment) {
-      const { user, activeExperiment, previousExperimentViewed, projectName } =
-        this.props;
-      const prolificProjectId =
-        activeExperiment !== "new"
-          ? await getPastProlificIdFromExperimentTables(
-              user,
-              activeExperiment?.name,
-              previousExperimentViewed.originalFileName
-            )
-          : user.currentExperiment.prolificWorkspaceProjectId;
-      activeExperiment !== "new"
-        ? await this.getProlificStudyStatus(
-            prolificProjectId,
-            activeExperiment.name
-          )
-        : await this.getProlificStudyStatus(prolificProjectId, projectName);
+      await this.getProlificStudyStatus();
     }
   }
 

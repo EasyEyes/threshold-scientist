@@ -11,11 +11,8 @@ import {
   getDataFolderCsvLength,
   getExperimentStatus,
   runExperiment,
-  getPastProlificIdFromExperimentTables,
-  getExperimentDataFrames,
   createProlificStudyIdFile,
 } from "../threshold/preprocess/gitlabUtils";
-import { displayErrorReportPopup } from "./components/ErrorReport";
 
 import "./css/Running.scss";
 
@@ -134,13 +131,12 @@ export default class Running extends Component {
       });
   }
 
-  getProlificStudyStatus = async (prolificProjectId, projectName) => {
-    const { prolificToken, user } = this.props;
+  getProlificStudyStatus = async () => {
+    const { prolificToken, user, newRepo } = this.props;
     await this.props.functions.getProlificStudySubmissionDetails(
       user,
       prolificToken,
-      projectName,
-      prolificProjectId
+      newRepo?.id
     );
   };
 
@@ -484,24 +480,7 @@ export default class Running extends Component {
                       this.props.newRepo
                     );
                     this.setState({ dataFolderLength });
-
-                    const prolificProjectId =
-                      activeExperiment !== "new"
-                        ? await getPastProlificIdFromExperimentTables(
-                            user,
-                            activeExperiment?.name,
-                            previousExperimentViewed.originalFileName
-                          )
-                        : user.currentExperiment.prolificWorkspaceProjectId;
-                    activeExperiment !== "new"
-                      ? await this.getProlificStudyStatus(
-                          prolificProjectId,
-                          activeExperiment.name
-                        )
-                      : await this.getProlificStudyStatus(
-                          prolificProjectId,
-                          projectName
-                        );
+                    await this.getProlificStudyStatus();
                   }}
                 >
                   Refresh
