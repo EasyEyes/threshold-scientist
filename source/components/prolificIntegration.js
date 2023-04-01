@@ -8,6 +8,16 @@ const prolificLangType = {
   FLUENT: "FLUENT",
 };
 
+const prolificStudySubmissionStatus = {
+  RESERVED: "RESERVED",
+  ACTIVE: "ACTIVE",
+  "TIME-OUT": "TIME-OUT",
+  "AWAITING REVIEW": "AWAITING REVIEW",
+  APPROVED: "APPROVED",
+  RETURNED: "RETURNED",
+  REJECTED: "REJECTED",
+};
+
 export const getProlificAccount = async (token) => {
   const headers = new Headers();
   headers.append("authorization", `Token ${token}`);
@@ -208,7 +218,8 @@ export const prolificCreateDraft = async (
   return result;
 };
 
-const fetchProlificProjectStudies = async (token, prolificStudyId) => {
+const fetchProlificStudy = async (token, prolificStudyId) => {
+  // const prolificFetchStudiesUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/`; - used for local testing - disable CORS
   const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/`;
   const response =
     (await fetch(prolificFetchStudiesUrl, {
@@ -228,15 +239,49 @@ const fetchProlificProjectStudies = async (token, prolificStudyId) => {
   return response;
 };
 
+const fetchProlificStudySubmissions = async (token, prolificStudyId) => {
+  // const prolificFetchStudiesUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/submissions/`; - used for local testing - disable CORS
+  const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/submissions/`;
+  const response =
+    (await fetch(prolificFetchStudiesUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Token ${token}`,
+      },
+    })
+      .then((response) => {
+        return response.json();
+      })
+      .catch((error) => {
+        console.log(error, "error");
+        return "";
+      })) || "";
+  return response;
+};
+
 export const getProlificStudySubmissions = async (token, prolificStudyId) => {
-  const result = await fetchProlificProjectStudies(token, prolificStudyId);
-  const study = result;
-  return !("status" in study)
-    ? ""
-    : `${
-        study.status.charAt(0).toUpperCase() +
-        study.status.slice(1).toLowerCase()
-      }. ${study.number_of_submissions}/${
-        study.total_available_places
-      } in progress`;
+  const study = await fetchProlificStudy(token, prolificStudyId);
+  const submissions = await fetchProlificStudySubmissions(
+    token,
+    prolificStudyId
+  );
+  if (!("status" in study)) {
+    return "";
+  }
+  let numberOfSubmissions = 0;
+  if (submissions?.results.length > 0) {
+    const submissionResults = submissions.results;
+    const res = submissionResults.filter(
+      (submissionResult) =>
+        submissionResult.status === prolificStudySubmissionStatus.ACTIVE ||
+        submissionResult.status ===
+          prolificStudySubmissionStatus["AWAITING REVIEW"] ||
+        submissionResult.status === prolificStudySubmissionStatus.APPROVED
+    );
+    numberOfSubmissions = res.length;
+  }
+  return `${
+    study.status.charAt(0).toUpperCase() + study.status.slice(1).toLowerCase()
+  }. ${numberOfSubmissions}/${study.total_available_places} in progress`;
 };
