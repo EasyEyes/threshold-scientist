@@ -266,7 +266,7 @@ export const getProlificStudySubmissions = async (token, prolificStudyId) => {
     token,
     prolificStudyId
   );
-  if (!("status" in study)) {
+  if (!study || !("status" in study)) {
     return "";
   }
   let numberOfSubmissions = 0;

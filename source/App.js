@@ -211,19 +211,41 @@ export default class App extends Component {
           Swal.close();
         },
       });
-    }
+      this.setState({
+        activeExperiment,
+        previousExperimentViewed: {
+          originalFileName,
+          previousExperimentStatus,
+          previousRecruitmentInformation,
+          previousCompatibilityRequirements: previousCompatibilityRequirements,
+          previousExperimentDuration,
+        },
+        compatibilityLanguage: "en-US",
+      });
+    } else {
+      await Swal.fire({
+        title: "Getting ready ...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: async () => {
+          Swal.showLoading(null);
+          this.setState({
+            activeExperiment,
+            previousExperimentViewed: {
+              originalFileName,
+              previousExperimentStatus,
+              previousRecruitmentInformation,
+              previousCompatibilityRequirements:
+                previousCompatibilityRequirements,
+              previousExperimentDuration,
+            },
+            compatibilityLanguage: "en-US",
+          });
 
-    this.setState({
-      activeExperiment,
-      previousExperimentViewed: {
-        originalFileName,
-        previousExperimentStatus,
-        previousRecruitmentInformation,
-        previousCompatibilityRequirements: previousCompatibilityRequirements,
-        previousExperimentDuration,
-      },
-      compatibilityLanguage: "en-US",
-    });
+          Swal.close();
+        },
+      });
+    }
   }
 
   /* -------------------------------------------------------------------------- */
