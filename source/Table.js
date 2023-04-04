@@ -168,7 +168,8 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          Submit any missing resources and then the experiment:
+          Submit any missing resources (forms, fonts, texts, sounds, etc.) and
+          then the experiment spreadsheet:
         </div>
         <div className="file-zone">
           <Dropzone onDrop={this.onDrop}>
