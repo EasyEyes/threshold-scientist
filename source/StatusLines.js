@@ -91,6 +91,16 @@ export default class StatusLines extends Component {
     });
   }
 
+  getExperimentStatus = (status) => {
+    if (status === "RUNNING") {
+      return "RUNNING MODE. Experiment ready to run online.";
+    } else if (status === "INACTIVE") {
+      return "INACTIVE. Go to Pavlovia to assign credits and set RUNNING mode, or to set PILOTING mode and then Pilot the experiment here.";
+    } else {
+      return "PILOTING MODE. Use Pavlovia’s Pilot button to run here.";
+    }
+  };
+
   render() {
     const {
       activeExperiment,
@@ -354,19 +364,11 @@ export default class StatusLines extends Component {
           }
           title={"Pavlovia"}
           content={
-            <>
-              {viewingPreviousExperiment
-                ? previousExperimentStatus
-                : user && filename && projectName
-                ? experimentStatus
-                : ""}
-              <Question
-                title={"Pavlovia Status"}
-                text={`INACTIVE. Go to Pavlovia to assign credits and set RUNNING mode, or to set PILOTING mode and then Pilot the experiment here.
-              <br />RUNNING MODE. Experiment ready to run online.
-              <br />PILOTING MODE. Use Pavlovia’s Pilot button to run here.`}
-              />
-            </>
+            viewingPreviousExperiment
+              ? this.getExperimentStatus(previousExperimentStatus)
+              : user && filename && projectName
+              ? this.getExperimentStatus(experimentStatus)
+              : ""
           }
         />
 
