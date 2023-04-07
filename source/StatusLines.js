@@ -328,19 +328,6 @@ export default class StatusLines extends Component {
         />
 
         <StatusLine
-          activated={
-            !!(user && filename && projectName) || viewingPreviousExperiment
-          }
-          title={"Experiment mode"}
-          content={
-            viewingPreviousExperiment
-              ? previousExperimentStatus
-              : user && filename && projectName
-              ? experimentStatus
-              : ""
-          }
-        />
-        <StatusLine
           activated={showExperimentURL}
           title={"Experiment URL"}
           content={
@@ -358,6 +345,28 @@ export default class StatusLines extends Component {
             ) : (
               ""
             )
+          }
+        />
+
+        <StatusLine
+          activated={
+            !!(user && filename && projectName) || viewingPreviousExperiment
+          }
+          title={"Pavlovia"}
+          content={
+            <>
+              {viewingPreviousExperiment
+                ? previousExperimentStatus
+                : user && filename && projectName
+                ? experimentStatus
+                : ""}
+              <Question
+                title={"Pavlovia Status"}
+                text={`INACTIVE. Go to Pavlovia to assign credits and set RUNNING mode, or to set PILOTING mode and then Pilot the experiment here.
+              <br />RUNNING MODE. Experiment ready to run online.
+              <br />PILOTING MODE. Use Pavlovia’s Pilot button to run here.`}
+              />
+            </>
           }
         />
 
