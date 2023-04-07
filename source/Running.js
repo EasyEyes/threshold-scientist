@@ -145,7 +145,7 @@ export default class Running extends Component {
     let link = "https://app.prolific.co/researcher/studies/active";
     const studyId = await getProlificStudyId(user, repoId);
     if (studyId) {
-      link = `https://app.prolific.co/researcher/workspaces/studies/${studyId}`;
+      link = `https://app.prolific.co/researcher/workspaces/studies/${studyId}/submissions`;
     }
     window.open(link, "_blank");
   };
