@@ -12,6 +12,7 @@ import {
   getExperimentStatus,
   runExperiment,
   createProlificStudyIdFile,
+  getProlificStudyId,
 } from "../threshold/preprocess/gitlabUtils";
 
 import "./css/Running.scss";
@@ -138,6 +139,15 @@ export default class Running extends Component {
       prolificToken,
       newRepo?.id
     );
+  };
+
+  goToProlificOnClick = async (user, repoId) => {
+    let link = "https://app.prolific.co/researcher/studies/active";
+    const studyId = await getProlificStudyId(user, repoId);
+    if (studyId) {
+      link = `https://app.prolific.co/researcher/workspaces/studies/${studyId}`;
+    }
+    window.open(link, "_blank");
   };
 
   render() {
@@ -374,13 +384,8 @@ export default class Running extends Component {
                   <button
                     className="button-grey button-small"
                     style={smallButtonExtraStyle}
-                    onClick={() => {
-                      window.open(
-                        user.currentExperiment.prolificWorkspaceModeBool
-                          ? `https://app.prolific.co/researcher/workspaces/projects/${user.currentExperiment.prolificWorkspaceProjectId}/active`
-                          : "https://app.prolific.co/researcher/studies/active",
-                        "_blank"
-                      );
+                    onClick={async () => {
+                      await this.goToProlificOnClick(user, newRepo?.id);
                     }}
                   >
                     Go to {recruitName}
