@@ -46,7 +46,7 @@ export const handleDrop = async (
   // handle valid resource files
   if (resourcesList.length > 0) {
     await Swal.fire({
-      title: "Uploading files for you ...",
+      title: "Uploading ...",
       allowOutsideClick: false,
       allowEscapeKey: false,
       didOpen: async () => {
