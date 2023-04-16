@@ -4,7 +4,10 @@ import Swal from "sweetalert2";
 
 import { Question } from "./components";
 import { db } from "./components/firebase";
-import { prolificCreateDraft } from "./components/prolificIntegration";
+import {
+  prolificCreateDraft,
+  downloadDemographicData,
+} from "./components/prolificIntegration";
 import {
   downloadDataFolder,
   generateAndUploadCompletionURL,
@@ -417,6 +420,17 @@ export default class Running extends Component {
                   className="button-green button-small"
                   onClick={async () => {
                     await downloadDataFolder(user, newRepo);
+                    const prolificStudyId = await getProlificStudyId(
+                      user,
+                      newRepo?.id
+                    );
+                    if (prolificStudyId) {
+                      await downloadDemographicData(
+                        prolificToken,
+                        prolificStudyId,
+                        newRepo.name
+                      );
+                    }
                   }}
                 >
                   Download results

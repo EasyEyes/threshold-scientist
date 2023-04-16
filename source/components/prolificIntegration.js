@@ -1,3 +1,4 @@
+import { saveAs } from "file-saver";
 import {
   LANGUAGE_INDEX_PROLIFIC_MAPPING,
   LOCATION_INDEX_PROLIFIC_MAPPING,
@@ -91,6 +92,7 @@ export const prolificCreateDraft = async (
   completionCode,
   token
 ) => {
+  // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
   const hours =
     parseFloat(
@@ -219,7 +221,7 @@ export const prolificCreateDraft = async (
 };
 
 const fetchProlificStudy = async (token, prolificStudyId) => {
-  // const prolificFetchStudiesUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/`; - used for local testing - disable CORS
+  // const prolificFetchStudiesUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/`;
   const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/`;
   const response =
     (await fetch(prolificFetchStudiesUrl, {
@@ -240,7 +242,7 @@ const fetchProlificStudy = async (token, prolificStudyId) => {
 };
 
 const fetchProlificStudySubmissions = async (token, prolificStudyId) => {
-  // const prolificFetchStudiesUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/submissions/`; - used for local testing - disable CORS
+  // const prolificFetchStudiesUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/submissions/`;
   const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/submissions/`;
   const response =
     (await fetch(prolificFetchStudiesUrl, {
@@ -284,4 +286,28 @@ export const getProlificStudySubmissions = async (token, prolificStudyId) => {
   return `${
     study.status.charAt(0).toUpperCase() + study.status.slice(1).toLowerCase()
   }. ${numberOfSubmissions}/${study.total_available_places} in progress`;
+};
+
+export const downloadDemographicData = async (
+  token,
+  prolificStudyId,
+  filename
+) => {
+  // const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
+  const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
+  const downloadName = filename ?? "experiment";
+
+  await fetch(downloadDataUrl, {
+    method: "GET",
+    headers: {
+      "Content-Type": "text/csv",
+      authorization: `Token ${token}`,
+    },
+    responseType: "blob",
+  })
+    .then((response) => response.blob())
+    .then((blob) => saveAs(blob, `${downloadName}-Prolific.csv`))
+    .catch((error) => {
+      console.log(error, "error");
+    });
 };
