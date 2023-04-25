@@ -40,13 +40,15 @@ export default class Dropdown extends Component {
       >
         {(function () {
           const optionList = projectList.map((project) => {
-            return (
-              <option key={project.id} value={project.id}>
-                {/* {`${this.shortenProjectName(project.name)}`} ( */}
-                {`${project.name}`} (
-                {new Date(project.created_at).toLocaleString()})
-              </option>
-            );
+            if (project.name !== "EasyEyesResources") {
+              return (
+                <option key={project.id} value={project.id}>
+                  {/* {`${this.shortenProjectName(project.name)}`} ( */}
+                  {`${project.name}`} (
+                  {new Date(project.created_at).toLocaleString()})
+                </option>
+              );
+            }
           });
 
           optionList.unshift(
