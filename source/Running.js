@@ -500,6 +500,8 @@ export default class Running extends Component {
                     );
                     this.setState({ dataFolderLength });
                     await this.getProlificStudyStatus();
+                    const result = await getExperimentStatus(user, newRepo);
+                    functions.handleSetExperimentStatus(result);
                   }}
                 >
                   Refresh

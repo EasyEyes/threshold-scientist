@@ -31,7 +31,6 @@ export default class Login extends Component {
       // eslint-disable-next-line no-undef
       if (!process.env.debug)
         window.history.replaceState(null, null, window.location.pathname);
-      console.log(accessToken);
       this.setState({
         login: "loading",
       });
@@ -40,7 +39,6 @@ export default class Login extends Component {
       tempAccessToken.t = accessToken;
 
       const [user, resources, prolificToken] = await getUserInfo(accessToken);
-      console.log(user);
 
       this.props.functions.handleLogin(
         user,

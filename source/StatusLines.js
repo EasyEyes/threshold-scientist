@@ -365,7 +365,9 @@ export default class StatusLines extends Component {
           title={"Pavlovia"}
           content={
             viewingPreviousExperiment
-              ? this.getExperimentStatus(previousExperimentStatus)
+              ? this.getExperimentStatus(
+                  experimentStatus ?? previousExperimentStatus
+                )
               : user && filename && projectName
               ? this.getExperimentStatus(experimentStatus)
               : ""
