@@ -62,14 +62,36 @@ export default class StatusLines extends Component {
     and "Copy" buttons to copy the Prolific token. Then paste that token into the text box above, 
     and click "Save". Your Pavlovia account will retain this link to your Prolific account, 
     offering tight EasyEyes integration. 
-    You can change it at any time by again using the "Change account" button.</div>`,
+    You can change it at any time by using the "Change account" button.</div>`,
       inputAttributes: {
         autocapitalize: "off",
       },
       showCancelButton: true,
       confirmButtonText: "Save",
       cancelButtonText: "Cancel",
+      customClass: {
+        confirmButton: "btn-success-prolific-token",
+      },
       showLoaderOnConfirm: true,
+      didOpen: () => {
+        document
+          .querySelector(".btn-success-prolific-token")
+          .setAttribute("disabled", true);
+        const textElement = document.getElementById(
+          "prolific-token-text-input"
+        );
+        textElement.addEventListener("keyup", () => {
+          if (textElement.value === "") {
+            document
+              .querySelector(".btn-success-prolific-token")
+              .setAttribute("disabled", true);
+          } else {
+            document.querySelector(
+              ".btn-success-prolific-token"
+            ).disabled = false;
+          }
+        });
+      },
       preConfirm: async () => {
         const token = document.getElementById(
           "prolific-token-text-input"
