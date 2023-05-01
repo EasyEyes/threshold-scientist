@@ -101,7 +101,7 @@ export const prolificCreateDraft = async (
   const pay = parseFloat(user.currentExperiment?._online2Pay) || 0;
   const payPerHour =
     parseFloat(user.currentExperiment?._online2PayPerHour) || 0;
-  const reward = parseFloat((pay + payPerHour * hours) * 100);
+  const reward = parseInt(parseFloat((pay + payPerHour * hours) * 100));
   console.log(hours, pay, payPerHour, reward, "ritika");
   let completionCodeAction = "MANUALLY_REVIEW";
   if (
