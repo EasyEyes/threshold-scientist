@@ -54,8 +54,8 @@ export default class Dropdown extends Component {
           optionList.unshift(
             <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
               {newExperimentProjectName
-                ? `📝 ${newExperimentProjectName}`
-                : `📑 [New experiment]`}
+                ? `${newExperimentProjectName}`
+                : `[New experiment]`}
             </option>
           );
 
@@ -65,7 +65,7 @@ export default class Dropdown extends Component {
                 key={"__FRESH_NEW_EXPERIMENT__"}
                 value={"__FRESH_NEW_EXPERIMENT__"}
               >
-                {`📑 [New experiment]`}
+                {`[New experiment]`}
               </option>
             );
           }
