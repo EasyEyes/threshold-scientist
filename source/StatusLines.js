@@ -349,7 +349,7 @@ export default class StatusLines extends Component {
             !!(user && filename && experimentStatus === "RUNNING") ||
             viewingPreviousExperiment
           }
-          title={"Experiment est. duration"}
+          title={"Experiment est. minutes"}
           content={
             viewingPreviousExperiment
               ? previousExperimentDuration
