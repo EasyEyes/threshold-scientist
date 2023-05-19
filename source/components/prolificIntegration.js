@@ -92,6 +92,11 @@ export const prolificCreateDraft = async (
   completionCode,
   token
 ) => {
+  console.log(
+    user,
+    user.currentExperiment?._online1InternalName,
+    "internal name"
+  );
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
   const hours =
@@ -114,7 +119,7 @@ export const prolificCreateDraft = async (
 
   const payload = {
     name: user.currentExperiment.titleOfStudy ?? "",
-    internal_name: internalName, // ! Looks weird
+    internal_name: user.currentExperiment._online1InternalName || internalName,
     description: user.currentExperiment.descriptionOfStudy ?? "",
     external_study_url: user.currentExperiment.experimentUrl,
     prolific_id_option: "url_parameters",
