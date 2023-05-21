@@ -1,3 +1,4 @@
+import { Buffer } from "buffer";
 import { saveAs } from "file-saver";
 import {
   LANGUAGE_INDEX_PROLIFIC_MAPPING,
@@ -300,13 +301,15 @@ export const downloadDemographicData = async (
   await fetch(downloadDataUrl, {
     method: "GET",
     headers: {
-      "Content-Type": "text/csv",
+      "Content-Type": "application/json",
       authorization: `Token ${token}`,
     },
   })
-    .then((response) => response.text())
-    .then((csvData) => {
-      const blob = new Blob([csvData], { type: "text/csv" });
+    .then((response) => response.json())
+    .then((jsonData) => {
+      const buffer = Buffer.from(jsonData.data, "base64");
+      console.log(buffer, jsonData);
+      const blob = new Blob([buffer], { type: "text/csv" });
       saveAs(blob, `${downloadName}-Prolific.csv`);
     })
     .catch((error) => {
