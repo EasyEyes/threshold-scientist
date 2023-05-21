@@ -294,8 +294,8 @@ export const downloadDemographicData = async (
   prolificStudyId,
   filename
 ) => {
-  // const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
-  const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
+  const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
+  // const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
   const downloadName = filename ?? "experiment";
 
   await fetch(downloadDataUrl, {
@@ -305,11 +305,12 @@ export const downloadDemographicData = async (
       authorization: `Token ${token}`,
     },
   })
-    .then((response) => response.json())
-    .then((jsonData) => {
-      const buffer = Buffer.from(jsonData.data, "base64");
-      console.log(buffer, jsonData);
-      const blob = new Blob([buffer], { type: "text/csv" });
+    .then((response) => {
+      console.log(response, "ritika");
+      const data = response.text();
+      console.log(data, "ritika");
+      const blob = new Blob([data], { type: "text/csv" });
+      console.log(blob, "ritika");
       saveAs(blob, `${downloadName}-Prolific.csv`);
     })
     .catch((error) => {
