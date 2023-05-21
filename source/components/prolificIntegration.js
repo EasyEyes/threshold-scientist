@@ -303,10 +303,12 @@ export const downloadDemographicData = async (
       "Content-Type": "text/csv",
       authorization: `Token ${token}`,
     },
-    responseType: "blob",
   })
-    .then((response) => response.blob())
-    .then((blob) => saveAs(blob, `${downloadName}-Prolific.csv`))
+    .then((response) => response.text())
+    .then((csvData) => {
+      const blob = new Blob([csvData], { type: "text/csv" });
+      saveAs(blob, `${downloadName}-Prolific.csv`);
+    })
     .catch((error) => {
       console.log(error, "error");
     });
