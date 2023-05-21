@@ -294,8 +294,8 @@ export const downloadDemographicData = async (
   prolificStudyId,
   filename
 ) => {
-  const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
-  // const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
+  // const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
+  const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
   const downloadName = filename ?? "experiment";
 
   await fetch(downloadDataUrl, {
