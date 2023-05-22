@@ -307,7 +307,12 @@ export const downloadDemographicData = async (
   })
     .then((response) => response.text())
     .then((responseData) => {
-      const blob = new Blob([responseData], { type: "text/csv" });
+      const parsedData = [];
+      responseData.split("\n").forEach((row) => {
+        parsedData.push(row.split(","));
+      });
+      const formattedCSV = parsedData.map((row) => row.join(",")).join("\n");
+      const blob = new Blob([formattedCSV], { type: "text/csv" });
       saveAs(blob, `${downloadName}-Prolific.csv`);
     })
     .catch((error) => {
