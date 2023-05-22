@@ -305,9 +305,10 @@ export const downloadDemographicData = async (
       authorization: `Token ${token}`,
     },
   })
-    .then((response) => response.text())
-    .then((responseData) => {
-      const blob = new Blob([responseData], { type: "text/csv" });
+    .then((response) => response.blob())
+    .then((blob) => {
+      console.log(blob, "ritika");
+      // const blob = new Blob([responseData], { type: "text/csv" });
       saveAs(blob, `${downloadName}-Prolific.csv`);
     })
     .catch((error) => {
