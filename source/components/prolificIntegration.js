@@ -301,7 +301,7 @@ export const downloadDemographicData = async (
   await fetch(downloadDataUrl, {
     method: "GET",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "text/csv",
       authorization: `Token ${token}`,
     },
   })
