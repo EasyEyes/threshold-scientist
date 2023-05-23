@@ -304,18 +304,17 @@ export const downloadDemographicData = async (
       authorization: `Token ${token}`,
     },
   })
-    .then((response) => response.json())
-    .then((data) => {
-      console.log(data, downloadName);
-      // let cleanedData = responseData.replace(/\\n/g, "\n");
-      // cleanedData = cleanedData.replace(/\\r/g, "\r");
-      // cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-      // const rows = cleanedData.split("\n");
-      // const csvArray = rows.map((row) => row.split(","));
-      // const formattedCSV = csvArray.map((row) => row.join(",")).join("\n");
-      // console.log(rows, csvArray, formattedCSV, responseData, "prolific");
-      // const blob = new Blob([formattedCSV], { type: "text/csv" });
-      // saveAs(blob, `${downloadName}-Prolific.csv`);
+    .then((response) => response.text())
+    .then((responseData) => {
+      let cleanedData = responseData.replace(/\\n/g, "\n");
+      cleanedData = cleanedData.replace(/\\r/g, "\r");
+      cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      const rows = cleanedData.split("\n");
+      const csvArray = rows.map((row) => row.split(","));
+      const formattedCSV = csvArray.map((row) => row.join(",")).join("\n");
+      console.log(rows, csvArray, formattedCSV, responseData, "prolific");
+      const blob = new Blob([formattedCSV], { type: "text/csv" });
+      saveAs(blob, `${downloadName}-Prolific.csv`);
     })
     .catch((error) => {
       console.log(error, "error");
