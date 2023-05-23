@@ -293,8 +293,8 @@ export const downloadDemographicData = async (
   prolificStudyId,
   filename
 ) => {
-  // const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
-  const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
+  const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
+  // const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
   const downloadName = filename ?? "experiment";
 
   await fetch(downloadDataUrl, {
@@ -306,13 +306,15 @@ export const downloadDemographicData = async (
   })
     .then((response) => response.text())
     .then((responseData) => {
-      let cleanedData = responseData.replace(/\\n/g, "\n");
+      let cleanedData = responseData.trim().replace(/^"(.*)"$/, "$1");
+      cleanedData = cleanedData.replace(/\\n/g, "\n");
       cleanedData = cleanedData.replace(/\\r/g, "\r");
       cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
       cleanedData = cleanedData.replace(/\r\n$/, "");
       const rows = cleanedData.split("\n");
       const csvArray = rows.map((row) => row.split(","));
-      const formattedCSV = csvArray.map((row) => row.join(",")).join("\r\n");
+      let formattedCSV = csvArray.map((row) => row.join(",")).join("\r\n");
+      formattedCSV = formattedCSV.replace(/\r\n$/, "");
       const encoder = new TextEncoder();
       const formattedCSVBuffer = encoder.encode(formattedCSV);
       const blob = new Blob([formattedCSVBuffer], { type: "text/csv" });
@@ -322,6 +324,7 @@ export const downloadDemographicData = async (
         formattedCSV,
         blob,
         formattedCSVBuffer,
+        cleanedData,
         "prolific"
       );
       saveAs(blob, `${downloadName}-Prolific.csv`);
