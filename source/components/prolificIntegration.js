@@ -311,8 +311,7 @@ export const downloadDemographicData = async (
       cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
       const rows = cleanedData.split("\n");
       const csvArray = rows.map((row) => row.split(","));
-      const formattedCSV = csvArray.map((row) => row.join(",")).join("\n");
-      console.log(rows, csvArray, formattedCSV, responseData, "prolific");
+      const formattedCSV = csvArray.map((row) => row.join(",")).join("\r\n");
       const blob = new Blob([formattedCSV], { type: "text/csv" });
       saveAs(blob, `${downloadName}-Prolific.csv`);
     })
