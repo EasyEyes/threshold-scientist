@@ -308,8 +308,8 @@ export const downloadDemographicData = async (
     .then((response) => response.text())
     .then((responseData) => {
       let cleanedData = responseData.replace(/\\n/g, "\n");
-      cleanedData = responseData.replace(/\\r/g, "\r");
-      cleanedData = responseData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      cleanedData = cleanedData.replace(/\\r/g, "\r");
+      cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
       const rows = cleanedData.split("\n");
       const csvArray = rows.map((row) => row.split(","));
       const formattedCSV = csvArray.map((row) => row.join(",")).join("\n");
