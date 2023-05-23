@@ -307,6 +307,7 @@ export const downloadDemographicData = async (
     .then((response) => response.blob())
     .then((blob1) => {
       const blob = new Blob([blob1], { type: "text/csv" });
+      console.log(blob1, blob, "prolific");
       saveAs(blob, `${downloadName}-Prolific.csv`);
       // let cleanedData = responseData.replace(/\\n/g, "\n");
       // cleanedData = cleanedData.replace(/\\r/g, "\r");
