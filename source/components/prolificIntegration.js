@@ -1,4 +1,3 @@
-import { Buffer } from "buffer";
 import { saveAs } from "file-saver";
 import {
   LANGUAGE_INDEX_PROLIFIC_MAPPING,
@@ -305,17 +304,19 @@ export const downloadDemographicData = async (
       authorization: `Token ${token}`,
     },
   })
-    .then((response) => response.text())
-    .then((responseData) => {
-      let cleanedData = responseData.replace(/\\n/g, "\n");
-      cleanedData = cleanedData.replace(/\\r/g, "\r");
-      cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-      const rows = cleanedData.split("\n");
-      const csvArray = rows.map((row) => row.split(","));
-      const formattedCSV = csvArray.map((row) => row.join(",")).join("\n");
-      console.log(rows, csvArray, formattedCSV, responseData, "prolific");
-      const blob = new Blob([formattedCSV], { type: "text/csv" });
+    .then((response) => response.blob())
+    .then((blob1) => {
+      const blob = new Blob([blob1], { type: "text/csv" });
       saveAs(blob, `${downloadName}-Prolific.csv`);
+      // let cleanedData = responseData.replace(/\\n/g, "\n");
+      // cleanedData = cleanedData.replace(/\\r/g, "\r");
+      // cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      // const rows = cleanedData.split("\n");
+      // const csvArray = rows.map((row) => row.split(","));
+      // const formattedCSV = csvArray.map((row) => row.join(",")).join("\n");
+      // console.log(rows, csvArray, formattedCSV, responseData, "prolific");
+      // const blob = new Blob([formattedCSV], { type: "text/csv" });
+      // saveAs(blob, `${downloadName}-Prolific.csv`);
     })
     .catch((error) => {
       console.log(error, "error");
