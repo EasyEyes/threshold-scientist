@@ -304,16 +304,17 @@ export const downloadDemographicData = async (
       authorization: `Token ${token}`,
     },
   })
-    .then((response) => response.text())
-    .then((responseData) => {
-      let cleanedData = responseData.replace(/\\n/g, "\n");
-      cleanedData = cleanedData.replace(/\\r/g, "\r");
-      cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-      const rows = cleanedData.split("\n");
-      const csvArray = rows.map((row) => row.split(","));
-      const formattedCSV = csvArray.map((row) => row.join(",")).join("\r\n");
-      const blob = new Blob([formattedCSV], { type: "text/csv" });
+    // .then((response) => response.text())
+    .then((blob) => {
       saveAs(blob, `${downloadName}-Prolific.csv`);
+      // let cleanedData = responseData.replace(/\\n/g, "\n");
+      // cleanedData = cleanedData.replace(/\\r/g, "\r");
+      // cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      // const rows = cleanedData.split("\n");
+      // const csvArray = rows.map((row) => row.split(","));
+      // const formattedCSV = csvArray.map((row) => row.join(",")).join("\r\n");
+      // const blob = new Blob([formattedCSV], { type: "text/csv" });
+      // saveAs(blob, `${downloadName}-Prolific.csv`);
     })
     .catch((error) => {
       console.log(error, "error");
