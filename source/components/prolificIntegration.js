@@ -307,7 +307,8 @@ export const downloadDemographicData = async (
   })
     .then((response) => response.text())
     .then((responseData) => {
-      const rows = responseData.split("\n");
+      const cleanedData = responseData.replace(/\\n/g, "\n");
+      const rows = cleanedData.split("\n");
       const csvArray = rows.map((row) => row.split(","));
       const formattedCSV = csvArray.map((row) => row.join(",")).join("\n");
       console.log(rows, csvArray, formattedCSV, responseData, "prolific");
