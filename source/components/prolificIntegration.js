@@ -111,6 +111,15 @@ export const prolificCreateDraft = async (
   } else {
     completionCodeAction = "MANUALLY_REVIEW";
   }
+  const allowList = user.currentExperiment._online4CustomAllowList;
+  const whiteListParticipants = allowList
+    ? allowList.split(",").map((item) => item.trim())
+    : [];
+
+  const blockList = user.currentExperiment._online4CustomBlockList;
+  const blockListParticipants = blockList
+    ? blockList.split(",").map((item) => item.trim())
+    : [];
 
   const payload = {
     name: user.currentExperiment.titleOfStudy ?? "",
@@ -190,6 +199,54 @@ export const prolificCreateDraft = async (
             "default_export_country_of_residence",
           ],
         },
+      },
+      {
+        requirement_type: "Allow List",
+        query: {
+          question: null,
+          description:
+            "A comma separated list of Prolific IDs for users you want to participate in the study.",
+          title: "Custom Whitelist",
+          help_text:
+            "ONLY these participants will be eligible for this study. (i.e. longitudinal design). <a href='https://researcher-help.prolific.co/hc/en-gb/articles/360015365674-How-to-invite-specific-participants-to-your-study'>Read about how to invite specific participants to your study.</a>",
+          researcher_help_text:
+            "ONLY these participants will be eligible for this study. (i.e. longitudinal design). <a href='https://researcher-help.prolific.co/hc/en-gb/articles/360015365674-How-to-invite-specific-participants-to-your-study'>Read about how to invite specific participants to your study.</a>",
+          participant_help_text: null,
+          is_new: null,
+        },
+        attributes: [
+          {
+            value: whiteListParticipants,
+            name: "white_list",
+            label: "White List",
+            default_value: [],
+          },
+        ],
+        _cls: "web.eligibility.models.CustomWhitelistEligibilityRequirement",
+      },
+      {
+        requirement_type: "Block List",
+        query: {
+          question: null,
+          description:
+            "A comma separated list of Prolific IDs of the users you wish to make ineligible for the study.",
+          title: "Custom Blacklist",
+          help_text:
+            "<a href='https://researcher-help.prolific.co/hc/en-gb/articles/360009094374-How-to-prevent-certain-participants-from-accessing-your-study'>Read about how to prevent certain participants from accessing your study.</a>",
+          researcher_help_text:
+            "<a href='https://researcher-help.prolific.co/hc/en-gb/articles/360009094374-How-to-prevent-certain-participants-from-accessing-your-study'>Read about how to prevent certain participants from accessing your study.</a>",
+          participant_help_text: null,
+          is_new: null,
+        },
+        attributes: [
+          {
+            value: blockListParticipants,
+            name: "black_list",
+            label: "Black List",
+            default_value: [],
+          },
+        ],
+        _cls: "web.eligibility.models.CustomBlacklistEligibilityRequirement",
       },
     ],
     project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
