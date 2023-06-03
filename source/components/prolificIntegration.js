@@ -230,8 +230,8 @@ export const prolificCreateDraft = async (
   completionCode,
   token
 ) => {
-  const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
-  // const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
+  // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
+  const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
   const hours =
     parseFloat(
       (user.currentExperiment._participantDurationMinutes / 60).toFixed(2)
