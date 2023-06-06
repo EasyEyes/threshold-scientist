@@ -63,12 +63,19 @@ const findProlificLanguageAttributes = (
 
 const findProlificLocationEligibilityAttributes = (field) => {
   const result = [];
-  if (!field || field == "All countries available") {
+
+  if (!field) {
     return result;
   }
-  const loc = { ...LOCATION_INDEX_PROLIFIC_MAPPING[field] };
-  loc["value"] = true;
-  result.push(loc);
+  const locations = field?.split(",") ?? [];
+  locations.forEach((element) => {
+    element = element?.trim();
+    if (element && element !== "All countries available") {
+      const loc = { ...LOCATION_INDEX_PROLIFIC_MAPPING[element] };
+      loc["value"] = true;
+      result.push(loc);
+    }
+  });
   return result;
 };
 
@@ -217,11 +224,21 @@ const selectedLocation = {
 };
 
 const findProlificLocationAttributes = (field) => {
-  if (field in selectedLocation) {
-    return selectedLocation[field];
-  } else {
-    return "more";
+  const result = [];
+  if (!field) {
+    return result;
   }
+  const locations = field?.split(",") ?? [];
+  locations.forEach((element) => {
+    element = element?.trim();
+    if (element in selectedLocation) {
+      result.push(selectedLocation[field]);
+    } else {
+      result.push("more");
+    }
+  });
+
+  return result;
 };
 
 export const prolificCreateDraft = async (
@@ -282,9 +299,9 @@ export const prolificCreateDraft = async (
       blockListParticipants
     ),
     project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
-    selected_location: [
-      findProlificLocationAttributes(user.currentExperiment._online4Location),
-    ],
+    selected_location: findProlificLocationAttributes(
+      user.currentExperiment._online4Location
+    ),
   };
 
   const response = await fetch(prolificStudyDraftApiUrl, {
