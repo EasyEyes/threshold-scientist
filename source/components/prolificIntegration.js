@@ -231,10 +231,13 @@ const findProlificLocationAttributes = (field) => {
   const locations = field?.split(",") ?? [];
   locations.forEach((element) => {
     element = element?.trim();
-    if (element in selectedLocation && !(selectedLocation[field] in result)) {
-      result.push(selectedLocation[field]);
+    if (
+      element in selectedLocation &&
+      result.indexOf(selectedLocation[element]) === -1
+    ) {
+      result.push(selectedLocation[element]);
     } else {
-      if (!("more" in result)) {
+      if (result.indexOf("more") === -1) {
         result.push("more");
       }
     }
