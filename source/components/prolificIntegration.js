@@ -2,6 +2,7 @@ import { saveAs } from "file-saver";
 import {
   LANGUAGE_INDEX_PROLIFIC_MAPPING,
   LOCATION_INDEX_PROLIFIC_MAPPING,
+  FLUENT_LANGUAGE_INDEX_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -61,6 +62,21 @@ const findProlificLanguageAttributes = (
   return result;
 };
 
+const findProlificLanguageFluentAttributes = (field) => {
+  const result = [];
+  if (!field) {
+    return result;
+  }
+  const languages = field?.split(",") ?? [];
+  languages.forEach((element) => {
+    element = element?.trim();
+    const v = { ...FLUENT_LANGUAGE_INDEX_PROLIFIC_MAPPING[element] };
+    v["value"] = true;
+    result.push(v);
+  });
+  return result;
+};
+
 const findProlificLocationEligibilityAttributes = (field) => {
   const result = [];
 
@@ -114,9 +130,8 @@ const buildEligibilityRequirements = (
           {
             id: null,
             type: "MultiSelectAnswer",
-            attributes: findProlificLanguageAttributes(
-              user.currentExperiment._online5LanguageFluent,
-              prolificLangType.FLUENT
+            attributes: findProlificLanguageFluentAttributes(
+              user.currentExperiment._online5LanguageFluent
             ),
             query: {
               id: "58c6b44ea4dd0a4799361afc",
