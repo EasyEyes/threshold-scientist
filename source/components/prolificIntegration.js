@@ -62,20 +62,26 @@ const findProlificLanguageAttributes = (
 };
 
 const findProlificLocationEligibilityAttributes = (field) => {
-  const result = [];
+  let result = [];
 
   if (!field) {
     return result;
   }
   const locations = field?.split(",") ?? [];
-  locations.forEach((element) => {
+  for (let element in locations) {
     element = element?.trim();
+    if (element === "All countries available") {
+      result = [];
+      break;
+    }
     if (element && element !== "All countries available") {
       const loc = { ...LOCATION_INDEX_PROLIFIC_MAPPING[element] };
       loc["value"] = true;
-      result.push(loc);
+      if ("name" in loc) {
+        result.push(loc);
+      }
     }
-  });
+  }
   return result;
 };
 
