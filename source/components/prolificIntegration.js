@@ -57,7 +57,9 @@ const findProlificLanguageAttributes = (
     const v = { ...LANGUAGE_INDEX_PROLIFIC_MAPPING[element] };
     v["index"] = type === prolificLangType.FLUENT ? v["index"] + 1 : v["index"];
     v["value"] = true;
-    result.push(v);
+    if ("index" in v) {
+      result.push(v);
+    }
   });
   return result;
 };
@@ -72,7 +74,9 @@ const findProlificLanguageFluentAttributes = (field) => {
     element = element?.trim();
     const v = { ...FLUENT_LANGUAGE_INDEX_PROLIFIC_MAPPING[element] };
     v["value"] = true;
-    result.push(v);
+    if ("index" in v) {
+      result.push(v);
+    }
   });
   return result;
 };
