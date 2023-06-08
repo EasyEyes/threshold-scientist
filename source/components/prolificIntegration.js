@@ -318,7 +318,9 @@ export const prolificCreateDraft = async (
     device_compatibility:
       user.currentExperiment._online3DeviceKind?.split(",") ?? [],
     peripheral_requirements:
-      user.currentExperiment._online3RequiredServices?.split(",") ?? [],
+      user.currentExperiment._online3RequiredServices
+        ?.split(",")
+        .map((element) => element.trim()) ?? [],
     eligibility_requirements: buildEligibilityRequirements(
       whiteListParticipants,
       user,
