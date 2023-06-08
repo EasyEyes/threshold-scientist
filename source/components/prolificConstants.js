@@ -2485,7 +2485,7 @@ export const LOCATION_INDEX_PROLIFIC_MAPPING = {
     value: false,
     index: 238,
   },
-  "Venezuela, Bolivarian Republic of": {
+  Venezuela: {
     label: "Venezuela, Bolivarian Republic of",
     name: "Venezuela, Bolivarian Republic of",
     value: false,
