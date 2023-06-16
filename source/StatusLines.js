@@ -273,6 +273,16 @@ export default class StatusLines extends Component {
           content={
             user ? (
               <span className="status-line-content">
+                <button
+                  className="button-small button-grey"
+                  style={inlineButtonStyle}
+                  onClick={() => {
+                    functions.handleSetActivateExperiment("REFRESH");
+                  }}
+                >
+                  {" "}
+                  New{" "}
+                </button>
                 <Dropdown
                   selected={activeExperiment}
                   setSelectedProject={functions.handleSetActivateExperiment}

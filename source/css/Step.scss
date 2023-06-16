@@ -160,8 +160,11 @@
   background: #999;
   font-weight: 400;
   border: none;
-  max-width: 160px;
+  max-width: 300px;
   cursor: pointer;
+  text-overflow: ellipsis;
+  text-align: center;
+  height: 30.38px;
 }
 
 .history-time {
