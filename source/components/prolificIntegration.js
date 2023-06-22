@@ -8,6 +8,7 @@ import {
   VISION_QUESTION_PROLIFIC_MAPPING,
   DYSLEXIA_QUESTION_PROLIFIC_MAPPING,
   HEARING_QUESTION_PROLIFIC_MAPPING,
+  MUSIC_EXPERIENCE_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -397,6 +398,31 @@ const buildEligibilityRequirements = (
               question: "Do you have any hearing loss or hearing difficulties?",
               description: "",
               title: "Hearing difficulties",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment &&
+    user.currentExperiment._online5MusicalInstrumentExperience
+      ? [
+          {
+            id: null,
+            type: "SelectAnswer",
+            attributes: findProlificObjectiveScreeningAttributes(
+              user.currentExperiment._online5MusicalInstrumentExperience,
+              MUSIC_EXPERIENCE_PROLIFIC_MAPPING
+            ),
+            query: {
+              id: "5aababea44adc700014c8415",
+              question:
+                "Do you play a musical instument, if so for how many years?",
+              description: "",
+              title: "Experience with musical instruments",
               help_text: "",
               participant_help_text: "",
               researcher_help_text: "",

@@ -1,5 +1,44 @@
 export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
 
+export const MUSIC_EXPERIENCE_PROLIFIC_MAPPING = {
+  No: {
+    label: "No. I don't play a musical instrument",
+    name: "No. I don't play a musical instrument",
+    value: false,
+    index: 0,
+  },
+  "0-1": {
+    label: "Yes. For 0-1 years.",
+    name: "Yes. For 0-1 years.",
+    value: true,
+    index: 1,
+  },
+  "1-2": {
+    label: "Yes. For 1-2 years.",
+    name: "Yes. For 1-2 years.",
+    value: true,
+    index: 2,
+  },
+  "2-3": {
+    label: "Yes. For 2-3 years.",
+    name: "Yes. For 2-3 years.",
+    value: false,
+    index: 3,
+  },
+  "3-4": {
+    label: "Yes. For 3-4 years.",
+    name: "Yes. For 3-4 years.",
+    value: false,
+    index: 4,
+  },
+  "5+": {
+    label: "Yes. For 5+ years.",
+    name: "Yes. For 5+ years.",
+    value: false,
+    index: 5,
+  },
+};
+
 export const HEARING_QUESTION_PROLIFIC_MAPPING = {
   Yes: {
     label: "Yes",
