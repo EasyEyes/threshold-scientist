@@ -175,6 +175,7 @@ const findProlificDyslexiaAttributes = (field) => {
 };
 
 const findProlificHearingAttributes = (field) => {
+  console.log(field);
   const result = [];
   if (!field) {
     return result;
@@ -188,6 +189,24 @@ const findProlificHearingAttributes = (field) => {
       result.push(v);
     }
   });
+  console.log(result);
+  return result;
+};
+
+const findProlificObjectiveScreeningAttributes = (field, constant) => {
+  const result = [];
+  if (!field) {
+    return result;
+  }
+  const languages = field?.split(",") ?? [];
+  languages.forEach((element) => {
+    element = element?.trim();
+    const v = { ...constant[element] };
+    v["value"] = true;
+    if ("index" in v) {
+      result.push(v);
+    }
+  });
   return result;
 };
 
@@ -196,6 +215,7 @@ const buildEligibilityRequirements = (
   user,
   blockListParticipants
 ) => {
+  console.log(user.currentExperiment);
   const req = [
     ...(user.currentExperiment && user.currentExperiment._online5LanguageFirst
       ? [
@@ -368,7 +388,7 @@ const buildEligibilityRequirements = (
       ? [
           {
             id: null,
-            type: "MultiSelectAnswer",
+            type: "SelectAnswer",
             attributes: findProlificHearingAttributes(
               user.currentExperiment._online5HearingDifficulties
             ),
