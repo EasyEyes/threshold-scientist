@@ -4,6 +4,7 @@ import {
   LOCATION_INDEX_PROLIFIC_MAPPING,
   FLUENT_LANGUAGE_INDEX_PROLIFIC_MAPPING,
   PRIMARY_LANGUAGE_INDEX_PROLIFIC_MAPPING,
+  OPERATING_SYSTEM_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -91,6 +92,23 @@ const findProlificLanguagePrimaryAttributes = (field) => {
   languages.forEach((element) => {
     element = element?.trim();
     const v = { ...PRIMARY_LANGUAGE_INDEX_PROLIFIC_MAPPING[element] };
+    v["value"] = true;
+    if ("index" in v) {
+      result.push(v);
+    }
+  });
+  return result;
+};
+
+const findProlificOperatingSystemAttributes = (field) => {
+  const result = [];
+  if (!field) {
+    return result;
+  }
+  const languages = field?.split(",") ?? [];
+  languages.forEach((element) => {
+    element = element?.trim();
+    const v = { ...OPERATING_SYSTEM_PROLIFIC_MAPPING[element] };
     v["value"] = true;
     if ("index" in v) {
       result.push(v);
@@ -191,6 +209,31 @@ const buildEligibilityRequirements = (
               is_new: false,
               tags: [],
             },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment &&
+    user.currentExperiment._online3PhoneOperatingSystem
+      ? [
+          {
+            id: null,
+            type: "SelectAnswer",
+            attributes: findProlificOperatingSystemAttributes(
+              user.currentExperiment._online3PhoneOperatingSystem
+            ),
+            query: {
+              id: "56d6310bfc7879000b77511a",
+              question:
+                "What operating system (OS) does your primary mobile phone have?",
+              description: "",
+              title: "Phone Operating System",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
+            },
+            _cls: "web.eligibility.models.SelectAnswerEligibilityRequirement",
           },
         ]
       : []),

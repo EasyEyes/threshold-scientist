@@ -1,5 +1,37 @@
 export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
 
+export const OPERATING_SYSTEM_PROLIFIC_MAPPING = {
+  Android: {
+    label: "Android",
+    name: "Android",
+    index: 0,
+  },
+  "iOS (iPhone)": {
+    label: "iOS (iPhone)",
+    name: "iOS (iPhone)",
+    value: false,
+    index: 1,
+  },
+  Windows: {
+    label: "Windows",
+    name: "Windows",
+    value: false,
+    index: 2,
+  },
+  "Other/Not Applicable": {
+    label: "Other/Not Applicable",
+    name: "Other/Not Applicable",
+    value: false,
+    index: 3,
+  },
+  "Don't Know": {
+    label: "Don't Know",
+    name: "Don't Know",
+    value: false,
+    index: 4,
+  },
+};
+
 export const PRIMARY_LANGUAGE_INDEX_PROLIFIC_MAPPING = {
   Afrikaans: {
     label: "Afrikaans",
