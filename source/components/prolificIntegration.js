@@ -3,6 +3,7 @@ import {
   LANGUAGE_INDEX_PROLIFIC_MAPPING,
   LOCATION_INDEX_PROLIFIC_MAPPING,
   FLUENT_LANGUAGE_INDEX_PROLIFIC_MAPPING,
+  PRIMARY_LANGUAGE_INDEX_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -81,6 +82,23 @@ const findProlificLanguageFluentAttributes = (field) => {
   return result;
 };
 
+const findProlificLanguagePrimaryAttributes = (field) => {
+  const result = [];
+  if (!field) {
+    return result;
+  }
+  const languages = field?.split(",") ?? [];
+  languages.forEach((element) => {
+    element = element?.trim();
+    const v = { ...PRIMARY_LANGUAGE_INDEX_PROLIFIC_MAPPING[element] };
+    v["value"] = true;
+    if ("index" in v) {
+      result.push(v);
+    }
+  });
+  return result;
+};
+
 const findProlificLocationEligibilityAttributes = (field) => {
   const result = [];
 
@@ -148,6 +166,30 @@ const buildEligibilityRequirements = (
               researcher_help_text: "",
               is_new: false,
               tags: ["rep_sample_language", "core-13"],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment && user.currentExperiment._online5LanguagePrimary
+      ? [
+          {
+            id: null,
+            type: "SelectAnswer",
+            attributes: findProlificLanguagePrimaryAttributes(
+              user.currentExperiment._online5LanguagePrimary
+            ),
+            query: {
+              id: "6228741119c5d3b399f98aaf",
+              question:
+                "Which of the following is your primary spoken language?",
+              description: "",
+              title: "Primary Language",
+              help_text: "",
+              participant_help_text:
+                "The language(s) you use most regularly at this current time.",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
             },
           },
         ]
