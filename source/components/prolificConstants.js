@@ -1,5 +1,38 @@
 export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
 
+export const LANGUAGE_DISORDER_PROLIFIC_MAPPING = {
+  "reading difficulty": {
+    label: "reading difficulty",
+    name: "reading difficulty",
+    value: false,
+    index: 0,
+  },
+  "writing difficulty": {
+    label: "writing difficulty",
+    name: "writing difficulty",
+    value: false,
+    index: 1,
+  },
+  "other language related disorder": {
+    label: "other language related disorder",
+    name: "other language related disorder",
+    value: false,
+    index: 2,
+  },
+  none: {
+    label: "none",
+    name: "none",
+    value: false,
+    index: 3,
+  },
+  "not applicable": {
+    label: "not applicable",
+    name: "not applicable",
+    value: false,
+    index: 4,
+  },
+};
+
 export const MUSIC_EXPERIENCE_PROLIFIC_MAPPING = {
   No: {
     label: "No. I don't play a musical instrument",

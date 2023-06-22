@@ -9,6 +9,7 @@ import {
   DYSLEXIA_QUESTION_PROLIFIC_MAPPING,
   HEARING_QUESTION_PROLIFIC_MAPPING,
   MUSIC_EXPERIENCE_PROLIFIC_MAPPING,
+  LANGUAGE_DISORDER_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -176,7 +177,6 @@ const findProlificDyslexiaAttributes = (field) => {
 };
 
 const findProlificHearingAttributes = (field) => {
-  console.log(field);
   const result = [];
   if (!field) {
     return result;
@@ -190,7 +190,6 @@ const findProlificHearingAttributes = (field) => {
       result.push(v);
     }
   });
-  console.log(result);
   return result;
 };
 
@@ -216,7 +215,6 @@ const buildEligibilityRequirements = (
   user,
   blockListParticipants
 ) => {
-  console.log(user.currentExperiment);
   const req = [
     ...(user.currentExperiment && user.currentExperiment._online5LanguageFirst
       ? [
@@ -423,6 +421,30 @@ const buildEligibilityRequirements = (
                 "Do you play a musical instument, if so for how many years?",
               description: "",
               title: "Experience with musical instruments",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment &&
+    user.currentExperiment._online5LanguageRelatedDisorders
+      ? [
+          {
+            id: null,
+            type: "SelectAnswer",
+            attributes: findProlificObjectiveScreeningAttributes(
+              user.currentExperiment._online5LanguageRelatedDisorders,
+              LANGUAGE_DISORDER_PROLIFIC_MAPPING
+            ),
+            query: {
+              id: "59b00f20180e8300015758b6",
+              question: "Do you have any language related disorders?",
+              description: "Do you have any language related disorders?",
+              title: "Language related disorders",
               help_text: "",
               participant_help_text: "",
               researcher_help_text: "",
