@@ -1,5 +1,38 @@
 export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
 
+export const DYSLEXIA_QUESTION_PROLIFIC_MAPPING = {
+  diagnosed: {
+    label: "Yes, I have been medically diagnosed with dyslexia",
+    name: "Yes, I have been medically diagnosed with dyslexia",
+    value: false,
+    index: 0,
+  },
+  "being diagnosed": {
+    label: "No, but I am in the process of being diagnosed",
+    name: "No, but I am in the process of being diagnosed",
+    value: false,
+    index: 1,
+  },
+  suspect: {
+    label: "No, but I strongly suspect I have undiagnosed dyslexia",
+    name: "No, but I strongly suspect I have undiagnosed dyslexia",
+    value: false,
+    index: 2,
+  },
+  no: {
+    label: "No",
+    name: "No",
+    value: false,
+    index: 3,
+  },
+  "not saying": {
+    label: "Rather not say",
+    name: "Rather not say",
+    value: false,
+    index: 4,
+  },
+};
+
 export const VISION_QUESTION_PROLIFIC_MAPPING = {
   Yes: {
     label: "Yes",

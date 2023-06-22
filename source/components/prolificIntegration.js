@@ -6,6 +6,7 @@ import {
   PRIMARY_LANGUAGE_INDEX_PROLIFIC_MAPPING,
   OPERATING_SYSTEM_PROLIFIC_MAPPING,
   VISION_QUESTION_PROLIFIC_MAPPING,
+  DYSLEXIA_QUESTION_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -147,6 +148,23 @@ const findProlificVisionAttributes = (field) => {
   languages.forEach((element) => {
     element = element?.trim();
     const v = { ...VISION_QUESTION_PROLIFIC_MAPPING[element] };
+    v["value"] = true;
+    if ("index" in v) {
+      result.push(v);
+    }
+  });
+  return result;
+};
+
+const findProlificDyslexiaAttributes = (field) => {
+  const result = [];
+  if (!field) {
+    return result;
+  }
+  const languages = field?.split(",") ?? [];
+  languages.forEach((element) => {
+    element = element?.trim();
+    const v = { ...DYSLEXIA_QUESTION_PROLIFIC_MAPPING[element] };
     v["value"] = true;
     if ("index" in v) {
       result.push(v);
@@ -301,6 +319,28 @@ const buildEligibilityRequirements = (
               researcher_help_text: "",
               is_new: false,
               tags: ["core-21"],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment && user.currentExperiment._online5Dyslexia
+      ? [
+          {
+            id: null,
+            type: "MultiSelectAnswer",
+            attributes: findProlificDyslexiaAttributes(
+              user.currentExperiment._online5Dyslexia
+            ),
+            query: {
+              id: "63497384f86b5bc7cb27c8a8",
+              question: "Have you received a medical diagnosis for dyslexia?",
+              description: "",
+              title: "Dyslexia",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
             },
           },
         ]
