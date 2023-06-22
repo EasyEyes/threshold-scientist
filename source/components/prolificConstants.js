@@ -6,7 +6,7 @@ export const OPERATING_SYSTEM_PROLIFIC_MAPPING = {
     name: "Android",
     index: 0,
   },
-  "iOS (iPhone)": {
+  iOS: {
     label: "iOS (iPhone)",
     name: "iOS (iPhone)",
     value: false,
@@ -18,7 +18,7 @@ export const OPERATING_SYSTEM_PROLIFIC_MAPPING = {
     value: false,
     index: 2,
   },
-  "Other/Not Applicable": {
+  Other: {
     label: "Other/Not Applicable",
     name: "Other/Not Applicable",
     value: false,
