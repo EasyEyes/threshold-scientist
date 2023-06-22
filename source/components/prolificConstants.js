@@ -1,5 +1,26 @@
 export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
 
+export const HEARING_QUESTION_PROLIFIC_MAPPING = {
+  Yes: {
+    label: "Yes",
+    name: "Yes",
+    value: false,
+    index: 0,
+  },
+  No: {
+    label: "No",
+    name: "No",
+    value: false,
+    index: 1,
+  },
+  "Rather not say": {
+    label: "Rather not say",
+    name: "Rather not say",
+    value: false,
+    index: 2,
+  },
+};
+
 export const DYSLEXIA_QUESTION_PROLIFIC_MAPPING = {
   diagnosed: {
     label: "Yes, I have been medically diagnosed with dyslexia",

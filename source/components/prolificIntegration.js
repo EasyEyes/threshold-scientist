@@ -7,6 +7,7 @@ import {
   OPERATING_SYSTEM_PROLIFIC_MAPPING,
   VISION_QUESTION_PROLIFIC_MAPPING,
   DYSLEXIA_QUESTION_PROLIFIC_MAPPING,
+  HEARING_QUESTION_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -165,6 +166,23 @@ const findProlificDyslexiaAttributes = (field) => {
   languages.forEach((element) => {
     element = element?.trim();
     const v = { ...DYSLEXIA_QUESTION_PROLIFIC_MAPPING[element] };
+    v["value"] = true;
+    if ("index" in v) {
+      result.push(v);
+    }
+  });
+  return result;
+};
+
+const findProlificHearingAttributes = (field) => {
+  const result = [];
+  if (!field) {
+    return result;
+  }
+  const languages = field?.split(",") ?? [];
+  languages.forEach((element) => {
+    element = element?.trim();
+    const v = { ...HEARING_QUESTION_PROLIFIC_MAPPING[element] };
     v["value"] = true;
     if ("index" in v) {
       result.push(v);
@@ -336,6 +354,29 @@ const buildEligibilityRequirements = (
               question: "Have you received a medical diagnosis for dyslexia?",
               description: "",
               title: "Dyslexia",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment &&
+    user.currentExperiment._online5HearingDifficulties
+      ? [
+          {
+            id: null,
+            type: "MultiSelectAnswer",
+            attributes: findProlificHearingAttributes(
+              user.currentExperiment._online5HearingDifficulties
+            ),
+            query: {
+              id: "5a9d10c989de8200013f17ce",
+              question: "Do you have any hearing loss or hearing difficulties?",
+              description: "",
+              title: "Hearing difficulties",
               help_text: "",
               participant_help_text: "",
               researcher_help_text: "",
