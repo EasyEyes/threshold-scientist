@@ -5,6 +5,7 @@ import {
   FLUENT_LANGUAGE_INDEX_PROLIFIC_MAPPING,
   PRIMARY_LANGUAGE_INDEX_PROLIFIC_MAPPING,
   OPERATING_SYSTEM_PROLIFIC_MAPPING,
+  VISION_QUESTION_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -137,6 +138,23 @@ const findProlificLocationEligibilityAttributes = (field) => {
   return result;
 };
 
+const findProlificVisionAttributes = (field) => {
+  const result = [];
+  if (!field) {
+    return result;
+  }
+  const languages = field?.split(",") ?? [];
+  languages.forEach((element) => {
+    element = element?.trim();
+    const v = { ...VISION_QUESTION_PROLIFIC_MAPPING[element] };
+    v["value"] = true;
+    if ("index" in v) {
+      result.push(v);
+    }
+  });
+  return result;
+};
+
 const buildEligibilityRequirements = (
   whiteListParticipants,
   user,
@@ -260,6 +278,29 @@ const buildEligibilityRequirements = (
                 "core-7",
                 "default_export_country_of_residence",
               ],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment && user.currentExperiment._online5Vision
+      ? [
+          {
+            id: null,
+            type: "MultiSelectAnswer",
+            attributes: findProlificVisionAttributes(
+              user.currentExperiment._online5Vision
+            ),
+            query: {
+              id: "57a0c4d2717b34954e81b919",
+              question: "Do you have normal or corrected-to-normal vision?",
+              description: "",
+              title: "Vision",
+              help_text: "",
+              participant_help_text:
+                "For example, you can see colour normally, and if you need glasses, you are wearing them or contact lenses",
+              researcher_help_text: "",
+              is_new: false,
+              tags: ["core-21"],
             },
           },
         ]
