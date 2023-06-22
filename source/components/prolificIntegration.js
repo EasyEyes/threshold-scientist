@@ -10,6 +10,7 @@ import {
   HEARING_QUESTION_PROLIFIC_MAPPING,
   MUSIC_EXPERIENCE_PROLIFIC_MAPPING,
   LANGUAGE_DISORDER_PROLIFIC_MAPPING,
+  COCHLEAR_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -445,6 +446,30 @@ const buildEligibilityRequirements = (
               question: "Do you have any language related disorders?",
               description: "Do you have any language related disorders?",
               title: "Language related disorders",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment && user.currentExperiment._online5CochlearImplant
+      ? [
+          {
+            id: null,
+            type: "SelectAnswer",
+            attributes: findProlificObjectiveScreeningAttributes(
+              user.currentExperiment._online5CochlearImplant,
+              COCHLEAR_PROLIFIC_MAPPING
+            ),
+            query: {
+              id: "6155e181100d59248cd68f0e",
+              question: "Do you have a cochlear implant?",
+              description:
+                "If you're not sure, select 'No'. A hearing aid is not a cochlear implant.",
+              title: "Cochlear implant",
               help_text: "",
               participant_help_text: "",
               researcher_help_text: "",
