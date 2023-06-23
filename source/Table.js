@@ -1,5 +1,6 @@
 import React, { Component, createRef } from "react";
 import Dropzone from "react-dropzone";
+import Swal from "sweetalert2";
 
 import { handleDrop } from "./components/dropzone";
 import ResourceButton from "./ResourceButton";
@@ -109,6 +110,8 @@ export default class Table extends Component {
           this.setState({
             errors: [...errorList],
           });
+
+          Swal.close();
 
           return;
         } else {
