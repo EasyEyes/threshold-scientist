@@ -275,7 +275,11 @@ export default class StatusLines extends Component {
               <span className="status-line-content">
                 <button
                   className="button-small button-grey"
-                  style={inlineButtonStyle}
+                  style={{
+                    fontSize: "16px",
+                    padding: "0.5rem",
+                    color: "#fff",
+                  }}
                   onClick={() => {
                     functions.handleSetActivateExperiment("REFRESH");
                   }}

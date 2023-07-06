@@ -155,7 +155,7 @@
   -moz-appearance: none; // remove the dropdown arrow button
   -webkit-appearance: none;
   white-space: nowrap;
-  padding: 0 0.7rem;
+  padding: 0.1rem;
   color: rgb(255, 255, 255) !important;
   background: #999;
   font-weight: 400;
@@ -164,7 +164,6 @@
   cursor: pointer;
   text-overflow: ellipsis;
   text-align: center;
-  height: 30.38px;
   font-size: unset;
 }
 
