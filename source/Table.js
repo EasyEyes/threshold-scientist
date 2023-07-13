@@ -17,6 +17,7 @@ export default class Table extends Component {
     this.state = {
       tableName: null,
       errors: [],
+      showDropZone: true,
     };
 
     this.onDrop = this.onDrop.bind(this);
@@ -27,24 +28,6 @@ export default class Table extends Component {
     this.finalSuccessMessage =
       "Compiled successfully. Compile a new experiment, anytime, by submitting it above.";
   }
-
-  // componentDidUpdate() {
-  //   if (
-  //     this.props.isCompletedStep &&
-  //     this.state.errors.length === 1 &&
-  //     this.state.errors[0].name !== this.finalSuccessMessage
-  //   ) {
-  //     this.setState({
-  //       errors: [
-  //         {
-  //           context: "preprocessor",
-  //           kind: "correct",
-  //           name: this.finalSuccessMessage,
-  //         },
-  //       ],
-  //     });
-  //   }
-  // }
 
   onDrop(files) {
     const { user, functions } = this.props;
@@ -63,6 +46,7 @@ export default class Table extends Component {
 
     this.setState({
       tableName: file.name,
+      showDropZone: false,
     });
 
     const errors = [];
@@ -109,6 +93,7 @@ export default class Table extends Component {
           // show errors
           this.setState({
             errors: [...errorList],
+            showDropZone: true,
           });
 
           Swal.close();
@@ -180,6 +165,9 @@ export default class Table extends Component {
               <div
                 {...getRootProps({ className: "dropzone" })}
                 ref={this.dropZoneRef}
+                style={{
+                  visibility: this.state.showDropZone ? "visible" : "hidden",
+                }}
               >
                 <input {...getInputProps()} />
                 <p className="dropzone-sub-text">Select file</p>
