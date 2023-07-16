@@ -162,6 +162,7 @@ export default class App extends Component {
       this.handleSetProjectName(null);
       this.handleSetCompatibilityRequirements("");
       this.handleSetExperimentDuration(null);
+      this.handleSetExperimentStatus("INACTIVE");
       this.functions.handleSetActivateExperiment("new");
 
       return;
@@ -547,7 +548,10 @@ export default class App extends Component {
           projectName={activeExperiment.name}
           newRepo={activeExperiment}
           activeExperiment={activeExperiment}
-          experimentStatus={previousExperimentViewed.previousExperimentStatus}
+          experimentStatus={
+            experimentStatus ??
+            previousExperimentViewed.previousExperimentStatus
+          }
           previousExperimentViewed={previousExperimentViewed}
           prolificStudyStatus={prolificStudyStatus}
         />
