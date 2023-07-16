@@ -167,12 +167,6 @@ export default class Running extends Component {
     const { pavloviaIsReady, completionCode, dataFolderLength } = this.state;
 
     const isRunning = experimentStatus === "RUNNING";
-    console.log(
-      pavloviaIsReady,
-      isRunning,
-      experimentStatus,
-      "debug pav ready; isRunning"
-    );
 
     const hasRecruitmentService = viewingPreviousExperiment
       ? previousRecruitmentInformation.recruitmentServiceName !== null
