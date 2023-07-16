@@ -547,10 +547,7 @@ export default class App extends Component {
           projectName={activeExperiment.name}
           newRepo={activeExperiment}
           activeExperiment={activeExperiment}
-          experimentStatus={
-            experimentStatus ??
-            previousExperimentViewed.previousExperimentStatus
-          }
+          experimentStatus={previousExperimentViewed.previousExperimentStatus}
           previousExperimentViewed={previousExperimentViewed}
           prolificStudyStatus={prolificStudyStatus}
         />
