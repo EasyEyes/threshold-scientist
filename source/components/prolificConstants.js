@@ -1,5 +1,32 @@
 export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
 
+export const VR_HEADSET_USAGE_PROLIFIC_MAPPING = {
+  Yes: {
+    label: "Yes",
+    name: "Yes",
+    value: false,
+    index: 0,
+  },
+  No: {
+    label: "No",
+    name: "No",
+    value: false,
+    index: 1,
+  },
+  "Don't know": {
+    label: "Don't know / other",
+    name: "Don't know / other",
+    value: false,
+    index: 2,
+  },
+  "Not applicable": {
+    label: "Not applicable / rather not say",
+    name: "Not applicable / rather not say",
+    value: false,
+    index: 3,
+  },
+};
+
 export const SIMULATED_EXPERIENCE_PROLIFIC_MAPPING = {
   "Virtual reality": {
     label: "Virtual reality",
@@ -25,7 +52,7 @@ export const SIMULATED_EXPERIENCE_PROLIFIC_MAPPING = {
     value: false,
     index: 3,
   },
-  "Not applicable / rather not say": {
+  "Not applicable": {
     label: "Not applicable / rather not say",
     name: "Not applicable / rather not say",
     value: false,

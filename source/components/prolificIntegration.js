@@ -12,6 +12,7 @@ import {
   LANGUAGE_DISORDER_PROLIFIC_MAPPING,
   COCHLEAR_PROLIFIC_MAPPING,
   SIMULATED_EXPERIENCE_PROLIFIC_MAPPING,
+  VR_HEADSET_USAGE_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -495,6 +496,29 @@ const buildEligibilityRequirements = (
                 "Have you engaged in any of the following simulated experiences before? Choose all that apply:",
               description: "",
               title: "Simulated Experiences",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment && user.currentExperiment._online5VRHeadset
+      ? [
+          {
+            id: null,
+            type: "SelectAnswer",
+            attributes: findProlificObjectiveScreeningAttributes(
+              user.currentExperiment._online5VRHeadset,
+              VR_HEADSET_USAGE_PROLIFIC_MAPPING
+            ),
+            query: {
+              id: "5eac255ff716eb05e0ed3853",
+              question: "Do you own a VR (Virtual Reality) headset?",
+              description: "",
+              title: "VR headset (ownership)",
               help_text: "",
               participant_help_text: "",
               researcher_help_text: "",
