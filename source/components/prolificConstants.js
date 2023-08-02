@@ -1,5 +1,44 @@
 export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
 
+export const VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING = {
+  0: {
+    label: "0 times",
+    name: "0 times",
+    value: false,
+    index: 0,
+  },
+  "1-5": {
+    label: "1-5 times",
+    name: "1-5 times",
+    value: false,
+    index: 1,
+  },
+  "6-10": {
+    label: "6-10 times",
+    name: "6-10 times",
+    value: false,
+    index: 2,
+  },
+  "11-15": {
+    label: "11-15 times",
+    name: "11-15 times",
+    value: false,
+    index: 3,
+  },
+  "more than 15": {
+    label: "more than 15 times",
+    name: "more than 15 times",
+    value: false,
+    index: 4,
+  },
+  "Not applicable": {
+    label: "Not applicable / rather not say",
+    name: "Not applicable / rather not say",
+    value: false,
+    index: 5,
+  },
+};
+
 export const VR_HEADSET_USAGE_PROLIFIC_MAPPING = {
   Yes: {
     label: "Yes",

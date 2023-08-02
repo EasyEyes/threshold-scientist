@@ -13,6 +13,7 @@ import {
   COCHLEAR_PROLIFIC_MAPPING,
   SIMULATED_EXPERIENCE_PROLIFIC_MAPPING,
   VR_HEADSET_USAGE_PROLIFIC_MAPPING,
+  VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -519,6 +520,30 @@ const buildEligibilityRequirements = (
               question: "Do you own a VR (Virtual Reality) headset?",
               description: "",
               title: "VR headset (ownership)",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment && user.currentExperiment._online5VRHeadsetUsage
+      ? [
+          {
+            id: null,
+            type: "SelectAnswer",
+            attributes: findProlificObjectiveScreeningAttributes(
+              user.currentExperiment._online5VRHeadsetUsage,
+              VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING
+            ),
+            query: {
+              id: "5eac24dacdc446055b9fa3f6",
+              question:
+                "In a given month, how frequently do you use a VR headset?",
+              description: "",
+              title: "VR headset (frequency)",
               help_text: "",
               participant_help_text: "",
               researcher_help_text: "",
