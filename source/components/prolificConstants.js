@@ -1,5 +1,38 @@
 export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
 
+export const SIMULATED_EXPERIENCE_PROLIFIC_MAPPING = {
+  "Virtual reality": {
+    label: "Virtual reality",
+    name: "Virtual reality",
+    value: false,
+    index: 0,
+  },
+  "Augmented reality": {
+    label: "Augmented reality",
+    name: "Augmented reality",
+    value: false,
+    index: 1,
+  },
+  "Mixed reality": {
+    label: "Mixed reality",
+    name: "Mixed reality",
+    value: false,
+    index: 2,
+  },
+  Other: {
+    label: "Other",
+    name: "Other",
+    value: false,
+    index: 3,
+  },
+  "Not applicable / rather not say": {
+    label: "Not applicable / rather not say",
+    name: "Not applicable / rather not say",
+    value: false,
+    index: 4,
+  },
+};
+
 export const COCHLEAR_PROLIFIC_MAPPING = {
   Yes: {
     label: "Yes",

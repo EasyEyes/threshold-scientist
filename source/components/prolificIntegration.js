@@ -11,6 +11,7 @@ import {
   MUSIC_EXPERIENCE_PROLIFIC_MAPPING,
   LANGUAGE_DISORDER_PROLIFIC_MAPPING,
   COCHLEAR_PROLIFIC_MAPPING,
+  SIMULATED_EXPERIENCE_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -470,6 +471,30 @@ const buildEligibilityRequirements = (
               description:
                 "If you're not sure, select 'No'. A hearing aid is not a cochlear implant.",
               title: "Cochlear implant",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
+            },
+          },
+        ]
+      : []),
+    ...(user.currentExperiment && user.currentExperiment._online5VRExperiences
+      ? [
+          {
+            id: null,
+            type: "MultiSelectAnswer",
+            attributes: findProlificObjectiveScreeningAttributes(
+              user.currentExperiment._online5VRExperiences,
+              SIMULATED_EXPERIENCE_PROLIFIC_MAPPING
+            ),
+            query: {
+              id: "5eabe23bb79d980009a5eab7",
+              question:
+                "Have you engaged in any of the following simulated experiences before? Choose all that apply:",
+              description: "",
+              title: "Simulated Experiences",
               help_text: "",
               participant_help_text: "",
               researcher_help_text: "",
