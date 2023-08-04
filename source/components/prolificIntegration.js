@@ -558,7 +558,7 @@ const buildEligibilityRequirements = (
       ? [
           {
             id: null,
-            type: "select",
+            type: "SelectAnswer",
             attributes: findProlificObjectiveScreeningAttributes(
               user.currentExperiment._online5VRHeadsetUsage,
               VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING
