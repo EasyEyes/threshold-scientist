@@ -1,5 +1,32 @@
 export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
 
+export const VISION_CORRECTION_PROLIFIC_MAPPING = {
+  glasses: {
+    label: "I mainly use glasses",
+    name: "I mainly use glasses",
+    value: false,
+    index: 0,
+  },
+  contacts: {
+    label: "I mainly use contact lenses",
+    name: "I mainly use contact lenses",
+    value: false,
+    index: 1,
+  },
+  both: {
+    label: "I use both glasses and contact lenses",
+    name: "I use both glasses and contact lenses",
+    value: false,
+    index: 2,
+  },
+  neither: {
+    label: "I do not use glasses or contact lenses",
+    name: "I do not use glasses or contact lenses",
+    value: false,
+    index: 3,
+  },
+};
+
 export const VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING = {
   0: {
     label: "0 times",

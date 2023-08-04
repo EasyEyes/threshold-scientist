@@ -553,6 +553,31 @@ const buildEligibilityRequirements = (
           },
         ]
       : []),
+    ...(user.currentExperiment &&
+    user.currentExperiment._online5VisionCorrection
+      ? [
+          {
+            id: null,
+            type: "select",
+            attributes: findProlificObjectiveScreeningAttributes(
+              user.currentExperiment._online5VRHeadsetUsage,
+              VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING
+            ),
+            query: {
+              id: "5a5e22b3eedc32000142ba06",
+              question:
+                "I currently use glasses or contact lenses to correct my vision",
+              description: "",
+              title: "Corrected vision",
+              help_text: "",
+              participant_help_text: "",
+              researcher_help_text: "",
+              is_new: false,
+              tags: [],
+            },
+          },
+        ]
+      : []),
     ...(whiteListParticipants.length > 0
       ? [
           {
