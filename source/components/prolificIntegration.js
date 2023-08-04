@@ -14,6 +14,7 @@ import {
   SIMULATED_EXPERIENCE_PROLIFIC_MAPPING,
   VR_HEADSET_USAGE_PROLIFIC_MAPPING,
   VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING,
+  VISION_CORRECTION_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -560,8 +561,8 @@ const buildEligibilityRequirements = (
             id: null,
             type: "SelectAnswer",
             attributes: findProlificObjectiveScreeningAttributes(
-              user.currentExperiment._online5VRHeadsetUsage,
-              VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING
+              user.currentExperiment._online5VisionCorrection,
+              VISION_CORRECTION_PROLIFIC_MAPPING
             ),
             query: {
               id: "5a5e22b3eedc32000142ba06",
