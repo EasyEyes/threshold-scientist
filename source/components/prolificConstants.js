@@ -77,13 +77,13 @@ export const VR_HEADSET_USAGE_PROLIFIC_MAPPING = {
     value: false,
     index: 1,
   },
-  "Don't know": {
+  "Don't know / other": {
     label: "Don't know / other",
     name: "Don't know / other",
     value: false,
     index: 2,
   },
-  "Not applicable": {
+  "Not applicable / rather not say": {
     label: "Not applicable / rather not say",
     name: "Not applicable / rather not say",
     value: false,
