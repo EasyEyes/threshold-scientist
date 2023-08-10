@@ -1,5 +1,3 @@
-export const DEVICE_COMPATIBILITY = ["mobile", "tablet", "desktop"];
-
 export const VISION_CORRECTION_PROLIFIC_MAPPING = {
   glasses: {
     label: "I mainly use glasses",

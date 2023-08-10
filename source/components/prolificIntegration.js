@@ -716,7 +716,9 @@ export const prolificCreateDraft = async (
       user.currentExperiment._participantDurationMinutes ?? 1,
     reward: reward ?? 0,
     device_compatibility:
-      user.currentExperiment._online3DeviceKind?.split(",") ?? [],
+      user.currentExperiment._online3DeviceKind
+        ?.split(",")
+        .map((element) => element.trim()) ?? [],
     peripheral_requirements:
       user.currentExperiment._online3RequiredServices
         ?.split(",")
