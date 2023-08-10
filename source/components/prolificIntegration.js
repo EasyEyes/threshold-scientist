@@ -718,7 +718,7 @@ export const prolificCreateDraft = async (
     device_compatibility:
       user.currentExperiment._online3DeviceKind
         ?.split(",")
-        .map((element) => element.trim()) ?? [],
+        .map((el) => el.trim()) ?? [],
     peripheral_requirements:
       user.currentExperiment._online3RequiredServices
         ?.split(",")
