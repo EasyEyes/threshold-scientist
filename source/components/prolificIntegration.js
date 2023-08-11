@@ -676,13 +676,13 @@ export const prolificCreateDraft = async (
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
   const hours =
-    parseFloat(
-      (user.currentExperiment._participantDurationMinutes / 60).toFixed(2)
-    ) || 0;
+    parseFloat(user.currentExperiment._participantDurationMinutes / 60) || 0;
   const pay = parseFloat(user.currentExperiment?._online2Pay) || 0;
   const payPerHour =
     parseFloat(user.currentExperiment?._online2PayPerHour) || 0;
-  const reward = parseInt(parseFloat((pay + payPerHour * hours) * 100));
+  const reward = parseInt(
+    parseFloat((pay + payPerHour * hours).toFixed(2) * 100)
+  );
   let completionCodeAction = "MANUALLY_REVIEW";
   if (
     user.currentExperiment &&
