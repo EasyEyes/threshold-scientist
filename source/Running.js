@@ -19,6 +19,7 @@ import {
 } from "../threshold/preprocess/gitlabUtils";
 
 import "./css/Running.scss";
+import Dropdown from "./components/Dropdown";
 
 export default class Running extends Component {
   constructor(props) {
@@ -238,6 +239,40 @@ export default class Running extends Component {
                   : "Setting mode to RUNNING ..."
               }`}
         </div>
+        <StatusLine
+          activated={!!this.props.user}
+          title={"Select experiment"}
+          content={
+            this.props.user ? (
+              <span className="status-line-content">
+                <button
+                  className="button-small button-grey"
+                  style={{
+                    fontSize: "16px",
+                    padding: "0.5rem",
+                    color: "#fff",
+                  }}
+                  onClick={() => {
+                    this.props.functions.handleSetActivateExperiment("REFRESH");
+                  }}
+                >
+                  {" "}
+                  New{" "}
+                </button>
+                <Dropdown
+                  selected={this.props.activeExperiment}
+                  setSelectedProject={
+                    this.props.functions.handleSetActivateExperiment
+                  }
+                  projectList={this.props.user.projectList}
+                  newExperimentProjectName={this.props.projectName}
+                />
+              </span>
+            ) : (
+              ""
+            )
+          }
+        />
         <div className="link-set">
           <div className="link-set-buttons">
             {isRunning && pavloviaIsReady && (
@@ -516,6 +551,33 @@ export default class Running extends Component {
           </>
         )}
       </>
+    );
+  }
+}
+
+class StatusLine extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    const { activated, title, content } = this.props;
+
+    return (
+      <div
+        className="status-lines"
+        style={{ marginTop: "20px", marginBottom: "10px" }}
+      >
+        <div
+          className={`status-line ${
+            activated ? "status-line-activated" : "status-line-inactivated"
+          }`}
+        >
+          <span className="line-title">{title}:</span>
+          {/* <span>: </span> */}
+          <span className="line-content">{content}</span>
+        </div>
+      </div>
     );
   }
 }

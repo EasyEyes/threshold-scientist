@@ -266,58 +266,6 @@ export default class StatusLines extends Component {
           )}
           content={"Unconnected"}
         /> */}
-
-        <StatusLine
-          activated={!!user}
-          title={"Select experiment"}
-          content={
-            user ? (
-              <span className="status-line-content">
-                <button
-                  className="button-small button-grey"
-                  style={{
-                    fontSize: "16px",
-                    padding: "0.5rem",
-                    color: "#fff",
-                  }}
-                  onClick={() => {
-                    functions.handleSetActivateExperiment("REFRESH");
-                  }}
-                >
-                  {" "}
-                  New{" "}
-                </button>
-                <Dropdown
-                  selected={activeExperiment}
-                  setSelectedProject={functions.handleSetActivateExperiment}
-                  projectList={user.projectList}
-                  newExperimentProjectName={projectName}
-                />
-                {/* {((!viewingPreviousExperiment && filename) ||
-                  viewingPreviousExperiment) && (
-                  <button
-                    className="button-small button-grey"
-                    style={inlineButtonStyle}
-                    onClick={async (e) => {
-                      // change this button class to button-wait
-                      e.target.classList.add("button-wait");
-
-                      await this.props.functions.handleReturnToStep("table");
-                      this.props.functions.handleSetFilename(null);
-                      this.props.functions.handleSetProjectName(null);
-
-                      functions.handleSetActivateExperiment("new");
-                    }}
-                  >
-                    Create a new experiment
-                  </button>
-                )} */}
-              </span>
-            ) : (
-              ""
-            )
-          }
-        />
         <StatusLine
           activated={!!filename || viewingPreviousExperiment}
           title={"Experiment file"}
