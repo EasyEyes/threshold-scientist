@@ -157,12 +157,12 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          Submit any missing resources (forms, fonts, texts, sounds, etc.) and
-          then the experiment spreadsheet:
+          Either select an old experiment or compile a new one. If new, then use
+          “Select file” to submit any missing resources (forms, fonts, texts,
+          sounds, etc.) and then the new experiment spreadsheet:
         </div>
         <StatusLine
           activated={!!this.props.user}
-          title={"Select experiment"}
           content={
             this.props.user ? (
               <span className="status-line-content">
@@ -178,7 +178,7 @@ export default class Table extends Component {
                   }}
                 >
                   {" "}
-                  New{" "}
+                  Compile new experiment{" "}
                 </button>
                 <Dropdown
                   selected={this.props.activeExperiment}
@@ -294,17 +294,18 @@ class StatusLine extends Component {
   }
 
   render() {
-    const { activated, title, content } = this.props;
+    const { activated, content } = this.props;
 
     return (
-      <div className="status-lines" style={{ marginTop: "20px" }}>
+      <div
+        className="status-lines"
+        style={{ marginTop: "20px", marginBottom: "10px" }}
+      >
         <div
           className={`status-line ${
             activated ? "status-line-activated" : "status-line-inactivated"
           }`}
         >
-          <span className="line-title">{title}:</span>
-          {/* <span>: </span> */}
           <span className="line-content">{content}</span>
         </div>
       </div>

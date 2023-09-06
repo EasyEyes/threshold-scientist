@@ -241,7 +241,6 @@ export default class Running extends Component {
         </div>
         <StatusLine
           activated={!!this.props.user}
-          title={"Select experiment"}
           content={
             this.props.user ? (
               <span className="status-line-content">
@@ -249,7 +248,6 @@ export default class Running extends Component {
                   className="button-small button-grey"
                   style={{
                     fontSize: "16px",
-                    padding: "0.5rem",
                     color: "#fff",
                   }}
                   onClick={() => {
@@ -257,7 +255,7 @@ export default class Running extends Component {
                   }}
                 >
                   {" "}
-                  New{" "}
+                  Compile new experiment{" "}
                 </button>
                 <Dropdown
                   selected={this.props.activeExperiment}
@@ -561,7 +559,7 @@ class StatusLine extends Component {
   }
 
   render() {
-    const { activated, title, content } = this.props;
+    const { activated, content } = this.props;
 
     return (
       <div
@@ -573,8 +571,6 @@ class StatusLine extends Component {
             activated ? "status-line-activated" : "status-line-inactivated"
           }`}
         >
-          <span className="line-title">{title}:</span>
-          {/* <span>: </span> */}
           <span className="line-content">{content}</span>
         </div>
       </div>
