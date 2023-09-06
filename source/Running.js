@@ -239,38 +239,40 @@ export default class Running extends Component {
                   : "Setting mode to RUNNING ..."
               }`}
         </div>
-        <StatusLine
-          activated={!!this.props.user}
-          content={
-            this.props.user ? (
-              <span className="status-line-content">
-                <button
-                  className="button-small button-grey"
-                  style={{
-                    fontSize: "16px",
-                    color: "#fff",
-                  }}
-                  onClick={() => {
-                    this.props.functions.handleSetActivateExperiment("REFRESH");
-                  }}
-                >
-                  {" "}
-                  Compile new experiment{" "}
-                </button>
-                <Dropdown
-                  selected={this.props.activeExperiment}
-                  setSelectedProject={
-                    this.props.functions.handleSetActivateExperiment
-                  }
-                  projectList={this.props.user.projectList}
-                  newExperimentProjectName={this.props.projectName}
-                />
-              </span>
-            ) : (
-              ""
-            )
-          }
-        />
+        <div style={{ marginTop: "20px", marginBottom: "10px" }}>
+          <span
+            style={{
+              display: "flex",
+              justifyContent: "flex-start",
+              gap: "0.3rem",
+            }}
+          >
+            <button
+              className="button-small button-grey resource-button"
+              style={{
+                fontSize: "1rem",
+                color: "#fff",
+              }}
+              onClick={() => {
+                this.props.functions.handleSetActivateExperiment("REFRESH");
+              }}
+            >
+              {" "}
+              Compile new experiment{" "}
+            </button>
+            <Dropdown
+              selected={this.props.activeExperiment}
+              setSelectedProject={
+                this.props.functions.handleSetActivateExperiment
+              }
+              projectList={this.props.user.projectList}
+              newExperimentProjectName={this.props.projectName}
+              style={{
+                padding: "0.3rem 1rem",
+              }}
+            />
+          </span>
+        </div>
         <div className="link-set">
           <div className="link-set-buttons">
             {isRunning && pavloviaIsReady && (
@@ -549,31 +551,6 @@ export default class Running extends Component {
           </>
         )}
       </>
-    );
-  }
-}
-
-class StatusLine extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    const { activated, content } = this.props;
-
-    return (
-      <div
-        className="status-lines"
-        style={{ marginTop: "20px", marginBottom: "10px" }}
-      >
-        <div
-          className={`status-line ${
-            activated ? "status-line-activated" : "status-line-inactivated"
-          }`}
-        >
-          <span className="line-content">{content}</span>
-        </div>
-      </div>
     );
   }
 }

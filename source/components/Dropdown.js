@@ -15,6 +15,7 @@ export default class Dropdown extends Component {
       setSelectedProject,
       projectList,
       newExperimentProjectName,
+      style,
     } = this.props;
 
     return (
@@ -37,6 +38,7 @@ export default class Dropdown extends Component {
           });
           setSelectedProject(selectedProject);
         }}
+        style={style}
       >
         {(function () {
           const optionList = projectList.map((project) => {
@@ -55,7 +57,7 @@ export default class Dropdown extends Component {
             <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
               {newExperimentProjectName
                 ? `${newExperimentProjectName}`
-                : `[Select a previous experiment]`}
+                : `[Select an old experiment]`}
             </option>
           );
 
@@ -65,7 +67,7 @@ export default class Dropdown extends Component {
                 key={"__FRESH_NEW_EXPERIMENT__"}
                 value={"__FRESH_NEW_EXPERIMENT__"}
               >
-                {`[Select a previous experiment]`}
+                {`[Select an old experiment]`}
               </option>
             );
           }
