@@ -57,7 +57,7 @@ export default class Dropdown extends Component {
             <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
               {newExperimentProjectName
                 ? `${newExperimentProjectName}`
-                : `[Select an old experiment]`}
+                : `[Select a compiled experiment]`}
             </option>
           );
 
@@ -67,7 +67,7 @@ export default class Dropdown extends Component {
                 key={"__FRESH_NEW_EXPERIMENT__"}
                 value={"__FRESH_NEW_EXPERIMENT__"}
               >
-                {`[Select an old experiment]`}
+                {`[Select a compiled experiment]`}
               </option>
             );
           }
