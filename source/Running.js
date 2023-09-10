@@ -247,6 +247,17 @@ export default class Running extends Component {
               gap: "0.3rem",
             }}
           >
+            <Dropdown
+              selected={this.props.activeExperiment}
+              setSelectedProject={
+                this.props.functions.handleSetActivateExperiment
+              }
+              projectList={this.props.user.projectList}
+              newExperimentProjectName={this.props.projectName}
+              style={{
+                padding: "0.3rem 1rem",
+              }}
+            />
             <button
               className="button-small button-grey resource-button"
               style={{
@@ -260,17 +271,6 @@ export default class Running extends Component {
               {" "}
               Compile new experiment{" "}
             </button>
-            <Dropdown
-              selected={this.props.activeExperiment}
-              setSelectedProject={
-                this.props.functions.handleSetActivateExperiment
-              }
-              projectList={this.props.user.projectList}
-              newExperimentProjectName={this.props.projectName}
-              style={{
-                padding: "0.3rem 1rem",
-              }}
-            />
           </span>
         </div>
         <div className="link-set">

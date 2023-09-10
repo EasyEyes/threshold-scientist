@@ -157,9 +157,10 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          Either select an old experiment or compile a new one. If new, then use
-          “Select file” to submit any missing resources (forms, fonts, texts,
-          sounds, etc.) and then the new experiment spreadsheet:
+          Either select an old experiment or compile a new one. If new, you can
+          click “Select file” to submit any missing resources (fonts, forms,
+          etc.). Then click “Select file” again to submit the new experiment
+          spreadsheet:
         </div>
         <div style={{ marginTop: "20px", marginBottom: "10px" }}>
           <span
@@ -169,6 +170,15 @@ export default class Table extends Component {
               gap: "0.3rem",
             }}
           >
+            <Dropdown
+              selected={this.props.activeExperiment}
+              setSelectedProject={
+                this.props.functions.handleSetActivateExperiment
+              }
+              projectList={this.props.user.projectList}
+              newExperimentProjectName={this.props.projectName}
+              style={{ padding: "0.6rem 1rem" }}
+            />
             <button
               className="button-small button-grey resource-button"
               style={{
@@ -182,15 +192,6 @@ export default class Table extends Component {
               {" "}
               Compile new experiment{" "}
             </button>
-            <Dropdown
-              selected={this.props.activeExperiment}
-              setSelectedProject={
-                this.props.functions.handleSetActivateExperiment
-              }
-              projectList={this.props.user.projectList}
-              newExperimentProjectName={this.props.projectName}
-              style={{ padding: "0.6rem 1rem" }}
-            />
           </span>
         </div>
         <div className="file-zone">
