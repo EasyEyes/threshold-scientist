@@ -729,41 +729,43 @@ export default class App extends Component {
 
           {websiteRepoLastCommitDeploy && websiteRepoLastCommitURL && (
             <>
-              <div className="experiment-compiled-line">
-                <i className="bi bi-stars"></i>
-                {totalCompileCounts} experiments compiled since February 1,
-                2023.
-              </div>
-              <div className="last-commit-date">
-                Compiler updated{" "}
-                <a
-                  href={websiteRepoLastCommitURL}
-                  style={{
-                    color: "inherit",
-                    textDecoration: "none",
-                    fontWeight: "500",
-                    borderBottom: "1px solid #ddd",
-                  }}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {new Date(websiteRepoLastCommitDeploy).toLocaleDateString(
-                    undefined,
-                    {
-                      dateStyle: "medium",
-                    }
-                  )}{" "}
-                  {new Date(websiteRepoLastCommitDeploy).toLocaleString(
-                    undefined,
-                    {
-                      timeStyle: "short",
-                    }
-                  )}{" "}
-                  {getTimezoneName()}
-                </a>
-                .
-              </div>
               <div className="copyright-info">
+                <p>
+                  {totalCompileCounts} experiments compiled since February 1,
+                  2023.
+                  <br />
+                  Compiler updated{" "}
+                  <a
+                    href={websiteRepoLastCommitURL}
+                    style={{
+                      color: "inherit",
+                      textDecoration: "none",
+                      fontWeight: "500",
+                      borderBottom: "1px solid #ddd",
+                    }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {new Date(websiteRepoLastCommitDeploy).toLocaleDateString(
+                      undefined,
+                      {
+                        dateStyle: "medium",
+                      }
+                    )}{" "}
+                    {new Date(websiteRepoLastCommitDeploy).toLocaleString(
+                      undefined,
+                      {
+                        timeStyle: "short",
+                      }
+                    )}{" "}
+                    {getTimezoneName()}
+                  </a>
+                  .
+                  <br />
+                  Copyright © 2020 - 2023 New York University
+                  <br />
+                  Created by Denis Pelli and the EasyEyes team
+                </p>
                 <a href="https://github.com/EasyEyes/threshold/stargazers">
                   <img
                     alt="GitHub stars"
@@ -782,11 +784,6 @@ export default class App extends Component {
                     src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
                   />
                 </a>
-                <p>
-                  Copyright © 2020 - 2023 New York University
-                  <br />
-                  Created by Denis Pelli and the EasyEyes team
-                </p>
               </div>
             </>
           )}
