@@ -177,7 +177,12 @@ export default class Table extends Component {
               }
               projectList={this.props.user.projectList}
               newExperimentProjectName={this.props.projectName}
-              style={{ padding: "0.6rem 1rem" }}
+              style={{
+                padding: "0.6rem 1rem",
+                backgroundColor: "#019267",
+                fontSize: "1.2rem",
+                fontWeight: "500",
+              }}
             />
             <button
               className="button-small button-grey resource-button"

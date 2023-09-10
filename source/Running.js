@@ -256,6 +256,7 @@ export default class Running extends Component {
               newExperimentProjectName={this.props.projectName}
               style={{
                 padding: "0.3rem 1rem",
+                backgroundColor: "#999",
               }}
             />
             <button
