@@ -157,10 +157,10 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          Either select an old experiment or compile a new one. If new, you can
-          click “Select file” to submit any missing resources (fonts, forms,
-          etc.). Then click “Select file” again to submit the new experiment
-          spreadsheet:
+          Welcome to the EasyEyes Compiler. Either select an old experiment or
+          compile a new one. If new, you can click “Select file” to submit any
+          missing resources (fonts, forms, etc.). Then click “Select file” again
+          to submit the new experiment spreadsheet:
         </div>
         <div style={{ marginTop: "20px", marginBottom: "10px" }}>
           <span
