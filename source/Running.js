@@ -279,7 +279,7 @@ export default class Running extends Component {
             {isRunning && pavloviaIsReady && (
               <>
                 <button
-                  className="button-green button-small"
+                  className="button-green button-large-font"
                   onClick={() => {
                     window.open(this._getPavloviaExperimentUrl(), "_blank");
                   }}
@@ -363,7 +363,7 @@ export default class Running extends Component {
                 >
                   <>
                     <button
-                      className="button-green button-small"
+                      className="button-green button-large-font"
                       onClick={async (e) => {
                         e.target.classList.add("button-disabled");
                         e.target.classList.add("button-wait");
@@ -453,7 +453,7 @@ export default class Running extends Component {
                 style={{ display: "inline-block" }}
               >
                 <button
-                  className="button-green button-small"
+                  className="button-green button-large-font"
                   onClick={async () => {
                     await downloadDataFolder(user, newRepo);
                     const prolificStudyId = await getProlificStudyId(
