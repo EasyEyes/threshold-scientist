@@ -765,25 +765,26 @@ export default class App extends Component {
                   Copyright © 2020 - 2023 New York University
                   <br />
                   Created by Denis Pelli and the EasyEyes team
+                  <br />
+                  <a href="https://github.com/EasyEyes/threshold/stargazers">
+                    <img
+                      alt="GitHub stars"
+                      src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square"
+                    />
+                  </a>
+                  <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
+                    <img
+                      alt="GitHub license"
+                      src="https://img.shields.io/github/license/EasyEyes/threshold?style=flat-square"
+                    />
+                  </a>
+                  <a href="https://app.netlify.com/sites/easyeyes/deploys">
+                    <img
+                      alt="Netlify Status"
+                      src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
+                    />
+                  </a>
                 </p>
-                <a href="https://github.com/EasyEyes/threshold/stargazers">
-                  <img
-                    alt="GitHub stars"
-                    src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square"
-                  />
-                </a>
-                <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
-                  <img
-                    alt="GitHub license"
-                    src="https://img.shields.io/github/license/EasyEyes/threshold?style=flat-square"
-                  />
-                </a>
-                <a href="https://app.netlify.com/sites/easyeyes/deploys">
-                  <img
-                    alt="Netlify Status"
-                    src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
-                  />
-                </a>
               </div>
             </>
           )}
