@@ -53,13 +53,13 @@ export default class Dropdown extends Component {
             }
           });
 
-          optionList.unshift(
-            <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
-              {newExperimentProjectName
-                ? `${newExperimentProjectName}`
-                : `Select a compiled experiment`}
-            </option>
-          );
+          if (!newExperimentProjectName) {
+            optionList.unshift(
+              <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
+                {`Select a compiled experiment`}
+              </option>
+            );
+          }
 
           if (newExperimentProjectName) {
             optionList.unshift(
