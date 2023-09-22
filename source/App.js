@@ -682,15 +682,6 @@ export default class App extends Component {
             >
               Compatibility
             </button>
-
-            <button
-              className="intro-button"
-              onClick={() => {
-                window.open("https://easyeyes.shinyapps.io/easyeyes_app/");
-              }}
-            >
-              Analyze
-            </button>
           </div>
         </div>
 
