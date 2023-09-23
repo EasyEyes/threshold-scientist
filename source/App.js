@@ -1,5 +1,4 @@
 import React, { Component, Suspense } from "react";
-import { renderToString } from "react-dom/server";
 import { set, ref, get } from "firebase/database";
 import { uuidv4 } from "@firebase/util";
 import Swal from "sweetalert2";
@@ -11,7 +10,6 @@ const Glossary = React.lazy(() => import("./Glossary"));
 import StatusLines from "./StatusLines";
 
 import { allSteps } from "./components/steps";
-import { Compatibility } from "./components";
 import {
   getAllProjects,
   getCompatibilityRequirementsForProject,
@@ -586,64 +584,9 @@ export default class App extends Component {
 
         <div id="header">
           <div id="header-title">
-            <h1>EasyEyes</h1>
+            <h1>EasyEyes compiler</h1>
           </div>
           <div className="buttons">
-            <button
-              className="intro-button"
-              onClick={() => {
-                Swal.fire({
-                  title: "Welcome to EasyEyes!",
-                  html: `<p>
-            All you need to run your experiment is a few accounts (<a
-              href="https://pavlovia.org/"
-              rel="noopener noreferrer"
-              target="_blank"
-              >Pavlovia</a
-            >
-            and probably
-            <a
-              href="https://prolific.co/"
-              rel="noopener noreferrer"
-              target="_blank"
-              >Prolific</a
-            >) and a table that you create in any spreadsheet app, e.g., Google
-            Sheets. The
-            <a
-              href="https://docs.google.com/document/d/12zZOEN7se437ueBZuGhyBC7HGhwgZe2OROatEyaRvoM/edit#heading=h.6h3xdiqhq593"
-              rel="noopener noreferrer"
-              target="_blank"
-              >Manual</a
-            >
-            and
-            <a
-              href="https://docs.google.com/spreadsheets/d/1x65NjykMm-XUOz98Eu_oo6ON2xspm_h0Q0M2u6UGtug/edit#gid=1287694458"
-              rel="noopener noreferrer"
-              target="_blank"
-              >Parameter Glossary</a
-            >
-            explain how to create your experiment table, compile it into a
-            participant web app, and run it. You can download
-            <a href="./resources/EasyEyes_demo.zip" download>our demo</a>
-            with all the files you need (table, fonts, forms, and a README of
-            instructions) to run an experiment.
-          </p>
-          <p>
-            You can online test yourself, and people you personally recruit, with
-            just a Pavlovia account. To recruit and test participants online,
-            you'll need both Pavlovia and Prolific accounts. We hope to offer
-            MTurk support as well, as an alternative to Prolific.
-          </p>`,
-                  confirmButtonColor: "#019267",
-                  customClass: {
-                    htmlContainer: "popup-text-container smaller-text",
-                  },
-                });
-              }}
-            >
-              Getting Started
-            </button>
-
             <button
               className="intro-button"
               onClick={() => {
@@ -653,34 +596,6 @@ export default class App extends Component {
               }}
             >
               Parameter Glossary
-            </button>
-
-            <button
-              className="intro-button"
-              onClick={() => {
-                window.open(
-                  `https://docs.google.com/document/d/12zZOEN7se437ueBZuGhyBC7HGhwgZe2OROatEyaRvoM/edit`,
-                  "_blank"
-                );
-              }}
-            >
-              Manual
-            </button>
-
-            <button
-              className="intro-button"
-              onClick={() => {
-                Swal.fire({
-                  title: "Compatibility",
-                  html: renderToString(<Compatibility />),
-                  confirmButtonColor: "#019267",
-                  customClass: {
-                    htmlContainer: "popup-text-container smaller-text",
-                  },
-                });
-              }}
-            >
-              Compatibility
             </button>
           </div>
         </div>

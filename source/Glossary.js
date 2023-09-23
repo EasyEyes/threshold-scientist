@@ -9,16 +9,11 @@ export default function Glossary({ closeGlossary }) {
   const columns = React.useMemo(
     () => [
       { accessor: "name", Header: "Name", className: "name" },
-      // { accessor: "type", Header: "Type", className: "type" },
-      // { accessor: "availability", Header: "Availability" },
-      // { accessor: "default", Header: "Default", className: "default" },
-      // { accessor: "example", Header: "Example", className: "example" },
       {
         accessor: "explanation",
         Header: "Explanation",
         className: "explanation",
       },
-      // { accessor: "categories", Header: "Categories", className: "categories" },
     ],
     []
   );
@@ -40,10 +35,6 @@ export default function Glossary({ closeGlossary }) {
         <div id="header-title">
           <h1>EasyEyes Input Glossary</h1>
         </div>
-        {/* <p className="description">
-          Welcome to EasyEyes, a PsychoJS-based experiment compiler designed
-          to help you measure perceptual thresholds online.
-        </p> */}
         <button
           className="intro-button"
           onClick={() => {
@@ -104,7 +95,6 @@ export default function Glossary({ closeGlossary }) {
                               >
                                 {availability}
                               </span>
-                              {/* <br /> */}
                             </>
                           );
                       }
