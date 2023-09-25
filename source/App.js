@@ -584,19 +584,7 @@ export default class App extends Component {
 
         <div id="header">
           <div id="header-title">
-            <h1>EasyEyes compiler</h1>
-          </div>
-          <div className="buttons">
-            <button
-              className="intro-button"
-              onClick={() => {
-                this.setState({
-                  readingGlossary: true,
-                });
-              }}
-            >
-              Parameter Glossary
-            </button>
+            <h1>EasyEyes COMPILER</h1>
           </div>
         </div>
 
