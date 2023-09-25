@@ -584,7 +584,7 @@ export default class App extends Component {
 
         <div id="header">
           <div id="header-title">
-            <h1>EasyEyes COMPILER</h1>
+            <h1>EasyEyes Compile</h1>
           </div>
         </div>
 
