@@ -162,7 +162,7 @@ export default class Table extends Component {
           any missing resources (fonts, forms, etc.). Then click “Select file”
           again to submit the new experiment spreadsheet:
         </div>
-        <div style={{ marginTop: "20px", marginBottom: "10px" }}>
+        <div style={{ marginTop: "8px", marginBottom: "10px" }}>
           <span
             style={{
               display: "flex",

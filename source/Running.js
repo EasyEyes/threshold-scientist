@@ -239,7 +239,7 @@ export default class Running extends Component {
                   : "Setting mode to RUNNING ..."
               }`}
         </div>
-        <div style={{ marginTop: "20px", marginBottom: "10px" }}>
+        <div style={{ marginTop: "8px", marginBottom: "10px" }}>
           <span
             style={{
               display: "flex",

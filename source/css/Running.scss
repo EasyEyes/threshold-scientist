@@ -3,7 +3,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin: 1rem 0 0 0;
+  margin: 8px 0 0 0;
   width: 100%;
   max-width: 100%;
   gap: 1rem;
@@ -15,9 +15,9 @@
     width: 0;
   }
 
-  &:not(:last-child) {
-    margin: 0.8rem 0 !important;
-  }
+  // &:not(:last-child) {
+  //   margin: 0.8rem 0 !important;
+  // }
 
   .link-set-buttons {
     display: flex;

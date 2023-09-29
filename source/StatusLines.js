@@ -166,7 +166,7 @@ export default class StatusLines extends Component {
         : user?.currentExperiment?.prolificWorkspaceModeBool;
 
     return (
-      <ul className="status-lines">
+      <ul className="status-lines" style={{ marginBottom: "8px" }}>
         <StatusLine
           activated={!!user}
           title={"Pavlovia account"}

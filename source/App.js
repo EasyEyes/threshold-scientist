@@ -624,7 +624,7 @@ export default class App extends Component {
           {websiteRepoLastCommitDeploy && websiteRepoLastCommitURL && (
             <>
               <div className="copyright-info">
-                <p>
+                <p style={{ lineHeight: "unset" }}>
                   {totalCompileCounts} experiments compiled since February 1,
                   2023.
                   <br />
