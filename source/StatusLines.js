@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
 
-import Dropdown from "./components/Dropdown";
 import { Question } from "./components";
 import { createOrUpdateProlificToken } from "../threshold/preprocess/gitlabUtils";
 import { compatibilityRequirements as globalCompatibilityReq } from "../threshold/preprocess/global";
@@ -13,9 +12,9 @@ import "./css/StatusLines.scss";
 const inlineButtonStyle = {
   whiteSpace: "nowrap",
   fontSize: "0.7rem",
-  padding: "0.6rem",
-  // borderRadius: "0.3rem",
+  padding: "7px",
   color: "#fff",
+  height: "27px",
 };
 
 export default class StatusLines extends Component {
