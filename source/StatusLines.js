@@ -12,9 +12,9 @@ import "./css/StatusLines.scss";
 const inlineButtonStyle = {
   whiteSpace: "nowrap",
   fontSize: "0.7rem",
-  padding: "7px",
+  padding: "4px",
   color: "#fff",
-  height: "27px",
+  height: "20px",
 };
 
 export default class StatusLines extends Component {
@@ -220,6 +220,7 @@ export default class StatusLines extends Component {
                       display: "flex",
                       alignItems: "center",
                       gap: "0.3rem",
+                      height: "20px",
                     }}
                   >
                     <button

@@ -3,7 +3,7 @@
 .status-lines {
   list-style: none;
   padding: 0;
-  line-height: 165%;
+  line-height: normal;
 
   .status-line {
     display: flex;
@@ -13,13 +13,8 @@
     .line-title {
       display: flex;
       white-space: nowrap;
-      // align-items: center;
       .line-title-icon {
         height: 2rem;
-
-        // * {
-        //   fill: #999 !important;
-        // }
       }
     }
 
