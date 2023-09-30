@@ -473,7 +473,11 @@ export default class Running extends Component {
                 </button>
 
                 <button
-                  style={{ marginLeft: "10px" }}
+                  style={{
+                    marginLeft: "10px",
+                    height: "33px",
+                    padding: "7px 1rem",
+                  }}
                   className="button-grey button-small"
                   onClick={async () => {
                     window.open(" https://easyeyes.shinyapps.io/easyeyes_app/");
