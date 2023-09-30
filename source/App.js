@@ -656,9 +656,9 @@ export default class App extends Component {
                   </a>
                   .
                   <br />
-                  Copyright © 2020 - 2023 New York University
+                  Copyright © 2020 - 2023 New York University.
                   <br />
-                  Created by Denis Pelli and the EasyEyes team
+                  Created by Denis Pelli and the EasyEyes team.
                   <br />
                   <a href="https://github.com/EasyEyes/threshold/stargazers">
                     <img
