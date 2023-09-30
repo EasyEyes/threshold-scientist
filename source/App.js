@@ -625,7 +625,7 @@ export default class App extends Component {
             <>
               <div className="copyright-info">
                 <p style={{ lineHeight: "unset" }}>
-                  {totalCompileCounts} experiments compiled since February 1,
+                  {totalCompileCounts} experiments compiled since 1 February,
                   2023.
                   <br />
                   Compiler updated{" "}
