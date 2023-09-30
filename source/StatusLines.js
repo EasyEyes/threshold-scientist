@@ -15,6 +15,8 @@ const inlineButtonStyle = {
   padding: "4px",
   color: "#fff",
   height: "20px",
+  paddingLeft: "10px",
+  paddingRight: "10px",
 };
 
 export default class StatusLines extends Component {
@@ -61,7 +63,7 @@ export default class StatusLines extends Component {
     and "Copy" buttons to copy the Prolific token. Then paste that token into the text box above, 
     and click "Save". Your Pavlovia account will retain this link to your Prolific account, 
     offering tight EasyEyes integration. 
-    You can change it at any time by using the "Change account" button.</div>`,
+    You can change it at any time by using the "Change Prolific acct." button.</div>`,
       inputAttributes: {
         autocapitalize: "off",
       },
@@ -230,7 +232,7 @@ export default class StatusLines extends Component {
                         this.popToUploadProlificToken();
                       }}
                     >
-                      Change account
+                      Change Prolific acct.
                     </button>
                     <div style={{ visibility: "hidden" }}>
                       <Question title={""} text={``} />
