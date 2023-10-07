@@ -636,6 +636,7 @@ export default class App extends Component {
                       textDecoration: "none",
                       fontWeight: "500",
                       borderBottom: "1px solid #ddd",
+                      marginLeft: "0",
                     }}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -660,6 +661,7 @@ export default class App extends Component {
                   <br />
                   Created by Denis Pelli and the EasyEyes team.
                   <br />
+                  <div style={{ marginTop: "5px" }}></div>
                   <a href="https://github.com/EasyEyes/threshold/stargazers">
                     <img
                       alt="GitHub stars"
