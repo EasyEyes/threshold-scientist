@@ -178,6 +178,10 @@ export default class StatusLines extends Component {
                   className="pavlovia-avatar"
                   src={user.avatar_url}
                   alt="Pavlovia Avatar"
+                  style={{
+                    height: "18px",
+                    width: "18px",
+                  }}
                 ></img>
                 {user.name} ({user.username})
               </span>
