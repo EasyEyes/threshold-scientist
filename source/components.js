@@ -94,7 +94,7 @@ export class Compatibility extends Component {
           </thead>
           <tbody>
             <tr>
-              <td className="left-td">Scientist page (this)</td>
+              <td className="left-td">Compile page</td>
               <td>✅</td>
               <td>✅</td>
               <td>✅</td>
