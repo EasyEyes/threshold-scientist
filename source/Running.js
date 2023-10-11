@@ -448,10 +448,7 @@ export default class Running extends Component {
         {isRunning && pavloviaIsReady && (
           <>
             <div className="link-set">
-              <div
-                className="link-set-buttons"
-                style={{ display: "inline-block" }}
-              >
+              <div className="link-set-buttons">
                 <button
                   className="button-green button-large-font"
                   onClick={async () => {
@@ -473,12 +470,7 @@ export default class Running extends Component {
                 </button>
 
                 <button
-                  style={{
-                    marginLeft: "10px",
-                    height: "33px",
-                    padding: "7px 1rem",
-                  }}
-                  className="button-grey button-small"
+                  className="button-grey button-small button-analyze"
                   onClick={async () => {
                     window.open(" https://easyeyes.shinyapps.io/easyeyes_app/");
                     // if (dataFolderLength == 0) {
@@ -512,7 +504,7 @@ export default class Running extends Component {
                   Analyze
                 </button>
 
-                <span style={{ marginLeft: "10px" }}>
+                <span className="csv-ready">
                   {`${dataFolderLength}`} CSV file(s) ready
                 </span>
               </div>
