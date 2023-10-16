@@ -9,16 +9,6 @@ import { durations } from "../threshold/preprocess/getDuration";
 
 import "./css/StatusLines.scss";
 
-const inlineButtonStyle = {
-  whiteSpace: "nowrap",
-  fontSize: "0.7rem",
-  padding: "4px",
-  color: "#fff",
-  height: "20px",
-  paddingLeft: "10px",
-  paddingRight: "10px",
-};
-
 export default class StatusLines extends Component {
   constructor(props) {
     super(props);
@@ -198,7 +188,7 @@ export default class StatusLines extends Component {
             user ? (
               prolificToken ? (
                 <>
-                  <span className="status-line-content">
+                  <span className="status-line-content prolific-account">
                     {prolificAccount
                       ? `${prolificAccount.name} (${prolificAccount.email})`
                       : "Failed to connect, please check if your Prolific token is correct."}
@@ -221,17 +211,9 @@ export default class StatusLines extends Component {
                       ""
                     )}
                   </span>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.3rem",
-                      height: "20px",
-                    }}
-                  >
+                  <div className="prolific-account-button">
                     <button
                       className="button-small button-grey"
-                      style={inlineButtonStyle}
                       onClick={async () => {
                         this.popToUploadProlificToken();
                       }}
@@ -246,7 +228,6 @@ export default class StatusLines extends Component {
               ) : (
                 <button
                   className="button-small button-grey"
-                  style={inlineButtonStyle}
                   onClick={async (e) => {
                     // change this button class to button-wait
                     e.target.classList.add("button-wait");
@@ -340,6 +321,7 @@ export default class StatusLines extends Component {
                 rel="noopenner noreferrer"
                 style={{
                   color: "#666",
+                  wordBreak: "break-all",
                 }}
               >{`https://run.pavlovia.org/${user.username}/${effectiveProjectNameLowerCase}`}</a>
             ) : (

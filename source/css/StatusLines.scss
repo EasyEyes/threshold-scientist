@@ -32,6 +32,37 @@
         gap: 0.3rem;
       }
 
+      .prolific-account {
+        @media screen and (max-width: 560px) {
+          display: block;
+        }
+      }
+
+      .prolific-account-button {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        height: 20px;
+        @media screen and (max-width: 560px) {
+          height: unset;
+          display: block;
+        }
+      }
+
+      .button-small {
+        white-space: nowrap;
+        font-size: 0.7rem;
+        padding: 4px;
+        color: #fff;
+        height: 20px;
+        padding-left: 10px;
+        padding-right: 10px;
+        @media screen and (max-width: 560px) {
+          height: unset;
+          white-space: unset;
+        }
+      }
+
       .experiment-needs {
         // truncate if more than 1 line
         white-space: nowrap;
@@ -41,6 +72,9 @@
         display: block;
         text-decoration: underline;
         cursor: pointer;
+        @media screen and (max-width: 560px) {
+          white-space: unset;
+        }
       }
     }
 
@@ -48,7 +82,6 @@
     .pavlovia-account-name {
       display: inline-flex;
       align-items: center;
-      word-break: break-all;
       gap: 0.5rem;
 
       .pavlovia-avatar {
