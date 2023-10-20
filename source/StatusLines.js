@@ -242,17 +242,6 @@ export default class StatusLines extends Component {
             )
           }
         />
-
-        {/* <StatusLine
-          activated={!!filename}
-          title={(
-            <>
-              <PavloviaIcon className="line-title-icon" />
-              <span>Pavlovia account</span>
-            </>
-          )}
-          content={"Unconnected"}
-        /> */}
         <StatusLine
           activated={!!filename || viewingPreviousExperiment}
           title={"Experiment file"}
@@ -269,30 +258,25 @@ export default class StatusLines extends Component {
           activated={!!filename || viewingPreviousExperiment}
           title={"Experiment needs"}
           content={
-            <span
-              className="experiment-needs"
-              onClick={() =>
-                displayExperimentNeedsPopup(
-                  previousCompatibilityRequirements,
-                  functions.handleSetCompatibilityLanguage,
-                  viewingPreviousExperiment
-                )
-              }
-            >
-              {viewingPreviousExperiment
-                ? previousCompatibilityRequirements
-                : globalCompatibilityReq.t}
-            </span>
+            <>
+              <span className="experiment-needs">
+                {viewingPreviousExperiment
+                  ? previousCompatibilityRequirements
+                  : globalCompatibilityReq.t}
+              </span>
+              <i
+                className="bi bi-question-circle icon-i"
+                onClick={() =>
+                  displayExperimentNeedsPopup(
+                    previousCompatibilityRequirements,
+                    functions.handleSetCompatibilityLanguage,
+                    viewingPreviousExperiment
+                  )
+                }
+              ></i>
+            </>
           }
         />
-        {/* <StatusLine
-          activated={!!projectName || viewingPreviousExperiment}
-          title={"Experiment name"}
-          content={
-            viewingPreviousExperiment ? activeExperiment.name : projectName
-          }
-        /> */}
-        {/* Status Line for Duration */}
         <StatusLine
           activated={
             !!(user && filename && experimentStatus === "RUNNING") ||
