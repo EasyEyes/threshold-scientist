@@ -46,7 +46,11 @@ const getHtml = (
   textArea.setAttribute("readonly", "");
 
   const copyButton = document.createElement("button");
-  copyButton.innerHTML = "Copy to clipboard";
+  if (window.innerWidth <= 560) {
+    copyButton.innerHTML = "Copy";
+  } else {
+    copyButton.innerHTML = "Copy to clipboard";
+  }
   copyButton.className = "copyButton";
   copyButton.addEventListener("click", () => {
     textArea.select();
@@ -73,7 +77,7 @@ const getHtml = (
   });
 
   LanguageDropdownContainer.className =
-    "history-dropdown LanguageDropdownContainer";
+    "language-dropdown LanguageDropdownContainer";
   LanguageDropdownContainer.name = "languageDropdown";
   LanguageDropdownContainer.id = "languageDropdown";
   LanguageDropdownContainer.value = selected

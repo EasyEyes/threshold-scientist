@@ -31,6 +31,13 @@
   height: 40px;
 }
 
-.swalWide {
-  width: 60vw !important;
+.language-dropdown {
+  border-radius: 0.5rem;
+  border: 1px solid #aaa;
+  background-color: #fff;
+  color: #666;
+  padding: 0.3rem;
+  font-size: 0.9rem;
+  vertical-align: middle;
+  pointer-events: auto !important;
 }
