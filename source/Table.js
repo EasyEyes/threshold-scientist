@@ -179,7 +179,7 @@ export default class Table extends Component {
               newExperimentProjectName={this.props.projectName}
               style={{
                 padding: "0.6rem 1rem",
-                backgroundColor: "#019267",
+                backgroundColor: "#999",
                 fontSize: "1.2rem",
                 fontWeight: "500",
               }}
