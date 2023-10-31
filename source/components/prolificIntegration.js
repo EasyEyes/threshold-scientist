@@ -718,11 +718,13 @@ export const prolificCreateDraft = async (
     device_compatibility:
       user.currentExperiment._online3DeviceKind
         ?.split(",")
-        .map((el) => el.trim()) ?? [],
+        .map((el) => el.trim())
+        .filter((element) => element != "") ?? [],
     peripheral_requirements:
       user.currentExperiment._online3RequiredServices
         ?.split(",")
-        .map((element) => element.trim()) ?? [],
+        .map((element) => element.trim())
+        .filter((element) => element != "") ?? [],
     eligibility_requirements: buildEligibilityRequirements(
       whiteListParticipants,
       user,
