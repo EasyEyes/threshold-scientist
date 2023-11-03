@@ -591,8 +591,8 @@ export default class App extends Component {
         {!accessToken && (
           <div className="description">
             Welcome to EasyEyes, an experiment compiler that helps you
-            accurately test vision and hearing online, especially sensitivity,
-            crowding, and reading.
+            accurately test vision and hearing online, including crowding,
+            acuity, sensitivity, and reading.
           </div>
         )}
 
