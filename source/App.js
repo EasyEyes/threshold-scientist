@@ -81,7 +81,7 @@ export default class App extends Component {
       previousExperimentDuration: null,
       prolificStudyStatus: "",
       totalCompileCounts: 0,
-      profileStatement: "",
+      profileStatement: "Loading...",
     };
 
     this.functions = {
@@ -297,7 +297,7 @@ export default class App extends Component {
       compatibilityRequirements: "",
       previousExperimentDuration: null,
       prolificStudyStatus: "",
-      profileStatement: "",
+      profileStatement: "Loading...",
     });
   }
 

@@ -43,7 +43,8 @@ export default class StatusLines extends Component {
   }
 
   async componentDidMount() {
-    await this.props.functions.getprofileStatement();
+    if (this.props.profileStatement === "Loading...")
+      await this.props.functions.getprofileStatement();
   }
 
   popToUploadProlificToken() {
@@ -351,7 +352,7 @@ export default class StatusLines extends Component {
         <StatusLine
           activated={showExperimentURL}
           title={"Profiles"}
-          content={profileStatement ? profileStatement : "Loading..."}
+          content={profileStatement}
         />
 
         {/* <hr
