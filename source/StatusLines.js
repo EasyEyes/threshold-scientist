@@ -39,7 +39,7 @@ export default class StatusLines extends Component {
     if (this.props.activeExperiment !== prevProps.activeExperiment) {
       await this.getProlificStudyStatus();
     }
-    await this.props.functions.getprofileStatement();
+    // await this.props.functions.getprofileStatement();
   }
 
   async componentDidMount() {
