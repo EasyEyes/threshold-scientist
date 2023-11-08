@@ -30,6 +30,7 @@ import { compatibilityRequirements } from "../threshold/preprocess/global";
 
 import "./css/App.scss";
 import { signInAnonymously } from "firebase/auth";
+import { getSoundProfileStatement } from "./components/firebase_soundProfile";
 
 export default class App extends Component {
   constructor(props) {
@@ -80,6 +81,7 @@ export default class App extends Component {
       previousExperimentDuration: null,
       prolificStudyStatus: "",
       totalCompileCounts: 0,
+      profileStatement: "",
     };
 
     this.functions = {
@@ -106,6 +108,7 @@ export default class App extends Component {
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
       handleSetCompileCount: this.handleSetCompileCount.bind(this),
+      getprofileStatement: this.getprofileStatement.bind(this),
     };
 
     this.closeGlossary = this.closeGlossary.bind(this);
@@ -294,6 +297,7 @@ export default class App extends Component {
       compatibilityRequirements: "",
       previousExperimentDuration: null,
       prolificStudyStatus: "",
+      profileStatement: "",
     });
   }
 
@@ -366,6 +370,11 @@ export default class App extends Component {
       prolificStudyId
     );
     this.setState({ prolificStudyStatus: submissionDetails });
+  }
+
+  async getprofileStatement() {
+    const profileStatement = await getSoundProfileStatement();
+    this.setState({ profileStatement: profileStatement });
   }
 
   handleAddResources(newResources) {
@@ -524,6 +533,7 @@ export default class App extends Component {
       prolificStudyStatus,
       totalCompileCounts,
       accessToken,
+      profileStatement,
     } = this.state;
     const steps = [];
 
@@ -616,6 +626,7 @@ export default class App extends Component {
               currentStep={currentStep}
               experimentStatus={experimentStatus}
               prolificStudyStatus={prolificStudyStatus}
+              profileStatement={profileStatement}
             />
             {/* <StatusBar currentStep={currentStep} /> */}
             {steps}

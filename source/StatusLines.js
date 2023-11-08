@@ -8,6 +8,7 @@ import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 import { durations } from "../threshold/preprocess/getDuration";
 
 import "./css/StatusLines.scss";
+import { getSoundProfileStatement } from "./components/firebase_soundProfile";
 
 export default class StatusLines extends Component {
   constructor(props) {
@@ -38,6 +39,11 @@ export default class StatusLines extends Component {
     if (this.props.activeExperiment !== prevProps.activeExperiment) {
       await this.getProlificStudyStatus();
     }
+    await this.props.functions.getprofileStatement();
+  }
+
+  async componentDidMount() {
+    await this.props.functions.getprofileStatement();
   }
 
   popToUploadProlificToken() {
@@ -137,8 +143,8 @@ export default class StatusLines extends Component {
       // compatibilityRequirements,
       // compatibilityLanguage,
       prolificStudyStatus,
+      profileStatement,
     } = this.props;
-
     const viewingPreviousExperiment = activeExperiment !== "new";
 
     const showExperimentURL =
@@ -340,6 +346,12 @@ export default class StatusLines extends Component {
               ? prolificStudyStatus
               : ""
           }
+        />
+
+        <StatusLine
+          activated={showExperimentURL}
+          title={"Profiles"}
+          content={profileStatement ? profileStatement : "Loading..."}
         />
 
         {/* <hr
