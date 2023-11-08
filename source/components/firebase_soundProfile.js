@@ -78,6 +78,9 @@ const getLoudspeakers = async () => {
 
   for (const doc of querySnapshot.docs) {
     const collectionIDs = doc.data().collectionIDs;
+    if (!collectionIDs) {
+      continue;
+    }
     for (const collectionID of collectionIDs) {
       const col = collection(db, "Loudspeaker", doc.id, collectionID);
       await getDocs(col).then((docs) => {
@@ -96,6 +99,9 @@ const getMicrophones = async () => {
 
   for (const doc of querySnapshot.docs) {
     const collectionIDs = doc.data().collectionIDs;
+    if (!collectionIDs) {
+      continue;
+    }
     for (const collectionID of collectionIDs) {
       const col = collection(db, "Microphone", doc.id, collectionID);
       await getDocs(col).then((docs) => {
