@@ -635,7 +635,7 @@ export default class App extends Component {
           {websiteRepoLastCommitDeploy && websiteRepoLastCommitURL && (
             <>
               <div className="copyright-info">
-                <p style={{ lineHeight: "normal" }}>
+                <div className="info-paragraph">
                   {totalCompileCounts} experiments compiled since 1 February,
                   2023.
                   <br />
@@ -691,7 +691,7 @@ export default class App extends Component {
                       src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
                     />
                   </a>
-                </p>
+                </div>
               </div>
             </>
           )}
