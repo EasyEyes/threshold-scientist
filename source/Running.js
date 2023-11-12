@@ -270,7 +270,7 @@ export default class Running extends Component {
               }}
             >
               {" "}
-              ⇦ Compile new experiment{" "}
+              Compile new experiment{" "}
             </button>
           </span>
         </div>
