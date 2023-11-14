@@ -9,6 +9,12 @@ export default class Dropdown extends Component {
     return name;
   }
 
+  async componentDidMount() {
+    if (this.props.newExperimentProjectName) {
+      await this.props.getProjectsList();
+    }
+  }
+
   render() {
     const {
       selected,
@@ -16,6 +22,8 @@ export default class Dropdown extends Component {
       projectList,
       newExperimentProjectName,
       style,
+      pavloviaIsReady,
+      isFromStartTable,
     } = this.props;
 
     return (
@@ -60,21 +68,30 @@ export default class Dropdown extends Component {
               </option>
             );
           }
-
-          if (newExperimentProjectName) {
-            optionList.unshift(
-              <option
-                key={"__FRESH_NEW_EXPERIMENT__"}
-                value={"__FRESH_NEW_EXPERIMENT__"}
-              >
-                {selected == "new"
-                  ? `${newExperimentProjectName}`
-                  : `Select a compiled experiment`}
-              </option>
-            );
+          if (pavloviaIsReady || isFromStartTable) {
+            return optionList;
+          } else {
+            const optionList = [];
+            if (!newExperimentProjectName) {
+              optionList.unshift(
+                <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
+                  {`Select a compiled experiment`}
+                </option>
+              );
+            } else {
+              optionList.unshift(
+                <option
+                  key={"__FRESH_NEW_EXPERIMENT__"}
+                  value={"__FRESH_NEW_EXPERIMENT__"}
+                >
+                  {selected == "new"
+                    ? `${newExperimentProjectName}`
+                    : `Select a compiled experiment`}
+                </option>
+              );
+            }
+            return optionList;
           }
-
-          return optionList;
         })()}
       </select>
     );

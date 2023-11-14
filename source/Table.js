@@ -183,6 +183,8 @@ export default class Table extends Component {
                 fontSize: "1.2rem",
                 fontWeight: "500",
               }}
+              getProjectsList={this.props.functions.getProjectsList}
+              isFromStartTable={true}
             />
           </span>
         </div>

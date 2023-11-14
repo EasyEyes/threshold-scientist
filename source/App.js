@@ -105,6 +105,7 @@ export default class App extends Component {
       handleSetExperimentDuration: this.handleSetExperimentDuration.bind(this),
       getProlificStudySubmissionDetails:
         this.getProlificStudySubmissionDetails.bind(this),
+      getProjectsList: this.getProjectsList.bind(this),
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
       handleSetCompileCount: this.handleSetCompileCount.bind(this),
@@ -370,6 +371,15 @@ export default class App extends Component {
       prolificStudyId
     );
     this.setState({ prolificStudyStatus: submissionDetails });
+  }
+
+  async getProjectsList() {
+    this.setState({
+      user: {
+        ...this.state.user,
+        projectList: await getAllProjects(this.state.user),
+      },
+    });
   }
 
   async getprofileStatement() {

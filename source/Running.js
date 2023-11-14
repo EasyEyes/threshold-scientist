@@ -258,6 +258,8 @@ export default class Running extends Component {
                 padding: "0.3rem 1rem",
                 backgroundColor: "#999",
               }}
+              getProjectsList={this.props.functions.getProjectsList}
+              pavloviaIsReady={this.state.pavloviaIsReady}
             />
             <button
               className="button-small button-grey resource-button"
