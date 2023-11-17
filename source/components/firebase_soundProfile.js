@@ -10,6 +10,8 @@ import {
   setDoc,
   arrayUnion,
   getDocs,
+  query,
+  where,
 } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -46,9 +48,9 @@ const getUniqueMicrophones = async (Microphones) => {
   // two microphones are the same if they have the same microhone.info.ID_from_51Degrees (if exists), microphone.info.OEM and microphone.info.ID
   const uniqueMicrophonesIDs = [];
   for (const microphone of Microphones) {
-    const ID_from_51Degrees = microphone.info.ID_from_51Degrees;
-    const OEM = microphone.info.OEM;
-    const ID = microphone.info.ID;
+    const ID_from_51Degrees = microphone.ID_from_51Degrees;
+    const OEM = microphone.OEM;
+    const ID = microphone.ID;
     const uniqueMicrophone = `${ID_from_51Degrees}_${OEM}_${ID}`;
     if (!uniqueMicrophonesIDs.includes(uniqueMicrophone)) {
       uniqueMicrophonesIDs.push(uniqueMicrophone);
@@ -74,42 +76,18 @@ const getUniqueLoudspeakers = async (Loudspeakers) => {
 
 const getLoudspeakers = async () => {
   const loudspeakers = [];
-  const querySnapshot = await getDocs(collection(db, "Loudspeaker"));
-
+  const querySnapshot = await getDocs(collection(db, "Loudspeakers"));
   for (const doc of querySnapshot.docs) {
-    const collectionIDs = doc.data().collectionIDs;
-    if (!collectionIDs) {
-      continue;
-    }
-    for (const collectionID of collectionIDs) {
-      const col = collection(db, "Loudspeaker", doc.id, collectionID);
-      await getDocs(col).then((docs) => {
-        docs.forEach((doc) => {
-          loudspeakers.push(doc.data());
-        });
-      });
-    }
+    loudspeakers.push(doc.data());
   }
   return loudspeakers;
 };
 
 const getMicrophones = async () => {
   const microphones = [];
-  const querySnapshot = await getDocs(collection(db, "Microphone"));
-
+  const querySnapshot = await getDocs(collection(db, "Microphones"));
   for (const doc of querySnapshot.docs) {
-    const collectionIDs = doc.data().collectionIDs;
-    if (!collectionIDs) {
-      continue;
-    }
-    for (const collectionID of collectionIDs) {
-      const col = collection(db, "Microphone", doc.id, collectionID);
-      await getDocs(col).then((docs) => {
-        docs.forEach((doc) => {
-          microphones.push(doc.data());
-        });
-      });
-    }
+    microphones.push(doc.data());
   }
   return microphones;
 };
