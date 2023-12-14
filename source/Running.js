@@ -16,6 +16,7 @@ import {
   runExperiment,
   createProlificStudyIdFile,
   getProlificStudyId,
+  downloadCommonResources,
 } from "../threshold/preprocess/gitlabUtils";
 
 import "./css/Running.scss";
@@ -40,7 +41,7 @@ export default class Running extends Component {
 
     const dataFolderLength = await getDataFolderCsvLength(
       this.props.user,
-      this.props.newRepo
+      this.props.newRepo,
     );
     this.setState({ dataFolderLength });
 
@@ -64,7 +65,7 @@ export default class Running extends Component {
     if (this.props.newRepo !== prevProps.newRepo) {
       const dataFolderLength = await getDataFolderCsvLength(
         this.props.user,
-        this.props.newRepo
+        this.props.newRepo,
       );
       this.setState({ dataFolderLength });
     }
@@ -76,7 +77,7 @@ export default class Running extends Component {
     const result = await runExperiment(
       user,
       newRepo,
-      user.currentExperiment.experimentUrl
+      user.currentExperiment.experimentUrl,
     );
 
     if (result && result.newStatus === "RUNNING") {
@@ -141,7 +142,7 @@ export default class Running extends Component {
     await this.props.functions.getProlificStudySubmissionDetails(
       user,
       prolificToken,
-      newRepo?.id
+      newRepo?.id,
     );
   };
 
@@ -191,7 +192,7 @@ export default class Running extends Component {
 
     const buttonGoToPavlovia = (
       displayText = "Go to Pavlovia",
-      extraStyle = {}
+      extraStyle = {},
     ) => (
       <button
         className={`button-grey button-small`}
@@ -200,7 +201,7 @@ export default class Running extends Component {
             `https://pavlovia.org/${
               user.username
             }/${projectName.toLocaleLowerCase()}`,
-            "_blank"
+            "_blank",
           );
         }}
         style={extraStyle}
@@ -310,7 +311,7 @@ export default class Running extends Component {
               <>
                 {buttonGoToPavlovia(
                   "Go to Pavlovia to run in PILOTING mode",
-                  {}
+                  {},
                 )}
                 <button
                   className="button-grey button-small"
@@ -377,7 +378,7 @@ export default class Running extends Component {
                           (await generateAndUploadCompletionURL(
                             user,
                             newRepo,
-                            functions.handleUpdateUser
+                            functions.handleUpdateUser,
                           ));
 
                         if (!hasCompletionCode)
@@ -390,7 +391,7 @@ export default class Running extends Component {
                           user,
                           `${this.props.user.username}/${this.props.projectName}`,
                           code,
-                          prolificToken
+                          prolificToken,
                         );
 
                         if (result.status === "UNPUBLISHED") {
@@ -398,13 +399,13 @@ export default class Running extends Component {
                             .open(
                               "https://app.prolific.co/researcher/workspaces/studies/" +
                                 result.id,
-                              "_blank"
+                              "_blank",
                             )
                             ?.focus();
                           await createProlificStudyIdFile(
                             newRepo,
                             user,
-                            result.id
+                            result.id,
                           );
                         }
                         e.target.classList.remove("button-disabled");
@@ -457,13 +458,13 @@ export default class Running extends Component {
                     await downloadDataFolder(user, newRepo);
                     const prolificStudyId = await getProlificStudyId(
                       user,
-                      newRepo?.id
+                      newRepo?.id,
                     );
                     if (prolificStudyId) {
                       await downloadDemographicData(
                         prolificToken,
                         prolificStudyId,
-                        newRepo.name
+                        newRepo.name,
                       );
                     }
                   }}
@@ -530,7 +531,7 @@ export default class Running extends Component {
                     } = this.props;
                     const dataFolderLength = await getDataFolderCsvLength(
                       this.props.user,
-                      this.props.newRepo
+                      this.props.newRepo,
                     );
                     this.setState({ dataFolderLength });
                     await this.getProlificStudyStatus();
@@ -545,6 +546,27 @@ export default class Running extends Component {
                   title={"Refresh button"}
                   text={`Every 10 sec, EasyEyes counts the number of result files ready for download from Pavlovia and checks the status of the Prolific study, if any. Press Refresh to count and check now. Note that the file count can exceed the request for two reasons. Firstly, the (Pavlovia) file count includes local runs and the (Prolific) request does not. Secondly, if an experiment terminates prematurely, the participant might try again, generating several CSV files with the same Prolific ID and unique Pavlovia IDs.`}
                 />
+              </div>
+            </div>
+          </>
+        )}
+
+        {isRunning && pavloviaIsReady && (
+          <>
+            <div className="link-set">
+              <div className="link-set-buttons">
+                <button
+                  className="button-green button-large-font"
+                  onClick={async () => {
+                    await downloadCommonResources(
+                      user,
+                      newRepo.id,
+                      newRepo.name,
+                    );
+                  }}
+                >
+                  Export
+                </button>
               </div>
             </div>
           </>
