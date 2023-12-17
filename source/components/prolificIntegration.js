@@ -44,7 +44,7 @@ export const getProlificAccount = async (token) => {
 
   const response = await fetch(
     "/.netlify/functions/prolific/users/me/",
-    requestOptions
+    requestOptions,
   )
     .then((response) => {
       return response.json();
@@ -57,7 +57,7 @@ export const getProlificAccount = async (token) => {
 
 const findProlificLanguageAttributes = (
   field,
-  type = prolificLangType.NATIVE
+  type = prolificLangType.NATIVE,
 ) => {
   const result = [];
   if (!field) {
@@ -218,7 +218,7 @@ const findProlificObjectiveScreeningAttributes = (field, constant) => {
 const buildEligibilityRequirements = (
   whiteListParticipants,
   user,
-  blockListParticipants
+  blockListParticipants,
 ) => {
   const req = [
     ...(user.currentExperiment && user.currentExperiment._online5LanguageFirst
@@ -227,7 +227,7 @@ const buildEligibilityRequirements = (
             id: null,
             type: "SelectAnswer",
             attributes: findProlificLanguageAttributes(
-              user.currentExperiment._online5LanguageFirst
+              user.currentExperiment._online5LanguageFirst,
             ),
             query: {
               id: "54ac6ea9fdf99b2204feb899",
@@ -249,7 +249,7 @@ const buildEligibilityRequirements = (
             id: null,
             type: "MultiSelectAnswer",
             attributes: findProlificLanguageFluentAttributes(
-              user.currentExperiment._online5LanguageFluent
+              user.currentExperiment._online5LanguageFluent,
             ),
             query: {
               id: "58c6b44ea4dd0a4799361afc",
@@ -272,7 +272,7 @@ const buildEligibilityRequirements = (
             id: null,
             type: "SelectAnswer",
             attributes: findProlificLanguagePrimaryAttributes(
-              user.currentExperiment._online5LanguagePrimary
+              user.currentExperiment._online5LanguagePrimary,
             ),
             query: {
               id: "6228741119c5d3b399f98aaf",
@@ -297,7 +297,7 @@ const buildEligibilityRequirements = (
             id: null,
             type: "SelectAnswer",
             attributes: findProlificOperatingSystemAttributes(
-              user.currentExperiment._online3PhoneOperatingSystem
+              user.currentExperiment._online3PhoneOperatingSystem,
             ),
             query: {
               id: "56d6310bfc7879000b77511a",
@@ -321,7 +321,7 @@ const buildEligibilityRequirements = (
             id: null,
             type: "SelectAnswer",
             attributes: findProlificLocationEligibilityAttributes(
-              user.currentExperiment._online4Location
+              user.currentExperiment._online4Location,
             ),
             query: {
               id: "54bef0fafdf99b15608c504e",
@@ -348,7 +348,7 @@ const buildEligibilityRequirements = (
             id: null,
             type: "MultiSelectAnswer",
             attributes: findProlificVisionAttributes(
-              user.currentExperiment._online5Vision
+              user.currentExperiment._online5Vision,
             ),
             query: {
               id: "57a0c4d2717b34954e81b919",
@@ -371,7 +371,7 @@ const buildEligibilityRequirements = (
             id: null,
             type: "MultiSelectAnswer",
             attributes: findProlificDyslexiaAttributes(
-              user.currentExperiment._online5Dyslexia
+              user.currentExperiment._online5Dyslexia,
             ),
             query: {
               id: "63497384f86b5bc7cb27c8a8",
@@ -394,7 +394,7 @@ const buildEligibilityRequirements = (
             id: null,
             type: "SelectAnswer",
             attributes: findProlificHearingAttributes(
-              user.currentExperiment._online5HearingDifficulties
+              user.currentExperiment._online5HearingDifficulties,
             ),
             query: {
               id: "5a9d10c989de8200013f17ce",
@@ -418,7 +418,7 @@ const buildEligibilityRequirements = (
             type: "SelectAnswer",
             attributes: findProlificObjectiveScreeningAttributes(
               user.currentExperiment._online5MusicalInstrumentExperience,
-              MUSIC_EXPERIENCE_PROLIFIC_MAPPING
+              MUSIC_EXPERIENCE_PROLIFIC_MAPPING,
             ),
             query: {
               id: "5aababea44adc700014c8415",
@@ -443,7 +443,7 @@ const buildEligibilityRequirements = (
             type: "SelectAnswer",
             attributes: findProlificObjectiveScreeningAttributes(
               user.currentExperiment._online5LanguageRelatedDisorders,
-              LANGUAGE_DISORDER_PROLIFIC_MAPPING
+              LANGUAGE_DISORDER_PROLIFIC_MAPPING,
             ),
             query: {
               id: "59b00f20180e8300015758b6",
@@ -466,7 +466,7 @@ const buildEligibilityRequirements = (
             type: "SelectAnswer",
             attributes: findProlificObjectiveScreeningAttributes(
               user.currentExperiment._online5CochlearImplant,
-              COCHLEAR_PROLIFIC_MAPPING
+              COCHLEAR_PROLIFIC_MAPPING,
             ),
             query: {
               id: "6155e181100d59248cd68f0e",
@@ -490,7 +490,7 @@ const buildEligibilityRequirements = (
             type: "MultiSelectAnswer",
             attributes: findProlificObjectiveScreeningAttributes(
               user.currentExperiment._online5VRExperiences,
-              SIMULATED_EXPERIENCE_PROLIFIC_MAPPING
+              SIMULATED_EXPERIENCE_PROLIFIC_MAPPING,
             ),
             query: {
               id: "5eabe23bb79d980009a5eab7",
@@ -514,7 +514,7 @@ const buildEligibilityRequirements = (
             type: "SelectAnswer",
             attributes: findProlificObjectiveScreeningAttributes(
               user.currentExperiment._online5VRHeadset,
-              VR_HEADSET_USAGE_PROLIFIC_MAPPING
+              VR_HEADSET_USAGE_PROLIFIC_MAPPING,
             ),
             query: {
               id: "5eac255ff716eb05e0ed3853",
@@ -537,7 +537,7 @@ const buildEligibilityRequirements = (
             type: "SelectAnswer",
             attributes: findProlificObjectiveScreeningAttributes(
               user.currentExperiment._online5VRHeadsetUsage,
-              VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING
+              VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING,
             ),
             query: {
               id: "5eac24dacdc446055b9fa3f6",
@@ -562,7 +562,7 @@ const buildEligibilityRequirements = (
             type: "SelectAnswer",
             attributes: findProlificObjectiveScreeningAttributes(
               user.currentExperiment._online5VisionCorrection,
-              VISION_CORRECTION_PROLIFIC_MAPPING
+              VISION_CORRECTION_PROLIFIC_MAPPING,
             ),
             query: {
               id: "5a5e22b3eedc32000142ba06",
@@ -671,7 +671,7 @@ export const prolificCreateDraft = async (
   user,
   internalName,
   completionCode,
-  token
+  token,
 ) => {
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
@@ -681,7 +681,7 @@ export const prolificCreateDraft = async (
   const payPerHour =
     parseFloat(user.currentExperiment?._online2PayPerHour) || 0;
   const reward = parseInt(
-    parseFloat((pay + payPerHour * hours).toFixed(2) * 100)
+    parseFloat((pay + payPerHour * hours).toFixed(2) * 100),
   );
   let completionCodeAction = "MANUALLY_REVIEW";
   if (
@@ -713,7 +713,7 @@ export const prolificCreateDraft = async (
     completion_option: "url",
     total_available_places: user.currentExperiment._participantsHowMany ?? 10,
     estimated_completion_time:
-      user.currentExperiment._participantDurationMinutes ?? 1,
+      parseInt(user.currentExperiment._participantDurationMinutes) ?? 1,
     reward: reward ?? 0,
     device_compatibility:
       user.currentExperiment._online3DeviceKind
@@ -728,11 +728,11 @@ export const prolificCreateDraft = async (
     eligibility_requirements: buildEligibilityRequirements(
       whiteListParticipants,
       user,
-      blockListParticipants
+      blockListParticipants,
     ),
     project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
     selected_location: findProlificLocationAttributes(
-      user.currentExperiment._online4Location
+      user.currentExperiment._online4Location,
     ),
   };
 
@@ -804,7 +804,7 @@ export const getProlificStudySubmissions = async (token, prolificStudyId) => {
   const study = await fetchProlificStudy(token, prolificStudyId);
   const submissions = await fetchProlificStudySubmissions(
     token,
-    prolificStudyId
+    prolificStudyId,
   );
   if (!study || !("status" in study)) {
     return "";
@@ -817,7 +817,7 @@ export const getProlificStudySubmissions = async (token, prolificStudyId) => {
         submissionResult.status === prolificStudySubmissionStatus.ACTIVE ||
         submissionResult.status ===
           prolificStudySubmissionStatus["AWAITING REVIEW"] ||
-        submissionResult.status === prolificStudySubmissionStatus.APPROVED
+        submissionResult.status === prolificStudySubmissionStatus.APPROVED,
     );
     numberOfSubmissions = res.length;
   }
@@ -829,7 +829,7 @@ export const getProlificStudySubmissions = async (token, prolificStudyId) => {
 export const downloadDemographicData = async (
   token,
   prolificStudyId,
-  filename
+  filename,
 ) => {
   // const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
   const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
