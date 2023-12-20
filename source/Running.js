@@ -275,6 +275,20 @@ export default class Running extends Component {
               {" "}
               New{" "}
             </button>
+            {isRunning && pavloviaIsReady && (
+              <button
+                className="button-small button-grey resource-button"
+                style={{
+                  fontSize: "1rem",
+                  color: "#fff",
+                }}
+                onClick={async () => {
+                  await downloadCommonResources(user, newRepo.id, newRepo.name);
+                }}
+              >
+                Export
+              </button>
+            )}
           </span>
         </div>
         <div className="link-set">
@@ -453,7 +467,7 @@ export default class Running extends Component {
             <div className="link-set">
               <div className="link-set-buttons">
                 <button
-                  className="button-green button-large-font"
+                  className="button-grey button-small button-download"
                   onClick={async () => {
                     await downloadDataFolder(user, newRepo);
                     const prolificStudyId = await getProlificStudyId(
@@ -546,27 +560,6 @@ export default class Running extends Component {
                   title={"Refresh button"}
                   text={`Every 10 sec, EasyEyes counts the number of result files ready for download from Pavlovia and checks the status of the Prolific study, if any. Press Refresh to count and check now. Note that the file count can exceed the request for two reasons. Firstly, the (Pavlovia) file count includes local runs and the (Prolific) request does not. Secondly, if an experiment terminates prematurely, the participant might try again, generating several CSV files with the same Prolific ID and unique Pavlovia IDs.`}
                 />
-              </div>
-            </div>
-          </>
-        )}
-
-        {isRunning && pavloviaIsReady && (
-          <>
-            <div className="link-set">
-              <div className="link-set-buttons">
-                <button
-                  className="button-green button-large-font"
-                  onClick={async () => {
-                    await downloadCommonResources(
-                      user,
-                      newRepo.id,
-                      newRepo.name,
-                    );
-                  }}
-                >
-                  Export
-                </button>
               </div>
             </div>
           </>

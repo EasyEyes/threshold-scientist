@@ -77,6 +77,15 @@
       }
     }
 
+    &.button-download {
+      height: 33px;
+      padding: 7px 1rem;
+      @media screen and (max-width: 560px) {
+        height: unset;
+        padding: 7px;
+      }
+    }
+
     &.button-analyze {
       margin-left: 10px;
       height: 33px;
