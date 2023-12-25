@@ -301,7 +301,7 @@ export default class Running extends Component {
                     window.open(this._getPavloviaExperimentUrl(), "_blank");
                   }}
                 >
-                  Run here
+                  Run
                 </button>
               </>
             )}
