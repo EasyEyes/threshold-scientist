@@ -36,7 +36,9 @@ export default class Table extends Component {
       user,
       files,
       functions.handleAddResources,
-      this.handleTable.bind(this)
+      this.handleTable.bind(this),
+      functions.handleArchivedExperimentBool,
+      functions.handleZipArchive,
     );
   }
 
@@ -65,7 +67,7 @@ export default class Table extends Component {
         requestedFolderList, // : string[],
         requestedCodeList, // : string[],
         fileList, // : File[],
-        errorList // : any[]
+        errorList, // : any[]
       ) => {
         // scroll to the top of the step block
         this.props.scrollToCurrentStep();
@@ -107,7 +109,7 @@ export default class Table extends Component {
           if (user.id != undefined) {
             // user logged in
             this.props.functions.handleSetProjectName(
-              await setRepoName(user, file.name.split(".")[0])
+              await setRepoName(user, file.name.split(".")[0]),
             );
             this.props.functions.handleNextStep("upload");
           }
@@ -124,7 +126,7 @@ export default class Table extends Component {
             ],
           });
         }
-      }
+      },
 
       // this.props.functions.handleSetExperiment
     );
@@ -150,7 +152,7 @@ export default class Table extends Component {
           key={`resource-button-${fileType}`}
           name={fileType}
           resourceList={this.props.resources[fileType]}
-        />
+        />,
       );
     }
 
@@ -211,7 +213,7 @@ export default class Table extends Component {
           <p
             className={`dropzone-around-text emphasize${
               this.state.errors.filter(
-                (err) => err.context === "preprocessor" && err.kind === "error"
+                (err) => err.context === "preprocessor" && err.kind === "error",
               ).length
                 ? " has-error"
                 : ""
@@ -246,7 +248,7 @@ export default class Table extends Component {
                     className="bi bi-x error-close"
                     onClick={() => {
                       const newErrors = this.state.errors.filter(
-                        (err, i) => i !== index
+                        (err, i) => i !== index,
                       );
                       const newName = newErrors.length ? this.state.name : null;
                       this.setState({

@@ -27,7 +27,9 @@ export default class Upload extends Component {
       await createPavloviaExperiment(
         this.props.user,
         this.props.projectName,
-        this.props.functions.handleGetNewRepo
+        this.props.functions.handleGetNewRepo,
+        this.props.isCompiledFromArchiveBool,
+        this.props.archivedZip,
       )
     ) {
       // update firebase compile count

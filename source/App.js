@@ -82,6 +82,8 @@ export default class App extends Component {
       prolificStudyStatus: "",
       totalCompileCounts: 0,
       profileStatement: "Loading...",
+      isCompiledFromArchiveBool: false,
+      archivedZip: null,
     };
 
     this.functions = {
@@ -102,6 +104,9 @@ export default class App extends Component {
       handleSetExperiment: this.handleSetExperiment.bind(this),
       handleGetNewRepo: this.handleGetNewRepo.bind(this),
       handleSetExperimentStatus: this.handleSetExperimentStatus.bind(this),
+      handleArchivedExperimentBool:
+        this.handleArchivedExperimentBool.bind(this),
+      handleZipArchive: this.handleZipArchive.bind(this),
       handleSetExperimentDuration: this.handleSetExperimentDuration.bind(this),
       getProlificStudySubmissionDetails:
         this.getProlificStudySubmissionDetails.bind(this),
@@ -118,7 +123,7 @@ export default class App extends Component {
   async componentDidMount() {
     // get the actual changes from GitHub
     const websiteGitHubRepo = await fetch(
-      "https://api.github.com/repos/EasyEyes/website/commits"
+      "https://api.github.com/repos/EasyEyes/website/commits",
     );
     websiteGitHubRepo.json().then((data) => {
       this.setState({
@@ -128,7 +133,7 @@ export default class App extends Component {
 
     // get the deployed time from Netlify
     const websiteNetlifySite = await fetch(
-      "https://api.netlify.com/api/v1/sites/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/"
+      "https://api.netlify.com/api/v1/sites/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/",
     );
     websiteNetlifySite.json().then((data) => {
       this.setState({
@@ -192,23 +197,23 @@ export default class App extends Component {
           Swal.showLoading(null);
           previousExperimentDuration = await getDurationForProject(
             user,
-            activeExperiment.name
+            activeExperiment.name,
           );
           previousCompatibilityRequirements =
             await getCompatibilityRequirementsForProject(
               user,
-              activeExperiment.name
+              activeExperiment.name,
             );
           originalFileName = await getOriginalFileNameForProject(
             user,
-            activeExperiment.name
+            activeExperiment.name,
           );
           previousExperimentStatus = await getExperimentStatus(user, {
             id: activeExperiment.id,
           });
           previousRecruitmentInformation = await getRecruitmentServiceConfig(
             user,
-            activeExperiment.name
+            activeExperiment.name,
           );
 
           Swal.close();
@@ -314,7 +319,7 @@ export default class App extends Component {
         currentStep: step,
         completedSteps: [...this.allSteps].slice(
           0,
-          this.allSteps.indexOf(step)
+          this.allSteps.indexOf(step),
         ),
         futureSteps: [...this.allSteps].slice(this.allSteps.indexOf(step) + 1),
         user: {
@@ -368,7 +373,7 @@ export default class App extends Component {
     const prolificStudyId = await getProlificStudyId(user, repoId);
     const submissionDetails = await getProlificStudySubmissions(
       prolificToken,
-      prolificStudyId
+      prolificStudyId,
     );
     this.setState({ prolificStudyStatus: submissionDetails });
   }
@@ -396,7 +401,7 @@ export default class App extends Component {
 
   handleSetCompatibilityLanguage(
     language,
-    isViewingPreviousExperiment = false
+    isViewingPreviousExperiment = false,
   ) {
     const parsed = isViewingPreviousExperiment
       ? compatibilityRequirements.previousParsedInfo
@@ -406,7 +411,7 @@ export default class App extends Component {
       language,
       true,
       null,
-      parsed
+      parsed,
     ).compatibilityRequirements[0];
     if (!isViewingPreviousExperiment) {
       compatibilityRequirements.t = text;
@@ -477,6 +482,18 @@ export default class App extends Component {
     });
   }
 
+  handleArchivedExperimentBool(isCompiledFromArchiveBool) {
+    this.setState({
+      isCompiledFromArchiveBool: isCompiledFromArchiveBool,
+    });
+  }
+
+  handleZipArchive(archivedZip) {
+    this.setState({
+      archivedZip: archivedZip,
+    });
+  }
+
   handleSetCompileCount(count) {
     const totalCompileCounts = count;
     this.setState({
@@ -544,6 +561,8 @@ export default class App extends Component {
       totalCompileCounts,
       accessToken,
       profileStatement,
+      isCompiledFromArchiveBool,
+      archivedZip,
     } = this.state;
     const steps = [];
 
@@ -572,7 +591,9 @@ export default class App extends Component {
           }
           previousExperimentViewed={previousExperimentViewed}
           prolificStudyStatus={prolificStudyStatus}
-        />
+          isCompiledFromArchiveBool={isCompiledFromArchiveBool}
+          archivedZip={archivedZip}
+        />,
       );
     else
       steps.push(
@@ -591,7 +612,9 @@ export default class App extends Component {
           experimentStatus={experimentStatus}
           prolificStudyStatus={prolificStudyStatus}
           activeExperiment={activeExperiment}
-        />
+          isCompiledFromArchiveBool={isCompiledFromArchiveBool}
+          archivedZip={archivedZip}
+        />,
       );
 
     return (
@@ -666,13 +689,13 @@ export default class App extends Component {
                       undefined,
                       {
                         dateStyle: "medium",
-                      }
+                      },
                     )}{" "}
                     {new Date(websiteRepoLastCommitDeploy).toLocaleString(
                       undefined,
                       {
                         timeStyle: "short",
-                      }
+                      },
                     )}{" "}
                     {getTimezoneName()}
                   </a>
