@@ -59,6 +59,7 @@ export default class Table extends Component {
       copyUser(this.props.user),
       errors,
       this.props.resources,
+      this.props.isCompiledFromArchiveBool,
       async (
         user,
         requestedForms, // : any,
