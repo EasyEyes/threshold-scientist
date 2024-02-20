@@ -267,18 +267,6 @@ export default class Running extends Component {
         <div className="link-set">
           <div className="link-set-buttons">
             {isRunning && pavloviaIsReady && (
-              <>
-                <button
-                  className="button-green button-large-font"
-                  onClick={() => {
-                    window.open(this._getPavloviaExperimentUrl(), "_blank");
-                  }}
-                >
-                  Run
-                </button>
-              </>
-            )}
-            {isRunning && pavloviaIsReady && (
               <button
                 className="button-large-font button-grey resource-button"
                 style={{
@@ -293,6 +281,19 @@ export default class Running extends Component {
                 {" "}
                 New{" "}
               </button>
+            )}
+
+            {isRunning && pavloviaIsReady && (
+              <>
+                <button
+                  className="button-green button-large-font"
+                  onClick={() => {
+                    window.open(this._getPavloviaExperimentUrl(), "_blank");
+                  }}
+                >
+                  Run
+                </button>
+              </>
             )}
 
             {isRunning && pavloviaIsReady && (
