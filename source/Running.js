@@ -262,33 +262,6 @@ export default class Running extends Component {
               getProjectsList={this.props.functions.getProjectsList}
               pavloviaIsReady={this.state.pavloviaIsReady}
             />
-            <button
-              className="button-small button-grey resource-button"
-              style={{
-                fontSize: "1rem",
-                color: "#fff",
-              }}
-              onClick={() => {
-                this.props.functions.handleSetActivateExperiment("REFRESH");
-              }}
-            >
-              {" "}
-              New{" "}
-            </button>
-            {isRunning && pavloviaIsReady && (
-              <button
-                className="button-small button-grey resource-button"
-                style={{
-                  fontSize: "1rem",
-                  color: "#fff",
-                }}
-                onClick={async () => {
-                  await downloadCommonResources(user, newRepo.id, newRepo.name);
-                }}
-              >
-                Export
-              </button>
-            )}
           </span>
         </div>
         <div className="link-set">
@@ -304,6 +277,37 @@ export default class Running extends Component {
                   Run
                 </button>
               </>
+            )}
+            {isRunning && pavloviaIsReady && (
+              <button
+                className="button-large-font button-grey resource-button"
+                style={{
+                  fontSize: "1rem",
+                  color: "#fff",
+                  fontWeight: "unset",
+                }}
+                onClick={() => {
+                  this.props.functions.handleSetActivateExperiment("REFRESH");
+                }}
+              >
+                {" "}
+                New{" "}
+              </button>
+            )}
+
+            {isRunning && pavloviaIsReady && (
+              <button
+                className="button-large-font button-grey resource-button"
+                style={{
+                  fontSize: "1rem",
+                  color: "#fff",
+                }}
+                onClick={async () => {
+                  await downloadCommonResources(user, newRepo.id, newRepo.name);
+                }}
+              >
+                Export
+              </button>
             )}
 
             {isRunning && !pavloviaIsReady && (
