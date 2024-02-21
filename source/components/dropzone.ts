@@ -25,7 +25,7 @@ export const handleDrop = async (
 ) => {
   const resourcesList: File[] = [];
   let experimentFile = null;
-  const regex = /^ExportedExperiment-(.+)\.zip$/;
+  const regex = /^(.+)\.export\.zip$/;
   let isCompiledFromArchiveBool = false;
   let archivedZip = null;
 
