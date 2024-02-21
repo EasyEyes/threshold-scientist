@@ -19,14 +19,14 @@ export default class Dropdown extends Component {
     setDynamicSelectWidth(selectDropdown);
   }
 
-  componentDidUpdate(prevProps) {
-    if (
-      this.props.newExperimentProjectName !== prevProps.newExperimentProjectName
-    ) {
-      const selectDropdown = document.getElementById("projects");
-      setDynamicSelectWidth(selectDropdown);
-    }
-  }
+  // componentDidUpdate(prevProps) {
+  //   if (
+  //     this.props.newExperimentProjectName !== prevProps.newExperimentProjectName
+  //   ) {
+  //     const selectDropdown = document.getElementById("projects");
+  //     setDynamicSelectWidth(selectDropdown);
+  //   }
+  // }
 
   render() {
     const {
@@ -58,6 +58,8 @@ export default class Dropdown extends Component {
             return project.id.toString() === e.target.value;
           });
           setSelectedProject(selectedProject);
+          const selectDropdown = document.getElementById("projects");
+          setDynamicSelectWidth(selectDropdown);
         }}
         style={style}
       >

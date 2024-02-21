@@ -11,7 +11,14 @@ function getTextWidth(text, font, weight, size) {
 }
 
 export function setDynamicSelectWidth(selectDropdown) {
+  console.log(selectDropdown, "ritika");
+  console.log(
+    selectDropdown.selectedIndex,
+    "ritika",
+    selectDropdown.options[0],
+  );
   const selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
+  console.log(selectedOption, selectedOption.text, "ritika");
   const textWidth = getTextWidth(
     selectedOption.text,
     selectDropdown.style.font,
