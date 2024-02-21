@@ -1,5 +1,7 @@
 import React, { Component } from "react";
 
+import { setDynamicSelectWidth } from "./DynamicSelectWidth";
+
 export default class Dropdown extends Component {
   shortenProjectName(name) {
     // if the name length is greater than 20, keep the first 10 characters and the last 10 characters
@@ -12,6 +14,17 @@ export default class Dropdown extends Component {
   async componentDidMount() {
     if (this.props.newExperimentProjectName) {
       await this.props.getProjectsList();
+    }
+    const selectDropdown = document.getElementById("projects");
+    setDynamicSelectWidth(selectDropdown);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (
+      this.props.newExperimentProjectName !== prevProps.newExperimentProjectName
+    ) {
+      const selectDropdown = document.getElementById("projects");
+      setDynamicSelectWidth(selectDropdown);
     }
   }
 
@@ -65,7 +78,7 @@ export default class Dropdown extends Component {
             optionList.unshift(
               <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
                 {`Select a compiled experiment`}
-              </option>
+              </option>,
             );
           }
           if (pavloviaIsReady || isFromStartTable) {
@@ -76,18 +89,22 @@ export default class Dropdown extends Component {
               optionList.unshift(
                 <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
                   {`Select a compiled experiment`}
-                </option>
+                </option>,
               );
             } else {
               optionList.unshift(
                 <option
                   key={"__FRESH_NEW_EXPERIMENT__"}
-                  value={"__FRESH_NEW_EXPERIMENT__"}
+                  value={
+                    selected == "new"
+                      ? `${newExperimentProjectName}`
+                      : `Select a compiled experiment`
+                  }
                 >
                   {selected == "new"
                     ? `${newExperimentProjectName}`
                     : `Select a compiled experiment`}
-                </option>
+                </option>,
               );
             }
             return optionList;
