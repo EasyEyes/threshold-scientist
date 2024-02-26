@@ -669,61 +669,67 @@ export default class App extends Component {
             <>
               <div className="copyright-info">
                 <div className="info-paragraph">
-                  {totalCompileCounts} experiments compiled since 1 February,
-                  2023.
-                  <br />
-                  Compiler updated{" "}
-                  <a
-                    href={websiteRepoLastCommitURL}
-                    style={{
-                      color: "inherit",
-                      textDecoration: "none",
-                      fontWeight: "500",
-                      borderBottom: "1px solid #ddd",
-                      marginLeft: "0",
-                    }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {new Date(websiteRepoLastCommitDeploy).toLocaleDateString(
-                      undefined,
-                      {
-                        dateStyle: "medium",
-                      },
-                    )}{" "}
-                    {new Date(websiteRepoLastCommitDeploy).toLocaleString(
-                      undefined,
-                      {
-                        timeStyle: "short",
-                      },
-                    )}{" "}
-                    {getTimezoneName()}
-                  </a>
-                  .
-                  <br />
-                  Copyright © 2020 - 2023 New York University.
-                  <br />
-                  Created by Denis Pelli and the EasyEyes team.
-                  <br />
-                  <div style={{ marginTop: "5px" }}></div>
-                  <a href="https://github.com/EasyEyes/threshold/stargazers">
-                    <img
-                      alt="GitHub stars"
-                      src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square"
-                    />
-                  </a>
-                  <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
-                    <img
-                      alt="GitHub license"
-                      src="https://img.shields.io/github/license/EasyEyes/threshold?style=flat-square"
-                    />
-                  </a>
-                  <a href="https://app.netlify.com/sites/easyeyes/deploys">
-                    <img
-                      alt="Netlify Status"
-                      src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
-                    />
-                  </a>
+                  <div className="item">
+                    {totalCompileCounts} experiments compiled since 1 February,
+                    2023.
+                    <br />
+                    Compiler updated{" "}
+                    <a
+                      href={websiteRepoLastCommitURL}
+                      style={{
+                        color: "inherit",
+                        textDecoration: "none",
+                        fontWeight: "500",
+                        borderBottom: "1px solid #ddd",
+                        marginLeft: "0",
+                      }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {new Date(websiteRepoLastCommitDeploy).toLocaleDateString(
+                        undefined,
+                        {
+                          dateStyle: "medium",
+                        },
+                      )}{" "}
+                      {new Date(websiteRepoLastCommitDeploy).toLocaleString(
+                        undefined,
+                        {
+                          timeStyle: "short",
+                        },
+                      )}{" "}
+                      {getTimezoneName()}
+                    </a>
+                    .{" "}
+                  </div>
+
+                  <div className="item">
+                    <div style={{ marginTop: "5px" }}></div>
+                    <a href="https://github.com/EasyEyes/threshold/stargazers">
+                      <img
+                        alt="GitHub stars"
+                        src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square"
+                      />
+                    </a>
+                    <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
+                      <img
+                        alt="GitHub license"
+                        src="https://img.shields.io/github/license/EasyEyes/threshold?style=flat-square"
+                      />
+                    </a>
+                    <a href="https://app.netlify.com/sites/easyeyes/deploys">
+                      <img
+                        alt="Netlify Status"
+                        src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
+                      />
+                    </a>
+                  </div>
+
+                  <div className="item">
+                    Copyright © 2020 - 2023 New York University.
+                    <br />
+                    Created by Denis Pelli and the EasyEyes team.
+                  </div>
                 </div>
               </div>
             </>
