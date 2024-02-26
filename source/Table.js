@@ -160,8 +160,8 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          Welcome to the EasyEyes Compiler. Use the top button to select an
-          already-compiled experiment, or use the green SELECT FILE button to
+          Welcome to the EasyEyes Compiler. Use the grey SELECT button to select
+          an already-compiled experiment, or use the green SELECT FILE button to
           compile a new one. For new compilations, click SELECT FILE to upload
           any necessary resources (fonts, forms, sounds, etc.) before submitting
           the experiment spreadsheet. Alternatively, use SELECT FILE to submit
