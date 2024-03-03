@@ -268,6 +268,7 @@ export default class Running extends Component {
           <div className="link-set-buttons">
             {isRunning && pavloviaIsReady && (
               <button
+                id="new-button"
                 className="button-large-font button-grey resource-button"
                 style={{
                   fontSize: "1rem",
@@ -276,6 +277,8 @@ export default class Running extends Component {
                 }}
                 onClick={() => {
                   this.props.functions.handleSetActivateExperiment("REFRESH");
+                  document.getElementById("new-button").style.visibility =
+                    "hidden";
                 }}
               >
                 {" "}
