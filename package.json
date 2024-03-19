@@ -32,7 +32,7 @@
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
     "react-table": "^7.8.0",
-    "sweetalert2": "^11.9.0"
+    "sweetalert2": "^11.6.13"
   },
   "devDependencies": {
     "@babel/core": "^7.23.3",
@@ -71,7 +71,7 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-middleware": "^6.1.1",
     "webpack-dev-server": "^4.15.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz"
   },
   "lint-staged": {
     "*.{js,json,md,html,css,scss,ts}": "prettier --write"
