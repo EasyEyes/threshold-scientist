@@ -15,6 +15,8 @@ import {
   VR_HEADSET_USAGE_PROLIFIC_MAPPING,
   VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING,
   VISION_CORRECTION_PROLIFIC_MAPPING,
+  COMPLETION_CODE_ACTION,
+  COMPLETION_CODE_TYPE,
 } from "./prolificConstants";
 
 const prolificLangType = {
@@ -671,6 +673,7 @@ export const prolificCreateDraft = async (
   user,
   internalName,
   completionCode,
+  incompatibleCompletionCode,
   token,
 ) => {
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
@@ -683,14 +686,14 @@ export const prolificCreateDraft = async (
   const reward = parseInt(
     parseFloat((pay + payPerHour * hours).toFixed(2) * 100),
   );
-  let completionCodeAction = "MANUALLY_REVIEW";
+  let completionCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
   if (
     user.currentExperiment &&
     user.currentExperiment._online2SubmissionApproval == "automatic"
   ) {
-    completionCodeAction = "AUTOMATICALLY_APPROVE";
+    completionCodeAction = COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
   } else {
-    completionCodeAction = "MANUALLY_REVIEW";
+    completionCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
   }
   const allowList = user.currentExperiment._online4CustomAllowList;
   const whiteListParticipants = allowList
@@ -708,9 +711,28 @@ export const prolificCreateDraft = async (
     description: user.currentExperiment.descriptionOfStudy ?? "",
     external_study_url: user.currentExperiment.experimentUrl,
     prolific_id_option: "url_parameters",
-    completion_code: completionCode,
-    completion_code_action: completionCodeAction,
     completion_option: "url",
+    completion_codes: [
+      {
+        code: completionCode,
+        code_type: COMPLETION_CODE_TYPE.COMPLETED,
+        actions: [
+          {
+            action: completionCodeAction,
+          },
+        ],
+      },
+      {
+        code: incompatibleCompletionCode,
+        code_type: COMPLETION_CODE_TYPE.INCOMPATIBLE_DEVICE,
+        actions: [
+          {
+            action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
+            return_reason: "Incompatible device",
+          },
+        ],
+      },
+    ],
     total_available_places: user.currentExperiment._participantsHowMany ?? 10,
     estimated_completion_time:
       parseInt(user.currentExperiment._participantDurationMinutes) ?? 1,

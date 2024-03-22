@@ -395,14 +395,13 @@ export default class Running extends Component {
 
                         // ! generate completion code
                         const hasCompletionCode = !!completionCode;
-                        const code =
+                        const { code, incompatibleCompletionCode } =
                           completionCode ??
                           (await generateAndUploadCompletionURL(
                             user,
                             newRepo,
                             functions.handleUpdateUser,
                           ));
-
                         if (!hasCompletionCode)
                           this.setState({
                             completionCode: code,
@@ -413,6 +412,7 @@ export default class Running extends Component {
                           user,
                           `${this.props.user.username}/${this.props.projectName}`,
                           code,
+                          incompatibleCompletionCode,
                           prolificToken,
                         );
 
