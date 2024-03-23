@@ -165,10 +165,9 @@ export default class Table extends Component {
           compile a new one. For new compilations, click SELECT FILE to upload
           any necessary resources (fonts, forms, sounds, etc.) before submitting
           the experiment spreadsheet. Alternatively, use SELECT FILE to submit
-          an exported-experiment zip file containing both the spreadsheet and
-          resources. Resources uploaded individually are stored in your Pavlovia
-          account for future use, whereas those in an exported experiment are
-          not.
+          an export.zip file containing both the spreadsheet and resources.
+          Resources uploaded individually are stored in your Pavlovia account
+          for future use, whereas those in an export.zip are not.
         </div>
         <div style={{ marginTop: "8px", marginBottom: "10px" }}>
           <span

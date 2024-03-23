@@ -19,4 +19,5 @@ export function setDynamicSelectWidth(selectDropdown) {
     selectDropdown.style.fontSize,
   );
   selectDropdown.style.width = textWidth + "px";
+  selectDropdown.style.minWidth = "auto";
 }
