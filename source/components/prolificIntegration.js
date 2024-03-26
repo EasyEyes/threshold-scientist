@@ -674,6 +674,7 @@ export const prolificCreateDraft = async (
   internalName,
   completionCode,
   incompatibleCompletionCode,
+  abortedCompletionCode,
   token,
 ) => {
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
@@ -729,6 +730,15 @@ export const prolificCreateDraft = async (
           {
             action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
             return_reason: "Incompatible device",
+          },
+        ],
+      },
+      {
+        code: abortedCompletionCode,
+        code_type: COMPLETION_CODE_TYPE.ABORTED,
+        actions: [
+          {
+            action: completionCodeAction,
           },
         ],
       },

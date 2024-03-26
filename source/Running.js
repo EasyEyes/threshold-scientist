@@ -395,7 +395,11 @@ export default class Running extends Component {
 
                         // ! generate completion code
                         const hasCompletionCode = !!completionCode;
-                        const { code, incompatibleCompletionCode } =
+                        const {
+                          code,
+                          incompatibleCompletionCode,
+                          abortedCompletionCode,
+                        } =
                           completionCode ??
                           (await generateAndUploadCompletionURL(
                             user,
@@ -413,6 +417,7 @@ export default class Running extends Component {
                           `${this.props.user.username}/${this.props.projectName}`,
                           code,
                           incompatibleCompletionCode,
+                          abortedCompletionCode,
                           prolificToken,
                         );
 
