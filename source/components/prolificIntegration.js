@@ -18,6 +18,7 @@ import {
   COMPLETION_CODE_ACTION,
   COMPLETION_CODE_TYPE,
 } from "./prolificConstants";
+import { GLOSSARY } from "../../threshold/parameters/glossary";
 
 const prolificLangType = {
   NATIVE: "NATIVE",
@@ -709,17 +710,20 @@ export const prolificCreateDraft = async (
 
   const payload = {
     name:
+      user.currentExperiment.titleOfStudy &&
       user.currentExperiment.titleOfStudy !== ""
         ? user.currentExperiment.titleOfStudy
-        : internalName,
+        : GLOSSARY["_online1Title"].default,
     internal_name:
+      user.currentExperiment._online1InternalName &&
       user.currentExperiment._online1InternalName !== ""
         ? user.currentExperiment._online1InternalName
         : internalName,
     description:
+      user.currentExperiment.descriptionOfStudy &&
       user.currentExperiment.descriptionOfStudy !== ""
         ? user.currentExperiment.descriptionOfStudy
-        : "n/a",
+        : GLOSSARY["_online2Description"].default,
     external_study_url: user.currentExperiment.experimentUrl,
     prolific_id_option: "url_parameters",
     completion_option: "url",
