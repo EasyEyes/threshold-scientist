@@ -677,6 +677,7 @@ export const prolificCreateDraft = async (
   abortedCompletionCode,
   token,
 ) => {
+  console.log(internalName);
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
   const hours =
@@ -707,9 +708,18 @@ export const prolificCreateDraft = async (
     : [];
 
   const payload = {
-    name: user.currentExperiment.titleOfStudy ?? "",
-    internal_name: user.currentExperiment._online1InternalName || internalName,
-    description: user.currentExperiment.descriptionOfStudy ?? "",
+    name:
+      user.currentExperiment.titleOfStudy !== ""
+        ? user.currentExperiment.titleOfStudy
+        : internalName,
+    internal_name:
+      user.currentExperiment._online1InternalName !== ""
+        ? user.currentExperiment._online1InternalName
+        : internalName,
+    description:
+      user.currentExperiment.descriptionOfStudy !== ""
+        ? user.currentExperiment.descriptionOfStudy
+        : "n/a",
     external_study_url: user.currentExperiment.experimentUrl,
     prolific_id_option: "url_parameters",
     completion_option: "url",
@@ -743,9 +753,16 @@ export const prolificCreateDraft = async (
         ],
       },
     ],
-    total_available_places: user.currentExperiment._participantsHowMany ?? 10,
-    estimated_completion_time:
-      parseInt(user.currentExperiment._participantDurationMinutes) ?? 1,
+    total_available_places: isNaN(
+      parseInt(user.currentExperiment._participantsHowMany),
+    )
+      ? 1
+      : parseInt(user.currentExperiment._participantsHowMany),
+    estimated_completion_time: isNaN(
+      parseInt(user.currentExperiment._participantDurationMinutes),
+    )
+      ? 1
+      : parseInt(user.currentExperiment._participantDurationMinutes),
     reward: reward ?? 0,
     device_compatibility:
       user.currentExperiment._online3DeviceKind
