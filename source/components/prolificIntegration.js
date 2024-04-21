@@ -1,4 +1,3 @@
-import { saveAs } from "file-saver";
 import {
   LANGUAGE_INDEX_PROLIFIC_MAPPING,
   LOCATION_INDEX_PROLIFIC_MAPPING,
@@ -883,6 +882,7 @@ export const downloadDemographicData = async (
   token,
   prolificStudyId,
   filename,
+  zip,
 ) => {
   // const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
   const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
@@ -906,8 +906,7 @@ export const downloadDemographicData = async (
       const csvArray = rows.map((row) => row.split(","));
       let formattedCSV = csvArray.map((row) => row.join(",")).join("\r\n");
       formattedCSV = formattedCSV.replace(/\r\n$/, "");
-      const blob = new Blob([formattedCSV], { type: "text/csv" });
-      saveAs(blob, `${downloadName}-Prolific.csv`);
+      zip.file(`${downloadName}.prolific.csv`, formattedCSV);
     })
     .catch((error) => {
       console.log(error, "error");

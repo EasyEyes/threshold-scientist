@@ -482,18 +482,17 @@ export default class Running extends Component {
                 <button
                   className="button-grey button-small button-download"
                   onClick={async () => {
-                    await downloadDataFolder(user, newRepo);
                     const prolificStudyId = await getProlificStudyId(
                       user,
                       newRepo?.id,
                     );
-                    if (prolificStudyId) {
-                      await downloadDemographicData(
-                        prolificToken,
-                        prolificStudyId,
-                        newRepo.name,
-                      );
-                    }
+                    await downloadDataFolder(
+                      user,
+                      newRepo,
+                      prolificStudyId,
+                      prolificToken,
+                      downloadDemographicData,
+                    );
                   }}
                 >
                   Download results
