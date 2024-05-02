@@ -677,7 +677,6 @@ export const prolificCreateDraft = async (
   abortedCompletionCode,
   token,
 ) => {
-  console.log(internalName);
   // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
   const hours =

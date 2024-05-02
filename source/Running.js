@@ -414,7 +414,7 @@ export default class Running extends Component {
                         // ! create draft study on prolific
                         const result = await prolificCreateDraft(
                           user,
-                          `${this.props.user.username}/${this.props.projectName}`,
+                          `${this.props.projectName}`,
                           code,
                           incompatibleCompletionCode,
                           abortedCompletionCode,
