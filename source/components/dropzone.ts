@@ -102,17 +102,14 @@ export const handleDrop = async (
         Swal.close();
       },
     });
-  } else {
+  } else if (experimentFile) {
     Swal.fire({
       title: "Compiling ...",
       allowOutsideClick: true,
       allowEscapeKey: false,
       showConfirmButton: false,
     });
-  }
 
-  // handle experiment file
-  if (experimentFile) {
     // Build an experiment
     userRepoFiles.experiment = experimentFile;
     handleExperimentFile(experimentFile);
