@@ -8,7 +8,6 @@ import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 import { durations } from "../threshold/preprocess/getDuration";
 
 import "./css/StatusLines.scss";
-import { getSoundProfileStatement } from "./components/firebase_soundProfile";
 
 export default class StatusLines extends Component {
   constructor(props) {
@@ -31,7 +30,7 @@ export default class StatusLines extends Component {
     await this.props.functions.getProlificStudySubmissionDetails(
       user,
       prolificToken,
-      repo?.id
+      repo?.id,
     );
   };
 
@@ -76,7 +75,7 @@ export default class StatusLines extends Component {
           .querySelector(".btn-success-prolific-token")
           .setAttribute("disabled", true);
         const textElement = document.getElementById(
-          "prolific-token-text-input"
+          "prolific-token-text-input",
         );
         textElement.addEventListener("keyup", () => {
           if (textElement.value === "") {
@@ -85,14 +84,14 @@ export default class StatusLines extends Component {
               .setAttribute("disabled", true);
           } else {
             document.querySelector(
-              ".btn-success-prolific-token"
+              ".btn-success-prolific-token",
             ).disabled = false;
           }
         });
       },
       preConfirm: async () => {
         const token = document.getElementById(
-          "prolific-token-text-input"
+          "prolific-token-text-input",
         ).value;
         await createOrUpdateProlificToken(this.props.user, token);
         return token;
@@ -251,7 +250,7 @@ export default class StatusLines extends Component {
         />
         <StatusLine
           activated={!!filename || viewingPreviousExperiment}
-          title={"Experiment file"}
+          title={"File"}
           content={
             viewingPreviousExperiment
               ? originalFileName
@@ -263,7 +262,7 @@ export default class StatusLines extends Component {
         {/* Status Line for Compatibility Requirements */}
         <StatusLine
           activated={!!filename || viewingPreviousExperiment}
-          title={"Experiment needs"}
+          title={"Needs"}
           content={
             <>
               <span className="experiment-needs">
@@ -277,7 +276,7 @@ export default class StatusLines extends Component {
                   displayExperimentNeedsPopup(
                     previousCompatibilityRequirements,
                     functions.handleSetCompatibilityLanguage,
-                    viewingPreviousExperiment
+                    viewingPreviousExperiment,
                   )
                 }
               ></i>
@@ -289,7 +288,7 @@ export default class StatusLines extends Component {
             !!(user && filename && experimentStatus === "RUNNING") ||
             viewingPreviousExperiment
           }
-          title={"Experiment est. minutes"}
+          title={"Estimated minutes"}
           content={
             viewingPreviousExperiment
               ? previousExperimentDuration
@@ -301,7 +300,7 @@ export default class StatusLines extends Component {
 
         <StatusLine
           activated={showExperimentURL}
-          title={"Experiment URL"}
+          title={"URL"}
           content={
             (user && projectName && experimentStatus === "RUNNING") ||
             (viewingPreviousExperiment &&
@@ -329,7 +328,7 @@ export default class StatusLines extends Component {
           content={
             viewingPreviousExperiment
               ? this.getExperimentStatus(
-                  experimentStatus ?? previousExperimentStatus
+                  experimentStatus ?? previousExperimentStatus,
                 )
               : user && filename && projectName
               ? this.getExperimentStatus(experimentStatus)
