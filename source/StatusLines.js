@@ -205,7 +205,7 @@ export default class StatusLines extends Component {
                           style={{
                             color: "#666",
                           }}
-                          href="https://researcher-help.prolific.co/hc/en-gb/sections/4500136384412-Workspaces"
+                          href="https://researcher-help.prolific.com/hc/en-gb/sections/4500136384412-Workspaces"
                           target="_blank"
                           rel="noopener noreferrer"
                         >

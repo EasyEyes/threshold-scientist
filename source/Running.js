@@ -147,10 +147,10 @@ export default class Running extends Component {
   };
 
   goToProlificOnClick = async (user, repoId) => {
-    let link = "https://app.prolific.co/researcher/studies/active";
+    let link = "https://app.prolific.com/researcher/studies/active";
     const studyId = await getProlificStudyId(user, repoId);
     if (studyId) {
-      link = `https://app.prolific.co/researcher/workspaces/studies/${studyId}/submissions`;
+      link = `https://app.prolific.com/researcher/workspaces/studies/${studyId}/submissions`;
     }
     window.open(link, "_blank");
   };
@@ -424,7 +424,7 @@ export default class Running extends Component {
                         if (result.status === "UNPUBLISHED") {
                           window
                             .open(
-                              "https://app.prolific.co/researcher/workspaces/studies/" +
+                              "https://app.prolific.com/researcher/workspaces/studies/" +
                                 result.id,
                               "_blank",
                             )

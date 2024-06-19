@@ -591,9 +591,9 @@ const buildEligibilityRequirements = (
                 "A comma separated list of Prolific IDs for users you want to participate in the study.",
               title: "Custom Whitelist",
               help_text:
-                "ONLY these participants will be eligible for this study. (i.e. longitudinal design). <a href='https://researcher-help.prolific.co/hc/en-gb/articles/360015365674-How-to-invite-specific-participants-to-your-study'>Read about how to invite specific participants to your study.</a>",
+                "ONLY these participants will be eligible for this study. (i.e. longitudinal design). <a href='https://researcher-help.prolific.com/hc/en-gb/articles/360015365674-How-to-invite-specific-participants-to-your-study'>Read about how to invite specific participants to your study.</a>",
               researcher_help_text:
-                "ONLY these participants will be eligible for this study. (i.e. longitudinal design). <a href='https://researcher-help.prolific.co/hc/en-gb/articles/360015365674-How-to-invite-specific-participants-to-your-study'>Read about how to invite specific participants to your study.</a>",
+                "ONLY these participants will be eligible for this study. (i.e. longitudinal design). <a href='https://researcher-help.prolific.com/hc/en-gb/articles/360015365674-How-to-invite-specific-participants-to-your-study'>Read about how to invite specific participants to your study.</a>",
               participant_help_text: null,
               is_new: null,
             },
@@ -619,9 +619,9 @@ const buildEligibilityRequirements = (
                 "A comma separated list of Prolific IDs of the users you wish to make ineligible for the study.",
               title: "Custom Blacklist",
               help_text:
-                "<a href='https://researcher-help.prolific.co/hc/en-gb/articles/360009094374-How-to-prevent-certain-participants-from-accessing-your-study'>Read about how to prevent certain participants from accessing your study.</a>",
+                "<a href='https://researcher-help.prolific.com/hc/en-gb/articles/360009094374-How-to-prevent-certain-participants-from-accessing-your-study'>Read about how to prevent certain participants from accessing your study.</a>",
               researcher_help_text:
-                "<a href='https://researcher-help.prolific.co/hc/en-gb/articles/360009094374-How-to-prevent-certain-participants-from-accessing-your-study'>Read about how to prevent certain participants from accessing your study.</a>",
+                "<a href='https://researcher-help.prolific.com/hc/en-gb/articles/360009094374-How-to-prevent-certain-participants-from-accessing-your-study'>Read about how to prevent certain participants from accessing your study.</a>",
               participant_help_text: null,
               is_new: null,
             },
@@ -677,7 +677,7 @@ export const prolificCreateDraft = async (
   abortedCompletionCode,
   token,
 ) => {
-  // const prolificStudyDraftApiUrl = "https://api.prolific.co/api/v1/studies/";
+  // const prolificStudyDraftApiUrl = "https://api.prolific.com/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
   const hours =
     parseFloat(user.currentExperiment._participantDurationMinutes / 60) || 0;
@@ -810,7 +810,7 @@ export const prolificCreateDraft = async (
 };
 
 const fetchProlificStudy = async (token, prolificStudyId) => {
-  // const prolificFetchStudiesUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/`;
+  // const prolificFetchStudiesUrl = `https://api.prolific.com/api/v1/studies/${prolificStudyId}/`;
   const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/`;
   const response =
     (await fetch(prolificFetchStudiesUrl, {
@@ -831,7 +831,7 @@ const fetchProlificStudy = async (token, prolificStudyId) => {
 };
 
 const fetchProlificStudySubmissions = async (token, prolificStudyId) => {
-  // const prolificFetchStudiesUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/submissions/`;
+  // const prolificFetchStudiesUrl = `https://api.prolific.com/api/v1/studies/${prolificStudyId}/submissions/`;
   const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/submissions/`;
   const response =
     (await fetch(prolificFetchStudiesUrl, {
@@ -883,7 +883,7 @@ export const downloadDemographicData = async (
   filename,
   zip,
 ) => {
-  // const downloadDataUrl = `https://api.prolific.co/api/v1/studies/${prolificStudyId}/export/`;
+  // const downloadDataUrl = `https://api.prolific.com/api/v1/studies/${prolificStudyId}/export/`;
   const downloadDataUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/export/`;
   const downloadName = filename ?? "experiment";
 
