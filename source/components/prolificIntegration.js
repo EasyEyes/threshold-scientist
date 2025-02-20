@@ -690,7 +690,7 @@ export const prolificCreateDraft = async (
   let completionCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
   if (
     user.currentExperiment &&
-    user.currentExperiment._online2SubmissionApproval == "automatic"
+    user.currentExperiment._prolific2SubmissionApproval == "automatic"
   ) {
     completionCodeAction = COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
   } else {
