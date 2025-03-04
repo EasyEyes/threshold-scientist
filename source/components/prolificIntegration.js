@@ -812,42 +812,44 @@ export const prolificCreateDraft = async (
 const fetchProlificStudy = async (token, prolificStudyId) => {
   // const prolificFetchStudiesUrl = `https://api.prolific.com/api/v1/studies/${prolificStudyId}/`;
   const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/`;
-  const response =
-    (await fetch(prolificFetchStudiesUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: `Token ${token}`,
-      },
-    })
-      .then((response) => {
-        return response.json();
+  const response = token
+    ? await fetch(prolificFetchStudiesUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Token ${token}`,
+        },
       })
-      .catch((error) => {
-        console.log(error, "error");
-        return "";
-      })) || "";
+        .then((response) => {
+          return response.json();
+        })
+        .catch((error) => {
+          console.log(error, "error");
+          return "";
+        })
+    : "";
   return response;
 };
 
 const fetchProlificStudySubmissions = async (token, prolificStudyId) => {
   // const prolificFetchStudiesUrl = `https://api.prolific.com/api/v1/studies/${prolificStudyId}/submissions/`;
   const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/submissions/`;
-  const response =
-    (await fetch(prolificFetchStudiesUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: `Token ${token}`,
-      },
-    })
-      .then((response) => {
-        return response.json();
+  const response = token
+    ? await fetch(prolificFetchStudiesUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Token ${token}`,
+        },
       })
-      .catch((error) => {
-        console.log(error, "error");
-        return "";
-      })) || "";
+        .then((response) => {
+          return response.json();
+        })
+        .catch((error) => {
+          console.log(error, "error");
+          return "";
+        })
+    : "";
   return response;
 };
 

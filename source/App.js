@@ -162,16 +162,16 @@ export default class App extends Component {
 
   async handleSetActivateExperiment(activeExperiment) {
     activeExperiment = activeExperiment || "new";
-
+    console.log(activeExperiment);
     if (activeExperiment === "REFRESH") {
-      await this.handleReturnToStep("table");
+      await this.functions.handleReturnToStep("table");
+      console.log(this.props.newRepo);
       this.handleSetFilename(null);
       this.handleSetProjectName(null);
       this.handleSetCompatibilityRequirements("");
       this.handleSetExperimentDuration(null);
       this.handleSetExperimentStatus("INACTIVE");
       this.functions.handleSetActivateExperiment("new");
-
       return;
     }
 
@@ -220,7 +220,7 @@ export default class App extends Component {
         },
       });
       this.setState({
-        activeExperiment,
+        activeExperiment: activeExperiment,
         previousExperimentViewed: {
           originalFileName,
           previousExperimentStatus,
@@ -235,10 +235,10 @@ export default class App extends Component {
         title: "Getting ready ...",
         allowOutsideClick: false,
         allowEscapeKey: false,
-        didOpen: async () => {
+        didOpen: () => {
           Swal.showLoading(null);
           this.setState({
-            activeExperiment,
+            activeExperiment: activeExperiment,
             previousExperimentViewed: {
               originalFileName,
               previousExperimentStatus,
@@ -465,6 +465,7 @@ export default class App extends Component {
     this.setState({
       newRepo: newRepo,
       activeExperiment: newRepo,
+      experimentStatus: "INACTIVE",
       user: {
         ...this.state.user,
         currentExperiment: {
@@ -585,7 +586,7 @@ export default class App extends Component {
           prolificToken={prolificToken}
           resources={resources}
           projectName={activeExperiment.name}
-          newRepo={activeExperiment}
+          newRepo={null}
           activeExperiment={activeExperiment}
           experimentStatus={
             experimentStatus ??

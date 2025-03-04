@@ -41,7 +41,10 @@ export default class Running extends Component {
     this.props.scrollToCurrentStep();
 
     const [dataFolderLength, latestDateForDataCollection] =
-      await getDataFolderCsvLength(this.props.user, this.props.newRepo);
+      await getDataFolderCsvLength(
+        this.props.user,
+        this.props.activeExperiment,
+      );
     this.setState({ dataFolderLength, latestDateForDataCollection });
 
     // get total compile counts
@@ -61,19 +64,24 @@ export default class Running extends Component {
   }
 
   async componentDidUpdate(prevProps) {
-    if (this.props.newRepo !== prevProps.newRepo) {
+    if (this.props.activeExperiment !== prevProps.activeExperiment) {
       const [dataFolderLength, latestDateForDataCollection] =
-        await getDataFolderCsvLength(this.props.user, this.props.newRepo);
+        await getDataFolderCsvLength(
+          this.props.user,
+          this.props.activeExperiment,
+        );
       this.setState({ dataFolderLength, latestDateForDataCollection });
     }
   }
 
   async setModeToRun(e = null) {
-    const { user, newRepo, functions } = this.props;
+    const { user, activeExperiment, newRepo, functions } = this.props;
+
+    console.log(user.currentExperiment);
 
     const result = await runExperiment(
       user,
-      newRepo,
+      activeExperiment,
       user.currentExperiment.experimentUrl,
     );
 
@@ -135,11 +143,11 @@ export default class Running extends Component {
   }
 
   getProlificStudyStatus = async () => {
-    const { prolificToken, user, newRepo } = this.props;
+    const { prolificToken, user, activeExperiment } = this.props;
     await this.props.functions.getProlificStudySubmissionDetails(
       user,
       prolificToken,
-      newRepo?.id,
+      activeExperiment?.id,
     );
   };
 
@@ -157,7 +165,7 @@ export default class Running extends Component {
       user,
       prolificToken,
       projectName,
-      newRepo,
+      activeExperiment,
       functions,
       experimentStatus,
       previousExperimentViewed: { previousRecruitmentInformation },
@@ -309,7 +317,11 @@ export default class Running extends Component {
                   color: "#fff",
                 }}
                 onClick={async () => {
-                  await downloadCommonResources(user, newRepo.id, newRepo.name);
+                  await downloadCommonResources(
+                    user,
+                    activeExperiment.id,
+                    activeExperiment.name,
+                  );
                 }}
               >
                 Export
@@ -342,7 +354,10 @@ export default class Running extends Component {
                   onClick={async (e) => {
                     e.target.classList.add("button-disabled");
                     e.target.classList.add("button-wait");
-                    const result = await getExperimentStatus(user, newRepo);
+                    const result = await getExperimentStatus(
+                      user,
+                      activeExperiment,
+                    );
 
                     if (result === "RUNNING")
                       functions.handleSetExperimentStatus("RUNNING");
@@ -405,7 +420,7 @@ export default class Running extends Component {
                           completionCode ??
                           (await generateAndUploadCompletionURL(
                             user,
-                            newRepo,
+                            activeExperiment,
                             functions.handleUpdateUser,
                           ));
                         if (!hasCompletionCode)
@@ -432,7 +447,7 @@ export default class Running extends Component {
                             )
                             ?.focus();
                           await createProlificStudyIdFile(
-                            newRepo,
+                            activeExperiment,
                             user,
                             result.id,
                           );
@@ -456,7 +471,10 @@ export default class Running extends Component {
                     className="button-grey button-small"
                     style={smallButtonExtraStyle}
                     onClick={async () => {
-                      await this.goToProlificOnClick(user, newRepo?.id);
+                      await this.goToProlificOnClick(
+                        user,
+                        activeExperiment?.id,
+                      );
                     }}
                   >
                     Go to {recruitName}
@@ -486,11 +504,11 @@ export default class Running extends Component {
                   onClick={async () => {
                     const prolificStudyId = await getProlificStudyId(
                       user,
-                      newRepo?.id,
+                      activeExperiment?.id,
                     );
                     await downloadDataFolder(
                       user,
-                      newRepo,
+                      activeExperiment,
                       prolificStudyId,
                       prolificToken,
                       downloadDemographicData,
@@ -563,14 +581,17 @@ export default class Running extends Component {
                     const [dataFolderLength, latestDateForDataCollection] =
                       await getDataFolderCsvLength(
                         this.props.user,
-                        this.props.newRepo,
+                        this.props.activeExperiment,
                       );
                     this.setState({
                       dataFolderLength,
                       latestDateForDataCollection,
                     });
                     await this.getProlificStudyStatus();
-                    const result = await getExperimentStatus(user, newRepo);
+                    const result = await getExperimentStatus(
+                      user,
+                      activeExperiment,
+                    );
                     functions.handleSetExperimentStatus(result);
                   }}
                 >
