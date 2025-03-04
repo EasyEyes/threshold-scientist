@@ -122,3 +122,5 @@ dist
 .pnp.*
 
 localtest.html
+.netlify/state.json
+.netlify/functions-serve/prolific/
