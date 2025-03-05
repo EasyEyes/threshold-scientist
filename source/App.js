@@ -104,6 +104,8 @@ export default class App extends Component {
       handleSetExperiment: this.handleSetExperiment.bind(this),
       handleGetNewRepo: this.handleGetNewRepo.bind(this),
       handleSetExperimentStatus: this.handleSetExperimentStatus.bind(this),
+      handleSetPrevExperimentStatus:
+        this.handleSetPrevExperimentStatus.bind(this),
       handleArchivedExperimentBool:
         this.handleArchivedExperimentBool.bind(this),
       handleZipArchive: this.handleZipArchive.bind(this),
@@ -162,10 +164,8 @@ export default class App extends Component {
 
   async handleSetActivateExperiment(activeExperiment) {
     activeExperiment = activeExperiment || "new";
-    console.log(activeExperiment);
     if (activeExperiment === "REFRESH") {
       await this.functions.handleReturnToStep("table");
-      console.log(this.props.newRepo);
       this.handleSetFilename(null);
       this.handleSetProjectName(null);
       this.handleSetCompatibilityRequirements("");
@@ -481,6 +481,15 @@ export default class App extends Component {
   handleSetExperimentStatus(newStatus) {
     this.setState({
       experimentStatus: newStatus,
+    });
+  }
+
+  handleSetPrevExperimentStatus(newStatus) {
+    this.setState({
+      previousExperimentViewed: {
+        ...this.state.previousExperimentViewed,
+        previousExperimentStatus: newStatus,
+      },
     });
   }
 

@@ -28,7 +28,7 @@ export default class Running extends Component {
 
     this.state = {
       pavloviaIsReady:
-        props.previousExperiment || props.experimentStatus === "RUNNING",
+        props.viewingPreviousExperiment || props.experimentStatus === "RUNNING",
       completionCode: undefined,
       dataFolderLength: 0,
       latestDateForDataCollection: false,
@@ -57,7 +57,7 @@ export default class Running extends Component {
     });
 
     if (
-      !this.props.previousExperiment &&
+      !this.props.viewingPreviousExperiment &&
       this.props.user.currentExperiment.pavloviaPreferRunningModeBool
     )
       this.setModeToRun();
@@ -77,8 +77,6 @@ export default class Running extends Component {
   async setModeToRun(e = null) {
     const { user, activeExperiment, newRepo, functions } = this.props;
 
-    console.log(user.currentExperiment);
-
     const result = await runExperiment(
       user,
       activeExperiment,
@@ -87,7 +85,11 @@ export default class Running extends Component {
 
     if (result && result.newStatus === "RUNNING") {
       if (e !== null) e.target.removeAttribute("disabled");
-      functions.handleSetExperimentStatus("RUNNING");
+      if (newRepo) {
+        functions.handleSetExperimentStatus("RUNNING");
+      } else {
+        functions.handleSetPrevExperimentStatus("RUNNING");
+      }
 
       let tries = 10; // try 10 times
       const checkPavloviaReadyInterval = setInterval(() => {
@@ -168,7 +170,10 @@ export default class Running extends Component {
       activeExperiment,
       functions,
       experimentStatus,
-      previousExperimentViewed: { previousRecruitmentInformation },
+      previousExperimentViewed: {
+        previousRecruitmentInformation,
+        previousExperimentStatus,
+      },
       viewingPreviousExperiment,
     } = this.props;
     const {
@@ -177,8 +182,9 @@ export default class Running extends Component {
       dataFolderLength,
       latestDateForDataCollection,
     } = this.state;
-
-    const isRunning = experimentStatus === "RUNNING";
+    const isRunning = viewingPreviousExperiment
+      ? previousExperimentStatus === "RUNNING"
+      : experimentStatus === "RUNNING";
 
     const hasRecruitmentService = viewingPreviousExperiment
       ? previousRecruitmentInformation.recruitmentServiceName !== null
@@ -244,6 +250,8 @@ export default class Running extends Component {
             ? pavloviaIsReady
               ? "Experiment ready to run."
               : "Local. Experiment compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new experiment, you need to assign tokens to it in Pavlovia."
+            : viewingPreviousExperiment
+            ? "Experiment not running. Please go to Pavlovia to set it to RUNNING mode."
             : `Local. Upload successful! ${
                 offerPilotingOption
                   ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
