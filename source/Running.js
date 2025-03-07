@@ -418,6 +418,25 @@ export default class Running extends Component {
                         e.target.classList.add("button-disabled");
                         e.target.classList.add("button-wait");
 
+                        // Handle preexisting prolific study
+                        const existingStudyId = await getProlificStudyId(
+                          user,
+                          activeExperiment?.id,
+                        );
+                        if (existingStudyId) {
+                          // Study already exists, open it
+                          window
+                            .open(
+                              "https://app.prolific.com/researcher/workspaces/studies/" +
+                                existingStudyId,
+                              "_blank",
+                            )
+                            ?.focus();
+                          e.target.classList.remove("button-disabled");
+                          e.target.classList.remove("button-wait");
+                          return;
+                        }
+
                         // ! generate completion code
                         const hasCompletionCode = !!completionCode;
                         const {
