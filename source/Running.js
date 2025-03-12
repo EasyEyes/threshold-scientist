@@ -55,12 +55,8 @@ export default class Running extends Component {
         Object.values(compileCounts).reduce((a, b) => a + b, 0) + 1;
       this.props.functions.handleSetCompileCount(totalCompileCounts);
     });
-
-    if (
-      !this.props.viewingPreviousExperiment &&
-      this.props.user.currentExperiment.pavloviaPreferRunningModeBool
-    )
-      this.setModeToRun();
+    console.log(this.props);
+    await this.setModeToRun();
   }
 
   async componentDidUpdate(prevProps) {
@@ -71,6 +67,19 @@ export default class Running extends Component {
           this.props.activeExperiment,
         );
       this.setState({ dataFolderLength, latestDateForDataCollection });
+    }
+
+    const needSetModeToRun =
+      (this.props.viewingPreviousExperiment &&
+        this.props.previousExperimentViewed.previousExperimentStatus ===
+          "INACTIVE") ||
+      (!this.props.viewingPreviousExperiment &&
+        this.props.experimentStatus === "INACTIVE");
+    console.log(this.props.viewingPreviousExperiment);
+    console.log(this.props.previousExperimentViewed.previousExperimentStatus);
+    console.log(this.props.experimentStatus);
+    if (needSetModeToRun) {
+      this.setModeToRun();
     }
   }
 
@@ -84,16 +93,14 @@ export default class Running extends Component {
     );
 
     if (result && result.newStatus === "RUNNING") {
-      if (e !== null) e.target.removeAttribute("disabled");
-      if (newRepo) {
-        functions.handleSetExperimentStatus("RUNNING");
-      } else {
-        functions.handleSetPrevExperimentStatus("RUNNING");
-      }
-
       let tries = 10; // try 10 times
       const checkPavloviaReadyInterval = setInterval(() => {
         this.checkPavloviaReady(() => {
+          if (newRepo) {
+            functions.handleSetExperimentStatus("RUNNING");
+          } else {
+            functions.handleSetPrevExperimentStatus("RUNNING");
+          }
           clearInterval(checkPavloviaReadyInterval);
         });
         tries--;
@@ -101,6 +108,7 @@ export default class Running extends Component {
           clearInterval(checkPavloviaReadyInterval);
         }
       }, 2000);
+      if (e !== null) e.target.removeAttribute("disabled");
     }
   }
 
