@@ -7,7 +7,7 @@ import "../css/ExperimentNeeds.css";
 export const displayExperimentNeedsPopup = (
   previousT = "",
   setSelectedLanguage,
-  isViewingPreviousExperiment
+  isViewingPreviousExperiment,
 ) => {
   const selected = isViewingPreviousExperiment
     ? compatibilityRequirements.previousL
@@ -16,12 +16,12 @@ export const displayExperimentNeedsPopup = (
     ? previousT
     : compatibilityRequirements.t;
   Swal.fire({
-    title: "Experiment Needs",
+    title: "Device Compatibility",
     html: getHtml(
       text,
       selected,
       setSelectedLanguage,
-      isViewingPreviousExperiment
+      isViewingPreviousExperiment,
     ),
     showCloseButton: true,
     showCancelButton: false,
@@ -38,7 +38,7 @@ const getHtml = (
   text,
   selected,
   setSelectedLanguage,
-  isViewingPreviousExperiment
+  isViewingPreviousExperiment,
 ) => {
   const textArea = document.createElement("textarea");
   textArea.value = text;
@@ -95,8 +95,8 @@ const getHtml = (
   buttonsContainer.appendChild(Language);
 
   const explanation = document.createElement("div");
-  explanation.innerHTML = `STATE NEEDS. To conform to Prolific policy, you should copy the text above and include it in your experiment’s description for participants in <strong>_online2Description</strong> in your experiment spreadsheet.\n
-EXPLANATION. Each EasyEyes study begins with a compatibility page that only accepts participant devices that meet the experiment’s needs (e.g. Chrome browser and at least 2000 pixel-wide screen). Prolific policy demands up-front presentation of all inclusion criteria in the study’s Description, which is read by participants before they accept the study. When EasyEyes creates the Prolific study, it copies your experiment’s <strong>_online2Description</strong> to the Prolific study’s Description.`;
+  explanation.innerHTML = `STATE DEVICE-COMPATIBILITY NEEDS. To conform to Prolific policy, you should copy the text above and include it in your study’s Description for participants in <strong>_online2Description</strong> in your study spreadsheet.\n
+EXPLANATION. Each EasyEyes study begins with a device-compatibility page that only accepts participant devices that meet the experiment’s needs (e.g. Chrome browser and at least 2000 pixel-wide screen). Prolific policy demands up-front presentation of all inclusion criteria in the study’s Description, which is read by participants before they accept the study. When EasyEyes creates the Prolific study, it copies your experiment’s <strong>_online2Description</strong> to the Prolific study’s Description.`;
 
   explanation.style.marginTop = "10px";
   explanation.style.textAlign = "left";

@@ -264,7 +264,7 @@ export default class StatusLines extends Component {
         {/* Status Line for Compatibility Requirements */}
         <StatusLine
           activated={!!filename || viewingPreviousExperiment}
-          title={"Needs"}
+          title={"Device Compatibility"}
           content={
             <>
               <span className="experiment-needs">
