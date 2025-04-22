@@ -75,11 +75,8 @@ export default class Running extends Component {
           "INACTIVE") ||
       (!this.props.viewingPreviousExperiment &&
         this.props.experimentStatus === "INACTIVE");
-    console.log(this.props.viewingPreviousExperiment);
-    console.log(this.props.previousExperimentViewed.previousExperimentStatus);
-    console.log(this.props.experimentStatus);
     if (needSetModeToRun) {
-      this.setModeToRun();
+      await this.setModeToRun();
     }
   }
 
@@ -93,22 +90,12 @@ export default class Running extends Component {
     );
 
     if (result && result.newStatus === "RUNNING") {
-      let tries = 10; // try 10 times
-      const checkPavloviaReadyInterval = setInterval(() => {
-        this.checkPavloviaReady(() => {
-          if (newRepo) {
-            functions.handleSetExperimentStatus("RUNNING");
-          } else {
-            functions.handleSetPrevExperimentStatus("RUNNING");
-          }
-          clearInterval(checkPavloviaReadyInterval);
-        });
-        tries--;
-        if (tries === 0) {
-          clearInterval(checkPavloviaReadyInterval);
-        }
-      }, 2000);
-      if (e !== null) e.target.removeAttribute("disabled");
+      try {
+        await this.waitForPavloviaReady();
+        if (e !== null) e.target.removeAttribute("disabled");
+      } catch (error) {
+        console.error("Failed to setModeToRun", error);
+      }
     }
   }
 
@@ -118,38 +105,64 @@ export default class Running extends Component {
     }/${this.props.projectName.toLocaleLowerCase()}`;
   }
 
-  checkPavloviaReady(successfulCallback = null) {
-    fetch(this._getPavloviaExperimentUrl())
-      .then((response) => response.text())
-      .then((data) => {
-        if (data.includes("403")) {
-          if (this.state.pavloviaIsReady)
-            this.setState({
-              pavloviaIsReady: false,
-            });
-        } else if (data.includes("404")) {
-          if (this.state.pavloviaIsReady)
-            this.setState({
-              pavloviaIsReady: false,
-            });
-          Swal.fire({
-            icon: "error",
-            title: `Experiment unavailable`,
-            text: `Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.`,
-            confirmButtonColor: "#666",
-          });
+  async waitForPavloviaReady(maxTries = 10, delay = 200) {
+    const { newRepo, functions } = this.props;
+    for (let tries = 0; tries < maxTries; tries++) {
+      try {
+        await this.checkPavloviaReady();
+        if (newRepo) {
+          functions.handleSetExperimentStatus("RUNNING");
         } else {
-          if (successfulCallback) successfulCallback();
-          if (!this.state.pavloviaIsReady)
-            this.setState({
-              pavloviaIsReady: true,
-            });
+          functions.handleSetPrevExperimentStatus("RUNNING");
         }
-      })
-      .catch(() => {
-        if (this.state.pavloviaIsReady)
-          this.setState({ pavloviaIsReady: false });
-      });
+        return;
+      } catch (error) {
+        if (tries !== maxTries - 1) {
+          await new Promise((res) => setTimeout(res, delay));
+        }
+      }
+    }
+    throw new Error(
+      `Failed to verify Pavlovia is ready, after ${maxTries} attempts`,
+    );
+  }
+
+  checkPavloviaReady() {
+    return new Promise((resolve, reject) => {
+      fetch(this._getPavloviaExperimentUrl())
+        .then((response) => response.text())
+        .then((data) => {
+          if (data.includes("403")) {
+            if (this.state.pavloviaIsReady)
+              this.setState({
+                pavloviaIsReady: false,
+              });
+          } else if (data.includes("404")) {
+            if (this.state.pavloviaIsReady)
+              this.setState({
+                pavloviaIsReady: false,
+              });
+            Swal.fire({
+              icon: "error",
+              title: `Experiment unavailable`,
+              text: `Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.`,
+              confirmButtonColor: "#666",
+            });
+            reject(new Error("404 - Experiment Unavailable"));
+          } else {
+            if (!this.state.pavloviaIsReady)
+              this.setState({
+                pavloviaIsReady: true,
+              });
+            resolve();
+          }
+        })
+        .catch((error) => {
+          if (this.state.pavloviaIsReady)
+            this.setState({ pavloviaIsReady: false });
+          reject(error);
+        });
+    });
   }
 
   getProlificStudyStatus = async () => {
