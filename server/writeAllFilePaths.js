@@ -49,6 +49,8 @@ const ignorePattern = [
   // "map",
   "eslintrc",
   "examples",
+  "aider",
+  "notes",
 ];
 
 const containPattern = [];
@@ -56,6 +58,7 @@ const containPattern = [];
 // Exact match
 const matchPattern = [
   "js/threshold.min.js",
+  "js/first.min.js",
   "components/images/favicon.ico",
   "components/images/ios_settings.png",
 ];
@@ -114,5 +117,5 @@ fs.writeFile(
     } else {
       console.log("File directories updated successfully.");
     }
-  }
+  },
 );
