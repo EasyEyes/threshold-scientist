@@ -54,6 +54,9 @@ export default class Table extends Component {
 
     const errors = [];
 
+    // Initialize impulse responses to empty array
+    userRepoFiles.impulseResponses = [];
+
     await preprocessExperimentFile(
       file,
       copyUser(this.props.user),
@@ -70,6 +73,7 @@ export default class Table extends Component {
         requestedCodeList, // : string[],
         fileList, // : File[],
         errorList, // : any[]
+        requestedImpulseResponseList, // : string[]
       ) => {
         // scroll to the top of the step block
         this.props.scrollToCurrentStep();
@@ -87,6 +91,7 @@ export default class Table extends Component {
         userRepoFiles.requestedFolders = requestedFolderList;
         userRepoFiles.requestedImages = requestedImageList;
         userRepoFiles.requestedCode = requestedCodeList;
+        userRepoFiles.requestedImpulseResponses = requestedImpulseResponseList;
         userRepoFiles.blockFiles = fileList;
 
         if (errorList.length) {
@@ -150,11 +155,26 @@ export default class Table extends Component {
   render() {
     const resourceButtons = [];
     for (const fileType in this.props.resources) {
+      // Skip folders and impulseResponses as they'll be combined into a single "sound" button
+      if (fileType !== "folders" && fileType !== "impulseResponses") {
+        resourceButtons.push(
+          <ResourceButton
+            key={`resource-button-${fileType}`}
+            name={fileType}
+            resourceList={this.props.resources[fileType]}
+          />,
+        );
+      }
+    }
+
+    // Add the combined sound button if either folders or impulse responses exist
+    if (this.props.resources.folders || this.props.resources.impulseResponses) {
       resourceButtons.push(
         <ResourceButton
-          key={`resource-button-${fileType}`}
-          name={fileType}
-          resourceList={this.props.resources[fileType]}
+          key="resource-button-sound"
+          name="sound"
+          resourceList={this.props.resources.folders || []}
+          secondaryResourceList={this.props.resources.impulseResponses || []}
         />,
       );
     }

@@ -14,6 +14,13 @@ import {
   User,
 } from "../../threshold/preprocess/gitlabUtils";
 import { userRepoFiles } from "../../threshold/preprocess/constants";
+import { validateImpulseResponseFile } from "../../threshold/preprocess/experimentFileChecks";
+import { EasyEyesError } from "../../threshold/preprocess/errorMessages";
+
+// Helper function to identify impulse response files by their filename pattern
+const isImpulseResponseFile = (file: File): boolean => {
+  return file.name.match(/\.gainVTime\.(xlsx|csv)$/i) !== null;
+};
 
 export const handleDrop = async (
   user: User,
@@ -24,6 +31,7 @@ export const handleDrop = async (
   handleArchiveZip: (archiveZip: any) => void,
 ) => {
   const resourcesList: File[] = [];
+  const impulseResponseList: File[] = [];
   let experimentFile = null;
   const regex = /^(.+)\.export\.zip$/;
   let isCompiledFromArchiveBool = false;
@@ -53,8 +61,28 @@ export const handleDrop = async (
       continue;
     }
 
-    if (!isExpTableFile(file)) resourcesList.push(file);
-    else experimentFile = file;
+    if (isImpulseResponseFile(file)) {
+      // Validate impulse response file right away
+      const errors = await validateImpulseResponseFile(file);
+      if (errors.length > 0) {
+        // Show error message with the validation errors
+        const errorMessages = errors
+          .map((error) => `• ${error.name}: ${error.message}`)
+          .join("\n");
+        await Swal.fire({
+          icon: "error",
+          title: `Invalid impulse response file`,
+          html: `<p>${file.name} has format issues:</p><pre style="text-align: left; margin-top: 10px;">${errorMessages}</pre>`,
+          confirmButtonColor: "#666",
+        });
+        continue;
+      }
+      impulseResponseList.push(file);
+    } else if (isExpTableFile(file)) {
+      experimentFile = file;
+    } else {
+      resourcesList.push(file);
+    }
   }
 
   if (isCompiledFromArchiveBool) {
@@ -64,11 +92,28 @@ export const handleDrop = async (
         Object.keys(zip.files).map(async (filename) => {
           return zip.files[filename]
             .async("arraybuffer")
-            .then((arrayBuffer) => {
+            .then(async (arrayBuffer) => {
               const blob = new Blob([arrayBuffer]);
               const fileObject = new File([blob], filename);
-              if (!isExpTableFile(fileObject)) resourcesList.push(fileObject);
-              else experimentFile = fileObject;
+
+              if (isImpulseResponseFile(fileObject)) {
+                // Validate impulse response file from archive
+                const errors = await validateImpulseResponseFile(fileObject);
+                if (errors.length === 0) {
+                  impulseResponseList.push(fileObject);
+                } else {
+                  console.warn(
+                    `Invalid impulse response file in archive: ${filename}`,
+                    errors,
+                  );
+                  // We'll just skip invalid files in archives instead of showing errors
+                  // since there could be multiple files and we don't want to overwhelm the user
+                }
+              } else if (isExpTableFile(fileObject)) {
+                experimentFile = fileObject;
+              } else {
+                resourcesList.push(fileObject);
+              }
             });
         }),
       );
@@ -80,14 +125,17 @@ export const handleDrop = async (
       showConfirmButton: false,
     });
     if (experimentFile) {
+      // Store impulse response files
+      userRepoFiles.impulseResponses = impulseResponseList;
       // Build an experiment
       userRepoFiles.experiment = experimentFile;
       handleExperimentFile(experimentFile);
     }
     return;
   }
+
   // handle valid resource files
-  if (resourcesList.length > 0) {
+  if (resourcesList.length > 0 || impulseResponseList.length > 0) {
     await Swal.fire({
       title: "Uploading ...",
       allowOutsideClick: false,
@@ -96,7 +144,12 @@ export const handleDrop = async (
         // @ts-ignore
         Swal.showLoading(null);
 
-        await createOrUpdateCommonResources(user, resourcesList);
+        // Store impulse response files
+        userRepoFiles.impulseResponses = impulseResponseList;
+
+        // Upload all resources, including impulse responses
+        const allResources = [...resourcesList, ...impulseResponseList];
+        await createOrUpdateCommonResources(user, allResources);
         addResourcesForApp(await getCommonResourcesNames(user));
 
         Swal.close();
