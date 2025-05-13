@@ -190,15 +190,17 @@
 }
 
 .history-dropdown {
+  display: inline-block;
+  width: max-content;
+  min-width: 200px;
+  white-space: nowrap;
+  max-width: 100vw;
+
   border-radius: 0.5rem;
   vertical-align: middle;
   pointer-events: auto !important;
-  -moz-appearance: none; // remove the dropdown arrow button
+  -moz-appearance: none;
   -webkit-appearance: none;
-  white-space: initial;
-  @media screen and (min-width: 960px) {
-    white-space: nowrap;
-  }
   color: rgb(255, 255, 255) !important;
   font-weight: 400;
   border: none;
@@ -206,7 +208,18 @@
   text-align: center;
   font-size: unset;
   background-color: #999;
-  @media screen and (max-width: 560px) {
+}
+
+@media screen and (min-width: 960px) {
+  .history-dropdown {
+    /* unnecessary now, since we force no wrap everywhere */
+    /* white-space: nowrap; */
+  }
+}
+
+@media screen and (max-width: 560px) {
+  .history-dropdown {
+    /* you can still enforce a minimum on small screens if you want */
     min-width: 200px;
   }
 }
