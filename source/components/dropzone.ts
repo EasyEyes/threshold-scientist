@@ -63,20 +63,6 @@ export const handleDrop = async (
 
     if (isImpulseResponseFile(file)) {
       // Validate impulse response file right away
-      const errors = await validateImpulseResponseFile(file);
-      if (errors.length > 0) {
-        // Show error message with the validation errors
-        const errorMessages = errors
-          .map((error) => `• ${error.name}: ${error.message}`)
-          .join("\n");
-        await Swal.fire({
-          icon: "error",
-          title: `Invalid impulse response file`,
-          html: `<p>${file.name} has format issues:</p><pre style="text-align: left; margin-top: 10px;">${errorMessages}</pre>`,
-          confirmButtonColor: "#666",
-        });
-        continue;
-      }
       impulseResponseList.push(file);
     } else if (isExpTableFile(file)) {
       experimentFile = file;
@@ -97,18 +83,7 @@ export const handleDrop = async (
               const fileObject = new File([blob], filename);
 
               if (isImpulseResponseFile(fileObject)) {
-                // Validate impulse response file from archive
-                const errors = await validateImpulseResponseFile(fileObject);
-                if (errors.length === 0) {
-                  impulseResponseList.push(fileObject);
-                } else {
-                  console.warn(
-                    `Invalid impulse response file in archive: ${filename}`,
-                    errors,
-                  );
-                  // We'll just skip invalid files in archives instead of showing errors
-                  // since there could be multiple files and we don't want to overwhelm the user
-                }
+                impulseResponseList.push(fileObject);
               } else if (isExpTableFile(fileObject)) {
                 experimentFile = fileObject;
               } else {
