@@ -38,79 +38,84 @@ export default class Dropdown extends Component {
     } = this.props;
 
     return (
-      <select
-        className="history-dropdown"
-        name="projects"
-        id="projects"
-        value={selected === "new" ? "__NEW_EXPERIMENT__" : selected?.id}
-        onChange={(e) => {
-          if (e.target.value === "__NEW_EXPERIMENT__") {
-            setSelectedProject(null);
-            return;
-          } else if (e.target.value === "__FRESH_NEW_EXPERIMENT__") {
-            setSelectedProject("REFRESH");
-            return;
-          }
-
-          const selectedProject = projectList.find((project) => {
-            return project.id.toString() === e.target.value;
-          });
-          setSelectedProject(selectedProject);
-          const selectDropdown = document.getElementById("projects");
-          setDynamicSelectWidth(selectDropdown);
-        }}
-        style={style}
-      >
-        {(function () {
-          const optionList = projectList.map((project) => {
-            if (project.name !== "EasyEyesResources") {
-              return (
-                <option key={project.id} value={project.id}>
-                  {/* {`${this.shortenProjectName(project.name)}`} ( */}
-                  {`${project.name}`} (
-                  {new Date(project.created_at).toLocaleString()})
-                </option>
-              );
+      <div className="history-dropdown-wrapper">
+        <select
+          className="history-dropdown"
+          name="projects"
+          id="projects"
+          value={selected === "new" ? "__NEW_EXPERIMENT__" : selected?.id}
+          onChange={(e) => {
+            if (e.target.value === "__NEW_EXPERIMENT__") {
+              setSelectedProject(null);
+              return;
+            } else if (e.target.value === "__FRESH_NEW_EXPERIMENT__") {
+              setSelectedProject("REFRESH");
+              return;
             }
-          });
 
-          if (!newExperimentProjectName) {
-            optionList.unshift(
-              <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
-                {`Select a compiled experiment`}
-              </option>,
-            );
-          }
-          if (pavloviaIsReady || isFromStartTable) {
-            return optionList;
-          } else {
-            const optionList = [];
+            const selectedProject = projectList.find((project) => {
+              return project.id.toString() === e.target.value;
+            });
+            setSelectedProject(selectedProject);
+            const selectDropdown = document.getElementById("projects");
+            setDynamicSelectWidth(selectDropdown);
+          }}
+          style={style}
+        >
+          {(function () {
+            const optionList = projectList.map((project) => {
+              if (project.name !== "EasyEyesResources") {
+                return (
+                  <option key={project.id} value={project.id}>
+                    {/* {`${this.shortenProjectName(project.name)}`} ( */}
+                    {`${project.name}`} (
+                    {new Date(project.created_at).toLocaleString()})
+                  </option>
+                );
+              }
+            });
+
             if (!newExperimentProjectName) {
               optionList.unshift(
                 <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
                   {`Select a compiled experiment`}
                 </option>,
               );
-            } else {
-              optionList.unshift(
-                <option
-                  key={"__FRESH_NEW_EXPERIMENT__"}
-                  value={
-                    selected == "new"
-                      ? `${newExperimentProjectName}`
-                      : `Select a compiled experiment`
-                  }
-                >
-                  {selected == "new"
-                    ? `${newExperimentProjectName}`
-                    : `Select a compiled experiment`}
-                </option>,
-              );
             }
-            return optionList;
-          }
-        })()}
-      </select>
+            if (pavloviaIsReady || isFromStartTable) {
+              return optionList;
+            } else {
+              const optionList = [];
+              if (!newExperimentProjectName) {
+                optionList.unshift(
+                  <option
+                    key={"__NEW_EXPERIMENT__"}
+                    value={"__NEW_EXPERIMENT__"}
+                  >
+                    {`Select a compiled experiment`}
+                  </option>,
+                );
+              } else {
+                optionList.unshift(
+                  <option
+                    key={"__FRESH_NEW_EXPERIMENT__"}
+                    value={
+                      selected == "new"
+                        ? `${newExperimentProjectName}`
+                        : `Select a compiled experiment`
+                    }
+                  >
+                    {selected == "new"
+                      ? `${newExperimentProjectName}`
+                      : `Select a compiled experiment`}
+                  </option>,
+                );
+              }
+              return optionList;
+            }
+          })()}
+        </select>
+      </div>
     );
   }
 }
