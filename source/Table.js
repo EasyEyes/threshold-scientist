@@ -56,6 +56,8 @@ export default class Table extends Component {
 
     // Initialize impulse responses to empty array
     userRepoFiles.impulseResponses = [];
+    // Initialize frequency responses to empty array
+    userRepoFiles.frequencyResponses = [];
 
     await preprocessExperimentFile(
       file,
@@ -74,6 +76,7 @@ export default class Table extends Component {
         fileList, // : File[],
         errorList, // : any[]
         requestedImpulseResponseList, // : string[]
+        requestedFrequencyResponseList, // : string[]
       ) => {
         // scroll to the top of the step block
         this.props.scrollToCurrentStep();
@@ -92,6 +95,8 @@ export default class Table extends Component {
         userRepoFiles.requestedImages = requestedImageList;
         userRepoFiles.requestedCode = requestedCodeList;
         userRepoFiles.requestedImpulseResponses = requestedImpulseResponseList;
+        userRepoFiles.requestedFrequencyResponses =
+          requestedFrequencyResponseList;
         userRepoFiles.blockFiles = fileList;
 
         if (errorList.length) {
@@ -155,8 +160,12 @@ export default class Table extends Component {
   render() {
     const resourceButtons = [];
     for (const fileType in this.props.resources) {
-      // Skip folders and impulseResponses as they'll be combined into a single "sound" button
-      if (fileType !== "folders" && fileType !== "impulseResponses") {
+      // Skip folders, impulseResponses, and frequencyResponses as they'll be combined into a single "sound" button
+      if (
+        fileType !== "folders" &&
+        fileType !== "impulseResponses" &&
+        fileType !== "frequencyResponses"
+      ) {
         resourceButtons.push(
           <ResourceButton
             key={`resource-button-${fileType}`}
@@ -167,14 +176,19 @@ export default class Table extends Component {
       }
     }
 
-    // Add the combined sound button if either folders or impulse responses exist
-    if (this.props.resources.folders || this.props.resources.impulseResponses) {
+    // Add the combined sound button if any of the sound-related resources exist
+    if (
+      this.props.resources.folders ||
+      this.props.resources.impulseResponses ||
+      this.props.resources.frequencyResponses
+    ) {
       resourceButtons.push(
         <ResourceButton
           key="resource-button-sound"
           name="sound"
           resourceList={this.props.resources.folders || []}
           secondaryResourceList={this.props.resources.impulseResponses || []}
+          tertiaryResourceList={this.props.resources.frequencyResponses || []}
         />,
       );
     }

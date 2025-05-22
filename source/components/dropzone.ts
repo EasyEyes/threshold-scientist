@@ -22,6 +22,11 @@ const isImpulseResponseFile = (file: File): boolean => {
   return file.name.match(/\.gainVTime\.(xlsx|csv)$/i) !== null;
 };
 
+// Helper function to identify frequency response files by their filename pattern
+const isFrequencyResponseFile = (file: File): boolean => {
+  return file.name.match(/\.gainVFreq\.(xlsx|csv)$/i) !== null;
+};
+
 export const handleDrop = async (
   user: User,
   files: File[],
@@ -32,6 +37,7 @@ export const handleDrop = async (
 ) => {
   const resourcesList: File[] = [];
   const impulseResponseList: File[] = [];
+  const frequencyResponseList: File[] = [];
   let experimentFile = null;
   const regex = /^(.+)\.export\.zip$/;
   let isCompiledFromArchiveBool = false;
@@ -64,6 +70,9 @@ export const handleDrop = async (
     if (isImpulseResponseFile(file)) {
       // Validate impulse response file right away
       impulseResponseList.push(file);
+    } else if (isFrequencyResponseFile(file)) {
+      // Add frequency response file
+      frequencyResponseList.push(file);
     } else if (isExpTableFile(file)) {
       experimentFile = file;
     } else {
@@ -84,6 +93,8 @@ export const handleDrop = async (
 
               if (isImpulseResponseFile(fileObject)) {
                 impulseResponseList.push(fileObject);
+              } else if (isFrequencyResponseFile(fileObject)) {
+                frequencyResponseList.push(fileObject);
               } else if (isExpTableFile(fileObject)) {
                 experimentFile = fileObject;
               } else {
@@ -102,6 +113,8 @@ export const handleDrop = async (
     if (experimentFile) {
       // Store impulse response files
       userRepoFiles.impulseResponses = impulseResponseList;
+      // Store frequency response files
+      userRepoFiles.frequencyResponses = frequencyResponseList;
       // Build an experiment
       userRepoFiles.experiment = experimentFile;
       handleExperimentFile(experimentFile);
@@ -110,7 +123,11 @@ export const handleDrop = async (
   }
 
   // handle valid resource files
-  if (resourcesList.length > 0 || impulseResponseList.length > 0) {
+  if (
+    resourcesList.length > 0 ||
+    impulseResponseList.length > 0 ||
+    frequencyResponseList.length > 0
+  ) {
     await Swal.fire({
       title: "Uploading ...",
       allowOutsideClick: false,
@@ -122,8 +139,15 @@ export const handleDrop = async (
         // Store impulse response files
         userRepoFiles.impulseResponses = impulseResponseList;
 
-        // Upload all resources, including impulse responses
-        const allResources = [...resourcesList, ...impulseResponseList];
+        // Store frequency response files
+        userRepoFiles.frequencyResponses = frequencyResponseList;
+
+        // Upload all resources, including impulse responses and frequency responses
+        const allResources = [
+          ...resourcesList,
+          ...impulseResponseList,
+          ...frequencyResponseList,
+        ];
         await createOrUpdateCommonResources(user, allResources);
         addResourcesForApp(await getCommonResourcesNames(user));
 

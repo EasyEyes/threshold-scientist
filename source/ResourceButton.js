@@ -17,6 +17,8 @@ const matchIcon = (name) => {
       return "bi bi-file-code";
     case "impulseResponses":
       return "bi bi-sound-wave";
+    case "frequencyResponses":
+      return "bi bi-graph-up";
     default:
       return "bi bi-question-circle";
   }
@@ -33,13 +35,15 @@ const processNameForSinglePlural = (name, length) => {
 
 export default class ResourceButton extends Component {
   render() {
-    const { resourceList, name, secondaryResourceList } = this.props;
+    const { resourceList, name, secondaryResourceList, tertiaryResourceList } =
+      this.props;
 
     // Calculate the total items for combined sound resources
     const totalItems =
       name === "sound"
         ? (resourceList ? resourceList.length : 0) +
-          (secondaryResourceList ? secondaryResourceList.length : 0)
+          (secondaryResourceList ? secondaryResourceList.length : 0) +
+          (tertiaryResourceList ? tertiaryResourceList.length : 0)
         : resourceList.length;
 
     return (
@@ -66,12 +70,22 @@ export default class ResourceButton extends Component {
                   })
                   .join("") +
                 "</ul>"
-              : "<h4>Impulse Responses</h4><p></p>";
+              : "<br><h4>Impulse Responses</h4><p></p>";
+
+            const frequencyResponsesHtml = tertiaryResourceList.length
+              ? "<br><h4>Frequency Responses</h4><ul>" +
+                tertiaryResourceList
+                  .map((resource) => {
+                    return `<li key=${resource}>${resource}</li>`;
+                  })
+                  .join("") +
+                "</ul>"
+              : "<br><h4>Frequency Responses</h4><p></p>";
 
             Swal.fire({
               icon: undefined,
               title: "Sound Files",
-              html: foldersHtml + impulseResponsesHtml,
+              html: foldersHtml + impulseResponsesHtml + frequencyResponsesHtml,
               confirmButtonColor: "#019267",
               customClass: {
                 htmlContainer: "popup-text-container smaller-text",
