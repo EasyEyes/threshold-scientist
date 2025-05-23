@@ -75,7 +75,7 @@ export default class Login extends Component {
     // Show modal when fetching user info
     if (prevState.login !== "loading" && this.state.login === "loading") {
       Swal.fire({
-        title: "Connecting to Pavlovia ...",
+        title: "Listing experiments...",
         allowOutsideClick: false,
         allowEscapeKey: false,
         showConfirmButton: false,
