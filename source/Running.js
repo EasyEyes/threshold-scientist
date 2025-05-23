@@ -81,22 +81,30 @@ export default class Running extends Component {
   }
 
   async setModeToRun(e = null) {
-    const { user, activeExperiment, newRepo, functions } = this.props;
-
-    const result = await runExperiment(
-      user,
-      activeExperiment,
-      user.currentExperiment.experimentUrl,
-    );
-
-    if (result && result.newStatus === "RUNNING") {
-      try {
-        await this.waitForPavloviaReady();
-        if (e !== null) e.target.removeAttribute("disabled");
-      } catch (error) {
-        console.error("Failed to setModeToRun", error);
-      }
-    }
+    await Swal.fire({
+      title: "Activating...",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: async () => {
+        Swal.showLoading(null);
+        const { user, activeExperiment, newRepo, functions } = this.props;
+        const result = await runExperiment(
+          user,
+          activeExperiment,
+          user.currentExperiment.experimentUrl,
+        );
+        if (result && result.newStatus === "RUNNING") {
+          try {
+            await this.waitForPavloviaReady();
+            if (e !== null) e.target.removeAttribute("disabled");
+          } catch (error) {
+            console.error("Failed to setModeToRun", error);
+          }
+        }
+        Swal.close();
+      },
+    });
   }
 
   _getPavloviaExperimentUrl() {

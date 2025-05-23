@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import "regenerator-runtime";
+import Swal from "sweetalert2";
 
 import { downloadDataFolder } from "../threshold/preprocess/gitlabUtils";
 import { getUserInfo, redirectToOauth2 } from "../threshold/preprocess/user";
@@ -44,9 +45,49 @@ export default class Login extends Component {
         user,
         resources,
         accessToken,
-        prolificToken
+        prolificToken,
       );
     }
+    try {
+      if (!this.state.login) {
+        this.login();
+      }
+    } catch (error) {
+      console.error("Error logging in", error);
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    // Show modal when redirecting to Pavlovia login
+    if (!prevState.login && !this.state.login && !this.props.isCompletedStep) {
+      Swal.fire({
+        title: "Logging into Pavlovia ...",
+        text: "Redirecting to Pavlovia login page",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading(null);
+        },
+      });
+    }
+
+    // Show modal when fetching user info
+    if (prevState.login !== "loading" && this.state.login === "loading") {
+      Swal.fire({
+        title: "Connecting to Pavlovia ...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading(null);
+        },
+      });
+    }
+  }
+
+  componentWillUnmount() {
+    Swal.close();
   }
 
   login() {
@@ -57,31 +98,7 @@ export default class Login extends Component {
   render() {
     const { isCompletedStep, user } = this.props;
 
-    let node;
-    switch (this.state.login) {
-      case null: // no login
-        node = (
-          <div>
-            <div className="green-status-banner">
-              Connect to your Pavlovia account:
-            </div>
-            <button
-              className="button-green connect-to-pav"
-              onClick={this.login}
-            >
-              Connect to Pavlovia
-            </button>
-          </div>
-        );
-        break;
-      case "loading": // fetching user info
-        node = (
-          <div className="green-status-banner">Connecting to Pavlovia ...</div>
-        );
-        break;
-      default:
-        break;
-    }
+    let node = <div></div>;
 
     if (isCompletedStep) {
       let mostRecentProject = null;
@@ -122,7 +139,7 @@ export default class Login extends Component {
                   onClick={() => {
                     window.open(
                       `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
-                      "_blank"
+                      "_blank",
                     );
                   }}
                 >
