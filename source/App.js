@@ -72,6 +72,7 @@ export default class App extends Component {
         folders: [],
         code: [],
         impulseResponses: [],
+        frequencyResponses: [],
       },
       filename: null,
       projectName: null,
