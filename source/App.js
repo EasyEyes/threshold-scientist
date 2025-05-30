@@ -167,13 +167,13 @@ export default class App extends Component {
   async handleSetActivateExperiment(activeExperiment) {
     activeExperiment = activeExperiment || "new";
     if (activeExperiment === "REFRESH") {
-      await this.functions.handleReturnToStep("table");
+      this.setState({ activeExperiment: "new" });
       this.handleSetFilename(null);
       this.handleSetProjectName(null);
       this.handleSetCompatibilityRequirements("");
       this.handleSetExperimentDuration(null);
       this.handleSetExperimentStatus("INACTIVE");
-      this.functions.handleSetActivateExperiment("new");
+      await this.functions.handleReturnToStep("table");
       return;
     }
 
@@ -335,7 +335,9 @@ export default class App extends Component {
             pavloviaOfferPilotingOptionBool: false, // deprecated
             pavloviaPreferRunningModeBool: true,
           },
-          projectList: await getAllProjects(this.state.user),
+          projectList: getAllProjects(this.state.user).then((p) =>
+            this.setState({ user: { ...this.state.user, projectList: p } }),
+          ), // VERIFY where is state.projectList used? Is it safe to remove await from getAllProjects?
         },
         projectName: null,
         newRepo: null,

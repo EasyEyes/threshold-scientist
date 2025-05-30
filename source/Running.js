@@ -70,11 +70,14 @@ export default class Running extends Component {
     }
 
     const needSetModeToRun =
+      // this.props.name === "running" &&
       (this.props.viewingPreviousExperiment &&
         this.props.previousExperimentViewed.previousExperimentStatus ===
           "INACTIVE") ||
       (!this.props.viewingPreviousExperiment &&
         this.props.experimentStatus === "INACTIVE");
+    // &&
+    // this.props.newRepo !== null;
     if (needSetModeToRun) {
       await this.setModeToRun();
     }

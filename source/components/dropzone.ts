@@ -106,7 +106,7 @@ export const handleDrop = async (
     });
     Swal.fire({
       title: "Compiling ...",
-      allowOutsideClick: true,
+      allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
     });
@@ -157,7 +157,7 @@ export const handleDrop = async (
   } else if (experimentFile) {
     Swal.fire({
       title: "Compiling ...",
-      allowOutsideClick: true,
+      allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
     });
