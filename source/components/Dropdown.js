@@ -119,7 +119,7 @@ export default class Dropdown extends Component {
             if (isLoadingProjects) {
               return (
                 <option key="loading" value="loading">
-                  Loading experiments...
+                  Listing experiments...
                 </option>
               );
             }
