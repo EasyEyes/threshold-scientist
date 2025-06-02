@@ -89,3 +89,17 @@ table {
     border-radius: $icon-radius !important;
   }
 }
+
+@keyframes custom-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.bi.bi-arrow-repeat.icon-spin {
+  display: inline-block;
+  animation: custom-spin 1s linear infinite !important;
+}

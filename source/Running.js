@@ -17,6 +17,7 @@ import {
   createProlificStudyIdFile,
   getProlificStudyId,
   downloadCommonResources,
+  getRetryDelayMs,
 } from "../threshold/preprocess/gitlabUtils";
 
 import "./css/Running.scss";
@@ -34,6 +35,7 @@ export default class Running extends Component {
       latestDateForDataCollection: false,
     };
 
+    this._isActivating = false;
     this.setModeToRun = this.setModeToRun.bind(this);
   }
 
@@ -84,30 +86,36 @@ export default class Running extends Component {
   }
 
   async setModeToRun(e = null) {
-    await Swal.fire({
-      title: "Activating...",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      didOpen: async () => {
-        Swal.showLoading(null);
-        const { user, activeExperiment, newRepo, functions } = this.props;
-        const result = await runExperiment(
-          user,
-          activeExperiment,
-          user.currentExperiment.experimentUrl,
-        );
-        if (result && result.newStatus === "RUNNING") {
-          try {
+    if (this._isActivating) {
+      return;
+    }
+    this._isActivating = true;
+    try {
+      await Swal.fire({
+        title: "Activating...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: async () => {
+          Swal.showLoading(null);
+          const { user, activeExperiment, newRepo, functions } = this.props;
+          const result = await runExperiment(
+            user,
+            activeExperiment,
+            user.currentExperiment.experimentUrl,
+          );
+          if (result && result.newStatus === "RUNNING") {
             await this.waitForPavloviaReady();
             if (e !== null) e.target.removeAttribute("disabled");
-          } catch (error) {
-            console.error("Failed to setModeToRun", error);
           }
-        }
-        Swal.close();
-      },
-    });
+          Swal.close();
+        },
+      });
+    } catch (error) {
+      console.error("Failed to setModeToRun", error);
+    } finally {
+      this._isActivating = false;
+    }
   }
 
   _getPavloviaExperimentUrl() {
@@ -131,6 +139,10 @@ export default class Running extends Component {
         if (tries !== maxTries - 1) {
           await new Promise((res) => setTimeout(res, delay));
         }
+      } finally {
+        await new Promise((resolve) =>
+          setTimeout(resolve, getRetryDelayMs(tries)),
+        );
       }
     }
     throw new Error(
@@ -148,6 +160,7 @@ export default class Running extends Component {
               this.setState({
                 pavloviaIsReady: false,
               });
+            reject(new Error("403 - Forbidden"));
           } else if (data.includes("404")) {
             if (this.state.pavloviaIsReady)
               this.setState({

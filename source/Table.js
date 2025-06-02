@@ -6,7 +6,12 @@ import { handleDrop } from "./components/dropzone";
 import ResourceButton from "./ResourceButton";
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
 import { userRepoFiles } from "../threshold/preprocess/constants";
-import { copyUser, setRepoName } from "../threshold/preprocess/gitlabUtils";
+import {
+  getAllProjects,
+  copyUser,
+  setRepoName,
+  manuallySetSwalTitle,
+} from "../threshold/preprocess/gitlabUtils";
 
 import "./css/Table.scss";
 import Dropdown from "./components/Dropdown";
@@ -43,6 +48,45 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
+    let resolvedResources;
+
+    // Wait for resources to be loaded if they aren't already
+    if (!this.props.resourcesLoaded) {
+      Swal.fire({
+        title: "Listing resources...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        willOpen: () => {
+          Swal.showLoading(null);
+        },
+      });
+
+      await new Promise((resolve) => {
+        const checkResourcesLoaded = () => {
+          if (this.props.resourcesLoaded) {
+            // Swal.close(); // Leave open actually, we want to seamlessly transition to the compiling Swal
+            manuallySetSwalTitle("Compiling ...");
+            resolve();
+          } else {
+            setTimeout(checkResourcesLoaded, 10);
+          }
+        };
+        checkResourcesLoaded();
+      });
+    }
+
+    resolvedResources = this.props.resources;
+
+    // Ensure project list is resolved before proceeding if user object exists and projectList is a promise
+    if (
+      this.props.user &&
+      this.props.user.projectList &&
+      typeof this.props.user.projectList.then === "function"
+    ) {
+      await this.props.user.projectList;
+    }
+
     this.dropZoneRef.current.classList.add("drop-disabled");
     await this.reset();
     this.dropZoneRef.current.classList.remove("drop-disabled");
@@ -63,7 +107,7 @@ export default class Table extends Component {
       file,
       copyUser(this.props.user),
       errors,
-      this.props.resources,
+      resolvedResources,
       this.props.isCompiledFromArchiveBool,
       async (
         user,
@@ -124,6 +168,10 @@ export default class Table extends Component {
             this.props.functions.handleSetProjectName(
               await setRepoName(user, file.name.split(".")[0]),
             );
+
+            user.projectList = getAllProjects(user);
+            this.props.functions.handleSetProjectList(user.projectList);
+
             this.props.functions.handleNextStep("upload");
           }
 
@@ -171,6 +219,7 @@ export default class Table extends Component {
             key={`resource-button-${fileType}`}
             name={fileType}
             resourceList={this.props.resources[fileType]}
+            isLoading={!this.props.resourcesLoaded}
           />,
         );
       }
@@ -189,6 +238,7 @@ export default class Table extends Component {
           resourceList={this.props.resources.folders || []}
           secondaryResourceList={this.props.resources.impulseResponses || []}
           tertiaryResourceList={this.props.resources.frequencyResponses || []}
+          isLoading={!this.props.resourcesLoaded}
         />,
       );
     }

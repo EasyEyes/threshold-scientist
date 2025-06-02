@@ -9,17 +9,19 @@ export default class History extends Component {
     super(props);
 
     this.state = {
-      selected: props.user.projectList[0],
+      selected: null,
+      projectListResolved: false,
     };
 
     this.changeSelectedExperiment = this.changeSelectedExperiment.bind(this);
   }
 
-  // componentDidMount() {
-  //   this.setState({
-  //     selected: this.props.user.projectList[0]
-  //   })
-  // }
+  async componentDidMount() {
+    const projectList = await this.props.user.projectList;
+    if (projectList && projectList.length > 0) {
+      this.setState({ selected: projectList[0] });
+    }
+  }
 
   // getProjectDict = (projectList) => {
   //   const projectDict = {}

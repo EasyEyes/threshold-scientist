@@ -46,6 +46,8 @@ export default class ResourceButton extends Component {
           (tertiaryResourceList ? tertiaryResourceList.length : 0)
         : resourceList.length;
 
+    const isLoading = this.props.isLoading;
+
     return (
       <button
         className="button-grey button-small resource-button"
@@ -115,7 +117,13 @@ export default class ResourceButton extends Component {
       >
         {/* <i className={`resource-button-icon ${matchIcon(name)}`}></i> */}
         <span>
-          {totalItems} {processNameForSinglePlural(name, totalItems)}
+          {isLoading ? (
+            <i className="bi bi-arrow-repeat icon-spin"></i>
+          ) : (
+            <>
+              {totalItems} {processNameForSinglePlural(name, totalItems)}
+            </>
+          )}
         </span>
       </button>
     );

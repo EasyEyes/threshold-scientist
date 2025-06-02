@@ -18,7 +18,9 @@ import {
   getRecruitmentServiceConfig,
   getDurationForProject,
   getProlificStudyId,
+  User,
 } from "../threshold/preprocess/gitlabUtils";
+import { resourcesFileTypes } from "../threshold/preprocess/constants";
 import { auth, db } from "./components/firebase";
 import {
   getProlificAccount,
@@ -31,6 +33,24 @@ import { compatibilityRequirements } from "../threshold/preprocess/global";
 import "./css/App.scss";
 import { signInAnonymously } from "firebase/auth";
 import { getSoundProfileStatement } from "./components/firebase_soundProfile";
+
+// Utility function to create empty resources object from constants
+const createEmptyResourcesObject = () => {
+  const resources = {};
+  resourcesFileTypes.forEach((type) => {
+    resources[type] = [];
+  });
+  return resources;
+};
+
+// Utility function to create resources object from loaded data
+const createResourcesObjectFromData = (loadedResources) => {
+  const resources = {};
+  resourcesFileTypes.forEach((type) => {
+    resources[type] = loadedResources[type] || [];
+  });
+  return resources;
+};
 
 export default class App extends Component {
   constructor(props) {
@@ -65,15 +85,7 @@ export default class App extends Component {
       accessToken: null,
       prolificToken: null,
       prolificAccount: null,
-      resources: {
-        fonts: [],
-        forms: [],
-        texts: [],
-        folders: [],
-        code: [],
-        impulseResponses: [],
-        frequencyResponses: [],
-      },
+      resources: createEmptyResourcesObject(),
       filename: null,
       projectName: null,
       newRepo: null,
@@ -100,6 +112,7 @@ export default class App extends Component {
       handleUpdateUser: this.handleUpdateUser.bind(this),
       handleLogin: this.handleLogin.bind(this),
       handleUploadProlificToken: this.handleUploadProlificToken.bind(this),
+      handleUpdateProlificToken: this.handleUpdateProlificToken.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
       handleSetFilename: this.handleSetFilename.bind(this),
       handleSetProjectName: this.handleSetProjectName.bind(this),
@@ -115,6 +128,7 @@ export default class App extends Component {
       getProlificStudySubmissionDetails:
         this.getProlificStudySubmissionDetails.bind(this),
       getProjectsList: this.getProjectsList.bind(this),
+      handleSetProjectList: this.handleSetProjectList.bind(this),
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
       handleSetCompileCount: this.handleSetCompileCount.bind(this),
@@ -293,13 +307,7 @@ export default class App extends Component {
       futureSteps: [...this.allSteps].slice(1),
       user: null,
       accessToken: null,
-      resources: {
-        fonts: [],
-        forms: [],
-        texts: [],
-        folders: [],
-        code: [],
-      },
+      resources: createEmptyResourcesObject(),
       projectName: null,
       newRepo: null,
       compatibilityRequirements: "",
@@ -316,7 +324,31 @@ export default class App extends Component {
   }
 
   async handleReturnToStep(step) {
-    if (this.state.currentStep !== step)
+    if (this.state.currentStep !== step) {
+      // Create a fresh User instance and refresh project list
+      const currentUser = this.state.user;
+      const refreshedUser = new User(currentUser.accessToken);
+
+      // Copy existing user properties
+      refreshedUser.username = currentUser.username;
+      refreshedUser.name = currentUser.name;
+      refreshedUser.id = currentUser.id;
+      refreshedUser.avatar_url = currentUser.avatar_url;
+
+      // Initialize project list properly
+      refreshedUser.initProjectList();
+
+      // Reset experiment settings
+      refreshedUser.currentExperiment = {
+        participantRecruitmentServiceName: "",
+        participantRecruitmentServiceUrl: "",
+        participantRecruitmentServiceCode: "",
+        experimentUrl: "",
+        // by default, we streamline the uploading process
+        pavloviaOfferPilotingOptionBool: false, // deprecated
+        pavloviaPreferRunningModeBool: true,
+      };
+
       this.setState({
         currentStep: step,
         completedSteps: [...this.allSteps].slice(
@@ -324,25 +356,12 @@ export default class App extends Component {
           this.allSteps.indexOf(step),
         ),
         futureSteps: [...this.allSteps].slice(this.allSteps.indexOf(step) + 1),
-        user: {
-          ...this.state.user,
-          currentExperiment: {
-            participantRecruitmentServiceName: "",
-            participantRecruitmentServiceUrl: "",
-            participantRecruitmentServiceCode: "",
-            experimentUrl: "",
-            // by default, we streamline the uploading process
-            pavloviaOfferPilotingOptionBool: false, // deprecated
-            pavloviaPreferRunningModeBool: true,
-          },
-          projectList: getAllProjects(this.state.user).then((p) =>
-            this.setState({ user: { ...this.state.user, projectList: p } }),
-          ), // VERIFY where is state.projectList used? Is it safe to remove await from getAllProjects?
-        },
+        user: refreshedUser,
         projectName: null,
         newRepo: null,
         compatibilityRequirements: "",
       });
+    }
   }
 
   handleUpdateUser(newUser) {
@@ -359,9 +378,25 @@ export default class App extends Component {
       prolificAccount: prolificToken
         ? await getProlificAccount(prolificToken)
         : null,
-      resources: resources,
+      resources: createEmptyResourcesObject(), // Initialize with empty arrays while resources load
+      resourcesLoaded: false,
       ...this.nextStepStatus("table"),
     });
+
+    // Load resources in background and update when ready
+    resources
+      .then((r) => {
+        this.setState({
+          resources: createResourcesObjectFromData(r),
+          resourcesLoaded: true,
+        });
+        return r;
+      })
+      .catch((error) => {
+        // TODO retry?
+        console.error("Error loading resources", error);
+        this.setState({ resourcesLoaded: true });
+      });
   }
 
   async handleUploadProlificToken(prolificToken) {
@@ -370,6 +405,12 @@ export default class App extends Component {
       prolificAccount: prolificToken
         ? await getProlificAccount(prolificToken)
         : null,
+    });
+  }
+
+  async handleUpdateProlificToken(prolificToken) {
+    this.setState({
+      prolificToken: prolificToken,
     });
   }
 
@@ -383,10 +424,20 @@ export default class App extends Component {
   }
 
   async getProjectsList() {
+    const resolvedProjectList = await this.state.user.projectList;
     this.setState({
       user: {
         ...this.state.user,
-        projectList: await getAllProjects(this.state.user),
+        projectList: resolvedProjectList,
+      },
+    });
+  }
+
+  handleSetProjectList(projectList) {
+    this.setState({
+      user: {
+        ...this.state.user,
+        projectList: projectList,
       },
     });
   }
@@ -578,6 +629,7 @@ export default class App extends Component {
       profileStatement,
       isCompiledFromArchiveBool,
       archivedZip,
+      resourcesLoaded,
     } = this.state;
     const steps = [];
 
@@ -609,6 +661,7 @@ export default class App extends Component {
           prolificStudyStatus={prolificStudyStatus}
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
+          resourcesLoaded={resourcesLoaded}
         />,
       );
     else
@@ -630,6 +683,7 @@ export default class App extends Component {
           activeExperiment={activeExperiment}
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
+          resourcesLoaded={resourcesLoaded}
         />,
       );
 

@@ -14,6 +14,8 @@ export default class Login extends Component {
 
     this.state = {
       login: null,
+      projectListLoaded: false,
+      mostRecentProject: null,
     };
 
     this.login = this.login.bind(this);
@@ -39,43 +41,99 @@ export default class Login extends Component {
       // // temporarily assign access token here for temporaryLog
       tempAccessToken.t = accessToken;
 
-      const [user, resources, prolificToken] = await getUserInfo(accessToken);
-
-      this.props.functions.handleLogin(
-        user,
-        resources,
-        accessToken,
-        prolificToken,
-      );
-    }
-    try {
-      if (!this.state.login) {
-        this.login();
+      this.initializeUserQuickly(accessToken);
+    } else {
+      // No access token in URL
+      try {
+        if (!this.state.login) {
+          this.login();
+        }
+      } catch (error) {
+        console.error("Error logging in", error);
       }
-    } catch (error) {
-      console.error("Error logging in", error);
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  async initializeUserQuickly(accessToken) {
+    try {
+      // Create user and get basic info immediately
+      const { User } = await import("../threshold/preprocess/gitlabUtils");
+      const user = new User(accessToken);
+      await user.initUserDetails(); // TODO measure this is actually fast
+
+      user.initProjectList();
+
+      const resourcesPromise = user.projectList.then(async () => {
+        const { getCommonResourcesNames } = await import(
+          "../threshold/preprocess/gitlabUtils"
+        );
+        return getCommonResourcesNames(user);
+      });
+      const prolificTokenPromise = user.projectList.then(async () => {
+        const { getProlificToken } = await import(
+          "../threshold/preprocess/gitlabUtils"
+        );
+        return getProlificToken(user);
+      });
+      this.setState({ login: "complete" }); // Handle login immediately with user and promises
+      this.props.functions.handleLogin(
+        user,
+        resourcesPromise,
+        accessToken,
+        "", // Empty prolific token initially
+      );
+
+      // Update prolific token when it's ready
+      prolificTokenPromise
+        .then((prolificToken) => {
+          // Update prolific token in app state via a method we'll need to add
+          if (this.props.functions.handleUpdateProlificToken) {
+            this.props.functions.handleUpdateProlificToken(prolificToken);
+          }
+        })
+        .catch((error) => {
+          console.error("Error loading prolific token:", error);
+        });
+    } catch (error) {
+      console.error("Error initializing user:", error);
+      this.setState({
+        login: null, // Reset to allow retry
+      });
+    }
+  }
+
+  async componentDidUpdate(prevProps, prevState) {
+    // Check if user changed and we need to load projectList
+    if (
+      this.props.user &&
+      this.props.user !== prevProps.user &&
+      !this.state.projectListLoaded
+    ) {
+      try {
+        const resolvedProjectList = await this.props.user.projectList;
+        const mostRecentProject =
+          Array.isArray(resolvedProjectList) && resolvedProjectList.length
+            ? resolvedProjectList[0]
+            : null;
+
+        this.setState({
+          projectListLoaded: true,
+          mostRecentProject: mostRecentProject,
+        });
+      } catch (error) {
+        console.error("Error loading project list:", error);
+        this.setState({
+          projectListLoaded: true,
+          mostRecentProject: null,
+        });
+      }
+    }
+
     // Show modal when redirecting to Pavlovia login
     if (!prevState.login && !this.state.login && !this.props.isCompletedStep) {
       Swal.fire({
         title: "Logging into Pavlovia ...",
         text: "Redirecting to Pavlovia login page",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        showConfirmButton: false,
-        didOpen: () => {
-          Swal.showLoading(null);
-        },
-      });
-    }
-
-    // Show modal when fetching user info
-    if (prevState.login !== "loading" && this.state.login === "loading") {
-      Swal.fire({
-        title: "Listing experiments...",
         allowOutsideClick: false,
         allowEscapeKey: false,
         showConfirmButton: false,
@@ -97,13 +155,11 @@ export default class Login extends Component {
 
   render() {
     const { isCompletedStep, user } = this.props;
+    const { projectListLoaded, mostRecentProject } = this.state;
 
     let node = <div></div>;
 
     if (isCompletedStep) {
-      let mostRecentProject = null;
-      if (user.projectList.length) mostRecentProject = user.projectList[0];
-
       const smallButtonExtraStyle = {
         whiteSpace: "nowrap",
         fontSize: "0.7rem",
@@ -131,46 +187,55 @@ export default class Login extends Component {
           </div>
 
           <div className="link-set-buttons-login">
-            {mostRecentProject !== null && (
+            {!projectListLoaded ? (
+              <p>Loading experiments...</p>
+            ) : (
               <>
+                {mostRecentProject !== null && (
+                  <>
+                    <button
+                      className="button-small button-grey"
+                      style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
+                      onClick={() => {
+                        window.open(
+                          `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
+                          "_blank",
+                        );
+                      }}
+                    >
+                      View last experiment
+                      <br />
+                      <b>{mostRecentProject.name}</b>
+                    </button>
+
+                    <button
+                      className="button-small button-grey"
+                      style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
+                      onClick={async () => {
+                        await downloadDataFolder(user, mostRecentProject);
+                      }}
+                    >
+                      Download last experiment data
+                      <br />
+                      <b>{mostRecentProject.name}</b>
+                    </button>
+                  </>
+                )}
+
                 <button
-                  className="button-small button-grey"
-                  style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
+                  className="button-grey button-small"
+                  style={smallButtonExtraStyle}
                   onClick={() => {
                     window.open(
-                      `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
+                      `https://pavlovia.org/dashboard?tab=1`,
                       "_blank",
                     );
                   }}
                 >
-                  View last experiment
-                  <br />
-                  <b>{mostRecentProject.name}</b>
-                </button>
-
-                <button
-                  className="button-small button-grey"
-                  style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
-                  onClick={async () => {
-                    await downloadDataFolder(user, mostRecentProject);
-                  }}
-                >
-                  Download last experiment data
-                  <br />
-                  <b>{mostRecentProject.name}</b>
+                  View all experiments in Pavlovia
                 </button>
               </>
             )}
-
-            <button
-              className="button-grey button-small"
-              style={smallButtonExtraStyle}
-              onClick={() => {
-                window.open(`https://pavlovia.org/dashboard?tab=1`, "_blank");
-              }}
-            >
-              View all experiments in Pavlovia
-            </button>
           </div>
         </>
       );
