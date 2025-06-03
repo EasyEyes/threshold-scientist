@@ -411,6 +411,9 @@ export default class App extends Component {
   async handleUpdateProlificToken(prolificToken) {
     this.setState({
       prolificToken: prolificToken,
+      prolificAccount: prolificToken
+        ? await getProlificAccount(prolificToken)
+        : null,
     });
   }
 
