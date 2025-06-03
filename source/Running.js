@@ -18,6 +18,7 @@ import {
   getProlificStudyId,
   downloadCommonResources,
   getRetryDelayMs,
+  getAllProjects,
 } from "../threshold/preprocess/gitlabUtils";
 
 import "./css/Running.scss";
@@ -98,6 +99,9 @@ export default class Running extends Component {
         showConfirmButton: false,
         didOpen: async () => {
           Swal.showLoading(null);
+          getAllProjects(this.props.user).then((updatedProjects) => {
+            this.props.functions.handleSetProjectList(updatedProjects);
+          });
           const { user, activeExperiment, newRepo, functions } = this.props;
           const result = await runExperiment(
             user,
