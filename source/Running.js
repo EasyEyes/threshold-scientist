@@ -92,7 +92,7 @@ export default class Running extends Component {
     this._isActivating = true;
     try {
       await Swal.fire({
-        title: "Activating...",
+        title: "Activating ...",
         allowOutsideClick: false,
         allowEscapeKey: false,
         showConfirmButton: false,

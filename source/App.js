@@ -95,7 +95,7 @@ export default class App extends Component {
       previousExperimentDuration: null,
       prolificStudyStatus: "",
       totalCompileCounts: 0,
-      profileStatement: "Loading...",
+      profileStatement: "Loading ...",
       isCompiledFromArchiveBool: false,
       archivedZip: null,
     };
@@ -313,7 +313,7 @@ export default class App extends Component {
       compatibilityRequirements: "",
       previousExperimentDuration: null,
       prolificStudyStatus: "",
-      profileStatement: "Loading...",
+      profileStatement: "Loading ...",
     });
   }
 

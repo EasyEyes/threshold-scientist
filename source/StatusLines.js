@@ -42,7 +42,7 @@ export default class StatusLines extends Component {
   }
 
   async componentDidMount() {
-    if (this.props.profileStatement === "Loading...")
+    if (this.props.profileStatement === "Loading ...")
       await this.props.functions.getprofileStatement();
   }
 
