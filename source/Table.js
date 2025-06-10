@@ -169,9 +169,14 @@ export default class Table extends Component {
               await setRepoName(user, file.name.split(".")[0]),
             );
 
-            user.projectList = getAllProjects(user);
-            this.props.functions.handleSetProjectList(user.projectList);
-
+            const projectsPromise = getAllProjects(user);
+            const updatedProjects = await projectsPromise;
+            this.props.functions.handleSetProjectList(updatedProjects);
+            const baseName = file.name.split(".")[0];
+            const newProj = updatedProjects.find((p) => p.name === baseName);
+            if (newProj) {
+              this.props.functions.handleSetActivateExperiment(newProj);
+            }
             this.props.functions.handleNextStep("upload");
           }
 

@@ -56,6 +56,7 @@ export function setDynamicSelectWidth(selectEl) {
 
   // Measure just the text of the selected option
   const optionText = selectEl.options[selectEl.selectedIndex]?.text || "";
+
   const textWidth = getTextWidth(optionText, cs);
 
   // Calculate arrow buffer (~1.3em)
@@ -65,6 +66,6 @@ export function setDynamicSelectWidth(selectEl) {
   const padL = parseFloat(cs.paddingLeft);
   const padR = parseFloat(cs.paddingRight);
   const finalWidth = Math.ceil(textWidth + padL + padR + arrowBuffer);
-
+  console.log(`Calculated width ${finalWidth} for ${optionText}`);
   selectEl.style.width = `${finalWidth}px`;
 }

@@ -1,5 +1,4 @@
-import React, { Component } from "react";
-
+import React, { Component, createRef } from "react";
 import { setDynamicSelectWidth } from "./DynamicSelectWidth";
 
 export default class Dropdown extends Component {
@@ -9,6 +8,7 @@ export default class Dropdown extends Component {
       resolvedProjectList: [],
       isLoadingProjects: false,
     };
+    this.selectRef = createRef();
   }
 
   shortenProjectName(name) {
@@ -21,29 +21,37 @@ export default class Dropdown extends Component {
 
   async componentDidMount() {
     await this.resolveProjectList();
-    if (this.props.newExperimentProjectName) {
-      await this.props.getProjectsList();
-    }
-    const selectDropdown = document.getElementById("projects");
-    setDynamicSelectWidth(selectDropdown);
+    this.measureWidth(); // measure once we have the real list
   }
 
-  async componentDidUpdate(prevProps) {
-    // // Resolve project list if it changed
+  async componentDidUpdate(prevProps, prevState) {
+    //  if the parent handed a brand-new projectList prop…
     if (this.props.projectList !== prevProps.projectList) {
       await this.resolveProjectList();
+      this.measureWidth();
     }
 
-    if (this.props.selected !== prevProps.selected) {
-      const selectDropdown = document.getElementById("projects");
-      setDynamicSelectWidth(selectDropdown);
+    // if selected project list changes
+    if (
+      prevProps.selected !== this.props.selected &&
+      !this.state.isLoadingProjects
+    ) {
+      this.measureWidth();
     }
+  }
+
+  measureWidth() {
+    const selectEl = this.selectRef.current;
+    if (selectEl) setDynamicSelectWidth(selectEl);
   }
 
   async resolveProjectList() {
     const { projectList } = this.props;
 
-    // Check if projectList is a Promise
+    // guard  not to re-enter “loading…” for every identical Promise
+    if (projectList === this._lastPromise) return;
+    this._lastPromise = projectList;
+
     if (projectList && typeof projectList.then === "function") {
       this.setState({ isLoadingProjects: true });
       try {
@@ -52,23 +60,15 @@ export default class Dropdown extends Component {
           resolvedProjectList: resolved || [],
           isLoadingProjects: false,
         });
-      } catch (error) {
-        console.error("Error resolving project list:", error);
+      } catch {
         this.setState({
           resolvedProjectList: [],
           isLoadingProjects: false,
         });
       }
-    } else if (Array.isArray(projectList)) {
-      // projectList is already an array
-      this.setState({
-        resolvedProjectList: projectList,
-        isLoadingProjects: false,
-      });
     } else {
-      // Handle case where projectList is null/undefined
       this.setState({
-        resolvedProjectList: [],
+        resolvedProjectList: Array.isArray(projectList) ? projectList : [],
         isLoadingProjects: false,
       });
     }
@@ -83,9 +83,8 @@ export default class Dropdown extends Component {
       pavloviaIsReady,
       isFromStartTable,
     } = this.props;
-
     const { resolvedProjectList, isLoadingProjects } = this.state;
-    // TODO disabling actions on loading is not working
+
     const loadingStyle = isLoadingProjects
       ? { pointerEvents: "none", userSelect: "none" }
       : {};
@@ -93,6 +92,7 @@ export default class Dropdown extends Component {
     return (
       <div className="history-dropdown-wrapper" style={loadingStyle}>
         <select
+          ref={this.selectRef}
           className="history-dropdown"
           name="projects"
           id="projects"
@@ -100,80 +100,55 @@ export default class Dropdown extends Component {
           onChange={(e) => {
             if (e.target.value === "__NEW_EXPERIMENT__") {
               setSelectedProject(null);
-              return;
             } else if (e.target.value === "__FRESH_NEW_EXPERIMENT__") {
               setSelectedProject("REFRESH");
-              return;
+            } else {
+              const proj = resolvedProjectList.find(
+                (p) => p.id.toString() === e.target.value,
+              );
+              setSelectedProject(proj);
             }
-
-            const selectedProject = resolvedProjectList.find((project) => {
-              return project.id.toString() === e.target.value;
-            });
-            setSelectedProject(selectedProject);
-            const selectDropdown = document.getElementById("projects");
-            setDynamicSelectWidth(selectDropdown);
           }}
           style={style}
         >
-          {(function () {
-            if (isLoadingProjects) {
-              return (
-                <option key="loading" value="loading">
-                  Listing experiments...
-                </option>
-              );
-            }
-
-            const optionList = resolvedProjectList.map((project) => {
-              if (project.name !== "EasyEyesResources") {
-                return (
+          {isLoadingProjects ? (
+            <option key="loading" value="loading">
+              Listing experiments...
+            </option>
+          ) : (
+            (() => {
+              const opts = resolvedProjectList
+                .filter((p) => p.name !== "EasyEyesResources")
+                .map((project) => (
                   <option key={project.id} value={project.id}>
                     {`${project.name}`} (
                     {new Date(project.created_at).toLocaleString()})
                   </option>
-                );
-              }
-            });
+                ));
 
-            if (!newExperimentProjectName) {
-              optionList.unshift(
-                <option key={"__NEW_EXPERIMENT__"} value={"__NEW_EXPERIMENT__"}>
-                  {`Select a compiled experiment`}
-                </option>,
-              );
-            }
-            if (pavloviaIsReady || isFromStartTable) {
-              return optionList;
-            } else {
-              const optionList = [];
+              // unshift either the “Select a compiled experiment” or “Fresh new” placeholder…
               if (!newExperimentProjectName) {
-                optionList.unshift(
-                  <option
-                    key={"__NEW_EXPERIMENT__"}
-                    value={"__NEW_EXPERIMENT__"}
-                  >
-                    {`Select a compiled experiment`}
+                opts.unshift(
+                  <option key="__NEW_EXPERIMENT__" value="__NEW_EXPERIMENT__">
+                    Select a compiled experiment
                   </option>,
                 );
               } else {
-                optionList.unshift(
+                opts.unshift(
                   <option
-                    key={"__FRESH_NEW_EXPERIMENT__"}
-                    value={
-                      selected == "new"
-                        ? `${newExperimentProjectName}`
-                        : `Select a compiled experiment`
-                    }
+                    key="__FRESH_NEW_EXPERIMENT__"
+                    value="__FRESH_NEW_EXPERIMENT__"
                   >
-                    {selected == "new"
-                      ? `${newExperimentProjectName}`
-                      : `Select a compiled experiment`}
+                    {selected === "new"
+                      ? newExperimentProjectName
+                      : "Select a compiled experiment"}
                   </option>,
                 );
               }
-              return optionList;
-            }
-          })()}
+
+              return opts;
+            })()
+          )}
         </select>
       </div>
     );
