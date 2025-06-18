@@ -76,7 +76,9 @@ $table-step-padding: 0.4rem;
     justify-content: center;
     cursor: pointer;
     background: $green;
-    transition: color 0.1s ease-in-out, outline 0.1s ease-in-out;
+    transition:
+      color 0.1s ease-in-out,
+      outline 0.1s ease-in-out;
 
     .dropzone-sub-text {
       font-size: 1.2rem;
@@ -146,10 +148,13 @@ $table-step-padding: 0.4rem;
       }
 
       .error-hint {
-        &::before {
-          content: "HINT: ";
-          font-weight: bold;
-        }
+        user-select: text;
+      }
+
+      .error-hint-prefix {
+        font-weight: bold;
+        user-select: text;
+        color: $error;
       }
 
       .error-flex {
