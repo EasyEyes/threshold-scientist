@@ -27,7 +27,7 @@ const matchIcon = (name) => {
 const processNameForSinglePlural = (name, length) => {
   // Special case for sound which is already a singular word
   if (name === "sound") {
-    return length <= 1 ? "sound file" : "sound files";
+    return "folders and sound files";
   }
   // ! dangerous assumption: no 's' in any of the names
   return length <= 1 ? name.replace("s", "") : name;
@@ -55,14 +55,14 @@ export default class ResourceButton extends Component {
           // Special handling for sound to show both folders and impulse responses
           if (name === "sound") {
             const foldersHtml = resourceList.length
-              ? "<h4>Sound Folders</h4><ul>" +
+              ? "<h4>Folders</h4><ul>" +
                 resourceList
                   .map((resource) => {
                     return `<li key=${resource}>${resource}</li>`;
                   })
                   .join("") +
                 "</ul>"
-              : "<h4>Sound Folders</h4><p>No sound folders found</p>";
+              : "<h4>Folders</h4><p>No folders found</p>";
 
             const impulseResponsesHtml = secondaryResourceList.length
               ? "<br><h4>Impulse Responses</h4><ul>" +
@@ -86,7 +86,7 @@ export default class ResourceButton extends Component {
 
             Swal.fire({
               icon: undefined,
-              title: "Sound Files",
+              title: "Folders and Sound Files",
               html: foldersHtml + impulseResponsesHtml + frequencyResponsesHtml,
               confirmButtonColor: "#019267",
               customClass: {
