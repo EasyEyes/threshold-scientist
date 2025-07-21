@@ -35,15 +35,21 @@ const processNameForSinglePlural = (name, length) => {
 
 export default class ResourceButton extends Component {
   render() {
-    const { resourceList, name, secondaryResourceList, tertiaryResourceList } =
-      this.props;
+    const {
+      resourceList,
+      name,
+      secondaryResourceList,
+      tertiaryResourceList,
+      targetSoundListList,
+    } = this.props;
 
     // Calculate the total items for combined sound resources
     const totalItems =
       name === "sound"
         ? (resourceList ? resourceList.length : 0) +
           (secondaryResourceList ? secondaryResourceList.length : 0) +
-          (tertiaryResourceList ? tertiaryResourceList.length : 0)
+          (tertiaryResourceList ? tertiaryResourceList.length : 0) +
+          (targetSoundListList ? targetSoundListList.length : 0)
         : resourceList.length;
 
     const isLoading = this.props.isLoading;
@@ -84,10 +90,24 @@ export default class ResourceButton extends Component {
                 "</ul>"
               : "<br><h4>Frequency Responses</h4><p></p>";
 
+            const targetSoundListsHtml = targetSoundListList.length
+              ? "<br><h4>targetSoundList</h4><ul>" +
+                targetSoundListList
+                  .map((resource) => {
+                    return `<li key=${resource}>${resource}</li>`;
+                  })
+                  .join("") +
+                "</ul>"
+              : "<br><h4>targetSoundList</h4><p></p>";
+
             Swal.fire({
               icon: undefined,
               title: "Folders and Sound Files",
-              html: foldersHtml + impulseResponsesHtml + frequencyResponsesHtml,
+              html:
+                foldersHtml +
+                impulseResponsesHtml +
+                frequencyResponsesHtml +
+                targetSoundListsHtml,
               confirmButtonColor: "#019267",
               customClass: {
                 htmlContainer: "popup-text-container smaller-text",

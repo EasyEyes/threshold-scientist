@@ -27,6 +27,10 @@ const isFrequencyResponseFile = (file: File): boolean => {
   return file.name.match(/\.gainVFreq\.(xlsx|csv)$/i) !== null;
 };
 
+const isTargetSoundListFile = (file: File): boolean => {
+  return file.name.match(/\.targetSoundList\.(xlsx|csv)$/i) !== null;
+};
+
 export const handleDrop = async (
   user: User,
   files: File[],
@@ -38,6 +42,7 @@ export const handleDrop = async (
   const resourcesList: File[] = [];
   const impulseResponseList: File[] = [];
   const frequencyResponseList: File[] = [];
+  const targetSoundListList: File[] = [];
   let experimentFile = null;
   const regex = /^(.+)\.export\.zip$/;
   let isCompiledFromArchiveBool = false;
@@ -73,6 +78,8 @@ export const handleDrop = async (
     } else if (isFrequencyResponseFile(file)) {
       // Add frequency response file
       frequencyResponseList.push(file);
+    } else if (isTargetSoundListFile(file)) {
+      targetSoundListList.push(file);
     } else if (isExpTableFile(file)) {
       experimentFile = file;
     } else {
@@ -95,6 +102,8 @@ export const handleDrop = async (
                 impulseResponseList.push(fileObject);
               } else if (isFrequencyResponseFile(fileObject)) {
                 frequencyResponseList.push(fileObject);
+              } else if (isTargetSoundListFile(fileObject)) {
+                targetSoundListList.push(fileObject);
               } else if (isExpTableFile(fileObject)) {
                 experimentFile = fileObject;
               } else {
@@ -115,6 +124,8 @@ export const handleDrop = async (
       userRepoFiles.impulseResponses = impulseResponseList;
       // Store frequency response files
       userRepoFiles.frequencyResponses = frequencyResponseList;
+      // Store target sound list files
+      userRepoFiles.targetSoundLists = targetSoundListList;
       // Build an experiment
       userRepoFiles.experiment = experimentFile;
       handleExperimentFile(experimentFile);
@@ -126,7 +137,8 @@ export const handleDrop = async (
   if (
     resourcesList.length > 0 ||
     impulseResponseList.length > 0 ||
-    frequencyResponseList.length > 0
+    frequencyResponseList.length > 0 ||
+    targetSoundListList.length > 0
   ) {
     await Swal.fire({
       title: "Uploading ...",
@@ -142,11 +154,15 @@ export const handleDrop = async (
         // Store frequency response files
         userRepoFiles.frequencyResponses = frequencyResponseList;
 
+        // Store target sound list files
+        userRepoFiles.targetSoundLists = targetSoundListList;
+
         // Upload all resources, including impulse responses and frequency responses
         const allResources = [
           ...resourcesList,
           ...impulseResponseList,
           ...frequencyResponseList,
+          ...targetSoundListList,
         ];
         await createOrUpdateCommonResources(user, allResources);
         addResourcesForApp(await getCommonResourcesNames(user));

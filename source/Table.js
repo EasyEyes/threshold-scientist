@@ -98,10 +98,11 @@ export default class Table extends Component {
 
     const errors = [];
 
-    // Initialize impulse responses to empty array
     userRepoFiles.impulseResponses = [];
-    // Initialize frequency responses to empty array
+
     userRepoFiles.frequencyResponses = [];
+
+    userRepoFiles.targetSoundLists = [];
 
     await preprocessExperimentFile(
       file,
@@ -121,6 +122,7 @@ export default class Table extends Component {
         errorList, // : any[]
         requestedImpulseResponseList, // : string[]
         requestedFrequencyResponseList, // : string[]
+        requestedTargetSoundListList, // : string[]
       ) => {
         // scroll to the top of the step block
         this.props.scrollToCurrentStep();
@@ -141,6 +143,7 @@ export default class Table extends Component {
         userRepoFiles.requestedImpulseResponses = requestedImpulseResponseList;
         userRepoFiles.requestedFrequencyResponses =
           requestedFrequencyResponseList;
+        userRepoFiles.requestedTargetSoundLists = requestedTargetSoundListList;
         userRepoFiles.blockFiles = fileList;
 
         if (errorList.length) {
@@ -217,7 +220,8 @@ export default class Table extends Component {
       if (
         fileType !== "folders" &&
         fileType !== "impulseResponses" &&
-        fileType !== "frequencyResponses"
+        fileType !== "frequencyResponses" &&
+        fileType !== "targetSoundLists"
       ) {
         resourceButtons.push(
           <ResourceButton
@@ -234,7 +238,8 @@ export default class Table extends Component {
     if (
       this.props.resources.folders ||
       this.props.resources.impulseResponses ||
-      this.props.resources.frequencyResponses
+      this.props.resources.frequencyResponses ||
+      this.props.resources.targetSoundLists
     ) {
       resourceButtons.push(
         <ResourceButton
@@ -243,6 +248,7 @@ export default class Table extends Component {
           resourceList={this.props.resources.folders || []}
           secondaryResourceList={this.props.resources.impulseResponses || []}
           tertiaryResourceList={this.props.resources.frequencyResponses || []}
+          targetSoundListList={this.props.resources.targetSoundLists || []}
           isLoading={!this.props.resourcesLoaded}
         />,
       );
