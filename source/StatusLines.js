@@ -200,24 +200,6 @@ export default class StatusLines extends Component {
                     {prolificAccount
                       ? `${prolificAccount.name} (${prolificAccount.email})`
                       : "Failed to connect, please check if your Prolific token is correct."}
-                    {effectiveUsingProlificWorkspace ? (
-                      <span style={{ fontSize: "0.9rem" }}>
-                        {` (Using `}
-                        <a
-                          style={{
-                            color: "#666",
-                          }}
-                          href="https://researcher-help.prolific.com/hc/en-gb/sections/4500136384412-Workspaces"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Prolific Workspace
-                        </a>
-                        {`.)`}
-                      </span>
-                    ) : (
-                      ""
-                    )}
                   </span>
                   <div className="prolific-account-button">
                     <button
