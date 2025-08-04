@@ -92,6 +92,7 @@ export default class Dropdown extends Component {
     return (
       <div className="history-dropdown-wrapper" style={loadingStyle}>
         <select
+          disabled={isLoadingProjects}
           ref={this.selectRef}
           className="history-dropdown"
           name="projects"
