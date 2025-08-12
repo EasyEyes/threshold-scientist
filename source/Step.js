@@ -27,7 +27,7 @@ export default class Step extends PureComponent {
 
   render() {
     const { name, isCurrentStep, isCompletedStep } = this.props;
-    if (isCurrentStep && isCompletedStep) throw "STEP ERROR";
+    if (isCurrentStep && isCompletedStep) throw new Error("STEP ERROR");
     if (!isCurrentStep && !isCompletedStep) return <></>;
 
     let component;
