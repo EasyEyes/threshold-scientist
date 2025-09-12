@@ -91,33 +91,40 @@ export default class Dropdown extends Component {
 
     return (
       <div className="history-dropdown-wrapper" style={loadingStyle}>
-        <select
-          disabled={isLoadingProjects}
-          ref={this.selectRef}
-          className="history-dropdown"
-          name="projects"
-          id="projects"
-          value={selected === "new" ? "__NEW_EXPERIMENT__" : selected?.id}
-          onChange={(e) => {
-            if (e.target.value === "__NEW_EXPERIMENT__") {
-              setSelectedProject(null);
-            } else if (e.target.value === "__FRESH_NEW_EXPERIMENT__") {
-              setSelectedProject("REFRESH");
-            } else {
-              const proj = resolvedProjectList.find(
-                (p) => p.id.toString() === e.target.value,
-              );
-              setSelectedProject(proj);
-            }
-          }}
-          style={style}
-        >
-          {isLoadingProjects ? (
-            <option key="loading" value="loading">
-              Listing experiments...
-            </option>
-          ) : (
-            (() => {
+        {isLoadingProjects ? (
+          <button
+            className="history-dropdown"
+            disabled
+            style={{ ...style, pointerEvents: "none", cursor: "default" }}
+          >
+            <i
+              className="bi bi-arrow-repeat icon-spin"
+              style={{ color: "white" }}
+            ></i>
+          </button>
+        ) : (
+          <select
+            disabled={isLoadingProjects}
+            ref={this.selectRef}
+            className="history-dropdown"
+            name="projects"
+            id="projects"
+            value={selected === "new" ? "__NEW_EXPERIMENT__" : selected?.id}
+            onChange={(e) => {
+              if (e.target.value === "__NEW_EXPERIMENT__") {
+                setSelectedProject(null);
+              } else if (e.target.value === "__FRESH_NEW_EXPERIMENT__") {
+                setSelectedProject("REFRESH");
+              } else {
+                const proj = resolvedProjectList.find(
+                  (p) => p.id.toString() === e.target.value,
+                );
+                setSelectedProject(proj);
+              }
+            }}
+            style={style}
+          >
+            {(() => {
               const opts = resolvedProjectList
                 .filter((p) => p.name !== "EasyEyesResources")
                 .map((project) => (
@@ -148,9 +155,9 @@ export default class Dropdown extends Component {
               }
 
               return opts;
-            })()
-          )}
-        </select>
+            })()}
+          </select>
+        )}
       </div>
     );
   }
