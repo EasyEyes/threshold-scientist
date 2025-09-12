@@ -249,13 +249,8 @@ export default class StatusLines extends Component {
           title={"Device Compatibility"}
           content={
             <>
-              <span className="experiment-needs">
-                {viewingPreviousExperiment
-                  ? previousCompatibilityRequirements
-                  : globalCompatibilityReq.t}
-              </span>
-              <i
-                className="bi bi-question-circle icon-i"
+              <span
+                className="experiment-needs"
                 onClick={() =>
                   displayExperimentNeedsPopup(
                     previousCompatibilityRequirements,
@@ -263,7 +258,17 @@ export default class StatusLines extends Component {
                     viewingPreviousExperiment,
                   )
                 }
-              ></i>
+                style={{
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => (e.target.style.fontWeight = "bold")}
+                onMouseLeave={(e) => (e.target.style.fontWeight = "normal")}
+              >
+                {viewingPreviousExperiment
+                  ? previousCompatibilityRequirements
+                  : globalCompatibilityReq.t}
+              </span>
             </>
           }
         />
