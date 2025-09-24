@@ -44,6 +44,15 @@ export default class Dropdown extends Component {
     const selectEl = this.selectRef.current;
     if (selectEl) setDynamicSelectWidth(selectEl);
   }
+  async refreshProjectList() {
+    if (this.props.user && this.props.user.initProjectList) {
+      await this.props.user.initProjectList(true);
+      const freshList = await this.props.user.projectList;
+      this.setState({
+        resolvedProjectList: freshList || this.state.resolvedProjectList,
+      });
+    }
+  }
 
   async resolveProjectList() {
     const { projectList } = this.props;
@@ -110,6 +119,9 @@ export default class Dropdown extends Component {
             name="projects"
             id="projects"
             value={selected === "new" ? "__NEW_EXPERIMENT__" : selected?.id}
+            onFocus={() => {
+              if (!isLoadingProjects) this.refreshProjectList();
+            }}
             onChange={(e) => {
               if (e.target.value === "__NEW_EXPERIMENT__") {
                 setSelectedProject(null);

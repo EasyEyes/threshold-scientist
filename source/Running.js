@@ -326,7 +326,7 @@ export default class Running extends Component {
                 padding: "0.3rem 1rem",
                 backgroundColor: "#999",
               }}
-              getProjectsList={this.props.functions.getProjectsList}
+              user={this.props.user}
               pavloviaIsReady={this.state.pavloviaIsReady}
             />
           </span>
