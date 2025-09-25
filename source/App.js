@@ -91,7 +91,7 @@ export default class App extends Component {
       newRepo: null,
       experimentStatus: "INACTIVE",
       compatibilityRequirements: compatibilityRequirements.t,
-      compatibilityLanguage: "en-US",
+      compatibilityLanguage: "en",
       previousExperimentDuration: null,
       prolificStudyStatus: "",
       totalCompileCounts: 0,
@@ -252,7 +252,7 @@ export default class App extends Component {
           previousCompatibilityRequirements: previousCompatibilityRequirements,
           previousExperimentDuration,
         },
-        compatibilityLanguage: "en-US",
+        compatibilityLanguage: "en",
       });
     } else {
       await Swal.fire({
@@ -271,7 +271,7 @@ export default class App extends Component {
                 previousCompatibilityRequirements,
               previousExperimentDuration,
             },
-            compatibilityLanguage: "en-US",
+            compatibilityLanguage: "en",
           });
 
           Swal.close();

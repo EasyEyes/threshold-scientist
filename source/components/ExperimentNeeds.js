@@ -112,7 +112,7 @@ EXPLANATION. Each EasyEyes study begins with a device-compatibility page that on
 
 // Languages map from language name to language code (From EasyEyes Phrases doc)
 export const Languages = {
-  English: "en-US",
+  English: "en",
   Deutsch: "de",
   Français: "fr",
   Español: "es",
