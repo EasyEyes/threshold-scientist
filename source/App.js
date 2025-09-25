@@ -127,6 +127,7 @@ export default class App extends Component {
       handleSetExperimentDuration: this.handleSetExperimentDuration.bind(this),
       getProlificStudySubmissionDetails:
         this.getProlificStudySubmissionDetails.bind(this),
+      handleSetProjectList: this.handleSetProjectList.bind(this),
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
       handleSetCompileCount: this.handleSetCompileCount.bind(this),
@@ -175,6 +176,15 @@ export default class App extends Component {
   }
 
   /* -------------------------------------------------------------------------- */
+
+  handleSetProjectList(projectList) {
+    this.setState({
+      user: {
+        ...this.state.user,
+        projectList: projectList,
+      },
+    });
+  }
 
   async handleSetActivateExperiment(activeExperiment) {
     activeExperiment = activeExperiment || "new";
