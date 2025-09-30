@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import { compatibilityRequirements } from "../../threshold/preprocess/global";
 
 import "../css/ExperimentNeeds.css";
+import { readi18nPhrases } from "../../threshold/components/readPhrases";
 
 export const displayExperimentNeedsPopup = (
   previousT = "",
@@ -65,14 +66,20 @@ const getHtml = (
   Language.innerHTML = "Language: ";
   Language.style.display = "flex";
   Language.style.alignItems = "center";
+  Language.style.width = "100%";
+  Language.style.paddingLeft = "3px";
 
   const LanguageDropdownContainer = document.createElement("select");
 
-  Object.keys(Languages).forEach((language) => {
+  const langCodes = Object.keys(readi18nPhrases("EE_languageNameNative"));
+  const nativeName = (code) => readi18nPhrases("EE_languageNameNative", code);
+  const englishName = (code) => readi18nPhrases("EE_languageNameEnglish", code);
+
+  langCodes.forEach((code) => {
     const option = document.createElement("option");
-    option.key = language;
-    option.value = Languages[language];
-    option.innerHTML = language;
+    option.key = nativeName(code);
+    option.value = code;
+    option.innerHTML = englishName(code) + " (" + nativeName(code) + ")";
     LanguageDropdownContainer.appendChild(option);
   });
 
@@ -80,9 +87,7 @@ const getHtml = (
     "language-dropdown LanguageDropdownContainer";
   LanguageDropdownContainer.name = "languageDropdown";
   LanguageDropdownContainer.id = "languageDropdown";
-  LanguageDropdownContainer.value = selected
-    ? selected
-    : Object.values(Languages)[0];
+  LanguageDropdownContainer.value = selected ? selected : "en";
   LanguageDropdownContainer.addEventListener("change", (e) => {
     setSelectedLanguage(e.target.value, isViewingPreviousExperiment);
     textArea.value = isViewingPreviousExperiment
@@ -95,8 +100,7 @@ const getHtml = (
   buttonsContainer.appendChild(Language);
 
   const explanation = document.createElement("div");
-  explanation.innerHTML = `THE STUDY DESCRIPTION MUST CLEARLY SPECIFY ALL REQUIREMENTS. To conform to Prolific policy, you should copy the text above and include it in your study’s Description for participants in <strong>_online2Description</strong> in your study spreadsheet.\n
-EXPLANATION. Each EasyEyes study begins with a device-compatibility page that only accepts participant devices that meet the study’s needs (e.g. Chrome browser and at least 2000 pixel-wide screen). Prolific policy demands up-front presentation of all inclusion criteria in the study’s Description, which is read by participants before they accept the study. When EasyEyes creates the Prolific study, it copies your study’s <strong>_online2Description</strong> to the Prolific study’s Description.`;
+  explanation.innerHTML = `1. Specify your study's needs in your spreadsheet using the _needXXX and needXXX parameters.\n2. Choose a language from the menu above.\n3. Copy the translated, participant-friendly needs statement provided in the box above.\n4. Include that in your spreadsheet's _online2Description. This becomes your study's Prolific Description, which participants see before deciding whether to join.\n\n✅ This ensures that only compatible devices participate (e.g., Chrome browser, ≥4 CPU cores) and keeps you compliant with Prolific's policy that all study requirements must be included in the Description.`;
 
   explanation.style.marginTop = "10px";
   explanation.style.textAlign = "left";
@@ -108,34 +112,4 @@ EXPLANATION. Each EasyEyes study begins with a device-compatibility page that on
   container.appendChild(explanation);
 
   return container;
-};
-
-// Languages map from language name to language code (From EasyEyes Phrases doc)
-export const Languages = {
-  English: "en",
-  Deutsch: "de",
-  Français: "fr",
-  Español: "es",
-  Português: "pt",
-  Italiano: "it",
-  Română: "ro",
-  Polski: "pl",
-  Русский: "ru",
-  հայերեն: "hy",
-  Suomalainen: "fi",
-  ქართული: "ka",
-  עִברִית: "he",
-  عربي: "ar",
-  اردو: "ur",
-  हिंदी: "hi",
-  தமிழ்: "ta",
-  മലയാളം: "ml",
-  తెలుగు: "te",
-  ಕನ್ನಡ: "kn",
-  বাংলা: "bn",
-  "bahasa Indonesia": "id",
-  简体中文: "zh-CN",
-  繁體中文: "zh-HK",
-  日本: "ja",
-  한국인: "ko",
 };
