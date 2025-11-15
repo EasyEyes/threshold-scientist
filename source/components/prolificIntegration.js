@@ -704,6 +704,22 @@ export const prolificCreateDraft = async (
     ? blockList.split(",").map((item) => item.trim())
     : [];
 
+  const participantGroup =
+    user.currentExperiment._prolific2CompletionPathAddToGroup?.trim();
+
+  const completedActions = [
+    {
+      action: completionCodeAction,
+    },
+  ];
+
+  if (participantGroup && participantGroup !== "") {
+    completedActions.push({
+      action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
+      participant_group_id: participantGroup,
+    });
+  }
+
   const payload = {
     name:
       user.currentExperiment.titleOfStudy &&
@@ -727,11 +743,7 @@ export const prolificCreateDraft = async (
       {
         code: completionCode,
         code_type: COMPLETION_CODE_TYPE.COMPLETED,
-        actions: [
-          {
-            action: completionCodeAction,
-          },
-        ],
+        actions: completedActions,
       },
       {
         code: incompatibleCompletionCode,
