@@ -687,13 +687,11 @@ export const prolificCreateDraft = async (
   const reward = parseInt(
     parseFloat((pay + payPerHour * hours).toFixed(2) * 100),
   );
-  let completionCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
+  let completionCodeAction = COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
   if (
     user.currentExperiment &&
-    user.currentExperiment._prolific2SubmissionApproval == "automatic"
+    user.currentExperiment._prolific2CompletionPath === "manuallyReview"
   ) {
-    completionCodeAction = COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
-  } else {
     completionCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
   }
   const allowList = user.currentExperiment._online4CustomAllowList;
