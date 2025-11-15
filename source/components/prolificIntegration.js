@@ -728,6 +728,22 @@ export const prolificCreateDraft = async (
     });
   }
 
+  const abortedParticipantGroup =
+    user.currentExperiment._prolific2AbortedAddToGroup?.trim();
+
+  const abortedActions = [
+    {
+      action: abortedCodeAction,
+    },
+  ];
+
+  if (abortedParticipantGroup && abortedParticipantGroup !== "") {
+    abortedActions.push({
+      action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
+      participant_group_id: abortedParticipantGroup,
+    });
+  }
+
   const payload = {
     name:
       user.currentExperiment.titleOfStudy &&
@@ -766,11 +782,7 @@ export const prolificCreateDraft = async (
       {
         code: abortedCompletionCode,
         code_type: COMPLETION_CODE_TYPE.ABORTED,
-        actions: [
-          {
-            action: abortedCodeAction,
-          },
-        ],
+        actions: abortedActions,
       },
     ],
     total_available_places: isNaN(
