@@ -695,12 +695,14 @@ export const prolificCreateDraft = async (
     completionCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
   }
 
-  let abortedCodeAction = COMPLETION_CODE_ACTION.REQUEST_RETURN;
+  let abortedCodeAction;
   const abortedPath = user.currentExperiment._prolific2Aborted;
-  if (abortedPath === "manuallyReview") {
-    abortedCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
+  if (abortedPath === "requestAReturn") {
+    abortedCodeAction = COMPLETION_CODE_ACTION.REQUEST_RETURN;
   } else if (abortedPath === "approveAndPay") {
     abortedCodeAction = COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
+  } else {
+    abortedCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
   }
   const allowList = user.currentExperiment._online4CustomAllowList;
   const whiteListParticipants = allowList
