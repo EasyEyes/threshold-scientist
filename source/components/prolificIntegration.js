@@ -687,23 +687,24 @@ export const prolificCreateDraft = async (
   const reward = parseInt(
     parseFloat((pay + payPerHour * hours).toFixed(2) * 100),
   );
-  let completionCodeAction = COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
-  if (
-    user.currentExperiment &&
-    user.currentExperiment._prolific2CompletionPath === "manuallyReview"
-  ) {
-    completionCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
-  }
+  const completionPathMapping = {
+    manuallyReview: COMPLETION_CODE_ACTION.MANUALLY_REVIEW,
+    approveAndPay: COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE,
+    requestAReturn: COMPLETION_CODE_ACTION.REQUEST_RETURN,
+  };
+  const completionPath = user.currentExperiment?._prolific2CompletionPath;
+  const completionCodeAction =
+    completionPathMapping[completionPath] ||
+    COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
 
-  let abortedCodeAction;
-  const abortedPath = user.currentExperiment._prolific2Aborted;
-  if (abortedPath === "requestAReturn") {
-    abortedCodeAction = COMPLETION_CODE_ACTION.REQUEST_RETURN;
-  } else if (abortedPath === "approveAndPay") {
-    abortedCodeAction = COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
-  } else {
-    abortedCodeAction = COMPLETION_CODE_ACTION.MANUALLY_REVIEW;
-  }
+  const abortedPathMapping = {
+    requestAReturn: COMPLETION_CODE_ACTION.REQUEST_RETURN,
+    approveAndPay: COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE,
+    manuallyReview: COMPLETION_CODE_ACTION.MANUALLY_REVIEW,
+  };
+  const abortedPath = user.currentExperiment?._prolific2Aborted;
+  const abortedCodeAction =
+    abortedPathMapping[abortedPath] || COMPLETION_CODE_ACTION.REQUEST_RETURN;
   const allowList = user.currentExperiment._online4CustomAllowList;
   const whiteListParticipants = allowList
     ? allowList.split(",").map((item) => item.trim())
