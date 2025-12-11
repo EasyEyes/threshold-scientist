@@ -128,11 +128,12 @@ export default class Running extends Component {
     }/${this.props.projectName.toLocaleLowerCase()}`;
   }
 
-  async waitForPavloviaReady(maxTries = 10, delay = 200) {
+  async waitForPavloviaReady(maxTries = 60, delay = 1000) {
     const { newRepo, functions } = this.props;
     for (let tries = 0; tries < maxTries; tries++) {
       try {
-        await this.checkPavloviaReady();
+        const silentModel = maxTries - tries === 1;
+        await this.checkPavloviaReady(silentModel);
         if (newRepo) {
           functions.handleSetExperimentStatus("RUNNING");
         } else {
@@ -154,7 +155,7 @@ export default class Running extends Component {
     );
   }
 
-  checkPavloviaReady() {
+  checkPavloviaReady(silentMode = false) {
     return new Promise((resolve, reject) => {
       fetch(this._getPavloviaExperimentUrl())
         .then((response) => response.text())
@@ -170,12 +171,14 @@ export default class Running extends Component {
               this.setState({
                 pavloviaIsReady: false,
               });
-            Swal.fire({
-              icon: "error",
-              title: `Experiment unavailable`,
-              text: `Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.`,
-              confirmButtonColor: "#666",
-            });
+            if (!silentMode) {
+              Swal.fire({
+                icon: "error",
+                title: `Experiment unavailable`,
+                text: `Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.`,
+                confirmButtonColor: "#666",
+              });
+            }
             reject(new Error("404 - Experiment Unavailable"));
           } else {
             if (!this.state.pavloviaIsReady)
