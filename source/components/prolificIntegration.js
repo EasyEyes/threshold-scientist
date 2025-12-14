@@ -735,9 +735,14 @@ export const prolificCreateDraft = async (
     user.currentExperiment._prolific2AbortedAddToGroup?.trim();
 
   const abortedActions = [
-    {
-      action: abortedCodeAction,
-    },
+    abortedCodeAction === COMPLETION_CODE_ACTION.REQUEST_RETURN
+      ? {
+          action: abortedCodeAction,
+          return_reason: "Study aborted",
+        }
+      : {
+          action: abortedCodeAction,
+        },
   ];
 
   if (abortedParticipantGroup && abortedParticipantGroup !== "") {
