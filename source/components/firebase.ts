@@ -9,8 +9,9 @@ import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const apiKey = process.env.FIREBASE_API_KEY;
 const firebaseConfig = {
-  apiKey: "AIzaSyBredrcRCoAwTeakgAW4TsYzEtxNYTzmiU",
+  apiKey: apiKey,
   authDomain: "easyeyes-compiler.firebaseapp.com",
   projectId: "easyeyes-compiler",
   storageBucket: "easyeyes-compiler.appspot.com",

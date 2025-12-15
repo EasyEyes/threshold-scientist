@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-undef */
+require("dotenv").config();
 const webpack = require("webpack");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const path = require("path");
@@ -62,7 +63,7 @@ const redirect_uri = (uri) =>
   `https://gitlab.pavlovia.org//oauth/authorize`.concat(
     `?client_id=63785db109412d3b2a6179ada78be8a3411936184b467f678c8251fda96d8c14`,
     `&scope=api&response_type=token&response_mode=query`,
-    `&redirect_uri=${uri}`
+    `&redirect_uri=${uri}`,
   );
 
 module.exports = (env) => {
@@ -78,9 +79,12 @@ module.exports = (env) => {
         new webpack.DefinePlugin({
           "process.env.debug": true,
           "process.env.REDIRECT_URL": JSON.stringify(
-            redirect_uri("http%3A%2F%2Flocalhost%3A5500%2Fredirect")
+            redirect_uri("http%3A%2F%2Flocalhost%3A5500%2Fredirect"),
           ),
           "process.env.GITHUB_PAT": JSON.stringify(""),
+          "process.env.FIREBASE_API_KEY": JSON.stringify(
+            process.env.FIREBASE_API_KEY || "",
+          ),
         }),
       ],
       // watch: true,
@@ -130,9 +134,12 @@ module.exports = (env) => {
         new webpack.DefinePlugin({
           "process.env.debug": false,
           "process.env.REDIRECT_URL": JSON.stringify(
-            redirect_uri("https%3A%2F%2Feasyeyes.app%2Fredirect")
+            redirect_uri("https%3A%2F%2Feasyeyes.app%2Fredirect"),
           ),
           "process.env.GITHUB_PAT": JSON.stringify(""),
+          "process.env.FIREBASE_API_KEY": JSON.stringify(
+            process.env.FIREBASE_API_KEY || "",
+          ),
         }),
       ],
     });
