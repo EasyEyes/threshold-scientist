@@ -143,6 +143,9 @@ module.exports = (env) => {
           "process.env.FIREBASE_API_KEY": JSON.stringify(
             process.env.FIREBASE_API_KEY || "",
           ),
+          "process.env.FIREBASE_API_KEY_SOUND": JSON.stringify(
+            process.env.FIREBASE_API_KEY_SOUND || "",
+          ),
         }),
       ],
     });
