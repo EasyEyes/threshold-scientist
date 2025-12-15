@@ -18,7 +18,7 @@ import {
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const apiKey = process.env.FIREBASE_API_KEY;
+const apiKey = process.env.FIREBASE_API_KEY_SOUND;
 const firebaseConfig = {
   apiKey: apiKey,
   authDomain: "speaker-calibration.firebaseapp.com",
