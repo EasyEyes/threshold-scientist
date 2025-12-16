@@ -10,6 +10,10 @@ const config = {
   module: {
     rules: [
       {
+        test: /\.wasm$/,
+        type: "asset/resource",
+      },
+      {
         test: /\.css$/i,
         exclude: /node_modules/,
         use: ["style-loader", "css-loader"],
