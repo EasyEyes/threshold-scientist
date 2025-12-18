@@ -297,7 +297,7 @@ export default class StatusLines extends Component {
               <a
                 href={`https://run.pavlovia.org/${user.username}/${effectiveProjectNameLowerCase}`}
                 target="_blank"
-                rel="noopenner noreferrer"
+                rel="noopener noreferrer"
                 style={{
                   color: "#666",
                   wordBreak: "break-all",
