@@ -23,6 +23,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@sentry/react": "^10.32.0",
     "animate.css": "^4.1.1",
     "buffer": "^6.0.3",
     "dataframe-js": "^1.4.4",

@@ -92,6 +92,12 @@ module.exports = (env) => {
           "process.env.FIREBASE_API_KEY_SOUND": JSON.stringify(
             process.env.FIREBASE_API_KEY_SOUND || "",
           ),
+          "process.env.SENTRY_DSN": JSON.stringify(
+            process.env.SENTRY_DSN || "",
+          ),
+          "process.env.SENTRY_ENVIRONMENT": JSON.stringify(
+            process.env.SENTRY_ENVIRONMENT || "development",
+          ),
         }),
       ],
       // watch: true,
@@ -149,6 +155,12 @@ module.exports = (env) => {
           ),
           "process.env.FIREBASE_API_KEY_SOUND": JSON.stringify(
             process.env.FIREBASE_API_KEY_SOUND || "",
+          ),
+          "process.env.SENTRY_DSN": JSON.stringify(
+            process.env.SENTRY_DSN || "",
+          ),
+          "process.env.SENTRY_ENVIRONMENT": JSON.stringify(
+            process.env.SENTRY_ENVIRONMENT || "production",
           ),
         }),
       ],
