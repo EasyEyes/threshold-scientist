@@ -18,6 +18,7 @@ import {
   COMPLETION_CODE_TYPE,
 } from "./prolificConstants";
 import { GLOSSARY } from "../../threshold/parameters/glossary";
+import { captureError } from "../sentry";
 
 const prolificLangType = {
   NATIVE: "NATIVE",
@@ -51,7 +52,9 @@ export const getProlificAccount = async (token) => {
     .then((response) => {
       return response.json();
     })
-    .catch((error) => console.log(error));
+    .catch((error) =>
+      captureError(error, "Prolific Get Account", { endpoint: "users/me" }),
+    );
 
   if (response) return response;
   else return;
@@ -836,7 +839,9 @@ export const prolificCreateDraft = async (
     .then((response) => {
       return response.json();
     })
-    .catch((error) => console.log(error));
+    .catch((error) =>
+      captureError(error, "Prolific Create Draft", { endpoint: "studies" }),
+    );
 
   const result = response;
 
@@ -862,7 +867,9 @@ const fetchProlificStudy = async (token, prolificStudyId) => {
           return response.json();
         })
         .catch((error) => {
-          console.log(error, "error");
+          captureError(error, "Prolific Fetch Study", {
+            endpoint: `studies/${prolificStudyId}`,
+          });
           return "";
         })
     : "";
@@ -884,7 +891,9 @@ const fetchProlificStudySubmissions = async (token, prolificStudyId) => {
           return response.json();
         })
         .catch((error) => {
-          console.log(error, "error");
+          captureError(error, "Prolific Fetch Submissions", {
+            endpoint: `studies/${prolificStudyId}/submissions`,
+          });
           return "";
         })
     : "";
@@ -948,6 +957,8 @@ export const downloadDemographicData = async (
       zip.file(`${downloadName}.prolific.csv`, formattedCSV);
     })
     .catch((error) => {
-      console.log(error, "error");
+      captureError(error, "Download Demographic Data", {
+        endpoint: "demographic-data",
+      });
     });
 };
