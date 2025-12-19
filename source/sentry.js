@@ -42,3 +42,43 @@ export function initSentry() {
 
 // Export Sentry for manual error capturing
 export { Sentry };
+
+/**
+ * Capture and log an error to Sentry
+ * Use this in catch blocks instead of just console.error()
+ *
+ * @param {Error} error - The error object to capture
+ * @param {string} context - Descriptive context (e.g., "Login failed")
+ * @param {Object} extra - Additional data to send with error
+ *
+ * @example
+ * try {
+ *   await loginUser(email, password);
+ * } catch (error) {
+ *   captureError(error, "User login", { email });
+ * }
+ */
+export function captureError(error, context = "", extra = {}) {
+  console.error(context, error);
+  Sentry.captureException(error, {
+    tags: { context },
+    extra,
+  });
+}
+
+/**
+ * Capture a message to Sentry (for non-error events)
+ *
+ * @param {string} message - The message to log
+ * @param {string} level - Log level: "info", "warning", "error"
+ * @param {Object} extra - Additional context data
+ *
+ * @example
+ * if (experimentDidNotComplete) {
+ *   captureMessage("Experiment terminated early", "warning", { reason });
+ * }
+ */
+export function captureMessage(message, level = "info", extra = {}) {
+  console.log(`[Sentry] ${message}`);
+  Sentry.captureMessage(message, level, { extra });
+}

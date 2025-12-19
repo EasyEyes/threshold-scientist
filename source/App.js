@@ -33,6 +33,7 @@ import { compatibilityRequirements } from "../threshold/preprocess/global";
 import "./css/App.scss";
 import { signInAnonymously } from "firebase/auth";
 import { getSoundProfileStatement } from "./components/firebase_soundProfile";
+import { captureError } from "./sentry";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -402,7 +403,7 @@ export default class App extends Component {
       })
       .catch((error) => {
         // TODO retry?
-        console.error("Error loading resources", error);
+        captureError(error, "Error loading resources", { type: "resources" });
         this.setState({ resourcesLoaded: true });
       });
   }

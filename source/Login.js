@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import { downloadDataFolder } from "../threshold/preprocess/gitlabUtils";
 import { getUserInfo, redirectToOauth2 } from "../threshold/preprocess/user";
 import { tempAccessToken } from "../threshold/preprocess/global";
+import { captureError } from "./sentry";
 
 import "./css/Login.scss";
 
@@ -49,7 +50,7 @@ export default class Login extends Component {
           this.login();
         }
       } catch (error) {
-        console.error("Error logging in", error);
+        captureError(error, "Error logging in", { step: "initLogin" });
       }
     }
   }
@@ -92,10 +93,14 @@ export default class Login extends Component {
           }
         })
         .catch((error) => {
-          console.error("Error loading prolific token:", error);
+          captureError(error, "Error loading prolific token:", {
+            step: "loadProlificToken",
+          });
         });
     } catch (error) {
-      console.error("Error initializing user:", error);
+      captureError(error, "Error initializing user:", {
+        step: "initializeUser",
+      });
       this.setState({
         login: null, // Reset to allow retry
       });
@@ -121,7 +126,9 @@ export default class Login extends Component {
           mostRecentProject: mostRecentProject,
         });
       } catch (error) {
-        console.error("Error loading project list:", error);
+        captureError(error, "Error loading project list:", {
+          step: "loadProjectList",
+        });
         this.setState({
           projectListLoaded: true,
           mostRecentProject: null,

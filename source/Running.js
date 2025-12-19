@@ -20,6 +20,7 @@ import {
   getRetryDelayMs,
   getAllProjects,
 } from "../threshold/preprocess/gitlabUtils";
+import { captureError } from "./sentry";
 
 import "./css/Running.scss";
 import Dropdown from "./components/Dropdown";
@@ -116,7 +117,10 @@ export default class Running extends Component {
         },
       });
     } catch (error) {
-      console.error("Failed to setModeToRun", error);
+      captureError(error, "Failed to setModeToRun", {
+        step: "setModeToRun",
+        info: "Experiment Activation",
+      });
     } finally {
       this._isActivating = false;
     }
@@ -141,6 +145,13 @@ export default class Running extends Component {
         }
         return;
       } catch (error) {
+        if (tries === maxTries - 1) {
+          captureError(error, "Pavlovia Readiness Check", {
+            step: "checkPavloviaReady",
+            tries: tries,
+            maxTries: maxTries,
+          });
+        }
         if (tries !== maxTries - 1) {
           await new Promise((res) => setTimeout(res, delay));
         }
@@ -189,6 +200,9 @@ export default class Running extends Component {
           }
         })
         .catch((error) => {
+          captureError(error, "Pavlovia Availability Check", {
+            step: "isPavloviaAvailable",
+          });
           if (this.state.pavloviaIsReady)
             this.setState({ pavloviaIsReady: false });
           reject(error);
