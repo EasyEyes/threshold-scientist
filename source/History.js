@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { downloadDataFolder } from "./components/gitlabUtils";
+import { downloadDataFolder } from "../threshold/preprocess/gitlabUtils";
 
 // import log from 'log-here-now';
 import Dropdown from "./components/Dropdown";
