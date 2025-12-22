@@ -11,7 +11,6 @@ import StatusLines from "./StatusLines";
 
 import { allSteps } from "./components/steps";
 import {
-  getAllProjects,
   getCompatibilityRequirementsForProject,
   getExperimentStatus,
   getOriginalFileNameForProject,
@@ -628,8 +627,6 @@ export default class App extends Component {
 
     const viewingPreviousExperiment =
       activeExperiment !== "new" && activeExperiment !== newRepo;
-
-    // if (user) steps.push(<History key={"history"} user={user} />);
 
     if (viewingPreviousExperiment)
       steps.push(
