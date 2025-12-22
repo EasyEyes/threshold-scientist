@@ -628,8 +628,6 @@ export default class App extends Component {
     const viewingPreviousExperiment =
       activeExperiment !== "new" && activeExperiment !== newRepo;
 
-    // if (user) steps.push(<History key={"history"} user={user} />);
-
     if (viewingPreviousExperiment)
       steps.push(
         <Step
