@@ -11,7 +11,6 @@ import StatusLines from "./StatusLines";
 
 import { allSteps } from "./components/steps";
 import {
-  getAllProjects,
   getCompatibilityRequirementsForProject,
   getExperimentStatus,
   getOriginalFileNameForProject,
