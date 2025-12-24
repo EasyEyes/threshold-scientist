@@ -301,6 +301,7 @@ describe("Prolific Integration - New Parameters", () => {
       expect(abortedCode).toBeDefined();
       expect(abortedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
+        return_reason: "Study aborted"
       });
     });
 
@@ -325,6 +326,7 @@ describe("Prolific Integration - New Parameters", () => {
 
       expect(abortedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
+        return_reason: "Study aborted",
       });
     });
 
@@ -376,7 +378,7 @@ describe("Prolific Integration - New Parameters", () => {
       });
     });
 
-    it("should default to MANUALLY_REVIEW for invalid _prolific2Aborted value", async () => {
+    it("should default to REQUEST_RETURN for invalid _prolific2Aborted value", async () => {
       mockUser.currentExperiment._prolific2Aborted = "invalidValue";
 
       await prolificCreateDraft(
@@ -396,7 +398,8 @@ describe("Prolific Integration - New Parameters", () => {
       );
 
       expect(abortedCode.actions).toContainEqual({
-        action: COMPLETION_CODE_ACTION.MANUALLY_REVIEW,
+        action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
+        return_reason: "Study aborted",
       });
     });
   });
