@@ -30,7 +30,14 @@ const config = {
             },
           },
           // "postcss-loader",
-          "sass-loader",
+          {
+            loader: "sass-loader",
+            options: {
+              sassOptions: {
+                silenceDeprecations: ['legacy-js-api', 'import'],
+              },
+            },
+          },
         ],
       },
       {
