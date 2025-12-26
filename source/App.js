@@ -786,7 +786,8 @@ export default class App extends Component {
                   </div>
 
                   <div className="item">
-                    Copyright © 2020 - 2023 New York University.
+                    Copyright © 2020 - {new Date().getFullYear()} New York
+                    University.
                     <br />
                     Created by Denis Pelli and the EasyEyes team.
                   </div>
