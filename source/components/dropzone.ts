@@ -14,8 +14,6 @@ import {
   User,
 } from "../../threshold/preprocess/gitlabUtils";
 import { userRepoFiles } from "../../threshold/preprocess/constants";
-import { validateImpulseResponseFile } from "../../threshold/preprocess/experimentFileChecks";
-import { EasyEyesError } from "../../threshold/preprocess/errorMessages";
 
 // Helper function to identify impulse response files by their filename pattern
 const isImpulseResponseFile = (file: File): boolean => {
