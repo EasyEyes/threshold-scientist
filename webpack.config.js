@@ -34,7 +34,7 @@ const config = {
             loader: "sass-loader",
             options: {
               sassOptions: {
-                silenceDeprecations: ['legacy-js-api', 'import'],
+                silenceDeprecations: ["legacy-js-api", "import"],
               },
             },
           },
@@ -73,7 +73,7 @@ const plugins = [];
 const redirect_uri = (uri) =>
   `https://gitlab.pavlovia.org//oauth/authorize`.concat(
     `?client_id=63785db109412d3b2a6179ada78be8a3411936184b467f678c8251fda96d8c14`,
-    `&scope=api&response_type=token&response_mode=query`,
+    `&scope=api&response_type=token`,
     `&redirect_uri=${uri}`,
   );
 
