@@ -153,8 +153,8 @@ export default class StatusLines extends Component {
       !!(user && projectName && experimentStatus === "RUNNING") ||
       (viewingPreviousExperiment && previousExperimentStatus === "RUNNING");
     const effectiveProjectNameLowerCase = viewingPreviousExperiment
-      ? activeExperiment.name?.toLocaleLowerCase()
-      : projectName?.toLocaleLowerCase();
+      ? activeExperiment.name
+      : projectName;
     const hasRecruitmentService = viewingPreviousExperiment
       ? previousRecruitmentInformation.recruitmentServiceName !== null
       : !!user?.currentExperiment?.participantRecruitmentServiceName;
