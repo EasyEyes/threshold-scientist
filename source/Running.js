@@ -127,7 +127,9 @@ export default class Running extends Component {
   }
 
   _getPavloviaExperimentUrl() {
-    return `https://run.pavlovia.org/${this.props.user.username}/${this.props.projectName}`;
+    return `https://run.pavlovia.org/${
+      this.props.user.username
+    }/${this.props.projectName.toLocaleLowerCase()}`;
   }
 
   async waitForPavloviaReady(maxTries = 60, delay = 1000) {
