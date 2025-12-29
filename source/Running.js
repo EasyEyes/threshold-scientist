@@ -127,9 +127,7 @@ export default class Running extends Component {
   }
 
   _getPavloviaExperimentUrl() {
-    return `https://run.pavlovia.org/${
-      this.props.user.username
-    }/${this.props.projectName.toLocaleLowerCase()}`;
+    return `https://run.pavlovia.org/${this.props.user.username}/${this.props.projectName}`;
   }
 
   async waitForPavloviaReady(maxTries = 60, delay = 1000) {
@@ -280,9 +278,7 @@ export default class Running extends Component {
         className={`button-grey button-small`}
         onClick={() => {
           window.open(
-            `https://pavlovia.org/${
-              user.username
-            }/${projectName.toLocaleLowerCase()}`,
+            `https://pavlovia.org/${user.username}/${projectName}`,
             "_blank",
           );
         }}
