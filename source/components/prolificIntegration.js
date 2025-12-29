@@ -696,9 +696,9 @@ export const prolificCreateDraft = async (
     requestAReturn: COMPLETION_CODE_ACTION.REQUEST_RETURN,
   };
   const completionPath = user.currentExperiment?._prolific2CompletionPath;
-  const completionCodeAction = completionPath
-    ? completionPathMapping[completionPath]
-    : null;
+  const completionCodeAction =
+    completionPathMapping[completionPath] ||
+    COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
 
   const abortedPathMapping = {
     requestAReturn: COMPLETION_CODE_ACTION.REQUEST_RETURN,
@@ -706,9 +706,8 @@ export const prolificCreateDraft = async (
     manuallyReview: COMPLETION_CODE_ACTION.MANUALLY_REVIEW,
   };
   const abortedPath = user.currentExperiment?._prolific2Aborted;
-  const abortedCodeAction = abortedPath
-    ? abortedPathMapping[abortedPath]
-    : null;
+  const abortedCodeAction =
+    abortedPathMapping[abortedPath] || COMPLETION_CODE_ACTION.REQUEST_RETURN;
   const allowList = user.currentExperiment._online4CustomAllowList;
   const whiteListParticipants = allowList
     ? allowList.split(",").map((item) => item.trim())
@@ -722,13 +721,11 @@ export const prolificCreateDraft = async (
   const participantGroup =
     user.currentExperiment._prolific2CompletionPathAddToGroup?.trim();
 
-  const completedActions = [];
-
-  if (completionCodeAction) {
-    completedActions.push({
+  const completedActions = [
+    {
       action: completionCodeAction,
-    });
-  }
+    },
+  ];
 
   if (participantGroup && participantGroup !== "") {
     completedActions.push({
@@ -740,20 +737,16 @@ export const prolificCreateDraft = async (
   const abortedParticipantGroup =
     user.currentExperiment._prolific2AbortedAddToGroup?.trim();
 
-  const abortedActions = [];
-
-  if (abortedCodeAction) {
-    abortedActions.push(
-      abortedCodeAction === COMPLETION_CODE_ACTION.REQUEST_RETURN
-        ? {
-            action: abortedCodeAction,
-            return_reason: "Study aborted",
-          }
-        : {
-            action: abortedCodeAction,
-          },
-    );
-  }
+  const abortedActions = [
+    abortedCodeAction === COMPLETION_CODE_ACTION.REQUEST_RETURN
+      ? {
+          action: abortedCodeAction,
+          return_reason: "Study aborted",
+        }
+      : {
+          action: abortedCodeAction,
+        },
+  ];
 
   if (abortedParticipantGroup && abortedParticipantGroup !== "") {
     abortedActions.push({
