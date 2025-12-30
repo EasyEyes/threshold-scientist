@@ -60,6 +60,41 @@ export const getProlificAccount = async (token) => {
   else return;
 };
 
+const fetchProlificParticipantGroups = async (token, projectId) => {
+  if (!projectId) return [];
+
+  const url = `/.netlify/functions/prolific/participant-groups/?project_id=${projectId}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Token ${token}`,
+    },
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .catch((error) => {
+      captureError(error, "Prolific Fetch Participant Groups", {
+        endpoint: `participant-groups/?project_id=${projectId}`,
+      });
+      return { results: [] };
+    });
+
+  return response?.results || [];
+};
+
+const findParticipantGroupId = (participantGroups, groupName) => {
+  if (!groupName || groupName === "") return null;
+
+  const group = participantGroups.find(
+    (g) => g.name?.trim().toLowerCase() === groupName.toLowerCase(),
+  );
+
+  return group?.id || null;
+};
+
 const findProlificLanguageAttributes = (
   field,
   type = prolificLangType.NATIVE,
@@ -718,8 +753,18 @@ export const prolificCreateDraft = async (
     ? blockList.split(",").map((item) => item.trim())
     : [];
 
-  const participantGroup =
+  // Fetch participant groups if project ID is available
+  const projectId = user.currentExperiment.prolificWorkspaceProjectId;
+  const participantGroups = projectId
+    ? await fetchProlificParticipantGroups(token, projectId)
+    : [];
+
+  const participantGroupName =
     user.currentExperiment._prolific2CompletionPathAddToGroup?.trim();
+  const participantGroupId = findParticipantGroupId(
+    participantGroups,
+    participantGroupName,
+  );
 
   const completedActions = [
     {
@@ -727,15 +772,19 @@ export const prolificCreateDraft = async (
     },
   ];
 
-  if (participantGroup && participantGroup !== "") {
+  if (participantGroupId) {
     completedActions.push({
       action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-      participant_group: participantGroup,
+      participant_group: participantGroupId,
     });
   }
 
-  const abortedParticipantGroup =
+  const abortedParticipantGroupName =
     user.currentExperiment._prolific2AbortedAddToGroup?.trim();
+  const abortedParticipantGroupId = findParticipantGroupId(
+    participantGroups,
+    abortedParticipantGroupName,
+  );
 
   const abortedActions = [
     abortedCodeAction === COMPLETION_CODE_ACTION.REQUEST_RETURN
@@ -748,10 +797,10 @@ export const prolificCreateDraft = async (
         },
   ];
 
-  if (abortedParticipantGroup && abortedParticipantGroup !== "") {
+  if (abortedParticipantGroupId) {
     abortedActions.push({
       action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-      participant_group: abortedParticipantGroup,
+      participant_group: abortedParticipantGroupId,
     });
   }
 
