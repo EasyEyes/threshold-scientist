@@ -23,28 +23,64 @@ export default class Login extends Component {
   }
 
   async componentDidMount() {
-    if (
-      window.location.hash.length &&
-      window.location.hash.includes("#access_token")
-    ) {
-      const accessToken = window.location.hash
-        .split("&")[0]
-        .split("#access_token=")[1];
+    // Check for authorization code in URL (PKCE flow)
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get("code");
 
-      // clear address bar parameters
-      // eslint-disable-next-line no-undef
-      if (!process.env.debug)
-        window.history.replaceState(null, null, window.location.pathname);
+    if (authCode) {
+      // We have an authorization code, exchange it for access token
       this.setState({
         login: "loading",
       });
 
-      // // temporarily assign access token here for temporaryLog
-      tempAccessToken.t = accessToken;
+      // Clear URL parameters
+      // eslint-disable-next-line no-undef
+      if (!process.env.debug)
+        window.history.replaceState(null, null, window.location.pathname);
 
-      this.initializeUserQuickly(accessToken);
+      try {
+        // Import PKCE utilities
+        const { retrieveCodeVerifier, exchangeCodeForToken } = await import(
+          "../threshold/preprocess/pkceUtils"
+        );
+
+        // Retrieve the code verifier we stored before redirecting
+        const codeVerifier = retrieveCodeVerifier();
+        if (!codeVerifier) {
+          throw new Error("Code verifier not found in session storage");
+        }
+
+        // Determine the redirect URI based on environment
+        // eslint-disable-next-line no-undef
+        const redirectUri = process.env.debug
+          ? "http://localhost:5500/redirect"
+          : "https://easyeyes.app/redirect";
+
+        // Exchange authorization code for access token
+        const tokenResponse = await exchangeCodeForToken(
+          authCode,
+          codeVerifier,
+          redirectUri,
+          "63785db109412d3b2a6179ada78be8a3411936184b467f678c8251fda96d8c14",
+        );
+
+        const accessToken = tokenResponse.access_token;
+
+        // Temporarily assign access token for temporaryLog
+        tempAccessToken.t = accessToken;
+
+        // Initialize user with the access token
+        this.initializeUserQuickly(accessToken);
+      } catch (error) {
+        captureError(error, "Error exchanging authorization code for token", {
+          step: "tokenExchange",
+        });
+        this.setState({
+          login: null, // Reset to allow retry
+        });
+      }
     } else {
-      // No access token in URL
+      // No authorization code in URL, initiate login
       try {
         if (!this.state.login) {
           this.login();
@@ -155,9 +191,9 @@ export default class Login extends Component {
     Swal.close();
   }
 
-  login() {
+  async login() {
     console.log("Logging In");
-    redirectToOauth2();
+    await redirectToOauth2();
   }
 
   render() {

@@ -71,9 +71,9 @@ const config = {
 const plugins = [];
 
 const redirect_uri = (uri) =>
-  `https://gitlab.pavlovia.org//oauth/authorize`.concat(
+  `https://gitlab.pavlovia.org/oauth/authorize`.concat(
     `?client_id=63785db109412d3b2a6179ada78be8a3411936184b467f678c8251fda96d8c14`,
-    `&scope=api&response_type=token`,
+    `&scope=api&response_type=code`,
     `&redirect_uri=${uri}`,
   );
 
