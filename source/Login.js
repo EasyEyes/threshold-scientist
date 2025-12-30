@@ -241,7 +241,7 @@ export default class Login extends Component {
                       style={{ ...smallButtonExtraStyle, lineHeight: "120%" }}
                       onClick={() => {
                         window.open(
-                          `https://pavlovia.org/${mostRecentProject.path_with_namespace}`,
+                          `https://gitlab.pavlovia.org/${mostRecentProject.path_with_namespace}?access_token=${user.accessToken}`,
                           "_blank",
                         );
                       }}
@@ -270,7 +270,7 @@ export default class Login extends Component {
                   style={smallButtonExtraStyle}
                   onClick={() => {
                     window.open(
-                      `https://pavlovia.org/dashboard?tab=1`,
+                      `https://gitlab.pavlovia.org/dashboard?tab=1&access_token=${user.accessToken}`,
                       "_blank",
                     );
                   }}
