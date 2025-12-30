@@ -60,8 +60,8 @@ describe("Prolific Integration - New Parameters", () => {
   });
 
   describe("_prolific2CompletionPath Parameter", () => {
-    it("should not add any action when _prolific2CompletionPath is not set", async () => {
-      // Don't set _prolific2CompletionPath, should not add any action
+    it("should default to AUTOMATICALLY_APPROVE when _prolific2CompletionPath is not set", async () => {
+      // Don't set _prolific2CompletionPath, should default to approveAndPay
       const result = await prolificCreateDraft(
         mockUser,
         mockInternalName,
@@ -91,7 +91,9 @@ describe("Prolific Integration - New Parameters", () => {
       );
 
       expect(completedCode).toBeDefined();
-      expect(completedCode.actions).toEqual([]);
+      expect(completedCode.actions).toContainEqual({
+        action: COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE,
+      });
     });
 
     it("should set MANUALLY_REVIEW when _prolific2CompletionPath is 'manuallyReview'", async () => {
@@ -164,28 +166,6 @@ describe("Prolific Integration - New Parameters", () => {
       expect(completedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
       });
-    });
-
-    it("should not add any action for invalid _prolific2CompletionPath value", async () => {
-      mockUser.currentExperiment._prolific2CompletionPath = "invalidValue";
-
-      await prolificCreateDraft(
-        mockUser,
-        mockInternalName,
-        mockCompletionCode,
-        mockIncompatibleCode,
-        mockAbortedCode,
-        mockToken,
-      );
-
-      const callArgs = global.fetch.mock.calls[0];
-      const requestBody = JSON.parse(callArgs[1].body);
-
-      const completedCode = requestBody.completion_codes.find(
-        (code) => code.code_type === COMPLETION_CODE_TYPE.COMPLETED,
-      );
-
-      expect(completedCode.actions).toEqual([]);
     });
   });
 
@@ -300,8 +280,8 @@ describe("Prolific Integration - New Parameters", () => {
   });
 
   describe("_prolific2Aborted Parameter", () => {
-    it("should not add any action when _prolific2Aborted is not set", async () => {
-      // Don't set _prolific2Aborted, should not add any action
+    it("should default to REQUEST_RETURN when _prolific2Aborted is not set", async () => {
+      // Don't set _prolific2Aborted, should default to requestAReturn
       await prolificCreateDraft(
         mockUser,
         mockInternalName,
@@ -319,7 +299,10 @@ describe("Prolific Integration - New Parameters", () => {
       );
 
       expect(abortedCode).toBeDefined();
-      expect(abortedCode.actions).toEqual([]);
+      expect(abortedCode.actions).toContainEqual({
+        action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
+        return_reason: "Study aborted"
+      });
     });
 
     it("should set REQUEST_RETURN when _prolific2Aborted is 'requestAReturn'", async () => {
@@ -395,7 +378,7 @@ describe("Prolific Integration - New Parameters", () => {
       });
     });
 
-    it("should not add any action for invalid _prolific2Aborted value", async () => {
+    it("should default to REQUEST_RETURN for invalid _prolific2Aborted value", async () => {
       mockUser.currentExperiment._prolific2Aborted = "invalidValue";
 
       await prolificCreateDraft(
@@ -414,7 +397,10 @@ describe("Prolific Integration - New Parameters", () => {
         (code) => code.code_type === COMPLETION_CODE_TYPE.ABORTED,
       );
 
-      expect(abortedCode.actions).toEqual([]);
+      expect(abortedCode.actions).toContainEqual({
+        action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
+        return_reason: "Study aborted",
+      });
     });
   });
 
