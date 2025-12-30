@@ -730,7 +730,7 @@ export const prolificCreateDraft = async (
   if (participantGroup && participantGroup !== "") {
     completedActions.push({
       action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-      participant_group_id: participantGroup,
+      participant_group: participantGroup,
     });
   }
 
@@ -751,7 +751,7 @@ export const prolificCreateDraft = async (
   if (abortedParticipantGroup && abortedParticipantGroup !== "") {
     abortedActions.push({
       action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-      participant_group_id: abortedParticipantGroup,
+      participant_group: abortedParticipantGroup,
     });
   }
 
