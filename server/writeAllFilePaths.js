@@ -3,13 +3,32 @@ const fs = require("fs");
 const process = require("process");
 
 const fetchDir = "threshold/";
-const psychoJSVersion = "2021.3.0";
 
+// Files/directories to ignore (won't be included unless in matchPattern)
 const ignorePattern = [
+  // System/editor files
   ".DS_Store",
   ".git",
   ".husky",
   ".prettierignore",
+  ".aider",
+  ".claude",
+  ".env",
+
+  // Build/dev config files
+  "tsconfig.json",
+  "jest.config",
+  "vite.config",
+  "webpack",
+  "netlify",
+  "package",
+  "eslintrc",
+
+  // Source directories (not needed for Pavlovia runtime)
+  "@rust", // Entire directory - WASM is bundled into js/easyeyes_wasm.js
+  ".d.ts", // TypeScript definitions
+
+  // Threshold source/build directories
   "fonts/",
   "forms/",
   "folders/",
@@ -18,9 +37,17 @@ const ignorePattern = [
   "preprocess",
   "addons",
   "legacy",
+  "parameters",
+  "server",
+  "conditions/",
+  "examples",
+  "notes",
+
+  // PsychoJS non-runtime files
   "psychojs/src",
   "psychojs/docs",
   "psychojs/scripts",
+  "psychojs/out",
   "psychojs/.dprint.json",
   "psychojs/.editorconfig",
   "psychojs/.eslintrc.cjs",
@@ -28,39 +55,36 @@ const ignorePattern = [
   "psychojs/CONTRIBUTING.md",
   "psychojs/README.md",
   "psychojs/code-of-conduct.md",
-  // `psychojs/out/psychojs-${psychoJSVersion}.iife.js`,
-  // `psychojs/out/psychojs-${psychoJSVersion}.iife.js.map`,
-  // `psychojs/out/psychojs-${psychoJSVersion}.js`,
-  // `psychojs/out/psychojs-${psychoJSVersion}.js.map`,
-  `psychojs/out`,
-  "netlify",
-  "package",
-  "webpack",
+
+  // Other non-runtime files
   "experiment",
   "i18n",
   "node_modules",
   "threshold.js",
-  "parameters",
-  "server",
-  "tsconfig.json",
+  "first.js",
   "debugExperiment.csv",
-  "conditions/",
   "init",
-  // "map",
-  "eslintrc",
-  "examples",
-  "aider",
-  "notes",
 ];
 
-const containPattern = [];
-
-// Exact match
+// Exact match - always include these specific files even if in ignored directories
 const matchPattern = [
+  // Build outputs - entry points
   "js/threshold.min.js",
+  "js/threshold.min.js.map",
+  "js/threshold.css",
   "js/first.min.js",
+  "js/first.min.js.map",
+
+  // Build outputs - chunks (stable names, no hashes)
+  "js/i18n.js",
+  "js/easyeyes_wasm.js",
+
+  // Component assets needed at runtime
   "components/images/favicon.ico",
   "components/images/ios_settings.png",
+  "components/multiple-displays/peripheralDisplay.js",
+  "components/multiple-displays/peripheralDisplay.html",
+  "components/multiple-displays/multipleDisplay.css",
 ];
 
 const inIgnore = (f) => {
@@ -70,16 +94,9 @@ const inIgnore = (f) => {
   return false;
 };
 
-const inContain = (f) => {
-  for (const ig of containPattern) {
-    if (f.includes(ig)) return true;
-  }
-  return false;
-};
-
 const inMatch = (f) => {
-  for (const ig of matchPattern) {
-    if (f === ig) return true;
+  for (const pattern of matchPattern) {
+    if (f === pattern) return true;
   }
   return false;
 };
@@ -95,27 +112,39 @@ function throughDirectory(directory) {
   });
 
   const returner = [];
-  for (let f of files)
-    if (!inIgnore(f) || inContain(f) || inMatch(f)) returner.push(f);
+  for (let f of files) {
+    if (inMatch(f) || !inIgnore(f)) {
+      returner.push(f);
+    }
+  }
   return returner;
 }
 
 const exportWarning = `/*
-  Do not modify this file! Run npm \`npm run files\` at ROOT of this project to update
+  Do not modify this file! Run \`npm run files\` from docs/experiment/ to regenerate.
+  This file lists all files uploaded to Pavlovia for hosted experiments.
 */\n\n`;
-const exportHandle = `export const _loadDir = "/experiment/threshold/"\nexport const _loadFiles: string[] = `;
+const exportHandle = `export const _loadDir = "/experiment/threshold/";\nexport const _loadFiles: string[] = `;
 
-fs.writeFile(
+const fileList = throughDirectory(fetchDir);
+const fileContent =
+  exportWarning + exportHandle + JSON.stringify(fileList, null, 2) + ";\n";
+
+// Write to threshold/preprocess/files.ts (the one actually used for Pavlovia uploads)
+// Also write to source/components/files.ts for backwards compatibility
+const out = [
+  `${process.cwd()}/threshold/preprocess/files.ts`,
   `${process.cwd()}/source/components/files.ts`,
-  exportWarning +
-    exportHandle +
-    JSON.stringify(throughDirectory(fetchDir)) +
-    "\n",
-  (error) => {
+];
+out.forEach((filepath) =>
+  fs.writeFile(filepath, fileContent, (error) => {
     if (error) {
-      console.log("Error! Couldn't write to the file.", error);
+      console.log(`Error writing ${filepath}:`, error);
     } else {
-      console.log("File directories updated successfully.");
+      console.log(`Updated ${filepath}`);
     }
-  },
+  }),
 );
+
+// Log summary
+console.log(`\nGenerated file list with ${fileList.length} files.`);
