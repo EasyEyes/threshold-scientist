@@ -63,7 +63,7 @@ const config = {
   output: {
     filename: "main.js",
     path: path.resolve(__dirname, "dist/"),
-    publicPath: "/experiment/dist/",
+    publicPath: "/compiler/dist/",
   },
 };
 
@@ -119,6 +119,18 @@ module.exports = (env) => {
         open: true,
         hot: true,
         liveReload: true,
+        historyApiFallback: {
+          rewrites: [
+            {
+              from: /^\/compiler\//,
+              to: (context) =>
+                context.parsedUrl.pathname.replace(
+                  "/compiler/",
+                  "/experiment/",
+                ),
+            },
+          ],
+        },
         // devMiddleware: {
         //   writeToDisk: true,
         // },
@@ -140,7 +152,7 @@ module.exports = (env) => {
       output: {
         filename: "main.js",
         path: path.resolve(__dirname, "dist/"),
-        publicPath: "/experiment/dist/",
+        publicPath: "/compiler/dist/",
       },
     });
   } else if (env.production) {
