@@ -124,7 +124,7 @@ const exportWarning = `/*
   Do not modify this file! Run \`npm run files\` from docs/experiment/ to regenerate.
   This file lists all files uploaded to Pavlovia for hosted experiments.
 */\n\n`;
-const exportHandle = `export const _loadDir = "/experiment/threshold/";\nexport const _loadFiles: string[] = `;
+const exportHandle = `export const _loadDir = "/compiler/threshold/";\nexport const _loadFiles: string[] = `;
 
 const fileList = throughDirectory(fetchDir);
 const fileContent =
