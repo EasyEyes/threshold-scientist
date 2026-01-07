@@ -122,11 +122,11 @@ module.exports = (env) => {
         historyApiFallback: {
           rewrites: [
             {
-              from: /^\/compiler\//,
+              from: /^\/compiler(\/|$)/,
               to: (context) =>
                 context.parsedUrl.pathname.replace(
-                  "/compiler/",
-                  "/experiment/",
+                  /^\/compiler(\/|$)/,
+                  "/experiment$1",
                 ),
             },
           ],
