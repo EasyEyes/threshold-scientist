@@ -130,12 +130,22 @@ export default class Running extends Component {
     return `https://run.pavlovia.org/${this.props.user.username}/${this.props.projectName}`;
   }
 
-  async waitForPavloviaReady(maxTries = 60, delay = 1000) {
+  async waitForPavloviaReady(
+    maxTries = 60,
+    delay = 1000,
+    initialDelayMs = 5000,
+  ) {
     const { newRepo, functions } = this.props;
+
+    // Wait for Pavlovia deployment before first check
+    if (initialDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, initialDelayMs));
+    }
+
     for (let tries = 0; tries < maxTries; tries++) {
       try {
-        const silentModel = maxTries - tries === 1;
-        await this.checkPavloviaReady(silentModel);
+        const silentMode = tries !== maxTries - 1;
+        await this.checkPavloviaReady(silentMode);
         if (newRepo) {
           functions.handleSetExperimentStatus("RUNNING");
         } else {

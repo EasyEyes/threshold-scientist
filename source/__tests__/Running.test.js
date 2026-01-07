@@ -312,20 +312,18 @@ describe("Running Component - checkPavloviaReady", () => {
 
       // Call waitForPavloviaReady with maxTries=2 to ensure last try shows error
       // With maxTries=2:
-      //   tries=0: silentMode = (2-0===1) = false → show dialog
-      //   tries=1: silentMode = (2-1===1) = true → silent (no dialog)
-      // But user wants to test that on the LAST try the error is shown,
-      // which happens when silentMode=false (not on second-to-last)
-      const waitPromise = testInstance.waitForPavloviaReady(2, 10);
+      //   tries=0: silentMode = (0 !== 2-1) = (0 !== 1) = true → silent (no dialog)
+      //   tries=1: silentMode = (1 !== 2-1) = (1 !== 1) = false → show dialog
+      // Error dialog shown ONLY on the last attempt (tries=1, when silentMode=false)
+      const waitPromise = testInstance.waitForPavloviaReady(2, 10, 0); // initialDelayMs=0 for fast test
 
       // Wait for it to fail after all retries
       await expect(waitPromise).rejects.toThrow(
         "Failed to verify Pavlovia is ready, after 2 attempts",
       );
 
-      // Verify Swal.fire was called once (on tries=0, when silentMode=false)
-      // The last attempt (tries=1) has silentMode=true, so no dialog
-      // This test verifies that the error dialog is shown when NOT in silent mode
+      // Verify Swal.fire was called once (on tries=1, the last attempt, when silentMode=false)
+      // The first attempt (tries=0) has silentMode=true, so no dialog shown
       expect(Swal.fire).toHaveBeenCalledTimes(1);
       expect(Swal.fire).toHaveBeenCalledWith({
         icon: "error",
@@ -364,9 +362,9 @@ describe("Running Component - checkPavloviaReady", () => {
         text: jest.fn().mockResolvedValue("200 OK"),
       });
 
-      // Call waitForPavloviaReady
+      // Call waitForPavloviaReady with initialDelayMs=0 for fast test
       await expect(
-        testInstance.waitForPavloviaReady(3, 10),
+        testInstance.waitForPavloviaReady(3, 10, 0),
       ).resolves.toBeUndefined();
 
       // Verify experiment status was set to RUNNING
