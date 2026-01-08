@@ -52,7 +52,7 @@ export const handleDrop = async (
       await Swal.fire({
         icon: "error",
         title: "Invalid file name",
-        html: `File names cannot contain "-_" or "_-" patterns.<br>The requested file name is ${file.name}.`,
+        html: `File names cannot contain "-_" or "_-" patterns.<br>The requested file name is <br>${file.name}.`,
         confirmButtonColor: "#666",
       });
       continue;
