@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import {
   getFileExtension,
   isAcceptableExtension,
+  isValidateFileName,
 } from "../../threshold/preprocess/fileUtils";
 import { isExpTableFile } from "../../threshold/preprocess/utils";
 import {
@@ -47,6 +48,15 @@ export const handleDrop = async (
   let archivedZip = null;
 
   for (const file of files) {
+    if (!isValidateFileName(file)) {
+      await Swal.fire({
+        icon: "error",
+        title: "Invalid file name",
+        html: `File names cannot contain "-_" or "_-" patterns.<br>The requested file name is ${file.name}.`,
+        confirmButtonColor: "#666",
+      });
+      continue;
+    }
     // get extension
     isCompiledFromArchiveBool = regex.test(file.name);
     handleArchiveBool(isCompiledFromArchiveBool);
