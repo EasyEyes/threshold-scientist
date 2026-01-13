@@ -23,6 +23,9 @@ export default class Login extends Component {
   }
 
   async componentDidMount() {
+    const CLIENT_ID =
+      "63785db109412d3b2a6179ada78be8a3411936184b467f678c8251fda96d8c14";
+
     // Check for authorization code in URL (PKCE flow)
     const urlParams = new URLSearchParams(window.location.search);
     const authCode = urlParams.get("code");
@@ -56,12 +59,12 @@ export default class Login extends Component {
           ? "http://localhost:5500/redirect"
           : "https://easyeyes.app/redirect";
 
-        // Exchange authorization code for access token
+        // Exchange authorization code for access token (this will also store it)
         const tokenResponse = await exchangeCodeForToken(
           authCode,
           codeVerifier,
           redirectUri,
-          "63785db109412d3b2a6179ada78be8a3411936184b467f678c8251fda96d8c14",
+          CLIENT_ID,
         );
 
         const accessToken = tokenResponse.access_token;
@@ -80,13 +83,39 @@ export default class Login extends Component {
         });
       }
     } else {
-      // No authorization code in URL, initiate login
+      // No authorization code in URL - check for existing valid token
       try {
-        if (!this.state.login) {
-          this.login();
+        const { getValidAccessToken } = await import(
+          "../threshold/preprocess/pkceUtils"
+        );
+
+        // Try to get a valid access token (from storage or by refreshing)
+        const accessToken = await getValidAccessToken(CLIENT_ID);
+
+        if (accessToken) {
+          // We have a valid token, skip OAuth and initialize user directly
+          console.log("Using stored/refreshed access token");
+          this.setState({ login: "loading" });
+
+          // Temporarily assign access token for temporaryLog
+          tempAccessToken.t = accessToken;
+
+          // Initialize user with the access token
+          await this.initializeUserQuickly(accessToken);
+        } else {
+          // No valid token available, initiate OAuth login
+          if (!this.state.login) {
+            await this.login();
+          }
         }
       } catch (error) {
-        captureError(error, "Error logging in", { step: "initLogin" });
+        captureError(error, "Error checking stored token", {
+          step: "checkStoredToken",
+        });
+        // If checking token fails, fall back to normal login
+        if (!this.state.login) {
+          await this.login();
+        }
       }
     }
   }
