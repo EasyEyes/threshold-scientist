@@ -139,24 +139,48 @@ export default class App extends Component {
 
   async componentDidMount() {
     // get the actual changes from GitHub
-    const websiteGitHubRepo = await fetch(
-      "https://api.github.com/repos/EasyEyes/website/commits",
-    );
-    websiteGitHubRepo.json().then((data) => {
-      this.setState({
-        websiteRepoLastCommitURL: data[0].html_url,
-      });
-    });
+    try {
+      const websiteGitHubRepo = await fetch(
+        "https://api.github.com/repos/EasyEyes/website/commits",
+      );
+      if (websiteGitHubRepo.ok) {
+        websiteGitHubRepo
+          .json()
+          .then((data) => {
+            this.setState({
+              websiteRepoLastCommitURL: data[0].html_url,
+            });
+          })
+          .catch((error) => {
+            console.warn("Failed to parse GitHub API response:", error);
+          });
+      }
+    } catch (error) {
+      // Silently fail - this is not critical for app functionality
+      console.warn("Failed to fetch GitHub commits:", error);
+    }
 
     // get the deployed time from Netlify
-    const websiteNetlifySite = await fetch(
-      "https://api.netlify.com/api/v1/sites/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/",
-    );
-    websiteNetlifySite.json().then((data) => {
-      this.setState({
-        websiteRepoLastCommitDeploy: data.published_deploy.published_at,
-      });
-    });
+    try {
+      const websiteNetlifySite = await fetch(
+        "https://api.netlify.com/api/v1/sites/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/",
+      );
+      if (websiteNetlifySite.ok) {
+        websiteNetlifySite
+          .json()
+          .then((data) => {
+            this.setState({
+              websiteRepoLastCommitDeploy: data.published_deploy.published_at,
+            });
+          })
+          .catch((error) => {
+            console.warn("Failed to parse Netlify API response:", error);
+          });
+      }
+    } catch (error) {
+      // Silently fail - this is not critical for app functionality
+      console.warn("Failed to fetch Netlify deployment info:", error);
+    }
 
     // auth anonymous user for firebase
     signInAnonymously(auth)
