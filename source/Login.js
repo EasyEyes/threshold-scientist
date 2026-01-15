@@ -24,6 +24,27 @@ export default class Login extends Component {
   }
 
   async componentDidMount() {
+    // Check for URL parameters first
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Check if user just signed out (auto_sign_in=false query parameter)
+    const autoSignIn = urlParams.get("auto_sign_in");
+    if (autoSignIn === "false") {
+      // User just signed out - don't auto-redirect to OAuth
+      // Clean up the URL by removing the query parameter
+      window.history.replaceState(null, null, window.location.pathname);
+      // Clean up the signing_out flag if it exists
+      sessionStorage.removeItem("signing_out");
+      console.log(
+        "⏸️  Auto-login prevented after sign out. Waiting for manual login...",
+      );
+      this.setState({
+        login: null,
+        preventAutoLogin: true, // Set flag to prevent modal in componentDidUpdate
+      });
+      return; // Don't process anything else
+    }
+
     // Check if user is in the process of signing out
     const signingOut = sessionStorage.getItem("signing_out");
     if (signingOut) {
@@ -35,7 +56,6 @@ export default class Login extends Component {
     }
 
     // Check for authorization code in URL (PKCE flow)
-    const urlParams = new URLSearchParams(window.location.search);
     const authCode = urlParams.get("code");
     const state = urlParams.get("state");
 
