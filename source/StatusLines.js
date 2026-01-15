@@ -232,6 +232,7 @@ export default class StatusLines extends Component {
         <StatusLine
           activated={!!user}
           title={"Pavlovia account"}
+          className="pavlovia-account-status"
           content={
             user ? (
               <>
@@ -431,13 +432,13 @@ class StatusLine extends Component {
   }
 
   render() {
-    const { activated, title, content } = this.props;
+    const { activated, title, content, className } = this.props;
 
     return (
       <li
         className={`status-line ${
           activated ? "status-line-activated" : "status-line-inactivated"
-        }`}
+        } ${className || ""}`}
       >
         <span className="line-title">{title}:</span>
         {/* <span>: </span> */}
