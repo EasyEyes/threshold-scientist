@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
 
-import { Question } from "./components";
 import { createOrUpdateProlificToken } from "../threshold/preprocess/gitlabUtils";
 import { compatibilityRequirements as globalCompatibilityReq } from "../threshold/preprocess/global";
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
@@ -284,9 +283,6 @@ export default class StatusLines extends Component {
                     >
                       Change Prolific acct.
                     </button>
-                    <div style={{ visibility: "hidden" }}>
-                      <Question title={""} text={``} />
-                    </div>
                   </div>
                 </>
               ) : (
