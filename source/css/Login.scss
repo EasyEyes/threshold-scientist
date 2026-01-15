@@ -50,4 +50,22 @@
       white-space: nowrap;
     }
   }
+
+  .login-prompt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    p {
+      margin: 0;
+    }
+
+    .login-button {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+      align-self: flex-start;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+    }
+  }
 }

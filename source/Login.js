@@ -381,6 +381,23 @@ export default class Login extends Component {
           </div>
         </>
       );
+    } else if (this.state.preventAutoLogin) {
+      // User just signed out - show login button
+      node = (
+        <div className="login-prompt">
+          <p className="bold">You have been signed out from Pavlovia.</p>
+          <p>Click the button below to login with your Pavlovia account.</p>
+          <button
+            className="button-green login-button"
+            onClick={async () => {
+              this.setState({ preventAutoLogin: false });
+              await this.login();
+            }}
+          >
+            Login with Pavlovia
+          </button>
+        </div>
+      );
     }
 
     return <div className="login">{node}</div>;
