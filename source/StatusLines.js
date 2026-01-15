@@ -14,6 +14,58 @@ export default class StatusLines extends Component {
     super(props);
 
     this.popToUploadProlificToken = this.popToUploadProlificToken.bind(this);
+    this.handleSignOut = this.handleSignOut.bind(this);
+  }
+
+  async handleSignOut() {
+    // Show confirmation dialog
+    const result = await Swal.fire({
+      title: "Sign Out from Pavlovia?",
+      text: "You will need to log in again to compile experiments.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, sign out",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#d33",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        // Clear tokens from localStorage
+        const { clearTokensFromStorage } = await import(
+          "../threshold/preprocess/auth/storage"
+        );
+        clearTokensFromStorage();
+
+        // Clear in-memory token
+        const { tempAccessToken } = await import(
+          "../threshold/preprocess/global"
+        );
+        tempAccessToken.t = undefined;
+
+        // Clear sessionStorage
+        sessionStorage.clear();
+
+        // Show success message and reload
+        Swal.fire({
+          title: "Signed Out",
+          text: "You have been signed out from Pavlovia.",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        }).then(() => {
+          // Reload the page to trigger login flow
+          window.location.reload();
+        });
+      } catch (error) {
+        console.error("Error during sign out:", error);
+        Swal.fire({
+          title: "Error",
+          text: "Failed to sign out. Please try again.",
+          icon: "error",
+        });
+      }
+    }
   }
 
   isLineActivated(step) {
@@ -171,18 +223,28 @@ export default class StatusLines extends Component {
           title={"Pavlovia account"}
           content={
             user ? (
-              <span className="pavlovia-account-name">
-                <img
-                  className="pavlovia-avatar"
-                  src={user.avatar_url}
-                  alt="Pavlovia Avatar"
-                  style={{
-                    height: "18px",
-                    width: "18px",
-                  }}
-                ></img>
-                {user.name} ({user.username})
-              </span>
+              <>
+                <span className="pavlovia-account-name">
+                  <img
+                    className="pavlovia-avatar"
+                    src={user.avatar_url}
+                    alt="Pavlovia Avatar"
+                    style={{
+                      height: "18px",
+                      width: "18px",
+                    }}
+                  ></img>
+                  {user.name} ({user.username})
+                </span>
+                <div className="signed-out-button">
+                  <button
+                    className="button-small button-grey"
+                    onClick={this.handleSignOut}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </>
             ) : (
               "Unconnected"
             )

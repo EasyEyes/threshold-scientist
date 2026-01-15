@@ -47,6 +47,17 @@
         }
       }
 
+      .signed-out-button {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-left: 0.5rem;
+        height: 20px;
+        @media screen and (max-width: 560px) {
+          height: unset;
+        }
+      }
+
       .button-small {
         white-space: nowrap;
         font-size: 0.7rem;
