@@ -31,6 +31,12 @@ export default class StatusLines extends Component {
 
     if (result.isConfirmed) {
       try {
+        console.log("🚪 Signing out from Pavlovia...");
+
+        // First, set a flag in sessionStorage BEFORE clearing anything
+        // This prevents auto-login from happening during the redirect
+        sessionStorage.setItem("signing_out", "true");
+
         // Clear tokens from localStorage
         const { clearTokensFromStorage } = await import(
           "../threshold/preprocess/auth/storage"
@@ -43,22 +49,27 @@ export default class StatusLines extends Component {
         );
         tempAccessToken.t = undefined;
 
-        // Clear sessionStorage
-        sessionStorage.clear();
+        // Clear any other localStorage items related to authentication
+        localStorage.removeItem("gitlab_oauth_tokens");
 
-        // Show success message and reload
-        Swal.fire({
-          title: "Signed Out",
-          text: "You have been signed out from Pavlovia.",
-          icon: "success",
-          timer: 1500,
-          showConfirmButton: false,
-        }).then(() => {
-          // Reload the page to trigger login flow
-          window.location.reload();
-        });
+        // Clear sessionStorage EXCEPT for the signing_out flag
+        const signingOut = sessionStorage.getItem("signing_out");
+        sessionStorage.clear();
+        if (signingOut) {
+          sessionStorage.setItem("signing_out", signingOut);
+        }
+
+        console.log("✅ All tokens and session data cleared");
+
+        // Immediately redirect to URL with auto_sign_in=false
+        // No delay - this prevents auto-login from triggering
+        const cleanUrl = window.location.pathname; // e.g., "/compiler/"
+        const redirectUrl = `${cleanUrl}?auto_sign_in=false`;
+        console.log("🔄 Redirecting to:", redirectUrl);
+        window.location.href = redirectUrl;
       } catch (error) {
         console.error("Error during sign out:", error);
+        sessionStorage.removeItem("signing_out");
         Swal.fire({
           title: "Error",
           text: "Failed to sign out. Please try again.",

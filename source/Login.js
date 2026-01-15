@@ -17,12 +17,23 @@ export default class Login extends Component {
       login: null,
       projectListLoaded: false,
       mostRecentProject: null,
+      preventAutoLogin: false, // Set to true when user signs out
     };
 
     this.login = this.login.bind(this);
   }
 
   async componentDidMount() {
+    // Check if user is in the process of signing out
+    const signingOut = sessionStorage.getItem("signing_out");
+    if (signingOut) {
+      sessionStorage.removeItem("signing_out");
+      console.log(
+        "⏸️  Sign out in progress, skipping componentDidMount logic...",
+      );
+      return; // Don't do anything, wait for redirect with auto_sign_in=false
+    }
+
     // Check for authorization code in URL (PKCE flow)
     const urlParams = new URLSearchParams(window.location.search);
     const authCode = urlParams.get("code");
@@ -86,40 +97,68 @@ export default class Login extends Component {
     } else {
       // No authorization code in URL
       // First, check for stored session before initiating login
-      try {
-        const { loadStoredSession } = await import(
-          "../threshold/preprocess/user"
-        );
-        const storedSession = await loadStoredSession();
 
-        if (storedSession) {
-          // We have a valid stored session, use it
-          const [user, resourcesPromise, prolificToken] = storedSession;
+      // Quick check: verify tokens exist in localStorage before attempting to load
+      const hasTokensInStorage = localStorage.getItem("gitlab_oauth_tokens");
 
-          // Set access token for backward compatibility
-          tempAccessToken.t = user.accessToken;
-
-          this.setState({ login: "complete" });
-          this.props.functions.handleLogin(
-            user,
-            resourcesPromise,
-            user.accessToken,
-            prolificToken,
+      if (hasTokensInStorage) {
+        try {
+          console.log("Checking stored session validity...");
+          const { loadStoredSession } = await import(
+            "../threshold/preprocess/user"
           );
-          return;
+          const storedSession = await loadStoredSession();
+
+          if (storedSession) {
+            // We have a valid stored session, use it
+            console.log("Valid stored session found, logging in automatically");
+            const [user, resourcesPromise, prolificToken] = storedSession;
+
+            // Set access token for backward compatibility
+            tempAccessToken.t = user.accessToken;
+
+            this.setState({ login: "complete" });
+            this.props.functions.handleLogin(
+              user,
+              resourcesPromise,
+              user.accessToken,
+              prolificToken,
+            );
+            return;
+          }
+        } catch (error) {
+          // Stored session invalid or error loading it
+          console.log("Stored session invalid, initiating login", error);
         }
-      } catch (error) {
-        // Stored session invalid or error loading it
-        console.log("No valid stored session, initiating login", error);
+      } else {
+        console.log("No tokens in localStorage, initiating OAuth login");
       }
 
-      // No stored session, initiate login
-      try {
-        if (!this.state.login) {
-          this.login();
+      // Check if user just signed out (auto_sign_in=false query parameter)
+      const urlParams = new URLSearchParams(window.location.search);
+      const autoSignIn = urlParams.get("auto_sign_in");
+
+      if (autoSignIn === "false") {
+        // User just signed out - don't auto-redirect to OAuth
+        // Clean up the URL by removing the query parameter
+        window.history.replaceState(null, null, window.location.pathname);
+        console.log(
+          "⏸️  Auto-login prevented after sign out. Waiting for manual login...",
+        );
+        this.setState({
+          login: null,
+          preventAutoLogin: true, // Set flag to prevent modal in componentDidUpdate
+        });
+      } else {
+        // No stored session, initiate login automatically
+        console.log("🔐 No session found, auto-redirecting to OAuth...");
+        try {
+          if (!this.state.login) {
+            this.login();
+          }
+        } catch (error) {
+          captureError(error, "Error logging in", { step: "initLogin" });
         }
-      } catch (error) {
-        captureError(error, "Error logging in", { step: "initLogin" });
       }
     }
   }
@@ -227,7 +266,13 @@ export default class Login extends Component {
     }
 
     // Show modal when redirecting to Pavlovia login
-    if (!prevState.login && !this.state.login && !this.props.isCompletedStep) {
+    // BUT don't show it if user just signed out (preventAutoLogin flag)
+    if (
+      !prevState.login &&
+      !this.state.login &&
+      !this.props.isCompletedStep &&
+      !this.state.preventAutoLogin
+    ) {
       Swal.fire({
         title: "Logging into Pavlovia ...",
         text: "Redirecting to Pavlovia login page",
