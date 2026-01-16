@@ -418,6 +418,24 @@ export default class App extends Component {
     // Load resources in background and update when ready
     resources
       .then((r) => {
+        // Check if any resource type failed to fetch (null values)
+        const failedTypes = Object.entries(r)
+          .filter(([_, value]) => value === null)
+          .map(([key, _]) => key);
+
+        if (failedTypes.length > 0) {
+          // Show warning banner if resource fetch failed
+          const Swal = require("sweetalert2").default;
+          Swal.fire({
+            icon: "warning",
+            title: "Could not verify resources",
+            text: `Failed to fetch ${failedTypes.join(
+              ", ",
+            )} resource lists. Try refreshing the page.`,
+            confirmButtonColor: "#666",
+          });
+        }
+
         this.setState({
           resources: createResourcesObjectFromData(r),
           resourcesLoaded: true,
