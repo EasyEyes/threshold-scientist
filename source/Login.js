@@ -101,18 +101,18 @@ export default class Login extends Component {
         captureError(error, "Error exchanging authorization code for token", {
           step: "tokenExchange",
         });
-        this.setState({
-          login: null, // Reset to allow retry
-        });
 
-        // Show error to user if it's a CSRF/state validation error
-        if (error.message?.includes("Invalid authentication state")) {
-          Swal.fire({
-            icon: "error",
-            title: "Security Error",
-            text: error.message,
-          });
-        }
+        // Clean up URL and redirect to fresh login
+        console.error("OAuth callback failed:", error.message);
+
+        // Clear URL parameters immediately
+        window.history.replaceState(null, null, window.location.pathname);
+        window.location.href = window.location.pathname;
+
+        // Reset state to allow retry
+        this.setState({
+          login: null,
+        });
       }
     } else {
       // No authorization code in URL

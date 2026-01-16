@@ -5,6 +5,7 @@ import { createOrUpdateProlificToken } from "../threshold/preprocess/gitlabUtils
 import { compatibilityRequirements as globalCompatibilityReq } from "../threshold/preprocess/global";
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 import { durations } from "../threshold/preprocess/getDuration";
+import { Question } from "./components";
 
 import "./css/StatusLines.scss";
 
@@ -247,13 +248,30 @@ export default class StatusLines extends Component {
                   ></img>
                   {user.name} ({user.username})
                 </span>
-                <div className="signed-out-button">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
+                  }}
+                >
                   <button
                     className="button-small button-grey"
                     onClick={this.handleSignOut}
                   >
-                    Sign Out
+                    Sign out from Pavlovia
                   </button>
+                  <Question
+                    title={"Why sign out from Pavlovia?"}
+                    text={`
+                      <p>Signing out disconnects your current Pavlovia session from EasyEyes and clears login data from this browser. Your Pavlovia experiments, data, settings, and files are not affected. After signing out, you'll return to the login screen and you'll need to sign in again to use EasyEyes. Use this if you want to:</p>
+                      <ul>
+                        <li>switch to a different Pavlovia account</li>
+                        <li>finish your session and sign out securely</li>
+                        <li>fix login or authentication issues</li>
+                      </ul>
+                    `}
+                  />
                 </div>
               </>
             ) : (
@@ -274,7 +292,13 @@ export default class StatusLines extends Component {
                       ? `${prolificAccount.name} (${prolificAccount.email})`
                       : "Failed to connect, please check if your Prolific token is correct."}
                   </span>
-                  <div className="prolific-account-button">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
+                    }}
+                  >
                     <button
                       className="button-small button-grey"
                       onClick={async () => {
@@ -283,6 +307,22 @@ export default class StatusLines extends Component {
                     >
                       Change Prolific acct.
                     </button>
+                    <Question
+                      title={"Change Prolific token"}
+                      text={`
+                        <p>Clicking this button lets you update the Prolific API token that connects EasyEyes to your Prolific account. This token is stored in your Pavlovia account and is used to create and manage Prolific studies automatically. Use this button if you want to:</p>
+                        <ul>
+                          <li>switch to a different Prolific account (e.g., personal vs. institutional)</li>
+                          <li>replace a token that has expired or been revoked</li>
+                          <li>fix connection errors when creating Prolific studies</li>
+                          <li>update your security credentials</li>
+                        </ul>
+                        <p><strong>First get a new token:</strong><br/>
+                        Log in to Prolific → Settings (blue sidebar) → Go to API token page → create and copy a new token.</p>
+                        <p>Then click this button, and paste in the token when prompted.</p>
+                        <p><strong>Note:</strong> This does not change your Prolific account. It only affects the connection token used by EasyEyes.</p>
+                      `}
+                    />
                   </div>
                 </>
               ) : (
