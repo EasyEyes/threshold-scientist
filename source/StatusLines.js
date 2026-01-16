@@ -257,6 +257,10 @@ export default class StatusLines extends Component {
                 >
                   <button
                     className="button-small button-grey"
+                    style={{
+                      color: "#FFFFFF",
+                      textShadow: "0 0 0 #FFFFFF",
+                    }}
                     onClick={this.handleSignOut}
                   >
                     Sign out from Pavlovia
@@ -301,6 +305,14 @@ export default class StatusLines extends Component {
                   >
                     <button
                       className="button-small button-grey"
+                      style={{
+                        color: "#FFFFFF",
+                        textShadow: "0 0 0 #FFFFFF",
+                        WebkitFontSmoothing: "none",
+                        MozOsxFontSmoothing: "unset",
+                        textRendering: "geometricPrecision",
+                        fontWeight: 630,
+                      }}
                       onClick={async () => {
                         this.popToUploadProlificToken();
                       }}
