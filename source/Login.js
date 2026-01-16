@@ -65,11 +65,6 @@ export default class Login extends Component {
         login: "loading",
       });
 
-      // Clear URL parameters
-      // eslint-disable-next-line no-undef
-      if (!process.env.debug)
-        window.history.replaceState(null, null, window.location.pathname);
-
       try {
         // Use GitLabAuth.handleCallback() to handle the entire OAuth callback flow
         const { GitLabAuth } = await import(
@@ -84,6 +79,11 @@ export default class Login extends Component {
 
         // Handle callback: validates state (CSRF), exchanges code for tokens
         const { client, returnUrl } = await auth.handleCallback();
+
+        // Clear URL parameters AFTER handleCallback() has read them
+        // eslint-disable-next-line no-undef
+        if (!process.env.debug)
+          window.history.replaceState(null, null, window.location.pathname);
 
         const accessToken = client.getAccessToken();
         const refreshToken = client.getRefreshToken();
