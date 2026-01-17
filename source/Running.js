@@ -471,17 +471,18 @@ export default class Running extends Component {
               text={`
                 <p>The "Go to Pavlovia" button takes you to the Pavlovia dashboard for the current repository. If the EasyEyes compiler seems stuck, you might learn something helpful by looking at the Pavlovia dashboard.</p>
 
-                <p><strong>LICENSED. RUNNING WITH LICENSE.</strong> We recommend having a Pavlovia license. Scientists using EasyEyes with a Pavlovia license hardly ever visit Pavlovia. You already have a Pavlovia license if your university pays for a site license. Otherwise, EasyEyes has a Pavlovia site license that we can add your email to, at no charge:</p>
+                <p>There are four ways to run your Pavlovia experiment:</p>
 
-                <p>Write to Denis &lt;denis.pelli@nyu.edu&gt; and Sasha &lt;aleksandra.igdalova@gmail.com&gt; with subject:<br/>
+                <p><strong>1. LICENSED. RUNNING WITH LICENSE.</strong> We recommend having a Pavlovia license. Scientists using EasyEyes with a Pavlovia license hardly ever visit Pavlovia. You already have a Pavlovia license if your university pays for a site license. Otherwise, EasyEyes has a Pavlovia site license that we can add your email to, at no charge:<br/>
+                Write to Denis &lt;denis.pelli@nyu.edu&gt; and Sasha &lt;aleksandra.igdalova@gmail.com&gt; with Subject:<br/>
                 <strong>"EasyEyes Pavlovia license"</strong><br/>
                 Use the same email address for the license as you use to log into Pavlovia.</p>
 
-                <p><strong>UNLICENSED. PILOTING.</strong> Without that license, you have two ways to run your experiment. For free, you can go to Pavlovia and run your experiment in PILOTING mode, which is strictly local, not online. For online testing, you need RUNNING mode.</p>
+                <p><strong>2. UNLICENSED. PILOTING.</strong> Without that license, you have two ways to run your experiment. For free, you can go to Pavlovia and run your experiment in PILOTING mode, which is strictly local, not online. For online testing, you need RUNNING mode.</p>
 
-                <p><strong>UNLICENSED. RUNNING WITH TOKENS.</strong> Or you can buy tokens from Pavlovia, assign some to this experiment, and run it in RUNNING mode. Pavlovia currently charges 20 pence per participant.</p>
+                <p><strong>3. UNLICENSED. RUNNING WITH TOKENS.</strong> Or you can buy tokens from Pavlovia, assign some to this experiment, and run it in RUNNING mode. Pavlovia currently charges 20 pence per participant.</p>
 
-                <p><strong>UNLICENSED, RUNNING WITH TOKENS. REUSING OLD REPOSITORY.</strong> Normally, every time you compile, it's a new experiment. Tokens don't transfer automatically to a new experiment, so you have to assign tokens to each new experiment, every time you compile. To minimize this hassle, EasyEyes allows you to set<br/>
+                <p><strong>4. UNLICENSED. RUNNING WITH TOKENS. REUSING OLD REPOSITORY.</strong> Normally, every time you compile, it's a new experiment. Tokens don't transfer automatically to a new experiment, so you have to assign tokens to each new experiment, every time you compile. To minimize this hassle, EasyEyes allows you to set<br/>
                 <code>_pavloviaNewExperimentBool = FALSE</code><br/>
                 In that case, the EasyEyes compiler will reuse the most recent repository for this experiment spreadsheet. Thus any assigned tokens will remain assigned to the current experiment, saving you a trip to Pavlovia. However, all your data from multiple versions of the experiment will all share one repository. Every download of results will download all the data. And you won't be able to go back to an old version.</p>
               `}
