@@ -125,7 +125,3 @@ localtest.html
 .netlify/state.json
 .netlify/functions-serve/prolific/
 .aider*
-
-# Compiled CSS files from SCSS
-source/css/*.css
-source/css/*.css.map
