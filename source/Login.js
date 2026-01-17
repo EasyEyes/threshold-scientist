@@ -17,15 +17,47 @@ export default class Login extends Component {
       login: null,
       projectListLoaded: false,
       mostRecentProject: null,
+      preventAutoLogin: false, // Set to true when user signs out
     };
 
     this.login = this.login.bind(this);
   }
 
   async componentDidMount() {
-    // Check for authorization code in URL (PKCE flow)
+    // Check for URL parameters first
     const urlParams = new URLSearchParams(window.location.search);
+
+    // Check if user just signed out (auto_sign_in=false query parameter)
+    const autoSignIn = urlParams.get("auto_sign_in");
+    if (autoSignIn === "false") {
+      // User just signed out - don't auto-redirect to OAuth
+      // Clean up the URL by removing the query parameter
+      window.history.replaceState(null, null, window.location.pathname);
+      // Clean up the signing_out flag if it exists
+      sessionStorage.removeItem("signing_out");
+      console.log(
+        "⏸️  Auto-login prevented after sign out. Waiting for manual login...",
+      );
+      this.setState({
+        login: null,
+        preventAutoLogin: true, // Set flag to prevent modal in componentDidUpdate
+      });
+      return; // Don't process anything else
+    }
+
+    // Check if user is in the process of signing out
+    const signingOut = sessionStorage.getItem("signing_out");
+    if (signingOut) {
+      sessionStorage.removeItem("signing_out");
+      console.log(
+        "⏸️  Sign out in progress, skipping componentDidMount logic...",
+      );
+      return; // Don't do anything, wait for redirect with auto_sign_in=false
+    }
+
+    // Check for authorization code in URL (PKCE flow)
     const authCode = urlParams.get("code");
+    const state = urlParams.get("state");
 
     if (authCode) {
       // We have an authorization code, exchange it for access token
@@ -33,66 +65,147 @@ export default class Login extends Component {
         login: "loading",
       });
 
-      // Clear URL parameters
-      // eslint-disable-next-line no-undef
-      if (!process.env.debug)
-        window.history.replaceState(null, null, window.location.pathname);
-
       try {
-        // Import PKCE utilities
-        const { retrieveCodeVerifier, exchangeCodeForToken } = await import(
-          "../threshold/preprocess/pkceUtils"
+        // Use GitLabAuth.handleCallback() to handle the entire OAuth callback flow
+        const { GitLabAuth } = await import(
+          "../threshold/preprocess/auth/gitlabAuth"
+        );
+        const { getAuthConfig } = await import(
+          "../threshold/preprocess/auth/config"
         );
 
-        // Retrieve the code verifier we stored before redirecting
-        const codeVerifier = retrieveCodeVerifier();
-        if (!codeVerifier) {
-          throw new Error("Code verifier not found in session storage");
-        }
+        const config = getAuthConfig();
+        const auth = new GitLabAuth(config);
 
-        // Determine the redirect URI based on environment
+        // Handle callback: validates state (CSRF), exchanges code for tokens
+        const { client, returnUrl } = await auth.handleCallback();
+
+        // Clear URL parameters AFTER handleCallback() has read them
         // eslint-disable-next-line no-undef
-        const redirectUri = process.env.debug
-          ? "http://localhost:5500/redirect"
-          : "https://easyeyes.app/redirect";
+        if (!process.env.debug)
+          window.history.replaceState(null, null, window.location.pathname);
 
-        // Exchange authorization code for access token
-        const tokenResponse = await exchangeCodeForToken(
-          authCode,
-          codeVerifier,
-          redirectUri,
-          "63785db109412d3b2a6179ada78be8a3411936184b467f678c8251fda96d8c14",
-        );
-
-        const accessToken = tokenResponse.access_token;
+        const accessToken = client.getAccessToken();
+        const refreshToken = client.getRefreshToken();
+        const expiresAt = client.getExpiresAt();
 
         // Temporarily assign access token for temporaryLog
         tempAccessToken.t = accessToken;
 
+        // Save tokens to localStorage
+        client.saveTokens();
+
         // Initialize user with the access token
-        this.initializeUserQuickly(accessToken);
+        this.initializeUserQuickly(accessToken, refreshToken, expiresAt);
       } catch (error) {
         captureError(error, "Error exchanging authorization code for token", {
           step: "tokenExchange",
         });
+
+        // Clean up URL and redirect to fresh login
+        console.error("OAuth callback failed:", error.message);
+
+        // Clear URL parameters immediately
+        window.history.replaceState(null, null, window.location.pathname);
+        window.location.href = window.location.pathname;
+
+        // Reset state to allow retry
         this.setState({
-          login: null, // Reset to allow retry
+          login: null,
         });
       }
     } else {
-      // No authorization code in URL, initiate login
-      try {
-        if (!this.state.login) {
-          this.login();
+      // No authorization code in URL
+      // First, check for stored session before initiating login
+
+      // Quick check: verify tokens exist in localStorage before attempting to load
+      const hasTokensInStorage = localStorage.getItem("gitlab_oauth_tokens");
+
+      if (hasTokensInStorage) {
+        try {
+          console.log("Checking stored session validity...");
+          const { loadStoredSession } = await import(
+            "../threshold/preprocess/user"
+          );
+          const storedSession = await loadStoredSession();
+
+          if (storedSession) {
+            // We have a valid stored session, use it
+            console.log("Valid stored session found, logging in automatically");
+            const [user, resourcesPromise, prolificToken] = storedSession;
+
+            // Set access token for backward compatibility
+            tempAccessToken.t = user.accessToken;
+
+            this.setState({ login: "complete" });
+            this.props.functions.handleLogin(
+              user,
+              resourcesPromise,
+              user.accessToken,
+              prolificToken,
+            );
+            return;
+          }
+        } catch (error) {
+          // Stored session invalid or error loading it
+          console.log("Stored session invalid, initiating login", error);
         }
-      } catch (error) {
-        captureError(error, "Error logging in", { step: "initLogin" });
+      } else {
+        console.log("No tokens in localStorage, initiating OAuth login");
+      }
+
+      // Check if user just signed out (auto_sign_in=false query parameter)
+      const urlParams = new URLSearchParams(window.location.search);
+      const autoSignIn = urlParams.get("auto_sign_in");
+
+      if (autoSignIn === "false") {
+        // User just signed out - don't auto-redirect to OAuth
+        // Clean up the URL by removing the query parameter
+        window.history.replaceState(null, null, window.location.pathname);
+        console.log(
+          "⏸️  Auto-login prevented after sign out. Waiting for manual login...",
+        );
+        this.setState({
+          login: null,
+          preventAutoLogin: true, // Set flag to prevent modal in componentDidUpdate
+        });
+      } else {
+        // No stored session, initiate login automatically
+        console.log("🔐 No session found, auto-redirecting to OAuth...");
+        try {
+          if (!this.state.login) {
+            this.login();
+          }
+        } catch (error) {
+          captureError(error, "Error logging in", { step: "initLogin" });
+        }
       }
     }
   }
 
-  async initializeUserQuickly(accessToken) {
+  async initializeUserQuickly(accessToken, refreshToken, expiresAt) {
     try {
+      // Create GitLabOAuthClient and save tokens to localStorage
+      const { GitLabOAuthClient } = await import(
+        "../threshold/preprocess/auth/gitlabOAuthClient"
+      );
+      const { getAuthConfig } = await import(
+        "../threshold/preprocess/auth/config"
+      );
+
+      const config = getAuthConfig();
+      const oauthClient = new GitLabOAuthClient({
+        clientId: config.clientId,
+        redirectUri: config.redirectUri,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        expiresAt: expiresAt,
+        baseUrl: config.baseUrl,
+      });
+
+      // Save tokens to localStorage for session persistence
+      oauthClient.saveTokens();
+
       // Create user and get basic info immediately
       const { User } = await import("../threshold/preprocess/gitlabUtils");
       const user = new User(accessToken);
@@ -173,7 +286,13 @@ export default class Login extends Component {
     }
 
     // Show modal when redirecting to Pavlovia login
-    if (!prevState.login && !this.state.login && !this.props.isCompletedStep) {
+    // BUT don't show it if user just signed out (preventAutoLogin flag)
+    if (
+      !prevState.login &&
+      !this.state.login &&
+      !this.props.isCompletedStep &&
+      !this.state.preventAutoLogin
+    ) {
       Swal.fire({
         title: "Logging into Pavlovia ...",
         text: "Redirecting to Pavlovia login page",
@@ -281,6 +400,23 @@ export default class Login extends Component {
             )}
           </div>
         </>
+      );
+    } else if (this.state.preventAutoLogin) {
+      // User just signed out - show login button
+      node = (
+        <div className="login-prompt">
+          <p className="bold">You have been signed out from Pavlovia.</p>
+          <p>Click the button below to login with your Pavlovia account.</p>
+          <button
+            className="button-green login-button"
+            onClick={async () => {
+              this.setState({ preventAutoLogin: false });
+              await this.login();
+            }}
+          >
+            Login with Pavlovia
+          </button>
+        </div>
       );
     }
 

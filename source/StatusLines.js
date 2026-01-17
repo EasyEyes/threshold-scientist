@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
 
-import { Question } from "./components";
 import { createOrUpdateProlificToken } from "../threshold/preprocess/gitlabUtils";
 import { compatibilityRequirements as globalCompatibilityReq } from "../threshold/preprocess/global";
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 import { durations } from "../threshold/preprocess/getDuration";
+import { Question } from "./components";
 
 import "./css/StatusLines.scss";
 
@@ -14,6 +14,69 @@ export default class StatusLines extends Component {
     super(props);
 
     this.popToUploadProlificToken = this.popToUploadProlificToken.bind(this);
+    this.handleSignOut = this.handleSignOut.bind(this);
+  }
+
+  async handleSignOut() {
+    // Show confirmation dialog
+    const result = await Swal.fire({
+      title: "Sign Out from Pavlovia?",
+      text: "You will need to log in again to compile experiments.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, sign out",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#d33",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        console.log("🚪 Signing out from Pavlovia...");
+
+        // First, set a flag in sessionStorage BEFORE clearing anything
+        // This prevents auto-login from happening during the redirect
+        sessionStorage.setItem("signing_out", "true");
+
+        // Clear tokens from localStorage
+        const { clearTokensFromStorage } = await import(
+          "../threshold/preprocess/auth/storage"
+        );
+        clearTokensFromStorage();
+
+        // Clear in-memory token
+        const { tempAccessToken } = await import(
+          "../threshold/preprocess/global"
+        );
+        tempAccessToken.t = undefined;
+
+        // Clear any other localStorage items related to authentication
+        localStorage.removeItem("gitlab_oauth_tokens");
+
+        // Clear sessionStorage EXCEPT for the signing_out flag
+        const signingOut = sessionStorage.getItem("signing_out");
+        sessionStorage.clear();
+        if (signingOut) {
+          sessionStorage.setItem("signing_out", signingOut);
+        }
+
+        console.log("✅ All tokens and session data cleared");
+
+        // Immediately redirect to URL with auto_sign_in=false
+        // No delay - this prevents auto-login from triggering
+        const cleanUrl = window.location.pathname; // e.g., "/compiler/"
+        const redirectUrl = `${cleanUrl}?auto_sign_in=false`;
+        console.log("🔄 Redirecting to:", redirectUrl);
+        window.location.href = redirectUrl;
+      } catch (error) {
+        console.error("Error during sign out:", error);
+        sessionStorage.removeItem("signing_out");
+        Swal.fire({
+          title: "Error",
+          text: "Failed to sign out. Please try again.",
+          icon: "error",
+        });
+      }
+    }
   }
 
   isLineActivated(step) {
@@ -169,20 +232,52 @@ export default class StatusLines extends Component {
         <StatusLine
           activated={!!user}
           title={"Pavlovia account"}
+          className="pavlovia-account-status"
           content={
             user ? (
-              <span className="pavlovia-account-name">
-                <img
-                  className="pavlovia-avatar"
-                  src={user.avatar_url}
-                  alt="Pavlovia Avatar"
+              <>
+                <span className="pavlovia-account-name">
+                  <img
+                    className="pavlovia-avatar"
+                    src={user.avatar_url}
+                    alt="Pavlovia Avatar"
+                    style={{
+                      height: "18px",
+                      width: "18px",
+                    }}
+                  ></img>
+                  {user.name} ({user.username})
+                </span>
+                <div
                   style={{
-                    height: "18px",
-                    width: "18px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
                   }}
-                ></img>
-                {user.name} ({user.username})
-              </span>
+                >
+                  <button
+                    className="button-small button-grey"
+                    style={{
+                      color: "#FFFFFF",
+                      textShadow: "0 0 0 #FFFFFF",
+                    }}
+                    onClick={this.handleSignOut}
+                  >
+                    Sign out from Pavlovia
+                  </button>
+                  <Question
+                    title={"Why sign out from Pavlovia?"}
+                    text={`
+                      <p>Signing out disconnects your current Pavlovia session from EasyEyes and clears login data from this browser. Your Pavlovia experiments, data, settings, and files are not affected. After signing out, you'll return to the login screen and you'll need to sign in again to use EasyEyes. Use this if you want to:</p>
+                      <ul>
+                        <li>switch to a different Pavlovia account</li>
+                        <li>finish your session and sign out securely</li>
+                        <li>fix login or authentication issues</li>
+                      </ul>
+                    `}
+                  />
+                </div>
+              </>
             ) : (
               "Unconnected"
             )
@@ -201,18 +296,41 @@ export default class StatusLines extends Component {
                       ? `${prolificAccount.name} (${prolificAccount.email})`
                       : "Failed to connect, please check if your Prolific token is correct."}
                   </span>
-                  <div className="prolific-account-button">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
+                    }}
+                  >
                     <button
                       className="button-small button-grey"
+                      style={{
+                        color: "#FFFFFF",
+                        textShadow: "0 0 0 #FFFFFF",
+                      }}
                       onClick={async () => {
                         this.popToUploadProlificToken();
                       }}
                     >
                       Change Prolific acct.
                     </button>
-                    <div style={{ visibility: "hidden" }}>
-                      <Question title={""} text={``} />
-                    </div>
+                    <Question
+                      title={"Change Prolific token"}
+                      text={`
+                        <p>Clicking this button lets you update the Prolific API token that connects EasyEyes to your Prolific account. This token is stored in your Pavlovia account and is used to create and manage Prolific studies automatically. Use this button if you want to:</p>
+                        <ul>
+                          <li>switch to a different Prolific account (e.g., personal vs. institutional)</li>
+                          <li>replace a token that has expired or been revoked</li>
+                          <li>fix connection errors when creating Prolific studies</li>
+                          <li>update your security credentials</li>
+                        </ul>
+                        <p><strong>First get a new token:</strong><br/>
+                        Log in to Prolific → Settings (blue sidebar) → Go to API token page → create and copy a new token.</p>
+                        <p>Then click this button, and paste in the token when prompted.</p>
+                        <p><strong>Note:</strong> This does not change your Prolific account. It only affects the connection token used by EasyEyes.</p>
+                      `}
+                    />
                   </div>
                 </>
               ) : (
@@ -358,13 +476,13 @@ class StatusLine extends Component {
   }
 
   render() {
-    const { activated, title, content } = this.props;
+    const { activated, title, content, className } = this.props;
 
     return (
       <li
         className={`status-line ${
           activated ? "status-line-activated" : "status-line-inactivated"
-        }`}
+        } ${className || ""}`}
       >
         <span className="line-title">{title}:</span>
         {/* <span>: </span> */}
