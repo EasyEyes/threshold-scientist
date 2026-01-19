@@ -132,7 +132,8 @@ export default class Login extends Component {
           if (storedSession) {
             // We have a valid stored session, use it
             console.log("Valid stored session found, logging in automatically");
-            const [user, resourcesPromise, prolificToken] = storedSession;
+            const [user, resourcesPromise, prolificTokenPromise] =
+              storedSession;
 
             // Set access token for backward compatibility
             tempAccessToken.t = user.accessToken;
@@ -142,8 +143,21 @@ export default class Login extends Component {
               user,
               resourcesPromise,
               user.accessToken,
-              prolificToken,
+              "", // Empty prolific token initially
             );
+
+            // Update prolific token when ready
+            prolificTokenPromise
+              .then((prolificToken) => {
+                if (this.props.functions.handleUpdateProlificToken) {
+                  this.props.functions.handleUpdateProlificToken(prolificToken);
+                }
+              })
+              .catch((error) => {
+                captureError(error, "Error loading prolific token", {
+                  step: "loadProlificToken",
+                });
+              });
             return;
           }
         } catch (error) {

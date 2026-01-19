@@ -407,9 +407,7 @@ export default class App extends Component {
       user: user,
       accessToken: accessToken,
       prolificToken: prolificToken,
-      prolificAccount: prolificToken
-        ? await getProlificAccount(prolificToken)
-        : null,
+      prolificAccount: null, // Load asynchronously below
       resources: createEmptyResourcesObject(), // Initialize with empty arrays while resources load
       resourcesLoaded: false,
       ...this.nextStepStatus("table"),
@@ -447,6 +445,19 @@ export default class App extends Component {
         captureError(error, "Error loading resources", { type: "resources" });
         this.setState({ resourcesLoaded: true });
       });
+
+    // Load prolific account in background if token exists
+    if (prolificToken) {
+      getProlificAccount(prolificToken)
+        .then((account) => {
+          this.setState({ prolificAccount: account });
+        })
+        .catch((error) => {
+          captureError(error, "Error loading prolific account", {
+            type: "prolific",
+          });
+        });
+    }
   }
 
   async handleUploadProlificToken(prolificToken) {
