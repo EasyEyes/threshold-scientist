@@ -143,7 +143,7 @@ export default class Login extends Component {
               user,
               resourcesPromise,
               user.accessToken,
-              "", // Empty prolific token initially
+              undefined,
             );
 
             // Update prolific token when ready
@@ -244,7 +244,7 @@ export default class Login extends Component {
         user,
         resourcesPromise,
         accessToken,
-        "", // Empty prolific token initially
+        undefined,
       );
 
       // Update prolific token when it's ready

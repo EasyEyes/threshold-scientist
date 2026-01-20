@@ -406,8 +406,8 @@ export default class App extends Component {
     this.setState({
       user: user,
       accessToken: accessToken,
-      prolificToken: prolificToken,
-      prolificAccount: null, // Load asynchronously below
+      prolificToken: prolificToken || null,
+      prolificAccount: null, // Load asynchronously via handleUpdateProlificToken
       resources: createEmptyResourcesObject(), // Initialize with empty arrays while resources load
       resourcesLoaded: false,
       ...this.nextStepStatus("table"),
@@ -441,23 +441,12 @@ export default class App extends Component {
         return r;
       })
       .catch((error) => {
-        // TODO retry?
         captureError(error, "Error loading resources", { type: "resources" });
         this.setState({ resourcesLoaded: true });
       });
 
-    // Load prolific account in background if token exists
-    if (prolificToken) {
-      getProlificAccount(prolificToken)
-        .then((account) => {
-          this.setState({ prolificAccount: account });
-        })
-        .catch((error) => {
-          captureError(error, "Error loading prolific account", {
-            type: "prolific",
-          });
-        });
-    }
+    // Note: Prolific account loading is handled by handleUpdateProlificToken
+    // when the prolificTokenPromise resolves in Login.js
   }
 
   async handleUploadProlificToken(prolificToken) {
@@ -472,10 +461,21 @@ export default class App extends Component {
   async handleUpdateProlificToken(prolificToken) {
     this.setState({
       prolificToken: prolificToken,
-      prolificAccount: prolificToken
-        ? await getProlificAccount(prolificToken)
-        : null,
     });
+
+    // Load prolific account in background if token exists
+    if (prolificToken) {
+      try {
+        const account = await getProlificAccount(prolificToken);
+        this.setState({ prolificAccount: account });
+      } catch (error) {
+        captureError(error, "Error loading prolific account", {
+          type: "prolific",
+        });
+      }
+    } else {
+      this.setState({ prolificAccount: null });
+    }
   }
 
   async getProlificStudySubmissionDetails(user, prolificToken, repoId) {
