@@ -37,6 +37,13 @@ export default class Table extends Component {
 
   onDrop(files) {
     const { user, functions } = this.props;
+    if (!user || !user.initProjectList)
+      throw new Error(
+        `Table.js::onDrop User ${
+          user ? "initProjectList method" : "object"
+        } undefined.`,
+      );
+    user.initProjectList(true);
     handleDrop(
       user,
       files,

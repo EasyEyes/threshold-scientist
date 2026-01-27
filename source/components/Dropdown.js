@@ -9,6 +9,7 @@ export default class Dropdown extends Component {
       isLoadingProjects: false,
     };
     this.selectRef = createRef();
+    this._lastPromise = null;
   }
 
   shortenProjectName(name) {
@@ -24,7 +25,7 @@ export default class Dropdown extends Component {
     this.measureWidth(); // measure once we have the real list
   }
 
-  async componentDidUpdate(prevProps, prevState) {
+  async componentDidUpdate(prevProps) {
     //  if the parent handed a brand-new projectList prop…
     if (this.props.projectList !== prevProps.projectList) {
       await this.resolveProjectList();
@@ -45,20 +46,31 @@ export default class Dropdown extends Component {
     if (selectEl) setDynamicSelectWidth(selectEl);
   }
   async refreshProjectList() {
-    if (this.props.user && this.props.user.initProjectList) {
-      await this.props.user.initProjectList(true);
-      const freshList = await this.props.user.projectList;
-      this.setState({
-        resolvedProjectList: freshList || this.state.resolvedProjectList,
-      });
+    if (this.props.user && this.props.user.projectList) {
+      try {
+        // If initProjectList exists, call it to force refresh from server
+        if (this.props.user.initProjectList) {
+          await this.props.user.initProjectList(true);
+        }
+        // Await the projectList promise
+        const freshList = await this.props.user.projectList;
+
+        this.setState({
+          resolvedProjectList: freshList || this.state.resolvedProjectList,
+        });
+      } catch (error) {
+        console.error("Error refreshing project list:", error);
+      }
     }
   }
 
   async resolveProjectList() {
     const { projectList } = this.props;
 
-    // guard  not to re-enter “loading…” for every identical Promise
-    if (projectList === this._lastPromise) return;
+    // guard  not to re-enter "loading..." for every identical Promise
+    if (projectList === this._lastPromise) {
+      return;
+    }
     this._lastPromise = projectList;
 
     if (projectList && typeof projectList.then === "function") {
@@ -120,7 +132,9 @@ export default class Dropdown extends Component {
             id="projects"
             value={selected === "new" ? "__NEW_EXPERIMENT__" : selected?.id}
             onFocus={() => {
-              if (!isLoadingProjects) this.refreshProjectList();
+              if (!isLoadingProjects) {
+                this.refreshProjectList();
+              }
             }}
             onChange={(e) => {
               if (e.target.value === "__NEW_EXPERIMENT__") {

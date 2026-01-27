@@ -202,12 +202,10 @@ export default class App extends Component {
   /* -------------------------------------------------------------------------- */
 
   handleSetProjectList(projectList) {
-    this.setState({
-      user: {
-        ...this.state.user,
-        projectList: projectList,
-      },
-    });
+    // Mutate directly to preserve User class prototype (spread operator loses it)
+    const updatedUser = this.state.user;
+    updatedUser.projectList = Promise.resolve(projectList);
+    this.setState({ user: updatedUser });
   }
 
   async handleSetActivateExperiment(activeExperiment) {
@@ -367,7 +365,6 @@ export default class App extends Component {
       refreshedUser.id = currentUser.id;
       refreshedUser.avatar_url = currentUser.avatar_url;
 
-      // Initialize project list properly
       refreshedUser.initProjectList();
 
       // Reset experiment settings
@@ -549,31 +546,29 @@ export default class App extends Component {
   }
 
   handleSetExperiment(experiment) {
-    this.setState({
-      user: {
-        ...this.state.user,
-        currentExperiment: {
-          ...this.state.user.currentExperiment,
-          ...experiment,
-        },
-      },
-    });
+    // Mutate directly to preserve User class prototype (spread operator loses it)
+    const updatedUser = this.state.user;
+    updatedUser.currentExperiment = {
+      ...this.state.user.currentExperiment,
+      ...experiment,
+    };
+    this.setState({ user: updatedUser });
   }
 
   handleGetNewRepo(newRepo, experimentUrl, serviceUrl) {
     // end of 'upload'
+    // Mutate directly to preserve User class prototype (spread operator loses it)
+    const updatedUser = this.state.user;
+    updatedUser.currentExperiment = {
+      ...this.state.user.currentExperiment,
+      experimentUrl: serviceUrl,
+      participantRecruitmentServiceUrl: serviceUrl,
+    };
     this.setState({
       newRepo: newRepo,
       activeExperiment: newRepo,
       experimentStatus: "INACTIVE",
-      user: {
-        ...this.state.user,
-        currentExperiment: {
-          ...this.state.user.currentExperiment,
-          experimentUrl: serviceUrl,
-          participantRecruitmentServiceUrl: serviceUrl,
-        },
-      },
+      user: updatedUser,
       ...this.nextStepStatus("running"),
     });
   }
