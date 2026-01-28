@@ -18,6 +18,8 @@ import {
   getDurationForProject,
   getProlificStudyId,
   User,
+  getCommonResourcesNames,
+  getRetryDelayMs,
 } from "../threshold/preprocess/gitlabUtils";
 import { resourcesFileTypes } from "../threshold/preprocess/constants";
 import { auth, db } from "./components/firebase";
@@ -411,7 +413,14 @@ export default class App extends Component {
     });
 
     // Load resources in background and update when ready
-    resources
+    this.handleResourcesLoaded(resources, user);
+
+    // Note: Prolific account loading is handled by handleUpdateProlificToken
+    // when the prolificTokenPromise resolves in Login.js
+  }
+
+  handleResourcesLoaded(resourcesPromise, user, attempt = 0) {
+    resourcesPromise
       .then((r) => {
         // Check if any resource type failed to fetch (null values)
         const failedTypes = Object.entries(r)
@@ -419,16 +428,21 @@ export default class App extends Component {
           .map(([key, _]) => key);
 
         if (failedTypes.length > 0) {
-          // Show warning banner if resource fetch failed
-          const Swal = require("sweetalert2").default;
-          Swal.fire({
-            icon: "warning",
-            title: "Could not verify resources",
-            text: `Failed to fetch ${failedTypes.join(
-              ", ",
-            )} resource lists. Try refreshing the page.`,
-            confirmButtonColor: "#666",
-          });
+          if (attempt >= 3) {
+            Swal.fire({
+              icon: "error",
+              title: "Pavlovia server troubles",
+              text: "Failed to fetch some resources. Try refreshing the page.",
+              confirmButtonColor: "#666",
+            });
+          } else {
+            // Retry with exponential backoff - keep spinner showing
+            setTimeout(() => {
+              const retryPromise = getCommonResourcesNames(user);
+              this.handleResourcesLoaded(retryPromise, user, attempt + 1);
+            }, getRetryDelayMs(attempt));
+            return;
+          }
         }
 
         this.setState({
@@ -438,12 +452,13 @@ export default class App extends Component {
         return r;
       })
       .catch((error) => {
-        captureError(error, "Error loading resources", { type: "resources" });
-        this.setState({ resourcesLoaded: true });
+        // getCommonResourcesNames should always resolve (catches per-type errors internally).
+        // If we're here, it's an unexpected bug.
+        captureError(error, "Unexpected error loading resources", {
+          type: "resources",
+        });
+        throw error;
       });
-
-    // Note: Prolific account loading is handled by handleUpdateProlificToken
-    // when the prolificTokenPromise resolves in Login.js
   }
 
   async handleUploadProlificToken(prolificToken) {
