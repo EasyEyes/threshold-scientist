@@ -14,7 +14,7 @@
     "build:threshold": "cd threshold && npm run netlify:website",
     "prepare:commit": "npm run files",
     "netlify:install": "npm ci",
-    "netlify": "run-s netlify:install build build:threshold",
+    "netlify": "npm run netlify:install && npm run build && npm run build:threshold",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
@@ -72,7 +72,6 @@
     "lint-staged": "^15.0.2",
     "log-here-now": "^0.3.7",
     "mini-css-extract-plugin": "^2.7.6",
-    "npm-run-all": "^4.1.5",
     "postcss-loader": "^7.3.3",
     "prettier": "^3.0.3",
     "sass": "^1.69.5",
