@@ -288,7 +288,7 @@ export default class Running extends Component {
         className={`button-grey button-small`}
         onClick={() => {
           window.open(
-            `https://gitlab.pavlovia.org/${user.username}/${projectName}?access_token=${user.accessToken}`,
+            `https://pavlovia.org/${user.username}/${projectName}`,
             "_blank",
           );
         }}
