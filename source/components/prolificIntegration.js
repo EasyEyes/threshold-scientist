@@ -60,10 +60,8 @@ export const getProlificAccount = async (token) => {
   else return;
 };
 
-const fetchProlificParticipantGroups = async (token, projectId) => {
-  if (!projectId) return [];
-
-  const url = `/.netlify/functions/prolific/participant-groups/?project_id=${projectId}`;
+const fetchProlificParticipantGroups = async (token) => {
+  const url = `/.netlify/functions/prolific/participant-groups/`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -77,7 +75,7 @@ const fetchProlificParticipantGroups = async (token, projectId) => {
     })
     .catch((error) => {
       captureError(error, "Prolific Fetch Participant Groups", {
-        endpoint: `participant-groups/?project_id=${projectId}`,
+        endpoint: `participant-groups/`,
       });
       return { results: [] };
     });
@@ -753,11 +751,8 @@ export const prolificCreateDraft = async (
     ? blockList.split(",").map((item) => item.trim())
     : [];
 
-  // Fetch participant groups if project ID is available
-  const projectId = user.currentExperiment.prolificWorkspaceProjectId;
-  const participantGroups = projectId
-    ? await fetchProlificParticipantGroups(token, projectId)
-    : [];
+  // Fetch participant groups from workspace
+  const participantGroups = await fetchProlificParticipantGroups(token);
 
   const participantGroupName =
     user.currentExperiment._prolific2CompletionPathAddToGroup?.trim();
