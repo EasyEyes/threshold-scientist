@@ -35,6 +35,7 @@ export default class Running extends Component {
       completionCode: undefined,
       dataFolderLength: 0,
       latestDateForDataCollection: false,
+      useLowercaseProjectName: false,
     };
 
     this._isActivating = false;
@@ -127,7 +128,10 @@ export default class Running extends Component {
   }
 
   _getPavloviaExperimentUrl() {
-    return `https://run.pavlovia.org/${this.props.user.username}/${this.props.projectName}`;
+    const projectName = this.state.useLowercaseProjectName
+      ? this.props.projectName.toLowerCase()
+      : this.props.projectName;
+    return `https://run.pavlovia.org/${this.props.user.username}/${projectName}`;
   }
 
   async waitForPavloviaReady(
@@ -189,6 +193,11 @@ export default class Running extends Component {
             if (this.state.pavloviaIsReady)
               this.setState({
                 pavloviaIsReady: false,
+                useLowercaseProjectName: true,
+              });
+            else if (!this.state.useLowercaseProjectName)
+              this.setState({
+                useLowercaseProjectName: true,
               });
             if (!silentMode) {
               Swal.fire({
@@ -288,7 +297,11 @@ export default class Running extends Component {
         className={`button-grey button-small`}
         onClick={() => {
           window.open(
-            `https://pavlovia.org/${user.username}/${projectName}`,
+            `https://pavlovia.org/${user.username}/${
+              this.state.useLowercaseProjectName
+                ? projectName.toLowerCase()
+                : projectName
+            }`,
             "_blank",
           );
         }}
