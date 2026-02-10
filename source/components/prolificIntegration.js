@@ -861,11 +861,11 @@ export const prolificCreateDraft = async (
         ?.split(",")
         .map((element) => element.trim())
         .filter((element) => element != "") ?? [],
-    eligibility_requirements: buildEligibilityRequirements(
-      whiteListParticipants,
-      user,
-      blockListParticipants,
-    ),
+    // eligibility_requirements: buildEligibilityRequirements(
+    //   whiteListParticipants,
+    //   user,
+    //   blockListParticipants,
+    // ),
     project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
     selected_location: findProlificLocationAttributes(
       user.currentExperiment._online4Location,
