@@ -758,7 +758,7 @@ export default class Running extends Component {
           </div>
           <div style={{ color: "#856404", lineHeight: "1.5" }}>
             Today Prolific changed their API, no longer accepting
-            eligibility_requirements, and it will take a few days to update
+            &quot;eligibility_requirements&quot;, and it will take a few days to update
             EasyEyes to this API change. Until then, when you use the
             &quot;Create Prolific study&quot; button, the EasyEyes compiler will
             ignore your study&apos;s settings of the EasyEyes parameters below.
