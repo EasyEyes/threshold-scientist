@@ -24,6 +24,7 @@ export default class Table extends Component {
       tableName: null,
       errors: [],
       showDropZone: true,
+      bannerExpanded: false,
     };
 
     this.onDrop = this.onDrop.bind(this);
@@ -264,14 +265,59 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          Welcome to the EasyEyes Compiler. Use the grey SELECT button to select
-          an already-compiled experiment, or use the green SELECT FILE button to
-          compile a new one. For new compilations, click SELECT FILE to upload
-          any necessary resources (fonts, forms, sounds, etc.) before submitting
-          the experiment spreadsheet. Alternatively, use SELECT FILE to submit
-          an export.zip file containing both the spreadsheet and resources.
-          Resources uploaded individually are stored in your Pavlovia account
-          for future use, whereas those in an export.zip are not.
+          <div className="info">
+            <p>
+              Welcome to the EasyEyes Compiler. To get started, you have two
+              options:
+              <ul>
+                <li>
+                  Use the green <strong>&quot;Select file&quot;</strong> button
+                  to compile a new experiment.
+                </li>
+                <li>
+                  Use the grey{" "}
+                  <strong>&quot;Select a compiled experiment&quot;</strong>{" "}
+                  button to load an already-compiled experiment.
+                </li>
+              </ul>
+            </p>
+
+            <div
+              className={`banner-expandable${
+                this.state.bannerExpanded ? " banner-expandable-open" : ""
+              }`}
+            >
+              <div>
+                <p>
+                  For new compilations, you can either upload your resources
+                  (fonts, forms, sounds, etc.) individually before submitting
+                  the experiment spreadsheet, or submit a single export.zip file
+                  that bundles both the spreadsheet and resources together.
+                </p>
+                <p>
+                  Note: resources uploaded individually are saved to your
+                  Pavlovia account for future use, while those included in an
+                  export.zip are not.
+                </p>
+              </div>
+            </div>
+          </div>
+          <button
+            className="banner-expand-toggle"
+            onClick={() =>
+              this.setState({ bannerExpanded: !this.state.bannerExpanded })
+            }
+            aria-expanded={this.state.bannerExpanded}
+          >
+            <span>{this.state.bannerExpanded ? "Less" : "More"}</span>
+            <span
+              className={`banner-arrow${
+                this.state.bannerExpanded ? " banner-arrow-up" : ""
+              }`}
+            >
+              ▼
+            </span>
+          </button>
         </div>
         <div style={{ marginTop: "8px", marginBottom: "10px" }}>
           <span
