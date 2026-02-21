@@ -51,7 +51,7 @@ export default function Dropdown({
       width: "800px",
       showConfirmButton: false,
       showCancelButton: true,
-      cancelButtonText: "Cancel",
+      cancelButtonText: "Close",
       confirmButtonColor: "#019267",
       customClass: {
         htmlContainer: "experiment-modal-html-container",
@@ -125,21 +125,27 @@ export default function Dropdown({
 }
 
 function buildModalHTML(projects) {
-  const rows = projects
-    .map((proj) => {
-      const date = new Date(proj.created_at).toLocaleString();
-      // Sanitize to prevent XSS from project names/dates
-      const safeName = proj.name.replace(
-        /[<>"&]/g,
-        (c) => `&#${c.charCodeAt(0)};`,
-      );
-      return `
-        <tr data-project-id="${proj.id}" class="experiment-row">
-          <td class="experiment-name-cell">${safeName}</td>
-          <td class="experiment-date-cell">${date}</td>
-        </tr>`;
-    })
-    .join("");
+  const sanitize = (str) =>
+    str.replace(/[<>"&]/g, (c) => `&#${c.charCodeAt(0)};`);
+
+  const createProjectRow = (proj) => {
+    const date = new Date(proj.created_at).toLocaleString();
+    const safeName = sanitize(proj.name);
+    return `
+    <tr data-project-id="${proj.id}" class="experiment-row">
+      <td class="experiment-name-cell">${safeName}</td>
+      <td class="experiment-date-cell">${date}</td>
+    </tr>`;
+  };
+
+  const emptyRow = `
+  <tr>
+    <td colspan="2" class="experiment-empty-cell">No experiments found.</td>
+  </tr>`;
+
+  const rows = projects.length
+    ? projects.map(createProjectRow).join("")
+    : emptyRow;
 
   return `
     <div class="experiment-modal-container">

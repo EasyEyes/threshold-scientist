@@ -178,6 +178,12 @@ table {
   }
 }
 
+.experiment-empty-cell {
+  text-align: center !important;
+  color: #999;
+  padding: 1.5rem 1rem !important;
+}
+
 // Mobile responsive
 @media screen and (max-width: 900px) {
   .swal2-popup.experiment-modal-popup {
