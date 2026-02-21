@@ -103,3 +103,84 @@ table {
   display: inline-block;
   animation: custom-spin 1s linear infinite !important;
 }
+
+// Experiment selection modal
+.experiment-modal-html-container {
+  text-align: left !important;
+  max-height: 600px;
+  overflow: visible;
+}
+
+.experiment-modal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.experiment-search-input {
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+.experiment-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+}
+
+.experiment-table {
+  width: 100%;
+  margin: 0 !important;
+  border-collapse: collapse;
+
+  thead {
+    position: sticky;
+    top: 0;
+    background: #f5f5f5;
+    z-index: 1;
+
+    th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      border-bottom: 2px solid #ddd;
+    }
+  }
+
+  tbody {
+    .experiment-row {
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+
+      &:hover,
+      &.experiment-row-hover {
+        background-color: #f0f9f4;
+      }
+
+      td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e0e0e0;
+        text-align: left;
+
+        &.experiment-name-cell {
+          font-weight: 500;
+          width: 60%;
+        }
+
+        &.experiment-date-cell {
+          color: #666;
+          font-size: 0.9rem;
+          width: 40%;
+        }
+      }
+    }
+  }
+}
+
+// Mobile responsive
+@media screen and (max-width: 900px) {
+  .swal2-popup.experiment-modal-popup {
+    width: 95% !important;
+  }
+}

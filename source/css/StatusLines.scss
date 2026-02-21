@@ -135,5 +135,19 @@
   width: fit-content;
 }
 .history-dropdown-wrapper {
-  width: 256px;
+  &.history-dropdown-wrapper-fixed {
+    width: 256px;
+  }
+
+  &.history-dropdown-wrapper-fit-content {
+    width: fit-content;
+  }
+}
+
+.history-dropdown {
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
 }

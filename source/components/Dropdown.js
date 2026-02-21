@@ -1,5 +1,5 @@
-import React, { Component, createRef } from "react";
-import { setDynamicSelectWidth } from "./DynamicSelectWidth";
+import React, { Component } from "react";
+import Swal from "sweetalert2";
 
 export default class Dropdown extends Component {
   constructor(props) {
@@ -8,59 +8,18 @@ export default class Dropdown extends Component {
       resolvedProjectList: [],
       isLoadingProjects: false,
     };
-    this.selectRef = createRef();
     this._lastPromise = null;
-  }
-
-  shortenProjectName(name) {
-    // if the name length is greater than 20, keep the first 10 characters and the last 10 characters
-    if (name.length > 20) {
-      return name.slice(0, 10) + "..." + name.slice(-10);
-    }
-    return name;
+    this.handleButtonClick = this.handleButtonClick.bind(this);
   }
 
   async componentDidMount() {
     await this.resolveProjectList();
-    this.measureWidth(); // measure once we have the real list
   }
 
   async componentDidUpdate(prevProps) {
     //  if the parent handed a brand-new projectList prop…
     if (this.props.projectList !== prevProps.projectList) {
       await this.resolveProjectList();
-      this.measureWidth();
-    }
-
-    // if selected project list changes
-    if (
-      prevProps.selected !== this.props.selected &&
-      !this.state.isLoadingProjects
-    ) {
-      this.measureWidth();
-    }
-  }
-
-  measureWidth() {
-    const selectEl = this.selectRef.current;
-    if (selectEl) setDynamicSelectWidth(selectEl);
-  }
-  async refreshProjectList() {
-    if (this.props.user && this.props.user.projectList) {
-      try {
-        // If initProjectList exists, call it to force refresh from server
-        if (this.props.user.initProjectList) {
-          await this.props.user.initProjectList(true);
-        }
-        // Await the projectList promise
-        const freshList = await this.props.user.projectList;
-
-        this.setState({
-          resolvedProjectList: freshList || this.state.resolvedProjectList,
-        });
-      } catch (error) {
-        console.error("Error refreshing project list:", error);
-      }
     }
   }
 
@@ -95,23 +54,143 @@ export default class Dropdown extends Component {
     }
   }
 
+  getButtonText() {
+    const { selected, newExperimentProjectName } = this.props;
+
+    if (selected === "new") {
+      return newExperimentProjectName || "Select a compiled experiment";
+    }
+
+    if (selected && selected.id) {
+      const date = new Date(selected.created_at);
+      return `${selected.name} (${date.toLocaleString()})`;
+    }
+
+    return "Select a compiled experiment";
+  }
+
+  generateModalHTML(projectList) {
+    const filteredProjects = projectList.filter(
+      (p) => p.name !== "EasyEyesResources",
+    );
+
+    const tableRows = filteredProjects
+      .map((proj) => {
+        const date = new Date(proj.created_at).toLocaleString();
+        return `
+          <tr data-project-id="${proj.id}" class="experiment-row">
+            <td class="experiment-name-cell">${proj.name}</td>
+            <td class="experiment-date-cell">${date}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    return `
+      <div class="experiment-modal-container">
+        <input
+          type="text"
+          id="experiment-search"
+          class="swal2-input experiment-search-input"
+          placeholder="Search experiments..."
+        />
+        <div class="experiment-table-container">
+          <table class="experiment-table">
+            <thead>
+              <tr>
+                <th>Experiment name</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="experiment-table-body">
+              ${tableRows}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  handleButtonClick(setSelectedProject) {
+    Swal.fire({
+      title: "Select an Experiment",
+      html: this.generateModalHTML(this.state.resolvedProjectList),
+      width: "800px",
+      showConfirmButton: false,
+      showCancelButton: true,
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#019267",
+      customClass: {
+        htmlContainer: "experiment-modal-html-container",
+        popup: "experiment-modal-popup",
+      },
+      didOpen: () => {
+        // Search filtering
+        const searchInput = document.getElementById("experiment-search");
+        const tableBody = document.getElementById("experiment-table-body");
+
+        searchInput.addEventListener("input", (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const rows = tableBody.querySelectorAll(".experiment-row");
+
+          rows.forEach((row) => {
+            const name = row
+              .querySelector(".experiment-name-cell")
+              .textContent.toLowerCase();
+            const date = row
+              .querySelector(".experiment-date-cell")
+              .textContent.toLowerCase();
+            const matches =
+              name.includes(searchTerm) || date.includes(searchTerm);
+            row.style.display = matches ? "" : "none";
+          });
+        });
+
+        // Row click handlers
+        const rows = tableBody.querySelectorAll(".experiment-row");
+        rows.forEach((row) => {
+          row.addEventListener("click", () => {
+            const projectId = row.getAttribute("data-project-id");
+            const selectedProj = this.state.resolvedProjectList.find(
+              (p) => p.id.toString() === projectId,
+            );
+            Swal.close();
+            if (selectedProj) {
+              // this.props.setSelectedProject("REFRESH");
+              setSelectedProject(selectedProj);
+            }
+          });
+
+          // Hover effect
+          row.addEventListener("mouseenter", () => {
+            row.classList.add("experiment-row-hover");
+          });
+          row.addEventListener("mouseleave", () => {
+            row.classList.remove("experiment-row-hover");
+          });
+        });
+
+        // Auto-focus search
+        searchInput.focus();
+      },
+    });
+  }
+
   render() {
-    const {
-      selected,
-      setSelectedProject,
-      newExperimentProjectName,
-      style,
-      pavloviaIsReady,
-      isFromStartTable,
-    } = this.props;
-    const { resolvedProjectList, isLoadingProjects } = this.state;
+    const { selected, style, setSelectedProject } = this.props;
+    const { isLoadingProjects } = this.state;
 
     const loadingStyle = isLoadingProjects
       ? { pointerEvents: "none", userSelect: "none" }
       : {};
 
+    const wrapperClass =
+      selected && selected !== "new"
+        ? "history-dropdown-wrapper history-dropdown-wrapper-fit-content"
+        : "history-dropdown-wrapper history-dropdown-wrapper-fixed";
+
     return (
-      <div className="history-dropdown-wrapper" style={loadingStyle}>
+      <div className={wrapperClass} style={loadingStyle}>
         {isLoadingProjects ? (
           <button
             className="history-dropdown"
@@ -124,65 +203,13 @@ export default class Dropdown extends Component {
             ></i>
           </button>
         ) : (
-          <select
-            disabled={isLoadingProjects}
-            ref={this.selectRef}
+          <button
             className="history-dropdown"
-            name="projects"
-            id="projects"
-            value={selected === "new" ? "__NEW_EXPERIMENT__" : selected?.id}
-            onFocus={() => {
-              if (!isLoadingProjects) {
-                this.refreshProjectList();
-              }
-            }}
-            onChange={(e) => {
-              if (e.target.value === "__NEW_EXPERIMENT__") {
-                setSelectedProject(null);
-              } else if (e.target.value === "__FRESH_NEW_EXPERIMENT__") {
-                setSelectedProject("REFRESH");
-              } else {
-                const proj = resolvedProjectList.find(
-                  (p) => p.id.toString() === e.target.value,
-                );
-                setSelectedProject(proj);
-              }
-            }}
+            onClick={() => this.handleButtonClick(setSelectedProject)}
             style={style}
           >
-            {(() => {
-              const opts = resolvedProjectList
-                .filter((p) => p.name !== "EasyEyesResources")
-                .map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {`${project.name}`} (
-                    {new Date(project.created_at).toLocaleString()})
-                  </option>
-                ));
-
-              // unshift either the “Select a compiled experiment” or “Fresh new” placeholder…
-              if (!newExperimentProjectName) {
-                opts.unshift(
-                  <option key="__NEW_EXPERIMENT__" value="__NEW_EXPERIMENT__">
-                    Select a compiled experiment
-                  </option>,
-                );
-              } else {
-                opts.unshift(
-                  <option
-                    key="__FRESH_NEW_EXPERIMENT__"
-                    value="__FRESH_NEW_EXPERIMENT__"
-                  >
-                    {selected === "new"
-                      ? newExperimentProjectName
-                      : "Select a compiled experiment"}
-                  </option>,
-                );
-              }
-
-              return opts;
-            })()}
-          </select>
+            {this.getButtonText()}
+          </button>
         )}
       </div>
     );
