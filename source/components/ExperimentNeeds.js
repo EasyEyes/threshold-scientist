@@ -2,7 +2,7 @@ import Swal from "sweetalert2";
 
 import { compatibilityRequirements } from "../../threshold/preprocess/global";
 
-import "../css/ExperimentNeeds.css";
+import "../css/ExperimentNeeds.scss";
 import { readi18nPhrases } from "../../threshold/components/readPhrases";
 
 export const displayExperimentNeedsPopup = (

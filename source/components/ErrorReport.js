@@ -1,5 +1,5 @@
 import Swal from "sweetalert2";
-import "../css/ErrorReport.css";
+import "../css/ErrorReport.scss";
 
 const generateErrorDataframe = async (dataframes) => {
   let processedDataframes = [];
@@ -68,8 +68,8 @@ const generateErrorDataframe = async (dataframes) => {
         "block_condition",
         "conditionName",
         "targetTask",
-        "targetKind"
-      )
+        "targetKind",
+      ),
     );
   }
   let error = processedDataframes[0];
@@ -108,7 +108,7 @@ const generateErrorDataframe = async (dataframes) => {
       "block_condition",
       "conditionName",
       "targetTask",
-      "targetKind"
+      "targetKind",
     )
     .sortBy("ok");
 };
