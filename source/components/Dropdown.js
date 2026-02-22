@@ -44,70 +44,78 @@ export default function Dropdown({
     }
   }, [projectList]);
 
-  const openModal = useCallback(async () => {
-    let listToShow = resolvedList;
+  const isExperiment = (project) => project.name !== "EasyEyesResources";
 
-    if (user?.initProjectList) {
-      setIsLoading(true);
-      try {
-        await user.initProjectList(true);
-        const freshList = await user.projectList;
-        listToShow = freshList ?? [];
-        setResolvedList(listToShow);
-      } catch {
-        // keep existing list
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchFreshList = useCallback(async () => {
+    if (!user?.initProjectList) return resolvedList.filter(isExperiment);
+    setIsLoading(true);
+    try {
+      await user.initProjectList(true);
+      const freshList = (await user.projectList) ?? [];
+      const experiments = freshList.filter(isExperiment);
+      setResolvedList(experiments);
+      return experiments;
+    } catch {
+      return resolvedList.filter(isExperiment);
+    } finally {
+      setIsLoading(false);
     }
+  }, [user, resolvedList]);
 
-    const filtered = listToShow.filter((p) => p.name !== "EasyEyesResources");
+  const openModal = useCallback(
+    (list) => {
+      Swal.fire({
+        title: "Select an Experiment",
+        width: "800px",
+        showConfirmButton: false,
+        showCancelButton: true,
+        cancelButtonText: "Close",
+        confirmButtonColor: "#019267",
+        customClass: {
+          htmlContainer: "experiment-modal-html-container",
+          popup: "experiment-modal-popup",
+        },
+        html: buildModalHTML(list),
+        didOpen: () => {
+          const searchInput = document.getElementById("experiment-search");
+          const tableBody = document.getElementById("experiment-table-body");
 
-    Swal.fire({
-      title: "Select an Experiment",
-      width: "800px",
-      showConfirmButton: false,
-      showCancelButton: true,
-      cancelButtonText: "Close",
-      confirmButtonColor: "#019267",
-      customClass: {
-        htmlContainer: "experiment-modal-html-container",
-        popup: "experiment-modal-popup",
-      },
-      html: buildModalHTML(filtered),
-      didOpen: () => {
-        const searchInput = document.getElementById("experiment-search");
-        const tableBody = document.getElementById("experiment-table-body");
+          searchInput.addEventListener("input", (e) => {
+            const term = e.target.value.toLowerCase();
+            tableBody.querySelectorAll(".experiment-row").forEach((row) => {
+              const name = row
+                .querySelector(".experiment-name-cell")
+                .textContent.toLowerCase();
+              const date = row
+                .querySelector(".experiment-date-cell")
+                .textContent.toLowerCase();
+              row.style.display =
+                name.includes(term) || date.includes(term) ? "" : "none";
+            });
+          });
 
-        searchInput.addEventListener("input", (e) => {
-          const term = e.target.value.toLowerCase();
           tableBody.querySelectorAll(".experiment-row").forEach((row) => {
-            const name = row
-              .querySelector(".experiment-name-cell")
-              .textContent.toLowerCase();
-            const date = row
-              .querySelector(".experiment-date-cell")
-              .textContent.toLowerCase();
-            row.style.display =
-              name.includes(term) || date.includes(term) ? "" : "none";
+            row.addEventListener("click", () => {
+              const id = row.getAttribute("data-project-id");
+              const proj = list.find((p) => p.id.toString() === id);
+              if (proj) {
+                Swal.close();
+                setSelectedProject(proj);
+              }
+            });
           });
-        });
 
-        tableBody.querySelectorAll(".experiment-row").forEach((row) => {
-          row.addEventListener("click", () => {
-            const id = row.getAttribute("data-project-id");
-            const proj = filtered.find((p) => p.id.toString() === id);
-            if (proj) {
-              Swal.close();
-              setSelectedProject(proj);
-            }
-          });
-        });
+          searchInput.focus();
+        },
+      });
+    },
+    [setSelectedProject],
+  );
 
-        searchInput.focus();
-      },
-    });
-  }, [resolvedList, setSelectedProject, user]);
+  const handleClick = useCallback(async () => {
+    const list = await fetchFreshList();
+    openModal(list);
+  }, [fetchFreshList, openModal]);
 
   const wrapperClass =
     selected && selected !== "new"
@@ -121,7 +129,7 @@ export default function Dropdown({
     >
       <button
         className="history-dropdown"
-        onClick={isLoading ? undefined : openModal}
+        onClick={isLoading ? undefined : handleClick}
         disabled={isLoading}
         style={{
           ...style,
