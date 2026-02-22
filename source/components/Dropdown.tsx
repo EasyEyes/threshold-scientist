@@ -1,41 +1,107 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Swal from "sweetalert2";
+import { User } from "../../threshold/preprocess/gitlabUtils";
 
-function getButtonText(selected, newExperimentProjectName) {
+export type Project = {
+  id: number;
+  name: string;
+  created_at: string;
+};
+
+export type DropdownProps = {
+  projectList: Promise<Project[]> | Project[] | null | undefined;
+  selected: Project | "new" | null | undefined;
+  newExperimentProjectName?: string;
+  setSelectedProject: (project: Project) => void;
+  style?: React.CSSProperties;
+  user?: User;
+};
+
+const isExperiment = (project: Project): boolean =>
+  project.name !== "EasyEyesResources";
+
+const formatProjectDate = (dateStr: string): string =>
+  new Date(dateStr).toLocaleString(undefined, {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+const getButtonText = (
+  selected: Project | "new" | null | undefined,
+  newExperimentProjectName?: string,
+): string => {
   const fallback = "Select a compiled experiment";
   if (selected === "new") return newExperimentProjectName || fallback;
   if (selected?.id) {
-    return `${selected.name} (${new Date(
-      selected.created_at,
-    ).toLocaleString()})`;
+    return `${selected.name} (${formatProjectDate(selected.created_at)})`;
   }
   return fallback;
-}
+};
 
-export default function Dropdown({
+const buildModalHTML = (projects: Project[]): string => {
+  const sanitize = (str: string): string =>
+    str.replace(/[<>"&]/g, (c) => `&#${c.charCodeAt(0)};`);
+
+  const createProjectRow = (proj: Project): string => {
+    const date = formatProjectDate(proj.created_at);
+    const safeName = sanitize(proj.name);
+    return `
+    <tr data-project-id="${proj.id}" class="experiment-row">
+      <td class="experiment-name-cell">${safeName}</td>
+      <td class="experiment-date-cell">${date}</td>
+    </tr>`;
+  };
+
+  const emptyRow = `
+  <tr>
+    <td colspan="2" class="experiment-empty-cell">No experiments found.</td>
+  </tr>`;
+
+  const rows = projects.length
+    ? projects.map(createProjectRow).join("")
+    : emptyRow;
+
+  return `
+    <div class="experiment-modal-container">
+      <input type="text" id="experiment-search" class="swal2-input experiment-search-input" placeholder="Search experiments..." />
+      <div class="experiment-table-container">
+        <table class="experiment-table">
+          <thead><tr><th>Experiment name</th><th>Date</th></tr></thead>
+          <tbody id="experiment-table-body">${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+};
+
+export const Dropdown = ({
   projectList,
   selected,
   newExperimentProjectName,
   setSelectedProject,
   style,
   user,
-}) {
-  const [resolvedList, setResolvedList] = useState([]);
+}: DropdownProps) => {
+  const [resolvedList, setResolvedList] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const lastPromiseRef = useRef(null);
+  const lastPromiseRef = useRef<Promise<Project[]> | Project[] | null>(null);
 
   useEffect(() => {
     if (projectList === lastPromiseRef.current) return;
-    lastPromiseRef.current = projectList;
+    lastPromiseRef.current = projectList ?? null;
 
     if (!projectList) {
       setResolvedList([]);
       return;
     }
 
-    if (typeof projectList.then === "function") {
+    const asPromise = projectList as Promise<Project[]>;
+    if (typeof asPromise.then === "function") {
       setIsLoading(true);
-      projectList
+      asPromise
         .then((resolved) => setResolvedList(resolved ?? []))
         .catch(() => setResolvedList([]))
         .finally(() => setIsLoading(false));
@@ -44,9 +110,7 @@ export default function Dropdown({
     }
   }, [projectList]);
 
-  const isExperiment = (project) => project.name !== "EasyEyesResources";
-
-  const fetchFreshList = useCallback(async () => {
+  const fetchFreshList = useCallback(async (): Promise<Project[]> => {
     if (!user?.initProjectList) return resolvedList.filter(isExperiment);
     setIsLoading(true);
     try {
@@ -63,13 +127,12 @@ export default function Dropdown({
   }, [user, resolvedList]);
 
   const openModal = useCallback(
-    (list) => {
+    (list: Project[]) => {
       Swal.fire({
         title: "Select an Experiment",
         width: "800px",
-        showConfirmButton: false,
-        showCancelButton: true,
-        cancelButtonText: "Close",
+        showConfirmButton: true,
+        confirmButtonText: "Close",
         confirmButtonColor: "#019267",
         customClass: {
           htmlContainer: "experiment-modal-html-container",
@@ -77,19 +140,21 @@ export default function Dropdown({
         },
         html: buildModalHTML(list),
         didOpen: () => {
-          const searchInput = document.getElementById("experiment-search");
-          const tableBody = document.getElementById("experiment-table-body");
+          const searchInput = document.getElementById(
+            "experiment-search",
+          ) as HTMLInputElement;
+          const tableBody = document.getElementById("experiment-table-body")!;
 
           searchInput.addEventListener("input", (e) => {
-            const term = e.target.value.toLowerCase();
+            const term = (e.target as HTMLInputElement).value.toLowerCase();
             tableBody.querySelectorAll(".experiment-row").forEach((row) => {
               const name = row
-                .querySelector(".experiment-name-cell")
-                .textContent.toLowerCase();
+                .querySelector(".experiment-name-cell")!
+                .textContent!.toLowerCase();
               const date = row
-                .querySelector(".experiment-date-cell")
-                .textContent.toLowerCase();
-              row.style.display =
+                .querySelector(".experiment-date-cell")!
+                .textContent!.toLowerCase();
+              (row as HTMLElement).style.display =
                 name.includes(term) || date.includes(term) ? "" : "none";
             });
           });
@@ -147,39 +212,4 @@ export default function Dropdown({
       </button>
     </div>
   );
-}
-
-function buildModalHTML(projects) {
-  const sanitize = (str) =>
-    str.replace(/[<>"&]/g, (c) => `&#${c.charCodeAt(0)};`);
-
-  const createProjectRow = (proj) => {
-    const date = new Date(proj.created_at).toLocaleString();
-    const safeName = sanitize(proj.name);
-    return `
-    <tr data-project-id="${proj.id}" class="experiment-row">
-      <td class="experiment-name-cell">${safeName}</td>
-      <td class="experiment-date-cell">${date}</td>
-    </tr>`;
-  };
-
-  const emptyRow = `
-  <tr>
-    <td colspan="2" class="experiment-empty-cell">No experiments found.</td>
-  </tr>`;
-
-  const rows = projects.length
-    ? projects.map(createProjectRow).join("")
-    : emptyRow;
-
-  return `
-    <div class="experiment-modal-container">
-      <input type="text" id="experiment-search" class="swal2-input experiment-search-input" placeholder="Search experiments..." />
-      <div class="experiment-table-container">
-        <table class="experiment-table">
-          <thead><tr><th>Experiment name</th><th>Date</th></tr></thead>
-          <tbody id="experiment-table-body">${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
-}
+};

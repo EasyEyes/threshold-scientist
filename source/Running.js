@@ -23,7 +23,7 @@ import {
 import { captureError } from "./sentry";
 
 import "./css/Running.scss";
-import Dropdown from "./components/Dropdown";
+import { Dropdown } from "./components/Dropdown";
 
 export default class Running extends Component {
   constructor(props) {
