@@ -18,6 +18,7 @@ export default function Dropdown({
   newExperimentProjectName,
   setSelectedProject,
   style,
+  user,
 }) {
   const [resolvedList, setResolvedList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,8 +44,24 @@ export default function Dropdown({
     }
   }, [projectList]);
 
-  const openModal = useCallback(() => {
-    const filtered = resolvedList.filter((p) => p.name !== "EasyEyesResources");
+  const openModal = useCallback(async () => {
+    let listToShow = resolvedList;
+
+    if (user?.initProjectList) {
+      setIsLoading(true);
+      try {
+        await user.initProjectList(true);
+        const freshList = await user.projectList;
+        listToShow = freshList ?? [];
+        setResolvedList(listToShow);
+      } catch {
+        // keep existing list
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    const filtered = listToShow.filter((p) => p.name !== "EasyEyesResources");
 
     Swal.fire({
       title: "Select an Experiment",
@@ -90,7 +107,7 @@ export default function Dropdown({
         searchInput.focus();
       },
     });
-  }, [resolvedList, setSelectedProject]);
+  }, [resolvedList, setSelectedProject, user]);
 
   const wrapperClass =
     selected && selected !== "new"
