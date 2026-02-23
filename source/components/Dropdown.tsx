@@ -9,8 +9,8 @@ export type Project = {
 };
 
 export type DropdownProps = {
-  projectList: Promise<Project[]> | Project[] | null | undefined;
-  selected: Project | "new" | null | undefined;
+  projectList: Promise<Project[]> | Project[] | null;
+  selected: Project | null;
   newExperimentProjectName?: string;
   setSelectedProject: (project: Project) => void;
   style?: React.CSSProperties;
@@ -31,11 +31,11 @@ const formatProjectDate = (dateStr: string): string =>
   });
 
 const getButtonText = (
-  selected: Project | "new" | null | undefined,
+  selected: Project | null,
   newExperimentProjectName?: string,
 ): string => {
   const fallback = "Select a compiled experiment";
-  if (selected === "new") return newExperimentProjectName || fallback;
+  if (selected === null) return newExperimentProjectName || fallback;
   if (selected?.id) {
     return `${selected.name} (${formatProjectDate(selected.created_at)})`;
   }
@@ -75,6 +75,54 @@ const buildModalHTML = (projects: Project[]): string => {
         </table>
       </div>
     </div>`;
+};
+
+const openModal = (list: Project[], onSelect: (proj: Project) => void) => {
+  void Swal.fire({
+    title: "Select an Experiment",
+    width: "800px",
+    showConfirmButton: true,
+    confirmButtonText: "Close",
+    confirmButtonColor: "#019267",
+    customClass: {
+      htmlContainer: "experiment-modal-html-container",
+      popup: "experiment-modal-popup",
+    },
+    html: buildModalHTML(list),
+    didOpen: () => {
+      const searchInput = document.getElementById(
+        "experiment-search",
+      ) as HTMLInputElement;
+      const tableBody = document.getElementById("experiment-table-body")!;
+
+      searchInput.addEventListener("input", (e) => {
+        const term = (e.target as HTMLInputElement).value.toLowerCase();
+        tableBody.querySelectorAll(".experiment-row").forEach((row) => {
+          const name = row
+            .querySelector(".experiment-name-cell")!
+            .textContent!.toLowerCase();
+          const date = row
+            .querySelector(".experiment-date-cell")!
+            .textContent!.toLowerCase();
+          (row as HTMLElement).style.display =
+            name.includes(term) || date.includes(term) ? "" : "none";
+        });
+      });
+
+      tableBody.querySelectorAll(".experiment-row").forEach((row) => {
+        row.addEventListener("click", () => {
+          const id = row.getAttribute("data-project-id");
+          const proj = list.find((p) => p.id.toString() === id);
+          if (proj) {
+            Swal.close();
+            onSelect(proj);
+          }
+        });
+      });
+
+      searchInput.focus();
+    },
+  });
 };
 
 export const Dropdown = ({
@@ -126,66 +174,16 @@ export const Dropdown = ({
     }
   }, [user, resolvedList]);
 
-  const openModal = useCallback(
-    (list: Project[]) => {
-      Swal.fire({
-        title: "Select an Experiment",
-        width: "800px",
-        showConfirmButton: true,
-        confirmButtonText: "Close",
-        confirmButtonColor: "#019267",
-        customClass: {
-          htmlContainer: "experiment-modal-html-container",
-          popup: "experiment-modal-popup",
-        },
-        html: buildModalHTML(list),
-        didOpen: () => {
-          const searchInput = document.getElementById(
-            "experiment-search",
-          ) as HTMLInputElement;
-          const tableBody = document.getElementById("experiment-table-body")!;
-
-          searchInput.addEventListener("input", (e) => {
-            const term = (e.target as HTMLInputElement).value.toLowerCase();
-            tableBody.querySelectorAll(".experiment-row").forEach((row) => {
-              const name = row
-                .querySelector(".experiment-name-cell")!
-                .textContent!.toLowerCase();
-              const date = row
-                .querySelector(".experiment-date-cell")!
-                .textContent!.toLowerCase();
-              (row as HTMLElement).style.display =
-                name.includes(term) || date.includes(term) ? "" : "none";
-            });
-          });
-
-          tableBody.querySelectorAll(".experiment-row").forEach((row) => {
-            row.addEventListener("click", () => {
-              const id = row.getAttribute("data-project-id");
-              const proj = list.find((p) => p.id.toString() === id);
-              if (proj) {
-                Swal.close();
-                setSelectedProject(proj);
-              }
-            });
-          });
-
-          searchInput.focus();
-        },
-      });
-    },
-    [setSelectedProject],
-  );
-
   const handleClick = useCallback(async () => {
     const list = await fetchFreshList();
-    openModal(list);
-  }, [fetchFreshList, openModal]);
+    openModal(list, (proj) => {
+      if (!(selected && selected.id === proj.id)) setSelectedProject(proj);
+    });
+  }, [fetchFreshList, selected, setSelectedProject]);
 
-  const wrapperClass =
-    selected && selected !== "new"
-      ? "history-dropdown-wrapper history-dropdown-wrapper-fit-content"
-      : "history-dropdown-wrapper history-dropdown-wrapper-fixed";
+  const wrapperClass = selected
+    ? "history-dropdown-wrapper history-dropdown-wrapper-fit-content"
+    : "history-dropdown-wrapper history-dropdown-wrapper-fixed";
 
   return (
     <div
