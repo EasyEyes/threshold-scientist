@@ -586,6 +586,10 @@ export default class App extends Component {
       user: updatedUser,
       ...this.nextStepStatus("running"),
     });
+    // Notify other open tabs that the experiment list has changed
+    new BroadcastChannel("easyeyes_experiments").postMessage({
+      type: "experiments:updated",
+    });
   }
 
   handleSetExperimentStatus(newStatus) {

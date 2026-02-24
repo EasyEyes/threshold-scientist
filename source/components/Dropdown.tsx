@@ -42,32 +42,50 @@ const getButtonText = (
   return fallback;
 };
 
-const buildModalHTML = (projects: Project[]): string => {
-  const sanitize = (str: string): string =>
-    str.replace(/[<>"&]/g, (c) => `&#${c.charCodeAt(0)};`);
+const attachRowHandlers = (
+  tableBody: Element,
+  rows: Project[],
+  onSelect: (proj: Project) => void,
+) => {
+  tableBody.querySelectorAll(".experiment-row").forEach((row) => {
+    row.addEventListener("click", () => {
+      const id = row.getAttribute("data-project-id");
+      const proj = rows.find((p) => p.id.toString() === id);
+      if (proj) {
+        Swal.close();
+        onSelect(proj);
+      }
+    });
+  });
+};
 
-  const createProjectRow = (proj: Project): string => {
-    const date = formatProjectDate(proj.created_at);
-    const safeName = sanitize(proj.name);
-    return `
+const sanitize = (str: string): string =>
+  str.replace(/[<>"&]/g, (c) => `&#${c.charCodeAt(0)};`);
+
+const buildTableRows = (projects: Project[]): string =>
+  projects.length
+    ? projects
+        .map(
+          (proj) => `
     <tr data-project-id="${proj.id}" class="experiment-row">
-      <td class="experiment-name-cell">${safeName}</td>
-      <td class="experiment-date-cell">${date}</td>
-    </tr>`;
-  };
+      <td class="experiment-name-cell">${sanitize(proj.name)}</td>
+      <td class="experiment-date-cell">${formatProjectDate(proj.created_at)}</td>
+    </tr>`,
+        )
+        .join("")
+    : `<tr><td colspan="2" class="experiment-empty-cell">No experiments found.</td></tr>`;
 
-  const emptyRow = `
-  <tr>
-    <td colspan="2" class="experiment-empty-cell">No experiments found.</td>
-  </tr>`;
-
-  const rows = projects.length
-    ? projects.map(createProjectRow).join("")
-    : emptyRow;
+const buildModalHTML = (projects: Project[]): string => {
+  const rows = buildTableRows(projects);
 
   return `
     <div class="experiment-modal-container">
-      <input type="text" id="experiment-search" class="swal2-input experiment-search-input" placeholder="Search experiments..." />
+      <div class="experiment-modal-toolbar">
+        <input type="text" id="experiment-search" class="swal2-input experiment-search-input" placeholder="Search experiments..." />
+        <button id="experiment-refresh-btn" class="experiment-refresh-btn" title="Refresh list">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
       <div class="experiment-table-container">
         <table class="experiment-table">
           <thead><tr><th>Experiment name</th><th>Date</th></tr></thead>
@@ -77,7 +95,11 @@ const buildModalHTML = (projects: Project[]): string => {
     </div>`;
 };
 
-const openModal = (list: Project[], onSelect: (proj: Project) => void) => {
+const openModal = (
+  list: Project[],
+  onSelect: (proj: Project) => void,
+  onRefresh: () => Promise<Project[]>,
+) => {
   void Swal.fire({
     title: "Select an Experiment",
     width: "800px",
@@ -94,6 +116,9 @@ const openModal = (list: Project[], onSelect: (proj: Project) => void) => {
         "experiment-search",
       ) as HTMLInputElement;
       const tableBody = document.getElementById("experiment-table-body")!;
+      const refreshBtn = document.getElementById(
+        "experiment-refresh-btn",
+      ) as HTMLButtonElement;
 
       searchInput.addEventListener("input", (e) => {
         const term = (e.target as HTMLInputElement).value.toLowerCase();
@@ -109,15 +134,33 @@ const openModal = (list: Project[], onSelect: (proj: Project) => void) => {
         });
       });
 
-      tableBody.querySelectorAll(".experiment-row").forEach((row) => {
-        row.addEventListener("click", () => {
-          const id = row.getAttribute("data-project-id");
-          const proj = list.find((p) => p.id.toString() === id);
-          if (proj) {
-            Swal.close();
-            onSelect(proj);
-          }
-        });
+      attachRowHandlers(tableBody, list, onSelect);
+
+      refreshBtn.addEventListener("click", async () => {
+        refreshBtn.disabled = true;
+        const icon = refreshBtn.querySelector("i")!;
+        icon.className = "bi bi-arrow-clockwise icon-spin";
+
+        const freshList = await onRefresh();
+        tableBody.innerHTML = buildTableRows(freshList);
+        attachRowHandlers(tableBody, freshList, onSelect);
+
+        const term = searchInput.value.toLowerCase();
+        if (term) {
+          tableBody.querySelectorAll(".experiment-row").forEach((row) => {
+            const name = row
+              .querySelector(".experiment-name-cell")!
+              .textContent!.toLowerCase();
+            const date = row
+              .querySelector(".experiment-date-cell")!
+              .textContent!.toLowerCase();
+            (row as HTMLElement).style.display =
+              name.includes(term) || date.includes(term) ? "" : "none";
+          });
+        }
+
+        icon.className = "bi bi-arrow-clockwise";
+        refreshBtn.disabled = false;
       });
 
       searchInput.focus();
@@ -174,12 +217,33 @@ export const Dropdown = ({
     }
   }, [user, resolvedList]);
 
-  const handleClick = useCallback(async () => {
-    const list = await fetchFreshList();
-    openModal(list, (proj) => {
-      if (!(selected && selected.id === proj.id)) setSelectedProject(proj);
-    });
-  }, [fetchFreshList, selected, setSelectedProject]);
+  // Stable ref so the BroadcastChannel handler always calls the latest fetchFreshList
+  // without needing to re-create the channel on every resolvedList change
+  const fetchFreshListRef = useRef(fetchFreshList);
+  useEffect(() => {
+    fetchFreshListRef.current = fetchFreshList;
+  }, [fetchFreshList]);
+
+  // Refresh the list when another tab compiles a new experiment
+  useEffect(() => {
+    if (!user?.initProjectList) return;
+    const channel = new BroadcastChannel("easyeyes_experiments");
+    channel.onmessage = (e) => {
+      if (e.data?.type === "experiments:updated")
+        void fetchFreshListRef.current();
+    };
+    return () => channel.close();
+  }, [user]);
+
+  const handleClick = useCallback(() => {
+    openModal(
+      resolvedList.filter(isExperiment),
+      (proj) => {
+        if (!(selected && selected.id === proj.id)) setSelectedProject(proj);
+      },
+      fetchFreshList,
+    );
+  }, [resolvedList, fetchFreshList, selected, setSelectedProject]);
 
   const wrapperClass = selected
     ? "history-dropdown-wrapper history-dropdown-wrapper-fit-content"
