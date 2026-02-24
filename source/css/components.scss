@@ -90,6 +90,17 @@ table {
   }
 }
 
+@keyframes row-appear {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes custom-spin {
   0% {
     transform: rotate(0deg);
@@ -191,6 +202,7 @@ table {
     .experiment-row {
       cursor: pointer;
       transition: background-color 0.15s ease;
+      animation: row-appear 0.25s ease-out both;
 
       &:hover,
       &.experiment-row-hover {

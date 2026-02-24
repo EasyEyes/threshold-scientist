@@ -66,11 +66,18 @@ const buildTableRows = (projects: Project[]): string =>
   projects.length
     ? projects
         .map(
-          (proj) => `
-    <tr data-project-id="${proj.id}" class="experiment-row">
-      <td class="experiment-name-cell">${sanitize(proj.name)}</td>
-      <td class="experiment-date-cell">${formatProjectDate(proj.created_at)}</td>
-    </tr>`,
+          (proj, i) =>
+            `<tr data-project-id="${
+              proj.id
+            }" class="experiment-row" style="animation-delay:${Math.min(
+              i * 40,
+              300,
+            )}ms">
+          <td class="experiment-name-cell">${sanitize(proj.name)}</td>
+          <td class="experiment-date-cell">${formatProjectDate(
+            proj.created_at,
+          )}</td>
+        </tr>`,
         )
         .join("")
     : `<tr><td colspan="2" class="experiment-empty-cell">No experiments found.</td></tr>`;
@@ -136,7 +143,8 @@ const openModal = (
 
       refreshBtn.addEventListener("click", async () => {
         refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise icon-spin"></i>';
+        refreshBtn.innerHTML =
+          '<i class="bi bi-arrow-clockwise icon-spin"></i>';
 
         const freshList = await onRefresh();
         tableBody.innerHTML = buildTableRows(freshList);
