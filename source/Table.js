@@ -14,7 +14,7 @@ import {
 } from "../threshold/preprocess/gitlabUtils";
 
 import "./css/Table.scss";
-import Dropdown from "./components/Dropdown";
+import { Dropdown } from "./components/Dropdown";
 
 export default class Table extends Component {
   constructor(props) {
