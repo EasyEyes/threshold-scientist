@@ -82,9 +82,7 @@ const buildModalHTML = (projects: Project[]): string => {
     <div class="experiment-modal-container">
       <div class="experiment-modal-toolbar">
         <input type="text" id="experiment-search" class="swal2-input experiment-search-input" placeholder="Search experiments..." />
-        <button id="experiment-refresh-btn" class="experiment-refresh-btn" title="Refresh list">
-          <i class="bi bi-arrow-clockwise"></i>
-        </button>
+        <button id="experiment-refresh-btn" class="experiment-refresh-btn">Refresh</button>
       </div>
       <div class="experiment-table-container">
         <table class="experiment-table">
@@ -138,8 +136,7 @@ const openModal = (
 
       refreshBtn.addEventListener("click", async () => {
         refreshBtn.disabled = true;
-        const icon = refreshBtn.querySelector("i")!;
-        icon.className = "bi bi-arrow-clockwise icon-spin";
+        refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise icon-spin"></i>';
 
         const freshList = await onRefresh();
         tableBody.innerHTML = buildTableRows(freshList);
@@ -159,7 +156,7 @@ const openModal = (
           });
         }
 
-        icon.className = "bi bi-arrow-clockwise";
+        refreshBtn.innerHTML = "Refresh";
         refreshBtn.disabled = false;
       });
 
