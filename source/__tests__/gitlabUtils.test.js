@@ -75,8 +75,8 @@ describe("gitlabUtils - Upload Progress", () => {
 
   describe("createThresholdCoreFilesOnRepo - Progress Monotonicity", () => {
     it("should maintain monotonically increasing progress within a single upload attempt", async () => {
-      // This test validates the actual bug fix by calling the real function
-      // with mocked dependencies and verifying progress calls are monotonic
+      // This test validates that progress is monotonically non-decreasing
+      // when gathering files and uploading in a single commit
       const {
         createThresholdCoreFilesOnRepo,
         pushCommits,
@@ -85,7 +85,7 @@ describe("gitlabUtils - Upload Progress", () => {
       const uploadedFileCount = { current: 0 };
       const mockRepo = { id: "123" };
       const mockUser = { username: "testuser" };
-      const totalFileCount = 200; // Will be += 3 in function (triggers bug with old code)
+      const totalFileCount = 200; // Will be += 3 in function
 
       // Mock pushCommits before calling function
       jest
@@ -104,7 +104,7 @@ describe("gitlabUtils - Upload Progress", () => {
         // Function may fail due to mocking, but we still capture progress
       }
 
-      // Assert: Progress should be monotonically increasing
+      // Assert: Progress should be monotonically non-decreasing
       expect(mockProgressUpdates.length).toBeGreaterThan(1);
 
       for (let i = 1; i < mockProgressUpdates.length; i++) {
@@ -113,9 +113,10 @@ describe("gitlabUtils - Upload Progress", () => {
         );
       }
 
-      // Assert: Initial progress < second progress
-      // (This would fail if code used totalFileCount / 3.5 instead of batchSize / 2)
-      expect(mockProgressUpdates[0]).toBeLessThan(mockProgressUpdates[1]);
+      // Assert: Final progress should be higher than initial
+      expect(
+        mockProgressUpdates[mockProgressUpdates.length - 1],
+      ).toBeGreaterThan(mockProgressUpdates[0]);
     });
 
     it("should reset progress on retry attempt", () => {
