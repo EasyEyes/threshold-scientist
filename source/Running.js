@@ -362,6 +362,8 @@ export default class Running extends Component {
                 fontSize: "1rem",
                 color: "#fff",
                 backgroundColor: "#999",
+                height: "33px",
+                padding: "7px 1rem",
               }}
               user={this.props.user}
               pavloviaIsReady={this.state.pavloviaIsReady}
