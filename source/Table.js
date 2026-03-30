@@ -5,13 +5,18 @@ import Swal from "sweetalert2";
 import { handleDrop } from "./components/dropzone";
 import ResourceButton from "./ResourceButton";
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
-import { userRepoFiles } from "../threshold/preprocess/constants";
+import {
+  userRepoFiles,
+  resourcesRepoName,
+} from "../threshold/preprocess/constants";
 import {
   getAllProjects,
   copyUser,
   setRepoName,
   manuallySetSwalTitle,
+  getProjectByNameInProjectList,
 } from "../threshold/preprocess/gitlabUtils";
+import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 
 import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
@@ -110,6 +115,39 @@ export default class Table extends Component {
     userRepoFiles.frequencyResponses = [];
 
     userRepoFiles.targetSoundLists = [];
+
+    // Fetch corpus text file content for compile-time length validation
+    let textContents = {};
+    try {
+      const projectList = await this.props.user.projectList;
+      const resourcesRepo = getProjectByNameInProjectList(
+        projectList,
+        resourcesRepoName,
+      );
+      if (resourcesRepo && resolvedResources.texts?.length > 0) {
+        const repoID = parseInt(resourcesRepo.id);
+        const accessToken = this.props.user.accessToken;
+        const entries = await Promise.all(
+          resolvedResources.texts.map(async (filename) => {
+            try {
+              const content = await getTextFileDataFromGitLab(
+                repoID,
+                `texts/${filename}`,
+                accessToken,
+              );
+              return [filename, content];
+            } catch (e) {
+              // File might not exist or be unreadable; skip silently
+              return null;
+            }
+          }),
+        );
+        textContents = Object.fromEntries(entries.filter(Boolean));
+      }
+    } catch (e) {
+      // Non-fatal: corpus length check will be silently skipped
+    }
+    resolvedResources.textContents = textContents;
 
     await preprocessExperimentFile(
       file,
