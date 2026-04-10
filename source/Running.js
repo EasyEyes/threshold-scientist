@@ -372,8 +372,11 @@ export default class Running extends Component {
               projectList={this.props.user.projectList}
               newExperimentProjectName={this.props.projectName}
               style={{
-                padding: "0.3rem 1rem",
+                fontSize: "1rem",
+                color: "#fff",
                 backgroundColor: "#999",
+                height: "33px",
+                padding: "7px 1rem",
               }}
               user={this.props.user}
               pavloviaIsReady={this.state.pavloviaIsReady}

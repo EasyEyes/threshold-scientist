@@ -196,7 +196,7 @@
   margin: 0 !important;
   padding: 0 !important;
 }
-.history-dropdown {
+button.history-dropdown {
   display: inline-block;
   width: 100%;
   white-space: nowrap;
@@ -208,15 +208,16 @@
   -webkit-appearance: none;
   color: rgb(255, 255, 255) !important;
   font-weight: 400;
+  font-size: $font-reg;
+  line-height: 100%;
   border: none;
   cursor: pointer;
   text-align: center;
-  font-size: unset;
   background-color: #999;
 }
 
 @media screen and (max-width: 560px) {
-  .history-dropdown {
+  button.history-dropdown {
     /* you can still enforce a minimum on small screens if you want */
     min-width: 297px;
   }
