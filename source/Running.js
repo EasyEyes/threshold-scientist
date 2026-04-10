@@ -134,11 +134,7 @@ export default class Running extends Component {
     return `https://run.pavlovia.org/${this.props.user.username}/${projectName}`;
   }
 
-  async waitForPavloviaReady(
-    maxTries = 60,
-    delay = 1000,
-    initialDelayMs = 5000,
-  ) {
+  async waitForPavloviaReady(maxTries = 60, initialDelayMs = 5000) {
     const { newRepo, functions } = this.props;
 
     // Wait for Pavlovia deployment before first check
@@ -164,13 +160,10 @@ export default class Running extends Component {
             maxTries: maxTries,
           });
         }
+        // Single delay using exponential backoff only
         if (tries !== maxTries - 1) {
-          await new Promise((res) => setTimeout(res, delay));
+          await new Promise((res) => setTimeout(res, getRetryDelayMs(tries)));
         }
-      } finally {
-        await new Promise((resolve) =>
-          setTimeout(resolve, getRetryDelayMs(tries)),
-        );
       }
     }
     throw new Error(
@@ -181,24 +174,24 @@ export default class Running extends Component {
   checkPavloviaReady(silentMode = false) {
     return new Promise((resolve, reject) => {
       fetch(this._getPavloviaExperimentUrl())
-        .then((response) => response.text())
-        .then((data) => {
-          if (data.includes("403")) {
+        .then((response) => {
+          const status = response.status;
+
+          if (status === 403) {
             if (this.state.pavloviaIsReady)
-              this.setState({
-                pavloviaIsReady: false,
-              });
+              this.setState({ pavloviaIsReady: false });
             reject(new Error("403 - Forbidden"));
-          } else if (data.includes("404")) {
+            return;
+          }
+
+          if (status === 404) {
             if (this.state.pavloviaIsReady)
               this.setState({
                 pavloviaIsReady: false,
                 useLowercaseProjectName: true,
               });
             else if (!this.state.useLowercaseProjectName)
-              this.setState({
-                useLowercaseProjectName: true,
-              });
+              this.setState({ useLowercaseProjectName: true });
             if (!silentMode) {
               Swal.fire({
                 icon: "error",
@@ -208,13 +201,33 @@ export default class Running extends Component {
               });
             }
             reject(new Error("404 - Experiment Unavailable"));
-          } else {
-            if (!this.state.pavloviaIsReady)
-              this.setState({
-                pavloviaIsReady: true,
-              });
-            resolve();
+            return;
           }
+
+          if (!response.ok) {
+            // Other error status — treat as transient
+            if (this.state.pavloviaIsReady)
+              this.setState({ pavloviaIsReady: false });
+            reject(new Error(`${status} - ${response.statusText}`));
+            return;
+          }
+
+          // Also check body for soft error pages (Pavlovia may return 200 with error content)
+          return response.text().then((data) => {
+            if (data.includes("403") || data.includes("404")) {
+              if (this.state.pavloviaIsReady)
+                this.setState({ pavloviaIsReady: false });
+              reject(
+                new Error(
+                  `Pavlovia returned 200 but body contains error indicator`,
+                ),
+              );
+              return;
+            }
+            if (!this.state.pavloviaIsReady)
+              this.setState({ pavloviaIsReady: true });
+            resolve();
+          });
         })
         .catch((error) => {
           captureError(error, "Pavlovia Availability Check", {

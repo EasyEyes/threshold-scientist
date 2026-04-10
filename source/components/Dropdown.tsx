@@ -65,20 +65,16 @@ const sanitize = (str: string): string =>
 const buildTableRows = (projects: Project[]): string =>
   projects.length
     ? projects
-        .map(
-          (proj, i) =>
-            `<tr data-project-id="${
-              proj.id
-            }" class="experiment-row" style="animation-delay:${Math.min(
-              i * 40,
-              300,
-            )}ms">
-          <td class="experiment-name-cell">${sanitize(proj.name)}</td>
-          <td class="experiment-date-cell">${formatProjectDate(
-            proj.created_at,
-          )}</td>
-        </tr>`,
-        )
+        .map((proj, i) => {
+          const animationDelay = `${Math.min(i * 40, 300)}ms`;
+          const projectDate = formatProjectDate(proj.created_at);
+          const projectName = sanitize(proj.name);
+          const projectId = proj.id.toString();
+          return `<tr data-project-id="${projectId}" class="experiment-row" style="animation-delay:${animationDelay}">
+                    <td class="experiment-name-cell">${projectName}</td>
+                    <td class="experiment-date-cell">${projectDate}</td>
+                  </tr>`;
+        })
         .join("")
     : `<tr><td colspan="2" class="experiment-empty-cell">No experiments found.</td></tr>`;
 
