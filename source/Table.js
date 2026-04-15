@@ -380,7 +380,7 @@ export default class Table extends Component {
               >
                 <div className="error-flex">
                   <p>
-                    {error.parameters ? (
+                    {error.parameters && error.parameters.length ? (
                       <>
                         <span className="error-parameter">
                           {error.parameters.join(" ")}
