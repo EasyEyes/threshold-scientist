@@ -1,21 +1,21 @@
 import {
-  LANGUAGE_INDEX_PROLIFIC_MAPPING,
-  LOCATION_INDEX_PROLIFIC_MAPPING,
-  FLUENT_LANGUAGE_INDEX_PROLIFIC_MAPPING,
-  PRIMARY_LANGUAGE_INDEX_PROLIFIC_MAPPING,
-  OPERATING_SYSTEM_PROLIFIC_MAPPING,
-  VISION_QUESTION_PROLIFIC_MAPPING,
-  DYSLEXIA_QUESTION_PROLIFIC_MAPPING,
-  HEARING_QUESTION_PROLIFIC_MAPPING,
-  MUSIC_EXPERIENCE_PROLIFIC_MAPPING,
-  LANGUAGE_DISORDER_PROLIFIC_MAPPING,
   COCHLEAR_PROLIFIC_MAPPING,
-  SIMULATED_EXPERIENCE_PROLIFIC_MAPPING,
-  VR_HEADSET_USAGE_PROLIFIC_MAPPING,
-  VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING,
-  VISION_CORRECTION_PROLIFIC_MAPPING,
   COMPLETION_CODE_ACTION,
   COMPLETION_CODE_TYPE,
+  DYSLEXIA_QUESTION_PROLIFIC_MAPPING,
+  FLUENT_LANGUAGE_INDEX_PROLIFIC_MAPPING,
+  HEARING_QUESTION_PROLIFIC_MAPPING,
+  LANGUAGE_DISORDER_PROLIFIC_MAPPING,
+  LANGUAGE_INDEX_PROLIFIC_MAPPING,
+  LOCATION_INDEX_PROLIFIC_MAPPING,
+  MUSIC_EXPERIENCE_PROLIFIC_MAPPING,
+  OPERATING_SYSTEM_PROLIFIC_MAPPING,
+  PRIMARY_LANGUAGE_INDEX_PROLIFIC_MAPPING,
+  SIMULATED_EXPERIENCE_PROLIFIC_MAPPING,
+  VISION_CORRECTION_PROLIFIC_MAPPING,
+  VISION_QUESTION_PROLIFIC_MAPPING,
+  VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING,
+  VR_HEADSET_USAGE_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 import { GLOSSARY } from "../../threshold/parameters/glossary";
 import { captureError } from "../sentry";
@@ -52,7 +52,6 @@ export const getProlificAccount = async (token) => {
     );
 
   if (response) return response;
-  else return;
 };
 
 const fetchProlificParticipantGroups = async (token) => {
@@ -391,12 +390,12 @@ export const prolificCreateDraft = async (
       user.currentExperiment._prolific2DeviceKind
         ?.split(",")
         .map((el) => el.trim())
-        .filter((element) => element != "") ?? [],
+        .filter((element) => element !== "") ?? [],
     peripheral_requirements:
       user.currentExperiment._prolific2RequiredServices
         ?.split(",")
         .map((element) => element.trim())
-        .filter((element) => element != "") ?? [],
+        .filter((element) => element !== "") ?? [],
     filters: buildFilters(whiteListParticipants, user, blockListParticipants),
     project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
     selected_location: findProlificLocationAttributes(
@@ -404,7 +403,7 @@ export const prolificCreateDraft = async (
     ),
   };
 
-  const response = await fetch(prolificStudyDraftApiUrl, {
+  const result = await fetch(prolificStudyDraftApiUrl, {
     method: "POST",
     body: JSON.stringify(payload),
     headers: {
@@ -419,8 +418,6 @@ export const prolificCreateDraft = async (
       captureError(error, "Prolific Create Draft", { endpoint: "studies" }),
     );
 
-  const result = response;
-
   if (result?.status !== "UNPUBLISHED") {
     console.error(result);
   }
@@ -431,7 +428,8 @@ export const prolificCreateDraft = async (
 const fetchProlificStudy = async (token, prolificStudyId) => {
   // const prolificFetchStudiesUrl = `https://api.prolific.com/api/v1/studies/${prolificStudyId}/`;
   const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/`;
-  const response = token
+
+  return token
     ? await fetch(prolificFetchStudiesUrl, {
         method: "GET",
         headers: {
@@ -449,13 +447,13 @@ const fetchProlificStudy = async (token, prolificStudyId) => {
           return "";
         })
     : "";
-  return response;
 };
 
 const fetchProlificStudySubmissions = async (token, prolificStudyId) => {
   // const prolificFetchStudiesUrl = `https://api.prolific.com/api/v1/studies/${prolificStudyId}/submissions/`;
   const prolificFetchStudiesUrl = `/.netlify/functions/prolific/studies/${prolificStudyId}/submissions/`;
-  const response = token
+
+  return token
     ? await fetch(prolificFetchStudiesUrl, {
         method: "GET",
         headers: {
@@ -473,7 +471,6 @@ const fetchProlificStudySubmissions = async (token, prolificStudyId) => {
           return "";
         })
     : "";
-  return response;
 };
 
 export const getProlificStudySubmissions = async (token, prolificStudyId) => {
@@ -521,7 +518,7 @@ export const downloadDemographicData = async (
   })
     .then((response) => response.text())
     .then((responseData) => {
-      let cleanedData = responseData.trim().replace(/^"(.*)"$/, "$1");
+      let cleanedData = responseData?.trim().replace(/^"(.*)"$/, "$1");
       cleanedData = cleanedData.replace(/\\n/g, "\n");
       cleanedData = cleanedData.replace(/\\r/g, "\r");
       cleanedData = cleanedData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
