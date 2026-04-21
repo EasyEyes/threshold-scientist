@@ -87,6 +87,42 @@ const findParticipantGroupId = (participantGroups, groupName) => {
   return group?.id || null;
 };
 
+const fetchProjectStudies = async (token, projectId) => {
+  if (!token || !projectId) return [];
+
+  const url = `/.netlify/functions/prolific/projects/${projectId}/studies/`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Token ${token}`,
+    },
+  })
+    .then((response) => response.json())
+    .catch((error) => {
+      captureError(error, "Prolific Fetch Project Studies", {
+        endpoint: `projects/${projectId}/studies`,
+      });
+      return { results: [] };
+    });
+
+  return response?.results || [];
+};
+
+const findStudyIdsByNames = (projectStudies, names) => {
+  if (!names || !projectStudies.length) return [];
+  return names
+    .map((name) => {
+      const study = projectStudies.find(
+        (s) =>
+          s.name?.trim().toLowerCase() === name.trim().toLowerCase() ||
+          s.internal_name?.trim().toLowerCase() === name.trim().toLowerCase(),
+      );
+      return study?.id;
+    })
+    .filter(Boolean);
+};
+
 const getSelectedValues = (field, mapping) => {
   if (!field) return [];
   return field
@@ -96,7 +132,12 @@ const getSelectedValues = (field, mapping) => {
     .map((el) => String(mapping[el].index));
 };
 
-const buildFilters = (whiteListParticipants, user, blockListParticipants) => {
+const buildFilters = (
+  whiteListParticipants,
+  user,
+  blockListParticipants,
+  projectStudies,
+) => {
   const filters = [];
   const exp = user.currentExperiment;
   if (!exp) return filters;
@@ -196,6 +237,49 @@ const buildFilters = (whiteListParticipants, user, blockListParticipants) => {
     VISION_CORRECTION_PROLIFIC_MAPPING,
   );
 
+  // Approval rate (range filter: "min,max" e.g. "15,85")
+  if (exp._prolific3ApprovalRate) {
+    const parts = exp._prolific3ApprovalRate.split(",").map((s) => s.trim());
+    if (parts.length === 2) {
+      const lower = parseInt(parts[0]);
+      const upper = parseInt(parts[1]);
+      if (!isNaN(lower) && !isNaN(upper)) {
+        filters.push({
+          filter_id: "approval_rate",
+          selected_range: { lower, upper },
+        });
+      }
+    }
+  }
+
+  // Previous study exclude/include (resolve study names to IDs)
+  if (exp._prolific3ParticipantInPreviousStudyExclude) {
+    const names = exp._prolific3ParticipantInPreviousStudyExclude
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const studyIds = findStudyIdsByNames(projectStudies, names);
+    if (studyIds.length > 0) {
+      filters.push({
+        filter_id: "previous_studies_blocklist",
+        selected_values: studyIds,
+      });
+    }
+  }
+  if (exp._prolific3ParticipantInPreviousStudyInclude) {
+    const names = exp._prolific3ParticipantInPreviousStudyInclude
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const studyIds = findStudyIdsByNames(projectStudies, names);
+    if (studyIds.length > 0) {
+      filters.push({
+        filter_id: "previous_studies_allowlist",
+        selected_values: studyIds,
+      });
+    }
+  }
+
   if (whiteListParticipants.length > 0) {
     filters.push({
       filter_id: "custom_allowlist",
@@ -285,6 +369,53 @@ export const prolificCreateDraft = async (
   const blockListParticipants = blockList
     ? blockList.split(",").map((item) => item.trim())
     : [];
+
+  // Fetch project studies if needed for name-to-ID resolution or AllowCompletedExperiment
+  const needsProjectStudies =
+    user.currentExperiment._prolific3ParticipantInPreviousStudyExclude ||
+    user.currentExperiment._prolific3ParticipantInPreviousStudyInclude ||
+    user.currentExperiment._prolific3AllowCompletedExperiment;
+  const projectStudies = needsProjectStudies
+    ? await fetchProjectStudies(
+        token,
+        user.currentExperiment.prolificWorkspaceProjectId,
+      )
+    : [];
+
+  // _prolific3AllowCompletedExperiment: add participants from completed studies to the allowlist
+  if (user.currentExperiment._prolific3AllowCompletedExperiment) {
+    const allowAfterHours =
+      parseFloat(user.currentExperiment._prolific3AllowAfterHours) || 0;
+    const completedStudyNames = user.currentExperiment
+      ._prolific3AllowCompletedExperiment
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const completedStudyIds = findStudyIdsByNames(
+      projectStudies,
+      completedStudyNames,
+    );
+    const cutoffMs = allowAfterHours * 60 * 60 * 1000;
+    const now = Date.now();
+
+    for (const studyId of completedStudyIds) {
+      const submissions = await fetchProlificStudySubmissions(token, studyId);
+      if (submissions?.results) {
+        submissions.results.forEach((s) => {
+          if (s.status === prolificStudySubmissionStatus.APPROVED) {
+            const completedAt = s.completed_at
+              ? new Date(s.completed_at).getTime()
+              : 0;
+            if (cutoffMs === 0 || now - completedAt >= cutoffMs) {
+              if (!whiteListParticipants.includes(s.participant_id)) {
+                whiteListParticipants.push(s.participant_id);
+              }
+            }
+          }
+        });
+      }
+    }
+  }
 
   // Fetch participant groups from workspace
   const participantGroups = await fetchProlificParticipantGroups(token);
@@ -396,11 +527,26 @@ export const prolificCreateDraft = async (
         ?.split(",")
         .map((element) => element.trim())
         .filter((element) => element !== "") ?? [],
-    filters: buildFilters(whiteListParticipants, user, blockListParticipants),
+    filters: buildFilters(
+      whiteListParticipants,
+      user,
+      blockListParticipants,
+      projectStudies,
+    ),
     project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
     selected_location: findProlificLocationAttributes(
       user.currentExperiment._prolific3Location,
     ),
+    ...(user.currentExperiment._prolific3StudyDistribution &&
+    user.currentExperiment._prolific3StudyDistribution !== "Standard sample"
+      ? {
+          naivety_distribution_rate:
+            user.currentExperiment._prolific3StudyDistribution ===
+            "Balanced sample"
+              ? 0.5
+              : 0,
+        }
+      : {}),
   };
 
   const result = await fetch(prolificStudyDraftApiUrl, {
