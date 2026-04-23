@@ -594,7 +594,7 @@ export const prolificCreateDraft = async (
       ? {
           study_labels: user.currentExperiment._prolific2StudyLabel
             .split(",")
-            .map((s) => s.trim())
+            .map((s) => s.trim().toLowerCase().replace(/\s+/g, "_"))
             .filter(Boolean),
         }
       : {}),
