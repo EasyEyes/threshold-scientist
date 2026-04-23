@@ -87,6 +87,36 @@ const findParticipantGroupId = (participantGroups, groupName) => {
   return group?.id || null;
 };
 
+const fetchProlificFilterSets = async (token) => {
+  const url = `/.netlify/functions/prolific/filter-sets/`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Token ${token}`,
+    },
+  })
+    .then((response) => response.json())
+    .catch((error) => {
+      captureError(error, "Prolific Fetch Filter Sets", {
+        endpoint: `filter-sets/`,
+      });
+      return { results: [] };
+    });
+
+  return response?.results || [];
+};
+
+const findFilterSetId = (filterSets, name) => {
+  if (!name || name === "") return null;
+  const target = name.trim().toLowerCase();
+  const set = filterSets.find(
+    (fs) => fs.name?.trim().toLowerCase() === target,
+  );
+  return set?.id || null;
+};
+
 const fetchProjectStudies = async (token, projectId) => {
   if (!token || !projectId) return [];
 
@@ -417,6 +447,15 @@ export const prolificCreateDraft = async (
     }
   }
 
+  // _prolific2ScreenerSet: resolve screener set name -> filter_set_id.
+  // When set, Prolific ignores the filters array, so we skip building it.
+  const screenerSetName =
+    user.currentExperiment._prolific2ScreenerSet?.trim();
+  const filterSets = screenerSetName
+    ? await fetchProlificFilterSets(token)
+    : [];
+  const filterSetId = findFilterSetId(filterSets, screenerSetName);
+
   // Fetch participant groups from workspace
   const participantGroups = await fetchProlificParticipantGroups(token);
 
@@ -527,12 +566,15 @@ export const prolificCreateDraft = async (
         ?.split(",")
         .map((element) => element.trim())
         .filter((element) => element !== "") ?? [],
-    filters: buildFilters(
-      whiteListParticipants,
-      user,
-      blockListParticipants,
-      projectStudies,
-    ),
+    filters: filterSetId
+      ? []
+      : buildFilters(
+          whiteListParticipants,
+          user,
+          blockListParticipants,
+          projectStudies,
+        ),
+    ...(filterSetId ? { filter_set_id: filterSetId } : {}),
     project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
     selected_location: findProlificLocationAttributes(
       user.currentExperiment._prolific3Location,
@@ -545,6 +587,15 @@ export const prolificCreateDraft = async (
             "Balanced sample"
               ? 0.5
               : 0,
+        }
+      : {}),
+    ...(user.currentExperiment._prolific2StudyLabel &&
+    user.currentExperiment._prolific2StudyLabel.trim() !== ""
+      ? {
+          study_labels: user.currentExperiment._prolific2StudyLabel
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
         }
       : {}),
   };
