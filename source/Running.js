@@ -36,6 +36,11 @@ export default class Running extends Component {
       dataFolderLength: 0,
       latestDateForDataCollection: false,
       useLowercaseProjectName: false,
+      // "idle" | "preparing" | "ready" — first click prepares the study,
+      // second click opens it in a new tab (fresh user gesture, so the
+      // browser's popup blocker never fires).
+      prolificStudyState: "idle",
+      preparedProlificStudyId: null,
     };
 
     this._isActivating = false;
@@ -71,7 +76,12 @@ export default class Running extends Component {
           this.props.user,
           this.props.activeExperiment,
         );
-      this.setState({ dataFolderLength, latestDateForDataCollection });
+      this.setState({
+        dataFolderLength,
+        latestDateForDataCollection,
+        prolificStudyState: "idle",
+        preparedProlificStudyId: null,
+      });
     }
 
     const needSetModeToRun =
@@ -277,6 +287,8 @@ export default class Running extends Component {
       completionCode,
       dataFolderLength,
       latestDateForDataCollection,
+      prolificStudyState,
+      preparedProlificStudyId,
     } = this.state;
     const isRunning = viewingPreviousExperiment
       ? previousExperimentStatus === "RUNNING"
@@ -531,77 +543,120 @@ export default class Running extends Component {
                 >
                   <>
                     <button
-                      className="button-green button-large-font"
-                      onClick={async (e) => {
-                        e.target.classList.add("button-disabled");
-                        e.target.classList.add("button-wait");
-
-                        // Handle preexisting prolific study
-                        const existingStudyId = await getProlificStudyId(
-                          user,
-                          activeExperiment?.id,
-                        );
-                        if (existingStudyId) {
-                          // Study already exists, open it
+                      className={`button-green button-large-font${
+                        prolificStudyState === "preparing"
+                          ? " button-disabled button-wait"
+                          : ""
+                      }`}
+                      disabled={prolificStudyState === "preparing"}
+                      onClick={async () => {
+                        // Second click: open the prepared study. Runs
+                        // synchronously inside the click handler so the
+                        // browser treats window.open as user-initiated.
+                        if (
+                          prolificStudyState === "ready" &&
+                          preparedProlificStudyId
+                        ) {
                           window
                             .open(
                               "https://app.prolific.com/researcher/workspaces/studies/" +
-                                existingStudyId,
+                                preparedProlificStudyId,
                               "_blank",
                             )
                             ?.focus();
-                          e.target.classList.remove("button-disabled");
-                          e.target.classList.remove("button-wait");
                           return;
                         }
+                        if (prolificStudyState === "preparing") return;
 
-                        // ! generate completion code
-                        const hasCompletionCode = !!completionCode;
-                        const {
-                          code,
-                          incompatibleCompletionCode,
-                          abortedCompletionCode,
-                        } =
-                          completionCode ??
-                          (await generateAndUploadCompletionURL(
+                        // First click: prepare the study.
+                        this.setState({ prolificStudyState: "preparing" });
+
+                        try {
+                          const existingStudyId = await getProlificStudyId(
                             user,
-                            activeExperiment,
-                            functions.handleUpdateUser,
-                          ));
-                        if (!hasCompletionCode)
-                          this.setState({
-                            completionCode: code,
-                          });
-
-                        // ! create draft study on prolific
-                        const result = await prolificCreateDraft(
-                          user,
-                          `${this.props.projectName}`,
-                          code,
-                          incompatibleCompletionCode,
-                          abortedCompletionCode,
-                          prolificToken,
-                        );
-
-                        if (result.status === "UNPUBLISHED") {
-                          window
-                            .open(
-                              "https://app.prolific.com/researcher/workspaces/studies/" +
-                                result.id,
-                              "_blank",
-                            )
-                            ?.focus();
-                          await createProlificStudyIdFile(
-                            activeExperiment,
-                            user,
-                            result.id,
+                            activeExperiment?.id,
                           );
+                          if (existingStudyId) {
+                            this.setState({
+                              prolificStudyState: "ready",
+                              preparedProlificStudyId: existingStudyId,
+                            });
+                            return;
+                          }
+
+                          const hasCompletionCode = !!completionCode;
+                          const {
+                            code,
+                            incompatibleCompletionCode,
+                            abortedCompletionCode,
+                          } =
+                            completionCode ??
+                            (await generateAndUploadCompletionURL(
+                              user,
+                              activeExperiment,
+                              functions.handleUpdateUser,
+                            ));
+                          if (!hasCompletionCode)
+                            this.setState({ completionCode: code });
+
+                          const result = await prolificCreateDraft(
+                            user,
+                            `${this.props.projectName}`,
+                            code,
+                            incompatibleCompletionCode,
+                            abortedCompletionCode,
+                            prolificToken,
+                          );
+
+                          if (
+                            result?.status === "UNPUBLISHED" &&
+                            result.id
+                          ) {
+                            await createProlificStudyIdFile(
+                              activeExperiment,
+                              user,
+                              result.id,
+                            );
+                            this.setState({
+                              prolificStudyState: "ready",
+                              preparedProlificStudyId: result.id,
+                            });
+                          } else {
+                            this.setState({ prolificStudyState: "idle" });
+                          }
+                        } catch (err) {
+                          this.setState({ prolificStudyState: "idle" });
+                          throw err;
                         }
-                        e.target.classList.remove("button-disabled");
-                        e.target.classList.remove("button-wait");
                       }}
                     >
-                      Create {recruitName} study to run online
+                      {prolificStudyState === "preparing" && (
+                        <>
+                          <i
+                            className="bi bi-arrow-repeat icon-spin"
+                            style={{
+                              marginRight: "0.5rem",
+                              color: "inherit",
+                            }}
+                          ></i>
+                          Preparing {recruitName} study…
+                        </>
+                      )}
+                      {prolificStudyState === "ready" && (
+                        <>
+                          Open {recruitName} study
+                          <i
+                            className="bi bi-box-arrow-up-right"
+                            style={{
+                              marginLeft: "0.5rem",
+                              color: "inherit",
+                            }}
+                          ></i>
+                        </>
+                      )}
+                      {prolificStudyState === "idle" && (
+                        <>Create {recruitName} study to run online</>
+                      )}
                     </button>
                   </>
                 </div>

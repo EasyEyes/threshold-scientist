@@ -451,16 +451,25 @@ export const prolificCreateDraft = async (
   // When set, Prolific ignores the filters array, so we skip building it.
   const screenerSetName =
     user.currentExperiment._prolific2ScreenerSet?.trim();
-  const filterSets = screenerSetName
-    ? await fetchProlificFilterSets(token)
-    : [];
-  const filterSetId = findFilterSetId(filterSets, screenerSetName);
-
-  // Fetch participant groups from workspace
-  const participantGroups = await fetchProlificParticipantGroups(token);
-
   const participantGroupName =
     user.currentExperiment._prolific2CompletionPathAddToGroup?.trim();
+  const abortedParticipantGroupName =
+    user.currentExperiment._prolific2AbortedAddToGroup?.trim();
+  const needsParticipantGroups =
+    !!participantGroupName || !!abortedParticipantGroupName;
+
+  // Fetch filter sets and participant groups in parallel, and only when
+  // the corresponding experiment fields are set — keeps click-to-open
+  // under the browser's ~1s user-activation window for the popup.
+  const [filterSets, participantGroups] = await Promise.all([
+    screenerSetName ? fetchProlificFilterSets(token) : Promise.resolve([]),
+    needsParticipantGroups
+      ? fetchProlificParticipantGroups(token)
+      : Promise.resolve([]),
+  ]);
+
+  const filterSetId = findFilterSetId(filterSets, screenerSetName);
+
   const participantGroupId = findParticipantGroupId(
     participantGroups,
     participantGroupName,
@@ -479,8 +488,6 @@ export const prolificCreateDraft = async (
     });
   }
 
-  const abortedParticipantGroupName =
-    user.currentExperiment._prolific2AbortedAddToGroup?.trim();
   const abortedParticipantGroupId = findParticipantGroupId(
     participantGroups,
     abortedParticipantGroupName,
