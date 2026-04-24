@@ -634,7 +634,10 @@ export default class Running extends Component {
                         <>
                           <i
                             className="bi bi-arrow-repeat icon-spin"
-                            style={{ marginRight: "0.5rem" }}
+                            style={{
+                              marginRight: "0.5rem",
+                              color: "inherit",
+                            }}
                           ></i>
                           Preparing {recruitName} study…
                         </>
@@ -644,7 +647,10 @@ export default class Running extends Component {
                           Open {recruitName} study
                           <i
                             className="bi bi-box-arrow-up-right"
-                            style={{ marginLeft: "0.5rem" }}
+                            style={{
+                              marginLeft: "0.5rem",
+                              color: "inherit",
+                            }}
                           ></i>
                         </>
                       )}
