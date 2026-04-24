@@ -536,69 +536,80 @@ export default class Running extends Component {
                         e.target.classList.add("button-disabled");
                         e.target.classList.add("button-wait");
 
-                        // Handle preexisting prolific study
-                        const existingStudyId = await getProlificStudyId(
-                          user,
-                          activeExperiment?.id,
-                        );
-                        if (existingStudyId) {
-                          // Study already exists, open it
-                          window
-                            .open(
-                              "https://app.prolific.com/researcher/workspaces/studies/" +
-                                existingStudyId,
-                              "_blank",
-                            )
-                            ?.focus();
+                        // Open the popup synchronously to preserve the user
+                        // gesture — awaiting network calls first lets the
+                        // browser's popup blocker strip the window.open.
+                        const prolificTab = window.open("about:blank", "_blank");
+
+                        const navigateOrClose = (studyId) => {
+                          const url =
+                            "https://app.prolific.com/researcher/workspaces/studies/" +
+                            studyId;
+                          if (prolificTab && !prolificTab.closed) {
+                            prolificTab.location.href = url;
+                            prolificTab.focus();
+                          } else {
+                            window.open(url, "_blank")?.focus();
+                          }
+                        };
+
+                        try {
+                          // Handle preexisting prolific study
+                          const existingStudyId = await getProlificStudyId(
+                            user,
+                            activeExperiment?.id,
+                          );
+                          if (existingStudyId) {
+                            navigateOrClose(existingStudyId);
+                            return;
+                          }
+
+                          // ! generate completion code
+                          const hasCompletionCode = !!completionCode;
+                          const {
+                            code,
+                            incompatibleCompletionCode,
+                            abortedCompletionCode,
+                          } =
+                            completionCode ??
+                            (await generateAndUploadCompletionURL(
+                              user,
+                              activeExperiment,
+                              functions.handleUpdateUser,
+                            ));
+                          if (!hasCompletionCode)
+                            this.setState({
+                              completionCode: code,
+                            });
+
+                          // ! create draft study on prolific
+                          const result = await prolificCreateDraft(
+                            user,
+                            `${this.props.projectName}`,
+                            code,
+                            incompatibleCompletionCode,
+                            abortedCompletionCode,
+                            prolificToken,
+                          );
+
+                          if (result.status === "UNPUBLISHED") {
+                            navigateOrClose(result.id);
+                            await createProlificStudyIdFile(
+                              activeExperiment,
+                              user,
+                              result.id,
+                            );
+                          } else if (prolificTab && !prolificTab.closed) {
+                            prolificTab.close();
+                          }
+                        } catch (err) {
+                          if (prolificTab && !prolificTab.closed)
+                            prolificTab.close();
+                          throw err;
+                        } finally {
                           e.target.classList.remove("button-disabled");
                           e.target.classList.remove("button-wait");
-                          return;
                         }
-
-                        // ! generate completion code
-                        const hasCompletionCode = !!completionCode;
-                        const {
-                          code,
-                          incompatibleCompletionCode,
-                          abortedCompletionCode,
-                        } =
-                          completionCode ??
-                          (await generateAndUploadCompletionURL(
-                            user,
-                            activeExperiment,
-                            functions.handleUpdateUser,
-                          ));
-                        if (!hasCompletionCode)
-                          this.setState({
-                            completionCode: code,
-                          });
-
-                        // ! create draft study on prolific
-                        const result = await prolificCreateDraft(
-                          user,
-                          `${this.props.projectName}`,
-                          code,
-                          incompatibleCompletionCode,
-                          abortedCompletionCode,
-                          prolificToken,
-                        );
-
-                        if (result.status === "UNPUBLISHED") {
-                          window
-                            .open(
-                              "https://app.prolific.com/researcher/workspaces/studies/" +
-                                result.id,
-                              "_blank",
-                            )
-                            ?.focus();
-                          await createProlificStudyIdFile(
-                            activeExperiment,
-                            user,
-                            result.id,
-                          );
-                        }
-                        e.target.classList.remove("button-disabled");
-                        e.target.classList.remove("button-wait");
                       }}
                     >
                       Create {recruitName} study to run online
