@@ -608,10 +608,7 @@ export default class Running extends Component {
                             prolificToken,
                           );
 
-                          if (
-                            result?.status === "UNPUBLISHED" &&
-                            result.id
-                          ) {
+                          if (result?.status === "UNPUBLISHED" && result.id) {
                             await createProlificStudyIdFile(
                               activeExperiment,
                               user,
@@ -806,64 +803,6 @@ export default class Running extends Component {
             </div>
           </>
         )}
-
-        <div
-          style={{
-            backgroundColor: "#fff3cd",
-            border: "1px solid #ffc107",
-            borderRadius: "0.5rem",
-            padding: "1rem",
-            marginTop: "1rem",
-            width: "100%",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "1.1rem",
-              fontWeight: "bold",
-              color: "#856404",
-              marginBottom: "0.5rem",
-            }}
-          >
-            ⚠️ WARNING. February 10, 2026.
-          </div>
-          <div style={{ color: "#856404", lineHeight: "1.5" }}>
-            Today Prolific changed their API, no longer accepting
-            &quot;eligibility_requirements&quot;, and it will take a few days to
-            update EasyEyes to this API change. Until then, when you use the
-            &quot;Create Prolific study&quot; button, the EasyEyes compiler will
-            ignore your study&apos;s settings of the EasyEyes parameters below.
-            You can set them manually in Prolific.
-          </div>
-          <ul
-            style={{
-              marginTop: "0.5rem",
-              fontFamily: "monospace",
-              fontSize: "0.95rem",
-              paddingLeft: "1.5rem",
-            }}
-          >
-            <li style={{ color: "#856404" }}>_online3PhoneOperatingSystem</li>
-            <li style={{ color: "#856404" }}>_online4Location</li>
-            <li style={{ color: "#856404" }}>_online5CochlearImplant</li>
-            <li style={{ color: "#856404" }}>_online5Dyslexia</li>
-            <li style={{ color: "#856404" }}>_online5HearingDifficulties</li>
-            <li style={{ color: "#856404" }}>_online5LanguageFirst</li>
-            <li style={{ color: "#856404" }}>_online5LanguageFluent</li>
-            <li style={{ color: "#856404" }}>_online5LanguagePrimary</li>
-            <li style={{ color: "#856404" }}>
-              _online5LanguageRelatedDisorders
-            </li>
-            <li style={{ color: "#856404" }}>
-              _online5MusicalInstrumentExperience
-            </li>
-            <li style={{ color: "#856404" }}>_online5Vision</li>
-            <li style={{ color: "#856404" }}>_online5VisionCorrection</li>
-            <li style={{ color: "#856404" }}>_online5VRExperiences</li>
-            <li style={{ color: "#856404" }}>_online5VRHeadset</li>
-            <li style={{ color: "#856404" }}>_online5VRHeadsetUsage</li>
-          </ul>
-        </div>
       </>
     );
   }
