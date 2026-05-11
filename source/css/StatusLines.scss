@@ -7,6 +7,7 @@
 
   .status-line {
     display: flex;
+    align-items: baseline;
     justify-content: flex-start;
     gap: 0.3rem;
 
@@ -83,11 +84,11 @@
 
     // login
     .pavlovia-account-name {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
+      display: inline;
 
       .pavlovia-avatar {
+        vertical-align: middle;
+        margin-right: 0.5rem;
         width: 1.5rem;
         height: 1.5rem;
         border-radius: 50%;
