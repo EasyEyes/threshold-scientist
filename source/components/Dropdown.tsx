@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Swal from "sweetalert2";
 import { User } from "../../threshold/preprocess/gitlabUtils";
+import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidToken";
+import { redirectToOauth2 } from "../../threshold/preprocess/user";
 
 export type Project = {
   id: number;
@@ -236,7 +238,8 @@ export const Dropdown = ({
     return () => channel.close();
   }, [user]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(async () => {
+    if (!(await ensureValidToken(redirectToOauth2))) return;
     openModal(
       resolvedList.filter(isExperiment),
       (proj) => {
