@@ -15,6 +15,8 @@ import {
   User,
 } from "../../threshold/preprocess/gitlabUtils";
 import { userRepoFiles } from "../../threshold/preprocess/constants";
+import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidToken";
+import { redirectToOauth2 } from "../../threshold/preprocess/user";
 
 // Helper function to identify impulse response files by their filename pattern
 const isImpulseResponseFile = (file: File): boolean => {
@@ -38,6 +40,8 @@ export const handleDrop = async (
   handleArchiveBool: (isArchivedBool: boolean) => void,
   handleArchiveZip: (archiveZip: any) => void,
 ) => {
+  if (!(await ensureValidToken(redirectToOauth2))) return;
+
   const resourcesList: File[] = [];
   const impulseResponseList: File[] = [];
   const frequencyResponseList: File[] = [];
