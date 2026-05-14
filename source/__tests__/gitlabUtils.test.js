@@ -12,11 +12,89 @@ jest.mock("../../threshold/preprocess/fileUtils", () => ({
   getAssetFileContent: jest.fn().mockResolvedValue("test content"),
 }));
 
+jest.mock("../../threshold/preprocess/auth/config", () => ({
+  getAuthConfig: () => ({ clientId: "test", redirectUri: "http://test" }),
+}));
+
+jest.mock("../../threshold/preprocess/auth/gitlabOAuthClient", () => ({
+  GitLabOAuthClient: {
+    loadFromStorage: jest.fn(),
+  },
+}));
+
 jest.mock("../../threshold/preprocess/gitlabUtils", () => {
   const actual = jest.requireActual("../../threshold/preprocess/gitlabUtils");
   return {
     ...actual,
   };
+});
+
+describe("getAllProjects — incremental-fetch short-circuit", () => {
+  it("initProjectList(true) resolves to a superset of the original list", async () => {
+    const { User } = require("../../threshold/preprocess/gitlabUtils");
+    const {
+      GitLabOAuthClient,
+    } = require("../../threshold/preprocess/auth/gitlabOAuthClient");
+
+    const originalProjects = [{ id: 5 }, { id: 3 }];
+    const page1Projects = [{ id: 8 }, { id: 5 }];
+
+    const mockResponse = {
+      ok: true,
+      json: jest.fn().mockResolvedValue(page1Projects),
+      headers: { get: jest.fn((h) => (h === "x-total-pages" ? "3" : null)) },
+    };
+    const mockClient = {
+      apiRequest: jest.fn().mockResolvedValue(mockResponse),
+      getAccessToken: jest.fn().mockReturnValue("test-token"),
+    };
+    GitLabOAuthClient.loadFromStorage.mockReturnValue(mockClient);
+
+    const user = new User("test-token");
+    user.id = "123";
+    user.projectList = Promise.resolve(originalProjects);
+
+    await user.initProjectList(true);
+    const result = await user.projectList;
+
+    const resultIds = result.map((p) => p.id);
+    // All originals preserved
+    expect(resultIds).toContain(5);
+    expect(resultIds).toContain(3);
+    // New project prepended
+    expect(resultIds).toContain(8);
+    // New project appears before the originals
+    expect(resultIds.indexOf(8)).toBeLessThan(resultIds.indexOf(3));
+  });
+
+  it("makes exactly one API request when oldProjectList max id appears on page 1", async () => {
+    const { getAllProjects } = require("../../threshold/preprocess/gitlabUtils");
+    const {
+      GitLabOAuthClient,
+    } = require("../../threshold/preprocess/auth/gitlabOAuthClient");
+
+    const oldProjects = [{ id: 5 }, { id: 3 }];
+    const page1Projects = [{ id: 7 }, { id: 6 }, { id: 5 }];
+
+    const mockResponse = {
+      ok: true,
+      json: jest.fn().mockResolvedValue(page1Projects),
+      headers: { get: jest.fn((h) => (h === "x-total-pages" ? "3" : null)) },
+    };
+    const mockClient = {
+      apiRequest: jest.fn().mockResolvedValue(mockResponse),
+      getAccessToken: jest.fn().mockReturnValue("test-token"),
+    };
+    GitLabOAuthClient.loadFromStorage.mockReturnValue(mockClient);
+
+    const mockUser = { id: "123", accessToken: "test-token" };
+    const result = await getAllProjects(mockUser, oldProjects);
+
+    expect(mockClient.apiRequest).toHaveBeenCalledTimes(1);
+    expect(result.map((p) => p.id)).toEqual(
+      expect.arrayContaining([7, 6, 5, 3]),
+    );
+  });
 });
 
 describe("gitlabUtils - Upload Progress", () => {
