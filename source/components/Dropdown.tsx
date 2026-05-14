@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Swal from "sweetalert2";
-import { User } from "../../threshold/preprocess/gitlabUtils";
+import {
+  User,
+  getProjectsPage,
+} from "../../threshold/preprocess/gitlabUtils";
 import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidToken";
 import { redirectToOauth2 } from "../../threshold/preprocess/user";
 
@@ -98,10 +101,17 @@ const buildModalHTML = (projects: Project[]): string => {
     </div>`;
 };
 
+type PaginationOptions = {
+  loadMore: () => Promise<{ projects: Project[]; hasMore: boolean }>;
+  hasMore: boolean;
+  onReset: () => void;
+};
+
 const openModal = (
   list: Project[],
   onSelect: (proj: Project) => void,
   onRefresh: () => Promise<Project[]>,
+  pagination?: PaginationOptions,
 ) => {
   void Swal.fire({
     title: "Select an Experiment",
@@ -139,6 +149,42 @@ const openModal = (
 
       attachRowHandlers(tableBody, list, onSelect);
 
+      let paginationHasMore = pagination?.hasMore ?? false;
+      let isLoadingMore = false;
+
+      if (pagination) {
+        const tableContainer = document.querySelector(
+          ".experiment-table-container",
+        ) as HTMLElement;
+
+        tableContainer?.addEventListener("scroll", async () => {
+          if (isLoadingMore || !paginationHasMore) return;
+          const distFromBottom =
+            tableContainer.scrollHeight -
+            tableContainer.scrollTop -
+            tableContainer.clientHeight;
+          if (distFromBottom < 200) {
+            isLoadingMore = true;
+            tableBody.insertAdjacentHTML(
+              "beforeend",
+              `<tr id="experiment-spinner-row"><td colspan="2" class="experiment-spinner-cell">
+                <i class="bi bi-arrow-clockwise icon-spin"></i>
+              </td></tr>`,
+            );
+            const { projects: newProjects, hasMore: nextHasMore } =
+              await pagination.loadMore();
+            document.getElementById("experiment-spinner-row")?.remove();
+            tableBody.insertAdjacentHTML(
+              "beforeend",
+              buildTableRows(newProjects),
+            );
+            attachRowHandlers(tableBody, newProjects, onSelect);
+            paginationHasMore = nextHasMore;
+            isLoadingMore = false;
+          }
+        });
+      }
+
       refreshBtn.addEventListener("click", async () => {
         refreshBtn.disabled = true;
         refreshBtn.innerHTML =
@@ -147,6 +193,12 @@ const openModal = (
         const freshList = await onRefresh();
         tableBody.innerHTML = buildTableRows(freshList);
         attachRowHandlers(tableBody, freshList, onSelect);
+
+        if (pagination) {
+          pagination.onReset();
+          paginationHasMore = pagination.hasMore;
+          isLoadingMore = false;
+        }
 
         const term = searchInput.value.toLowerCase();
         if (term) {
@@ -240,14 +292,33 @@ export const Dropdown = ({
 
   const handleClick = useCallback(async () => {
     if (!(await ensureValidToken(redirectToOauth2))) return;
+    const experiments = resolvedList.filter(isExperiment);
+    const totalPages = user?.totalProjectPages ?? 1;
+    let nextPage = 2;
     openModal(
-      resolvedList.filter(isExperiment),
+      experiments,
       (proj) => {
         if (!(selected && selected.id === proj.id)) setSelectedProject(proj);
       },
       fetchFreshList,
+      totalPages > 1
+        ? {
+            loadMore: async () => {
+              const projects = await getProjectsPage(user!, nextPage);
+              nextPage++;
+              return {
+                projects,
+                hasMore: nextPage <= totalPages,
+              };
+            },
+            hasMore: true,
+            onReset: () => {
+              nextPage = 2;
+            },
+          }
+        : undefined,
     );
-  }, [resolvedList, fetchFreshList, selected, setSelectedProject]);
+  }, [resolvedList, fetchFreshList, selected, setSelectedProject, user]);
 
   const wrapperClass = selected
     ? "history-dropdown-wrapper history-dropdown-wrapper-fit-content"

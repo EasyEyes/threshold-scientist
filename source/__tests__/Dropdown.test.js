@@ -1,378 +1,334 @@
-// Mock DynamicSelectWidth
-jest.mock("../components/DynamicSelectWidth", () => ({
-  setDynamicSelectWidth: jest.fn(),
+jest.mock("sweetalert2", () => ({
+  __esModule: true,
+  default: {
+    fire: jest.fn(),
+    close: jest.fn(),
+  },
+}));
+
+jest.mock("../../threshold/preprocess/auth/ensureValidToken", () => ({
+  ensureValidToken: jest.fn().mockResolvedValue(true),
+}));
+
+jest.mock("../../threshold/preprocess/user", () => ({
+  redirectToOauth2: jest.fn(),
+}));
+
+jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
+  getProjectsPage: jest.fn(),
 }));
 
 import React from "react";
-import { render, waitFor, fireEvent } from "@testing-library/react";
-import Dropdown from "../components/Dropdown";
+import { render, waitFor, fireEvent, act } from "@testing-library/react";
+import { Dropdown } from "../components/Dropdown";
+import Swal from "sweetalert2";
+import { getProjectsPage } from "../../threshold/preprocess/gitlabUtils";
 
-describe("Dropdown Component", () => {
-  let mockProps;
-  let mockUser;
+// jsdom does not ship BroadcastChannel
+global.BroadcastChannel = jest.fn(() => ({ onmessage: null, close: jest.fn() }));
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+const PAGE_1 = [
+  { id: 1, name: "Experiment A", created_at: "2024-01-01T00:00:00Z" },
+  { id: 2, name: "Experiment B", created_at: "2024-01-02T00:00:00Z" },
+];
 
-    mockUser = {
-      initProjectList: jest.fn().mockResolvedValue(true),
-      projectList: Promise.resolve([
-        { id: "1", name: "Project A", created_at: "2024-01-01T00:00:00Z" },
-        { id: "2", name: "Project B", created_at: "2024-01-02T00:00:00Z" },
-        {
-          id: "3",
-          name: "EasyEyesResources",
-          created_at: "2024-01-03T00:00:00Z",
-        },
-      ]),
-    };
+const PAGE_2 = [
+  { id: 10, name: "Page2 Experiment X", created_at: "2024-02-01T00:00:00Z" },
+];
 
-    mockProps = {
-      selected: "new",
-      setSelectedProject: jest.fn(),
-      projectList: mockUser.projectList,
-      newExperimentProjectName: null,
-      style: {},
-      user: mockUser,
-      pavloviaIsReady: true,
-    };
+/** Captures opts from Swal.fire, inserts the HTML, and calls didOpen immediately. */
+function mockSwalOpen() {
+  let capturedOpts = null;
+  Swal.fire.mockImplementation((opts) => {
+    capturedOpts = opts;
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = opts.html;
+    document.body.appendChild(wrapper);
+    opts.didOpen?.();
+    return Promise.resolve({ isConfirmed: false, isDismissed: false });
+  });
+  return () => capturedOpts;
+}
+
+/** Simulates a scroll event that is within 200px of the bottom. */
+function scrollNearBottom(container) {
+  Object.defineProperty(container, "scrollHeight", {
+    configurable: true,
+    get: () => 1000,
+  });
+  Object.defineProperty(container, "clientHeight", {
+    configurable: true,
+    get: () => 400,
+  });
+  container.scrollTop = 450; // 1000 - 450 - 400 = 150 < 200
+  fireEvent.scroll(container);
+}
+
+function makeUser(totalProjectPages = 2) {
+  return {
+    initProjectList: jest.fn().mockResolvedValue(true),
+    projectList: Promise.resolve(PAGE_1),
+    totalProjectPages,
+  };
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  document.body.innerHTML = "";
+  mockSwalOpen();
+});
+
+describe("Dropdown – infinite scroll", () => {
+  it("shows a spinner row while the next page is loading, then removes it", async () => {
+    let resolveLoad;
+    const pendingLoad = new Promise((res) => {
+      resolveLoad = res;
+    });
+    getProjectsPage.mockReturnValueOnce(pendingLoad);
+
+    const user = makeUser(2);
+    const { container } = render(
+      <Dropdown
+        projectList={user.projectList}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(container.querySelector("button")).not.toBeDisabled(),
+    );
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const tableContainer = document.querySelector(
+      ".experiment-table-container",
+    );
+    await act(async () => {
+      scrollNearBottom(tableContainer);
+    });
+
+    // Spinner must appear before the promise resolves
+    await waitFor(() =>
+      expect(
+        document.getElementById("experiment-spinner-row"),
+      ).toBeInTheDocument(),
+    );
+
+    // Resolve the load and confirm spinner disappears, rows appear
+    await act(async () => {
+      resolveLoad(PAGE_2);
+    });
+
+    await waitFor(() =>
+      expect(
+        document.getElementById("experiment-spinner-row"),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(
+        document.querySelector("[data-project-id='10']"),
+      ).toBeInTheDocument(),
+    );
   });
 
-  describe("Rendering", () => {
-    it("renders with placeholder when selected is 'new'", async () => {
-      const { container } = render(<Dropdown {...mockProps} />);
+  it("does not fetch again after hasMore becomes false", async () => {
+    // totalProjectPages = 2, so after loading page 2 there are no more pages
+    getProjectsPage.mockResolvedValue(PAGE_2);
 
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-        expect(select.value).toBe("__NEW_EXPERIMENT__");
-      });
+    const user = makeUser(2);
+    const { container } = render(
+      <Dropdown
+        projectList={user.projectList}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(container.querySelector("button")).not.toBeDisabled(),
+    );
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const tableContainer = document.querySelector(
+      ".experiment-table-container",
+    );
+
+    // First scroll – loads page 2, exhausts pages
+    await act(async () => {
+      scrollNearBottom(tableContainer);
+    });
+    await waitFor(() => expect(getProjectsPage).toHaveBeenCalledTimes(1));
+
+    // Second scroll – should NOT trigger another fetch
+    await act(async () => {
+      fireEvent.scroll(tableContainer);
     });
 
-    it("renders with experiment name and date when selected is a project", async () => {
-      const selectedProject = {
-        id: "1",
-        name: "Project A",
-        created_at: "2024-01-01T00:00:00Z",
-      };
-      const { container } = render(
-        <Dropdown {...mockProps} selected={selectedProject} />,
-      );
-
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-        expect(select.value).toBe("1");
-      });
-    });
-
-    it("filters out EasyEyesResources from project list", async () => {
-      const { container } = render(<Dropdown {...mockProps} />);
-
-      await waitFor(() => {
-        const options = container.querySelectorAll("option");
-        // Should have placeholder + 2 projects (EasyEyesResources filtered out)
-        expect(options.length).toBe(3);
-        expect(options[1].text).toContain("Project A");
-        expect(options[2].text).toContain("Project B");
-        // EasyEyesResources should not appear
-        Array.from(options).forEach((option) => {
-          expect(option.text).not.toContain("EasyEyesResources");
-        });
-      });
-    });
-
-    it("renders loading spinner when isLoadingProjects is true", () => {
-      // Create a promise that never resolves to simulate loading
-      const loadingProjectList = new Promise(() => {});
-      const { container } = render(
-        <Dropdown {...mockProps} projectList={loadingProjectList} />,
-      );
-
-      // Should show loading button instead of select
-      const select = container.querySelector("select");
-      const button = container.querySelector("button");
-
-      expect(select).not.toBeInTheDocument();
-      expect(button).toBeInTheDocument();
-      expect(button.disabled).toBe(true);
-    });
+    expect(getProjectsPage).toHaveBeenCalledTimes(1);
   });
 
-  describe("Focus Refresh (onFocus)", () => {
-    it("calls refreshProjectList when select element receives focus", async () => {
-      const { container } = render(<Dropdown {...mockProps} />);
-
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
+  it("Refresh button resets pagination so the next scroll loads page 2 again", async () => {
+    getProjectsPage.mockResolvedValue(PAGE_2);
+    let resolveRefresh;
+    const user = makeUser(2);
+    user.initProjectList = jest.fn().mockImplementation(() => {
+      user.projectList = new Promise((res) => {
+        resolveRefresh = res;
       });
-
-      const select = container.querySelector("select");
-
-      // Trigger focus event
-      fireEvent.focus(select);
-
-      // Wait for the async refresh to complete
-      await waitFor(() => {
-        expect(mockUser.initProjectList).toHaveBeenCalledWith(true);
-      });
+      return Promise.resolve(true);
     });
 
-    it("calls user.initProjectList with forceRefresh=true on focus", async () => {
-      const { container } = render(<Dropdown {...mockProps} />);
+    const { container } = render(
+      <Dropdown
+        projectList={Promise.resolve(PAGE_1)}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
 
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-      });
-
-      const select = container.querySelector("select");
-      fireEvent.focus(select);
-
-      await waitFor(() => {
-        expect(mockUser.initProjectList).toHaveBeenCalledWith(true); // true = force refresh
-      });
+    await waitFor(() =>
+      expect(container.querySelector("button")).not.toBeDisabled(),
+    );
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
     });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const tableContainer = document.querySelector(
+      ".experiment-table-container",
+    );
+
+    // Load page 2 (exhausts pages, hasMore → false); wait for rows to confirm loadMore completed
+    await act(async () => {
+      scrollNearBottom(tableContainer);
+    });
+    await waitFor(() =>
+      expect(
+        document.querySelector("[data-project-id='10']"),
+      ).toBeInTheDocument(),
+    );
+
+    // Click Refresh
+    const refreshBtn = document.getElementById("experiment-refresh-btn");
+    await act(async () => {
+      fireEvent.click(refreshBtn);
+      resolveRefresh(PAGE_1);
+    });
+
+    // Scroll again – pagination must have reset so page 2 is fetched once more
+    await act(async () => {
+      scrollNearBottom(tableContainer);
+    });
+    await waitFor(() =>
+      expect(getProjectsPage).toHaveBeenCalledTimes(2),
+    );
+    expect(getProjectsPage).toHaveBeenNthCalledWith(2, user, 2);
   });
 
-  describe("Promise Deduplication (_lastPromise)", () => {
-    it("does not re-resolve the same projectList Promise", async () => {
-      const testProjectList = Promise.resolve([
-        { id: "1", name: "Project A", created_at: "2024-01-01T00:00:00Z" },
-      ]);
+  it("closing and reopening the modal shows only the page-1 list (no stale rows)", async () => {
+    getProjectsPage.mockResolvedValue(PAGE_2);
 
-      const { rerender } = render(
-        <Dropdown {...mockProps} projectList={testProjectList} />,
-      );
+    const user = makeUser(2);
+    const { container } = render(
+      <Dropdown
+        projectList={user.projectList}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
 
-      // Wait for initial resolution
-      await waitFor(() => {
-        const select = document.querySelector("select");
-        expect(select).toBeInTheDocument();
-      });
+    await waitFor(() =>
+      expect(container.querySelector("button")).not.toBeDisabled(),
+    );
 
-      // Rerender with the exact same Promise reference
-      rerender(<Dropdown {...mockProps} projectList={testProjectList} />);
-
-      // The dropdown should still be visible (not go into loading state)
-      // This indicates _lastPromise guard prevented re-resolution
-      const select = document.querySelector("select");
-      expect(select).toBeInTheDocument();
+    // First open + scroll to load page 2
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
     });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
 
-    it("resolves new Promise when reference changes", async () => {
-      const firstProjectList = Promise.resolve([
-        { id: "1", name: "Project A", created_at: "2024-01-01T00:00:00Z" },
-      ]);
-
-      const { container, rerender } = render(
-        <Dropdown {...mockProps} projectList={firstProjectList} />,
-      );
-
-      await waitFor(() => {
-        const options = container.querySelectorAll("option");
-        expect(options.length).toBeGreaterThan(0);
-      });
-
-      // Rerender with a new Promise reference
-      const secondProjectList = Promise.resolve([
-        { id: "2", name: "Project B", created_at: "2024-01-02T00:00:00Z" },
-      ]);
-
-      rerender(<Dropdown {...mockProps} projectList={secondProjectList} />);
-
-      // Should resolve the new Promise
-      await waitFor(() => {
-        const options = container.querySelectorAll("option");
-        expect(options.length).toBeGreaterThan(0);
-      });
+    const tableContainer = document.querySelector(
+      ".experiment-table-container",
+    );
+    await act(async () => {
+      scrollNearBottom(tableContainer);
     });
+    await waitFor(() =>
+      expect(
+        document.querySelector("[data-project-id='10']"),
+      ).toBeInTheDocument(),
+    );
+
+    // Simulate close: remove the modal DOM that our Swal mock inserted
+    document
+      .querySelector(".experiment-modal-container")
+      ?.parentElement?.remove();
+
+    // Reopen
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(2));
+
+    // Only page-1 rows must be present; page-2 row must not exist
+    expect(document.querySelector("[data-project-id='10']")).not.toBeInTheDocument();
+    expect(document.querySelector("[data-project-id='1']")).toBeInTheDocument();
+    expect(document.querySelector("[data-project-id='2']")).toBeInTheDocument();
   });
 
-  describe("Selection Changes", () => {
-    it("calls setSelectedProject(null) when __NEW_EXPERIMENT__ is selected", async () => {
-      const { container } = render(<Dropdown {...mockProps} />);
+  it("triggers getProjectsPage(user, 2) and appends new rows when scrolled near bottom", async () => {
+    getProjectsPage.mockResolvedValue(PAGE_2);
 
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-      });
+    const user = makeUser(2);
+    const { container } = render(
+      <Dropdown
+        projectList={user.projectList}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
 
-      const select = container.querySelector("select");
-      fireEvent.change(select, { target: { value: "__NEW_EXPERIMENT__" } });
+    // Wait for page-1 list to resolve (button becomes enabled)
+    await waitFor(() =>
+      expect(container.querySelector("button")).not.toBeDisabled(),
+    );
 
-      expect(mockProps.setSelectedProject).toHaveBeenCalledWith(null);
+    // Open the modal
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
     });
 
-    it("calls setSelectedProject('REFRESH') when __FRESH_NEW_EXPERIMENT__ is selected", async () => {
-      const { container } = render(
-        <Dropdown {...mockProps} newExperimentProjectName="New Experiment" />,
-      );
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
 
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-      });
-
-      const select = container.querySelector("select");
-      fireEvent.change(select, {
-        target: { value: "__FRESH_NEW_EXPERIMENT__" },
-      });
-
-      expect(mockProps.setSelectedProject).toHaveBeenCalledWith("REFRESH");
+    // Scroll near the bottom of the table container
+    const tableContainer = document.querySelector(
+      ".experiment-table-container",
+    );
+    await act(async () => {
+      scrollNearBottom(tableContainer);
     });
 
-    it("calls setSelectedProject with project when a project is selected", async () => {
-      const { container } = render(<Dropdown {...mockProps} />);
+    // getProjectsPage must have been called with page 2
+    await waitFor(() =>
+      expect(getProjectsPage).toHaveBeenCalledWith(user, 2),
+    );
 
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-      });
-
-      const select = container.querySelector("select");
-
-      // Select Project A (id: "1")
-      fireEvent.change(select, { target: { value: "1" } });
-
-      await waitFor(() => {
-        expect(mockProps.setSelectedProject).toHaveBeenCalledWith(
-          expect.objectContaining({ id: "1", name: "Project A" }),
-        );
-      });
-    });
-
-    it("finds correct project by ID from resolvedProjectList", async () => {
-      const { container } = render(<Dropdown {...mockProps} />);
-
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-      });
-
-      const select = container.querySelector("select");
-
-      // Select Project B (id: "2")
-      fireEvent.change(select, { target: { value: "2" } });
-
-      await waitFor(() => {
-        expect(mockProps.setSelectedProject).toHaveBeenCalledWith(
-          expect.objectContaining({ id: "2", name: "Project B" }),
-        );
-      });
-    });
-  });
-
-  describe("State Updates", () => {
-    it("updates resolvedProjectList when refresh returns new data", async () => {
-      const { container } = render(<Dropdown {...mockProps} />);
-
-      await waitFor(() => {
-        const options = container.querySelectorAll("option");
-        expect(options.length).toBeGreaterThan(1);
-      });
-    });
-
-    it("falls back to existing resolvedProjectList when refresh returns empty", async () => {
-      // First render with a populated list
-      const { container, rerender } = render(<Dropdown {...mockProps} />);
-
-      await waitFor(() => {
-        const options = container.querySelectorAll("option");
-        expect(options.length).toBe(3); // placeholder + 2 projects
-      });
-
-      // Create a user that returns empty list on refresh
-      const emptyListUser = {
-        initProjectList: jest.fn().mockResolvedValue(true),
-        projectList: Promise.resolve([]),
-      };
-
-      // Rerender with user that has empty projectList
-      rerender(
-        <Dropdown
-          {...mockProps}
-          user={emptyListUser}
-          projectList={emptyListUser.projectList}
-        />,
-      );
-
-      // Should still show select (not loading state) because we fall back to existing list
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe("Error Handling", () => {
-    it("handles projectList promise rejection gracefully", async () => {
-      const rejectingProjectList = Promise.reject(new Error("Network error"));
-
-      const { container } = render(
-        <Dropdown {...mockProps} projectList={rejectingProjectList} />,
-      );
-
-      // Should recover and show select with empty list
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-      });
-    });
-
-    it("handles refreshProjectList errors gracefully", async () => {
-      const errorUser = {
-        initProjectList: jest
-          .fn()
-          .mockRejectedValue(new Error("Refresh failed")),
-        projectList: Promise.resolve([
-          { id: "1", name: "Project A", created_at: "2024-01-01T00:00:00Z" },
-        ]),
-      };
-
-      // Spy on console.error to verify only the expected error is logged
-      const originalError = console.error;
-      const consoleErrorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation((...args) => {
-          const message =
-            typeof args[0] === "string" ? args[0] : args[0]?.toString();
-          if (message?.includes("Error refreshing project list:")) {
-            return; // Suppress expected error
-          }
-          // Let any unexpected errors through
-          originalError.call(console, ...args);
-        });
-
-      const { container } = render(
-        <Dropdown
-          {...mockProps}
-          user={errorUser}
-          projectList={errorUser.projectList}
-        />,
-      );
-
-      await waitFor(() => {
-        const select = container.querySelector("select");
-        expect(select).toBeInTheDocument();
-      });
-
-      const select = container.querySelector("select");
-      fireEvent.focus(select);
-
-      // Should not throw, component should handle error internally
-      await waitFor(() => {
-        expect(errorUser.initProjectList).toHaveBeenCalled();
-      });
-
-      // Verify the expected error was logged
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Error refreshing project list:",
-        expect.any(Error),
-      );
-
-      consoleErrorSpy.mockRestore();
-    });
+    // The new row must appear in the DOM
+    await waitFor(() =>
+      expect(
+        document.querySelector("[data-project-id='10']"),
+      ).toBeInTheDocument(),
+    );
   });
 });
