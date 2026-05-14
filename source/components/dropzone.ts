@@ -54,7 +54,6 @@ export const handleDrop = async (
   for (const file of files) {
     if (!isValidateFileName(file)) {
       await Swal.fire({
-        icon: "error",
         title: "Invalid file name",
         html: `File names cannot contain "-_" or "_-" patterns.<br>The requested file name is <br>${file.name}.`,
         confirmButtonColor: "#666",
@@ -75,7 +74,6 @@ export const handleDrop = async (
     if (!isAcceptableExtension(ext)) {
       // give an error warning for the file if it's not supported
       await Swal.fire({
-        icon: "error",
         title: `${file.name} was discarded.`,
         text: `Sorry, we cannot accept files with extension '.${ext}'.`,
         confirmButtonColor: "#666",

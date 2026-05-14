@@ -204,7 +204,6 @@ export default class Running extends Component {
               this.setState({ useLowercaseProjectName: true });
             if (!silentMode) {
               Swal.fire({
-                icon: "error",
                 title: `Experiment unavailable`,
                 text: `Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.`,
                 confirmButtonColor: "#666",
@@ -721,7 +720,6 @@ export default class Running extends Component {
                     window.open(" https://easyeyes.shinyapps.io/easyeyes_app/");
                     // if (dataFolderLength == 0) {
                     //   Swal.fire({
-                    //     icon: "error",
                     //     title: `No data found for ${newRepo.name}.`,
                     //     text: `We can't find any data for the experiment. This might due to an error, or the Pavlovia server is down. Please refresh the page or try again later.`,
                     //     confirmButtonColor: "#666",

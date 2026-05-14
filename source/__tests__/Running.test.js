@@ -129,7 +129,6 @@ describe("Running Component - checkPavloviaReady", () => {
 
       // Verify Swal.fire was called with the correct error message
       expect(Swal.fire).toHaveBeenCalledWith({
-        icon: "error",
         title: "Experiment unavailable",
         text: "Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.",
         confirmButtonColor: "#666",
@@ -326,7 +325,6 @@ describe("Running Component - checkPavloviaReady", () => {
       // The first attempt (tries=0) has silentMode=true, so no dialog shown
       expect(Swal.fire).toHaveBeenCalledTimes(1);
       expect(Swal.fire).toHaveBeenCalledWith({
-        icon: "error",
         title: "Experiment unavailable",
         text: "Pavlovia makes each experiment unavailable unless you either have an institutional license or you have assigned tokens to that experiment, and the experiment is in the RUNNING state. If this is due to temporary internet outage, you might succeed if you try again.",
         confirmButtonColor: "#666",

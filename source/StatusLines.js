@@ -73,7 +73,6 @@ export default class StatusLines extends Component {
         Swal.fire({
           title: "Error",
           text: "Failed to sign out. Please try again.",
-          icon: "error",
         });
       }
     }

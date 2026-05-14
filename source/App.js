@@ -430,7 +430,6 @@ export default class App extends Component {
         if (failedTypes.length > 0) {
           if (attempt >= 3) {
             Swal.fire({
-              icon: "error",
               title: "Pavlovia server troubles",
               text: "Failed to fetch some resources. Try refreshing the page.",
               confirmButtonColor: "#666",
