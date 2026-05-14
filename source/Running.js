@@ -17,9 +17,9 @@ import {
   createProlificStudyIdFile,
   getProlificStudyId,
   downloadCommonResources,
-  getRetryDelayMs,
   getAllProjects,
 } from "../threshold/preprocess/gitlabUtils";
+import { getRetryDelayMs } from "../threshold/preprocess/retry";
 import { captureError } from "./sentry";
 
 import "./css/Running.scss";

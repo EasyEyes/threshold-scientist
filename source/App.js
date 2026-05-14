@@ -19,8 +19,8 @@ import {
   getProlificStudyId,
   User,
   getCommonResourcesNames,
-  getRetryDelayMs,
 } from "../threshold/preprocess/gitlabUtils";
+import { getRetryDelayMs } from "../threshold/preprocess/retry";
 import { resourcesFileTypes } from "../threshold/preprocess/constants";
 import { auth, db } from "./components/firebase";
 import {
