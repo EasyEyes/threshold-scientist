@@ -14,8 +14,8 @@ import {
   copyUser,
   setRepoName,
   manuallySetSwalTitle,
-  getProjectByNameInProjectList,
 } from "../threshold/preprocess/gitlabUtils";
+import { searchProjectByName } from "../threshold/preprocess/gitlabSearch";
 import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 
 import "./css/Table.scss";
@@ -119,9 +119,8 @@ export default class Table extends Component {
     // Fetch corpus text file content for compile-time length validation
     let textContents = {};
     try {
-      const projectList = await this.props.user.projectList;
-      const resourcesRepo = getProjectByNameInProjectList(
-        projectList,
+      const resourcesRepo = await searchProjectByName(
+        this.props.user,
         resourcesRepoName,
       );
       if (resourcesRepo && resolvedResources.texts?.length > 0) {
