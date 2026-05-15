@@ -136,6 +136,7 @@ const openModal = (
       ) as HTMLButtonElement;
 
       let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+      let isSearchActive = false;
 
       searchInput.addEventListener("input", (e) => {
         const term = (e.target as HTMLInputElement).value;
@@ -158,10 +159,12 @@ const openModal = (
         if (debounceTimer !== null) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(async () => {
           if (!term) {
+            isSearchActive = false;
             tableBody.innerHTML = buildTableRows(list);
             attachRowHandlers(tableBody, list, onSelect);
             return;
           }
+          isSearchActive = true;
 
           document.getElementById("experiment-spinner-row")?.remove();
           tableBody.insertAdjacentHTML(
@@ -195,7 +198,7 @@ const openModal = (
         ) as HTMLElement;
 
         tableContainer?.addEventListener("scroll", async () => {
-          if (isLoadingMore || !paginationHasMore) return;
+          if (isLoadingMore || !paginationHasMore || isSearchActive) return;
           const distFromBottom =
             tableContainer.scrollHeight -
             tableContainer.scrollTop -

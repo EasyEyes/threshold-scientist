@@ -570,6 +570,94 @@ describe("Dropdown – debounced API search", () => {
     jest.useRealTimers();
   });
 
+  it("scroll near bottom while search term is active does not call getProjectsPage", async () => {
+    jest.useFakeTimers();
+    searchProjectsByName.mockResolvedValue([]);
+
+    const user = makeUser(2);
+    const { container } = render(
+      <Dropdown
+        projectList={PAGE_1}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const tableContainer = document.querySelector(
+      ".experiment-table-container",
+    );
+    const searchInput = document.getElementById("experiment-search");
+
+    // Fire debounce with non-empty term — sets isSearchActive = true
+    fireEvent.input(searchInput, { target: { value: "Exp" } });
+    await act(async () => {
+      jest.advanceTimersByTime(300);
+    });
+
+    // Scroll near bottom while search is active
+    await act(async () => {
+      scrollNearBottom(tableContainer);
+    });
+
+    expect(getProjectsPage).not.toHaveBeenCalled();
+
+    jest.useRealTimers();
+  });
+
+  it("calls getProjectsPage after the search field is cleared", async () => {
+    jest.useFakeTimers();
+    searchProjectsByName.mockResolvedValue([]);
+    getProjectsPage.mockResolvedValue(PAGE_2);
+
+    const user = makeUser(2);
+    const { container } = render(
+      <Dropdown
+        projectList={PAGE_1}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const tableContainer = document.querySelector(
+      ".experiment-table-container",
+    );
+    const searchInput = document.getElementById("experiment-search");
+
+    // Activate search (isSearchActive = true)
+    fireEvent.input(searchInput, { target: { value: "Exp" } });
+    await act(async () => {
+      jest.advanceTimersByTime(300);
+    });
+    await waitFor(() => expect(searchProjectsByName).toHaveBeenCalledTimes(1));
+
+    // Clear the field (isSearchActive = false, cache restored)
+    fireEvent.input(searchInput, { target: { value: "" } });
+    await act(async () => {
+      jest.advanceTimersByTime(300);
+    });
+
+    // Scroll near bottom — page load should proceed
+    await act(async () => {
+      scrollNearBottom(tableContainer);
+    });
+
+    await waitFor(() => expect(getProjectsPage).toHaveBeenCalledWith(user, 2));
+
+    jest.useRealTimers();
+  });
+
   it("clicking a row in search results calls setSelectedProject with the correct project", async () => {
     jest.useFakeTimers();
     const searchResult = {
