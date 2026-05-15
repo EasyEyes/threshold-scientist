@@ -304,6 +304,73 @@ describe("Dropdown – infinite scroll", () => {
     expect(getProjectsPage).toHaveBeenNthCalledWith(2, user, 2);
   });
 
+  it("Refresh button clears search input and resets isSearchActive so the next scroll loads page 2", async () => {
+    jest.useFakeTimers();
+    searchProjectsByName.mockResolvedValue([]);
+    getProjectsPage.mockResolvedValue(PAGE_2);
+
+    let resolveRefresh;
+    const user = makeUser(2);
+    user.initProjectList = jest.fn().mockImplementation(() => {
+      user.projectList = new Promise((res) => {
+        resolveRefresh = res;
+      });
+      return Promise.resolve(true);
+    });
+
+    const { container } = render(
+      <Dropdown
+        projectList={Promise.resolve(PAGE_1)}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(container.querySelector("button")).not.toBeDisabled(),
+    );
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const tableContainer = document.querySelector(
+      ".experiment-table-container",
+    );
+    const searchInput = document.getElementById("experiment-search");
+
+    // Activate search (sets isSearchActive = true and populates searchInput)
+    fireEvent.input(searchInput, { target: { value: "Exp" } });
+    await act(async () => {
+      jest.advanceTimersByTime(300);
+    });
+    await waitFor(() =>
+      expect(searchProjectsByName).toHaveBeenCalledTimes(1),
+    );
+
+    // Click Refresh
+    const refreshBtn = document.getElementById("experiment-refresh-btn");
+    await act(async () => {
+      fireEvent.click(refreshBtn);
+      resolveRefresh(PAGE_1);
+    });
+    await waitFor(() => expect(refreshBtn.disabled).toBe(false));
+
+    // Search input must be cleared
+    expect(searchInput.value).toBe("");
+
+    // Scroll near bottom — isSearchActive must be false, so page 2 is fetched
+    await act(async () => {
+      scrollNearBottom(tableContainer);
+    });
+    await waitFor(() =>
+      expect(getProjectsPage).toHaveBeenCalledWith(user, 2),
+    );
+
+    jest.useRealTimers();
+  });
+
   it("closing and reopening the modal shows only the page-1 list (no stale rows)", async () => {
     getProjectsPage.mockResolvedValue(PAGE_2);
 

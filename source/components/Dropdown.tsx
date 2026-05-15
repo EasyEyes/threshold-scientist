@@ -240,6 +240,9 @@ const openModal = (
           isLoadingMore = false;
         }
 
+        searchInput.value = "";
+        isSearchActive = false;
+
         const term = searchInput.value.toLowerCase();
         if (term) {
           tableBody.querySelectorAll(".experiment-row").forEach((row) => {
