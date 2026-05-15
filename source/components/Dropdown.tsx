@@ -112,6 +112,7 @@ const openModal = (
   onSelect: (proj: Project) => void,
   onRefresh: () => Promise<Project[]>,
   pagination?: PaginationOptions,
+  user?: User,
 ) => {
   void Swal.fire({
     title: "Select an Experiment",
@@ -317,6 +318,7 @@ export const Dropdown = ({
             },
           }
         : undefined,
+      user,
     );
   }, [resolvedList, fetchFreshList, selected, setSelectedProject, user]);
 

@@ -78,6 +78,60 @@ beforeEach(() => {
   mockSwalOpen();
 });
 
+describe("Dropdown – search filtering", () => {
+  it("hides rows that do not match the search term (client-side filter, no user)", async () => {
+    const { container } = render(
+      <Dropdown
+        projectList={PAGE_1}
+        selected={null}
+        setSelectedProject={jest.fn()}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const searchInput = document.getElementById("experiment-search");
+    await act(async () => {
+      fireEvent.input(searchInput, { target: { value: "Experiment A" } });
+    });
+
+    const rowA = document.querySelector("[data-project-id='1']");
+    const rowB = document.querySelector("[data-project-id='2']");
+    expect(rowA.style.display).not.toBe("none");
+    expect(rowB.style.display).toBe("none");
+  });
+
+  it("falls back to client-side filter even when user is provided", async () => {
+    const user = makeUser(1);
+    const { container } = render(
+      <Dropdown
+        projectList={PAGE_1}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const searchInput = document.getElementById("experiment-search");
+    await act(async () => {
+      fireEvent.input(searchInput, { target: { value: "Experiment B" } });
+    });
+
+    const rowA = document.querySelector("[data-project-id='1']");
+    const rowB = document.querySelector("[data-project-id='2']");
+    expect(rowA.style.display).toBe("none");
+    expect(rowB.style.display).not.toBe("none");
+  });
+});
+
 describe("Dropdown – infinite scroll", () => {
   it("shows a spinner row while the next page is loading, then removes it", async () => {
     let resolveLoad;
