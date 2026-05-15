@@ -4,6 +4,7 @@ import {
   User,
   getProjectsPage,
 } from "../../threshold/preprocess/gitlabUtils";
+import { searchProjectsByName } from "../../threshold/preprocess/gitlabSearch";
 import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidToken";
 import { redirectToOauth2 } from "../../threshold/preprocess/user";
 
@@ -134,18 +135,53 @@ const openModal = (
         "experiment-refresh-btn",
       ) as HTMLButtonElement;
 
+      let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
       searchInput.addEventListener("input", (e) => {
-        const term = (e.target as HTMLInputElement).value.toLowerCase();
-        tableBody.querySelectorAll(".experiment-row").forEach((row) => {
-          const name = row
-            .querySelector(".experiment-name-cell")!
-            .textContent!.toLowerCase();
-          const date = row
-            .querySelector(".experiment-date-cell")!
-            .textContent!.toLowerCase();
-          (row as HTMLElement).style.display =
-            name.includes(term) || date.includes(term) ? "" : "none";
-        });
+        const term = (e.target as HTMLInputElement).value;
+
+        if (!user) {
+          const lower = term.toLowerCase();
+          tableBody.querySelectorAll(".experiment-row").forEach((row) => {
+            const name = row
+              .querySelector(".experiment-name-cell")!
+              .textContent!.toLowerCase();
+            const date = row
+              .querySelector(".experiment-date-cell")!
+              .textContent!.toLowerCase();
+            (row as HTMLElement).style.display =
+              name.includes(lower) || date.includes(lower) ? "" : "none";
+          });
+          return;
+        }
+
+        if (debounceTimer !== null) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+          if (!term) {
+            tableBody.innerHTML = buildTableRows(list);
+            attachRowHandlers(tableBody, list, onSelect);
+            return;
+          }
+
+          document.getElementById("experiment-spinner-row")?.remove();
+          tableBody.insertAdjacentHTML(
+            "beforeend",
+            `<tr id="experiment-spinner-row"><td colspan="2" class="experiment-spinner-cell">
+              <i class="bi bi-arrow-clockwise icon-spin"></i>
+            </td></tr>`,
+          );
+
+          try {
+            const results = await searchProjectsByName(user, term);
+            document.getElementById("experiment-spinner-row")?.remove();
+            const experiments = results.filter(isExperiment);
+            tableBody.innerHTML = buildTableRows(experiments);
+            attachRowHandlers(tableBody, experiments, onSelect);
+          } catch {
+            document.getElementById("experiment-spinner-row")?.remove();
+            tableBody.innerHTML = buildTableRows([]);
+          }
+        }, 300);
       });
 
       attachRowHandlers(tableBody, list, onSelect);

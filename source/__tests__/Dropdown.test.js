@@ -18,11 +18,16 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getProjectsPage: jest.fn(),
 }));
 
+jest.mock("../../threshold/preprocess/gitlabSearch", () => ({
+  searchProjectsByName: jest.fn(),
+}));
+
 import React from "react";
 import { render, waitFor, fireEvent, act } from "@testing-library/react";
 import { Dropdown } from "../components/Dropdown";
 import Swal from "sweetalert2";
 import { getProjectsPage } from "../../threshold/preprocess/gitlabUtils";
+import { searchProjectsByName } from "../../threshold/preprocess/gitlabSearch";
 
 // jsdom does not ship BroadcastChannel
 global.BroadcastChannel = jest.fn(() => ({ onmessage: null, close: jest.fn() }));
@@ -78,6 +83,10 @@ beforeEach(() => {
   mockSwalOpen();
 });
 
+afterEach(() => {
+  jest.useRealTimers();
+});
+
 describe("Dropdown – search filtering", () => {
   it("hides rows that do not match the search term (client-side filter, no user)", async () => {
     const { container } = render(
@@ -104,7 +113,12 @@ describe("Dropdown – search filtering", () => {
     expect(rowB.style.display).toBe("none");
   });
 
-  it("falls back to client-side filter even when user is provided", async () => {
+  it("calls searchProjectsByName (not client-side filter) when user is provided", async () => {
+    jest.useFakeTimers();
+    searchProjectsByName.mockResolvedValue([
+      { id: 99, name: "API Result", created_at: "2024-01-01T00:00:00Z" },
+    ]);
+
     const user = makeUser(1);
     const { container } = render(
       <Dropdown
@@ -121,14 +135,16 @@ describe("Dropdown – search filtering", () => {
     await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
 
     const searchInput = document.getElementById("experiment-search");
+    fireEvent.input(searchInput, { target: { value: "API" } });
+
     await act(async () => {
-      fireEvent.input(searchInput, { target: { value: "Experiment B" } });
+      jest.advanceTimersByTime(300);
     });
 
-    const rowA = document.querySelector("[data-project-id='1']");
-    const rowB = document.querySelector("[data-project-id='2']");
-    expect(rowA.style.display).toBe("none");
-    expect(rowB.style.display).not.toBe("none");
+    await waitFor(() =>
+      expect(searchProjectsByName).toHaveBeenCalledWith(user, "API"),
+    );
+    jest.useRealTimers();
   });
 });
 
@@ -384,5 +400,218 @@ describe("Dropdown – infinite scroll", () => {
         document.querySelector("[data-project-id='10']"),
       ).toBeInTheDocument(),
     );
+  });
+});
+
+describe("Dropdown – debounced API search", () => {
+  it("fires searchProjectsByName after the 300ms debounce delay", async () => {
+    jest.useFakeTimers();
+    searchProjectsByName.mockResolvedValue([]);
+
+    const user = makeUser(1);
+    const { container } = render(
+      <Dropdown
+        projectList={PAGE_1}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const searchInput = document.getElementById("experiment-search");
+    fireEvent.input(searchInput, { target: { value: "Exp" } });
+
+    expect(searchProjectsByName).not.toHaveBeenCalled();
+
+    await act(async () => {
+      jest.advanceTimersByTime(299);
+    });
+    expect(searchProjectsByName).not.toHaveBeenCalled();
+
+    await act(async () => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(searchProjectsByName).toHaveBeenCalledWith(user, "Exp");
+
+    jest.useRealTimers();
+  });
+
+  it("shows a spinner row while the API call is in flight and removes it after", async () => {
+    jest.useFakeTimers();
+    let resolveSearch;
+    const pending = new Promise((res) => {
+      resolveSearch = res;
+    });
+    searchProjectsByName.mockReturnValueOnce(pending);
+
+    const user = makeUser(1);
+    const { container } = render(
+      <Dropdown
+        projectList={PAGE_1}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const searchInput = document.getElementById("experiment-search");
+    fireEvent.input(searchInput, { target: { value: "test" } });
+
+    await act(async () => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(
+      document.getElementById("experiment-spinner-row"),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      resolveSearch([]);
+    });
+
+    expect(
+      document.getElementById("experiment-spinner-row"),
+    ).not.toBeInTheDocument();
+
+    jest.useRealTimers();
+  });
+
+  it("renders search results and excludes EasyEyesResources", async () => {
+    jest.useFakeTimers();
+    searchProjectsByName.mockResolvedValue([
+      { id: 5, name: "My Experiment", created_at: "2024-01-01T00:00:00Z" },
+      { id: 6, name: "EasyEyesResources", created_at: "2024-01-01T00:00:00Z" },
+    ]);
+
+    const user = makeUser(1);
+    const { container } = render(
+      <Dropdown
+        projectList={PAGE_1}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const searchInput = document.getElementById("experiment-search");
+    fireEvent.input(searchInput, { target: { value: "My" } });
+
+    await act(async () => {
+      jest.advanceTimersByTime(300);
+    });
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-project-id='5']")).toBeInTheDocument(),
+    );
+    expect(document.querySelector("[data-project-id='6']")).not.toBeInTheDocument();
+
+    jest.useRealTimers();
+  });
+
+  it("restores the cached list and does not call searchProjectsByName when input is cleared", async () => {
+    jest.useFakeTimers();
+    searchProjectsByName.mockResolvedValue([
+      { id: 99, name: "API Result", created_at: "2024-01-01T00:00:00Z" },
+    ]);
+
+    const user = makeUser(1);
+    const { container } = render(
+      <Dropdown
+        projectList={PAGE_1}
+        selected={null}
+        setSelectedProject={jest.fn()}
+        user={user}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const searchInput = document.getElementById("experiment-search");
+
+    // Type a term to trigger the API
+    fireEvent.input(searchInput, { target: { value: "API" } });
+    await act(async () => {
+      jest.advanceTimersByTime(300);
+    });
+    await waitFor(() => expect(searchProjectsByName).toHaveBeenCalledTimes(1));
+
+    // Now clear the field
+    searchProjectsByName.mockClear();
+    fireEvent.input(searchInput, { target: { value: "" } });
+    await act(async () => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(searchProjectsByName).not.toHaveBeenCalled();
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-project-id='1']")).toBeInTheDocument(),
+    );
+    expect(document.querySelector("[data-project-id='2']")).toBeInTheDocument();
+
+    jest.useRealTimers();
+  });
+
+  it("clicking a row in search results calls setSelectedProject with the correct project", async () => {
+    jest.useFakeTimers();
+    const searchResult = {
+      id: 77,
+      name: "Clicked Experiment",
+      created_at: "2024-03-01T00:00:00Z",
+    };
+    searchProjectsByName.mockResolvedValue([searchResult]);
+
+    const setSelectedProject = jest.fn();
+    const user = makeUser(1);
+    const { container } = render(
+      <Dropdown
+        projectList={PAGE_1}
+        selected={null}
+        setSelectedProject={setSelectedProject}
+        user={user}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(container.querySelector("button"));
+    });
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
+
+    const searchInput = document.getElementById("experiment-search");
+    fireEvent.input(searchInput, { target: { value: "Clicked" } });
+
+    await act(async () => {
+      jest.advanceTimersByTime(300);
+    });
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-project-id='77']")).toBeInTheDocument(),
+    );
+
+    await act(async () => {
+      fireEvent.click(document.querySelector("[data-project-id='77']"));
+    });
+
+    expect(setSelectedProject).toHaveBeenCalledWith(searchResult);
+
+    jest.useRealTimers();
   });
 });
