@@ -12,11 +12,81 @@ jest.mock("../../threshold/preprocess/fileUtils", () => ({
   getAssetFileContent: jest.fn().mockResolvedValue("test content"),
 }));
 
+jest.mock("../../threshold/preprocess/auth/config", () => ({
+  getAuthConfig: () => ({ clientId: "test", redirectUri: "http://test" }),
+}));
+
+jest.mock("../../threshold/preprocess/auth/gitlabOAuthClient", () => ({
+  GitLabOAuthClient: {
+    loadFromStorage: jest.fn(),
+  },
+}));
+
 jest.mock("../../threshold/preprocess/gitlabUtils", () => {
   const actual = jest.requireActual("../../threshold/preprocess/gitlabUtils");
   return {
     ...actual,
   };
+});
+
+describe("getAllProjects — page-1 only", () => {
+  it("makes exactly one API request", async () => {
+    const { getAllProjects } = require("../../threshold/preprocess/gitlabUtils");
+    const {
+      GitLabOAuthClient,
+    } = require("../../threshold/preprocess/auth/gitlabOAuthClient");
+
+    const page1Projects = [{ id: 8 }, { id: 5 }];
+    const mockResponse = {
+      ok: true,
+      json: jest.fn().mockResolvedValue(page1Projects),
+      headers: { get: jest.fn((h) => (h === "x-total-pages" ? "3" : null)) },
+    };
+    const mockClient = {
+      apiRequest: jest.fn().mockResolvedValue(mockResponse),
+      getAccessToken: jest.fn().mockReturnValue("test-token"),
+    };
+    GitLabOAuthClient.loadFromStorage.mockReturnValue(mockClient);
+
+    const mockUser = { id: "123", accessToken: "test-token" };
+    await getAllProjects(mockUser);
+
+    expect(mockClient.apiRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it("sets user.totalProjectPages from x-total-pages header", async () => {
+    const { getAllProjects } = require("../../threshold/preprocess/gitlabUtils");
+    const {
+      GitLabOAuthClient,
+    } = require("../../threshold/preprocess/auth/gitlabOAuthClient");
+
+    const mockResponse = {
+      ok: true,
+      json: jest.fn().mockResolvedValue([{ id: 1 }]),
+      headers: { get: jest.fn((h) => (h === "x-total-pages" ? "7" : null)) },
+    };
+    const mockClient = {
+      apiRequest: jest.fn().mockResolvedValue(mockResponse),
+      getAccessToken: jest.fn().mockReturnValue("test-token"),
+    };
+    GitLabOAuthClient.loadFromStorage.mockReturnValue(mockClient);
+
+    const mockUser = { id: "123", accessToken: "test-token" };
+    await getAllProjects(mockUser);
+
+    expect(mockUser.totalProjectPages).toBe(7);
+  });
+
+  it("copyUser copies totalProjectPages", () => {
+    const { User, copyUser } = require("../../threshold/preprocess/gitlabUtils");
+
+    const user = new User("test-token");
+    user.totalProjectPages = 5;
+
+    const copy = copyUser(user);
+
+    expect(copy.totalProjectPages).toBe(5);
+  });
 });
 
 describe("gitlabUtils - Upload Progress", () => {
