@@ -16,7 +16,18 @@
       content="measure, calibration, psychology, psychophysics"
     />
 
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-B8LSH945MT"
+    ></script>
     <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-B8LSH945MT");
       function onCompatibilityClick() {
         Swal.fire({
           title: "Compatibility",
@@ -374,18 +385,5 @@
     <!-- !----- This should be the very only script tag in the index.html ------ -->
     <!-- ----- (Except JQuery and Bootstrap that are used by other pages) ------ -->
     <script src="/compiler/dist/main.js"></script>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script
-      defer
-      src="https://www.googletagmanager.com/gtag/js?id=G-B8LSH945MT"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-      gtag("config", "G-B8LSH945MT");
-    </script>
   </body>
 </html>
