@@ -367,8 +367,7 @@ export default class App extends Component {
       refreshedUser.id = currentUser.id;
       refreshedUser.avatar_url = currentUser.avatar_url;
 
-      refreshedUser.projectList = currentUser.projectList;
-      refreshedUser.initProjectList(true);
+      refreshedUser.initProjectList();
 
       // Reset experiment settings
       refreshedUser.currentExperiment = {
