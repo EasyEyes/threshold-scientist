@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Swal from "sweetalert2";
-import { User } from "../../threshold/preprocess/gitlabUtils";
+import {
+  User,
+  getProjectsPage,
+} from "../../threshold/preprocess/gitlabUtils";
+import { searchProjectsByName } from "../../threshold/preprocess/gitlabSearch";
 import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidToken";
 import { redirectToOauth2 } from "../../threshold/preprocess/user";
 
@@ -98,10 +102,18 @@ const buildModalHTML = (projects: Project[]): string => {
     </div>`;
 };
 
+type PaginationOptions = {
+  loadMore: () => Promise<{ projects: Project[]; hasMore: boolean }>;
+  hasMore: boolean;
+  onReset: () => void;
+};
+
 const openModal = (
   list: Project[],
   onSelect: (proj: Project) => void,
   onRefresh: () => Promise<Project[]>,
+  pagination?: PaginationOptions,
+  user?: User,
 ) => {
   void Swal.fire({
     title: "Select an Experiment",
@@ -123,21 +135,95 @@ const openModal = (
         "experiment-refresh-btn",
       ) as HTMLButtonElement;
 
+      let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+      let isSearchActive = false;
+
       searchInput.addEventListener("input", (e) => {
-        const term = (e.target as HTMLInputElement).value.toLowerCase();
-        tableBody.querySelectorAll(".experiment-row").forEach((row) => {
-          const name = row
-            .querySelector(".experiment-name-cell")!
-            .textContent!.toLowerCase();
-          const date = row
-            .querySelector(".experiment-date-cell")!
-            .textContent!.toLowerCase();
-          (row as HTMLElement).style.display =
-            name.includes(term) || date.includes(term) ? "" : "none";
-        });
+        const term = (e.target as HTMLInputElement).value;
+
+        if (!user) {
+          const lower = term.toLowerCase();
+          tableBody.querySelectorAll(".experiment-row").forEach((row) => {
+            const name = row
+              .querySelector(".experiment-name-cell")!
+              .textContent!.toLowerCase();
+            const date = row
+              .querySelector(".experiment-date-cell")!
+              .textContent!.toLowerCase();
+            (row as HTMLElement).style.display =
+              name.includes(lower) || date.includes(lower) ? "" : "none";
+          });
+          return;
+        }
+
+        if (debounceTimer !== null) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+          if (!term) {
+            isSearchActive = false;
+            tableBody.innerHTML = buildTableRows(list);
+            attachRowHandlers(tableBody, list, onSelect);
+            return;
+          }
+          isSearchActive = true;
+
+          document.getElementById("experiment-spinner-row")?.remove();
+          tableBody.insertAdjacentHTML(
+            "beforeend",
+            `<tr id="experiment-spinner-row"><td colspan="2" class="experiment-spinner-cell">
+              <i class="bi bi-arrow-clockwise icon-spin"></i>
+            </td></tr>`,
+          );
+
+          try {
+            const results = await searchProjectsByName(user, term);
+            document.getElementById("experiment-spinner-row")?.remove();
+            const experiments = results.filter(isExperiment);
+            tableBody.innerHTML = buildTableRows(experiments);
+            attachRowHandlers(tableBody, experiments, onSelect);
+          } catch {
+            document.getElementById("experiment-spinner-row")?.remove();
+            tableBody.innerHTML = buildTableRows([]);
+          }
+        }, 300);
       });
 
       attachRowHandlers(tableBody, list, onSelect);
+
+      let paginationHasMore = pagination?.hasMore ?? false;
+      let isLoadingMore = false;
+
+      if (pagination) {
+        const tableContainer = document.querySelector(
+          ".experiment-table-container",
+        ) as HTMLElement;
+
+        tableContainer?.addEventListener("scroll", async () => {
+          if (isLoadingMore || !paginationHasMore || isSearchActive) return;
+          const distFromBottom =
+            tableContainer.scrollHeight -
+            tableContainer.scrollTop -
+            tableContainer.clientHeight;
+          if (distFromBottom < 200) {
+            isLoadingMore = true;
+            tableBody.insertAdjacentHTML(
+              "beforeend",
+              `<tr id="experiment-spinner-row"><td colspan="2" class="experiment-spinner-cell">
+                <i class="bi bi-arrow-clockwise icon-spin"></i>
+              </td></tr>`,
+            );
+            const { projects: newProjects, hasMore: nextHasMore } =
+              await pagination.loadMore();
+            document.getElementById("experiment-spinner-row")?.remove();
+            tableBody.insertAdjacentHTML(
+              "beforeend",
+              buildTableRows(newProjects),
+            );
+            attachRowHandlers(tableBody, newProjects, onSelect);
+            paginationHasMore = nextHasMore;
+            isLoadingMore = false;
+          }
+        });
+      }
 
       refreshBtn.addEventListener("click", async () => {
         refreshBtn.disabled = true;
@@ -147,6 +233,15 @@ const openModal = (
         const freshList = await onRefresh();
         tableBody.innerHTML = buildTableRows(freshList);
         attachRowHandlers(tableBody, freshList, onSelect);
+
+        if (pagination) {
+          pagination.onReset();
+          paginationHasMore = pagination.hasMore;
+          isLoadingMore = false;
+        }
+
+        searchInput.value = "";
+        isSearchActive = false;
 
         const term = searchInput.value.toLowerCase();
         if (term) {
@@ -240,14 +335,34 @@ export const Dropdown = ({
 
   const handleClick = useCallback(async () => {
     if (!(await ensureValidToken(redirectToOauth2))) return;
+    const experiments = resolvedList.filter(isExperiment);
+    const totalPages = user?.totalProjectPages ?? 1;
+    let nextPage = 2;
     openModal(
-      resolvedList.filter(isExperiment),
+      experiments,
       (proj) => {
         if (!(selected && selected.id === proj.id)) setSelectedProject(proj);
       },
       fetchFreshList,
+      totalPages > 1
+        ? {
+            loadMore: async () => {
+              const projects = await getProjectsPage(user!, nextPage);
+              nextPage++;
+              return {
+                projects,
+                hasMore: nextPage <= totalPages,
+              };
+            },
+            hasMore: true,
+            onReset: () => {
+              nextPage = 2;
+            },
+          }
+        : undefined,
+      user,
     );
-  }, [resolvedList, fetchFreshList, selected, setSelectedProject]);
+  }, [resolvedList, fetchFreshList, selected, setSelectedProject, user]);
 
   const wrapperClass = selected
     ? "history-dropdown-wrapper history-dropdown-wrapper-fit-content"
