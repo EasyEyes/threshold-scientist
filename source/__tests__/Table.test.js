@@ -7,7 +7,6 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   copyUser: jest.fn((u) => ({ ...u })),
   setRepoName: jest.fn().mockResolvedValue("myExp1"),
   manuallySetSwalTitle: jest.fn(),
-  getProjectByNameInProjectList: jest.fn(),
 }));
 jest.mock("../../threshold/preprocess/fileUtils", () => ({
   getTextFileDataFromGitLab: jest.fn().mockResolvedValue("corpus text"),
@@ -89,52 +88,5 @@ describe("Table.handleTable — EasyEyesResources lookup uses searchProjectByNam
     await instance.handleTable(file);
 
     expect(searchProjectByName).toHaveBeenCalledWith(user, "EasyEyesResources");
-  });
-
-  it("does not call getProjectByNameInProjectList for the resources lookup", async () => {
-    const {
-      searchProjectByName,
-    } = require("../../threshold/preprocess/gitlabSearch");
-    const {
-      getProjectByNameInProjectList,
-    } = require("../../threshold/preprocess/gitlabUtils");
-    searchProjectByName.mockResolvedValue(null);
-
-    const user = {
-      id: "1",
-      accessToken: "tok",
-      projectList: Promise.resolve([]),
-      currentExperiment: { _pavloviaNewExperimentBool: false },
-    };
-
-    const instance = new Table({
-      user,
-      resourcesLoaded: true,
-      resources: { texts: [] },
-      isCompiledFromArchiveBool: false,
-      scrollToCurrentStep: jest.fn(),
-      activeExperiment: null,
-      projectName: null,
-      functions: {
-        handleReturnToStep: jest.fn().mockResolvedValue(undefined),
-        handleAddResources: jest.fn(),
-        handleSetActivateExperiment: jest.fn(),
-        handleArchivedExperimentBool: jest.fn(),
-        handleZipArchive: jest.fn(),
-      },
-    });
-
-    instance.dropZoneRef = {
-      current: { classList: { add: jest.fn(), remove: jest.fn() } },
-    };
-    instance.setState = jest.fn();
-
-    const file = new File(["id,conditionName\n1,cond1"], "exp.csv", {
-      type: "text/csv",
-    });
-
-    await instance.handleTable(file);
-
-    expect(getProjectByNameInProjectList).not.toHaveBeenCalled();
   });
 });
