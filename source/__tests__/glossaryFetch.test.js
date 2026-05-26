@@ -1,4 +1,8 @@
-import { fetchGlossary, fetchGlossaryWithBackoff } from "../glossaryFetch";
+import {
+  fetchGlossary,
+  fetchGlossaryWithBackoff,
+  getGlossaryRawText,
+} from "../glossaryFetch";
 
 const MOCK_GLOSSARY = { targetKind: { type: "text" } };
 const MOCK_GLOSSARY_FULL = { targetKind: { type: "text", explanation: "full" } };
@@ -39,10 +43,29 @@ describe("fetchGlossary", () => {
     expect(window.SUPER_MATCHING_PARAMS).toEqual(MOCK_SUPER_MATCHING_PARAMS);
   });
 
+  it("returns the raw JS text on 200", async () => {
+    global.fetch.mockResolvedValueOnce(mockSuccess());
+
+    const result = await fetchGlossary();
+
+    expect(result).toBe(MOCK_JS_BODY);
+  });
+
   it("throws on non-200 response", async () => {
     global.fetch.mockResolvedValueOnce(mockFailure());
 
     await expect(fetchGlossary()).rejects.toThrow();
+  });
+});
+
+// ─── getGlossaryRawText ───────────────────────────────────────────────────────
+
+describe("getGlossaryRawText", () => {
+  it("returns the raw text after a successful fetchGlossary", async () => {
+    global.fetch.mockResolvedValueOnce(mockSuccess());
+    await fetchGlossary();
+
+    expect(getGlossaryRawText()).toBe(MOCK_JS_BODY);
   });
 });
 
@@ -63,10 +86,11 @@ describe("fetchGlossaryWithBackoff", () => {
   it("resolves on first success without calling captureError", async () => {
     global.fetch.mockResolvedValueOnce(mockSuccess());
 
-    await fetchGlossaryWithBackoff(noop);
+    const result = await fetchGlossaryWithBackoff(noop);
 
     expect(noop).not.toHaveBeenCalled();
     expect(window.GLOSSARY).toEqual(MOCK_GLOSSARY);
+    expect(result).toBe(MOCK_JS_BODY);
   });
 
   it("retries after one failure and resolves on second attempt", async () => {
@@ -104,6 +128,6 @@ describe("fetchGlossaryWithBackoff", () => {
     const promise = fetchGlossaryWithBackoff(noop);
     await jest.runAllTimersAsync();
 
-    await expect(promise).resolves.toBeUndefined();
+    await expect(promise).resolves.toBeDefined();
   });
 });
