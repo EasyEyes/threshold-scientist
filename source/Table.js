@@ -3,6 +3,8 @@ import Dropzone from "react-dropzone";
 import Swal from "sweetalert2";
 
 import { handleDrop } from "./components/dropzone";
+import { fetchGlossaryWithBackoff } from "./glossaryFetch";
+import { captureError } from "./sentry";
 import ResourceButton from "./ResourceButton";
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
 import {
@@ -60,6 +62,8 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
+    await fetchGlossaryWithBackoff(captureError);
+
     let resolvedResources;
 
     // Wait for resources to be loaded if they aren't already

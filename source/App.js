@@ -64,6 +64,8 @@ export default class App extends Component {
       websiteRepoLastCommitDeploy: null,
       websiteRepoLastCommitURL: null,
       readingGlossary: false,
+      glossaryReady: !props.initialGlossaryError,
+      glossaryError: props.initialGlossaryError || null,
       /* -------------------------------------------------------------------------- */
       activeExperiment: "new",
       previousExperimentViewed: {
@@ -688,6 +690,8 @@ export default class App extends Component {
       isCompiledFromArchiveBool,
       archivedZip,
       resourcesLoaded,
+      glossaryReady,
+      glossaryError,
     } = this.state;
     const steps = [];
 
@@ -718,6 +722,7 @@ export default class App extends Component {
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
+          glossaryReady={glossaryReady}
         />,
       );
     else
@@ -740,6 +745,7 @@ export default class App extends Component {
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
+          glossaryReady={glossaryReady}
         />,
       );
 
@@ -756,6 +762,23 @@ export default class App extends Component {
             <h1>EasyEyes Compiler</h1>
           </div>
         </div>
+
+        {glossaryError && (
+          <div
+            role="alert"
+            style={{
+              background: "#fdecea",
+              border: "1px solid #f44336",
+              borderRadius: "4px",
+              color: "#b71c1c",
+              margin: "12px 16px",
+              padding: "10px 14px",
+            }}
+          >
+            Could not load parameter glossary. Compiling is disabled until the
+            page is refreshed and the glossary loads successfully.
+          </div>
+        )}
 
         {!accessToken && (
           <div className="description">
