@@ -655,3 +655,62 @@ describe("Prolific Integration - New Parameters", () => {
     });
   });
 });
+
+describe("GLOSSARY window global fallback", () => {
+  const MOCK_GLOSSARY = {
+    _online1Title: { default: "WINDOW_MOCK_TITLE" },
+    _online2Description: { default: "WINDOW_MOCK_DESC" },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    window.GLOSSARY = MOCK_GLOSSARY;
+    global.fetch = jest.fn().mockResolvedValue({
+      json: jest.fn().mockResolvedValue({ status: "UNPUBLISHED" }),
+    });
+  });
+
+  afterEach(() => {
+    delete window.GLOSSARY;
+  });
+
+  it("uses window.GLOSSARY default when titleOfStudy is empty", async () => {
+    const user = {
+      currentExperiment: {
+        titleOfStudy: "",
+        descriptionOfStudy: "Some desc",
+        experimentUrl: "https://example.com",
+        _participantsHowMany: "1",
+        _participantDurationMinutes: "10",
+        _online2Pay: "0",
+        _online2PayPerHour: "0",
+        _online1InternalName: "internal",
+      },
+    };
+
+    await prolificCreateDraft(user, "internal", "C1", "C2", "C3", "tok");
+
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.name).toBe("WINDOW_MOCK_TITLE");
+  });
+
+  it("uses window.GLOSSARY default when descriptionOfStudy is empty", async () => {
+    const user = {
+      currentExperiment: {
+        titleOfStudy: "Real Title",
+        descriptionOfStudy: "",
+        experimentUrl: "https://example.com",
+        _participantsHowMany: "1",
+        _participantDurationMinutes: "10",
+        _online2Pay: "0",
+        _online2PayPerHour: "0",
+        _online1InternalName: "internal",
+      },
+    };
+
+    await prolificCreateDraft(user, "internal", "C1", "C2", "C3", "tok");
+
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.description).toBe("WINDOW_MOCK_DESC");
+  });
+});
