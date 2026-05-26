@@ -235,4 +235,17 @@ button.history-dropdown {
   font-weight: 500;
   font-size: 1.4rem;
   border-radius: $step-radius;
+
+  /* Denis requested linebreaks for compiler instructions
+   be 1.5x normal line spacing. */
+  br {
+    display: block;
+    content: "";
+    margin-top: 0.75em;
+  }
+
+  li {
+    padding: 0;
+    color: $green;
+  }
 }

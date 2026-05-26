@@ -302,15 +302,31 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          Welcome to the EasyEyes Compiler. Use the grey &quot;Select a compiled
-          experiment&quot; button to select an already-compiled experiment, or
-          use the green &quot;Select file&quot; button to compile a new one. For
-          new compilations, click &quot;Select file&quot; to upload any
-          necessary resources (fonts, forms, sounds, etc.) before submitting the
-          experiment spreadsheet. Alternatively, use &quot;Select file&quot; to
-          submit an export.zip file containing both the spreadsheet and
-          resources. Resources uploaded individually are stored in your Pavlovia
-          account for future use, whereas those in an export.zip are not.
+          Welcome to the EasyEyes Compiler.
+          <br />
+          To retrieve a previously compiled experiment, click the gray "Select a
+          compiled experiment" button.
+          <br />
+          To compile a new experiment spreadsheet:
+          <ul>
+            <li>
+              Click the green "Select file" button to upload any required
+              resources (fonts, forms, sounds, etc.).
+            </li>
+            <li>
+              Then click the green "Select file" button again to select and
+              compile the spreadsheet.
+            </li>
+          </ul>
+          <br />
+          To compile an export.zip archive containing both the spreadsheet and
+          its resources:
+          <ul>
+            <li>Click the green "Select file" button.</li>
+          </ul>
+          <br />
+          Resources uploaded individually are stored in your Pavlovia account
+          for future use. Resources in an export.zip are not.
         </div>
         <div style={{ marginTop: "8px", marginBottom: "10px" }}>
           <span
