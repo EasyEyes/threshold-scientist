@@ -1,7 +1,11 @@
 import { getRetryDelayMs, wait } from "../threshold/preprocess/retry";
 
 export async function fetchGlossary() {
-  const response = await fetch("/.netlify/functions/glossary");
+  const url =
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:8888/.netlify/functions/glossary"
+      : "/.netlify/functions/glossary";
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Glossary fetch failed: ${response.status}`);
   }
