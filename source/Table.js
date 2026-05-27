@@ -304,27 +304,26 @@ export default class Table extends Component {
         <div className="green-status-banner">
           Welcome to the EasyEyes Compiler.
           <br />
-          To retrieve a previously compiled experiment, click the gray "Select a
-          compiled experiment" button.
-          <br />
+          To retrieve an already-compiled experiment:
+          <ul>
+            <li>Click SELECT COMPILED EXPERIMENT</li>
+          </ul>
           To compile a new experiment spreadsheet:
           <ul>
             <li>
-              Click the green "Select file" button to upload any required
-              resources (fonts, forms, sounds, etc.).
+              Click SELECT FILE to upload any required resources: fonts, sounds,
+              images, forms, … .
             </li>
             <li>
-              Then click the green "Select file" button again to select and
-              compile the spreadsheet.
+              Then click SELECT FILE again to select and compile the
+              spreadsheet.
             </li>
           </ul>
-          <br />
           To compile an export.zip archive containing both the spreadsheet and
           its resources:
           <ul>
-            <li>Click the green "Select file" button.</li>
+            <li>Click SELECT FILE.</li>
           </ul>
-          <br />
           Resources uploaded individually are stored in your Pavlovia account
           for future use. Resources in an export.zip are not.
         </div>
