@@ -36,6 +36,7 @@ import { signInAnonymously } from "firebase/auth";
 import { getSoundProfileStatement } from "./components/firebase_soundProfile";
 import { captureError } from "./sentry";
 import { fetchGlossaryData } from "./components/glossaryApi";
+import { initGlossary } from "../threshold/parameters/glossaryRegistry";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -143,7 +144,10 @@ export default class App extends Component {
 
   async componentDidMount() {
     fetchGlossaryData()
-      .then((data) => this.setState({ glossaryData: data }))
+      .then((data) => {
+        initGlossary(data);
+        this.setState({ glossaryData: data });
+      })
       .catch((error) => console.warn("Failed to fetch glossary data:", error));
 
     // get the actual changes from GitHub
