@@ -700,6 +700,9 @@ export default class App extends Component {
       resourcesLoaded,
       glossaryData,
     } = this.state;
+
+    if (glossaryData === null) return null;
+
     const steps = [];
 
     const viewingPreviousExperiment =
