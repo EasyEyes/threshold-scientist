@@ -16,7 +16,7 @@
  */
 
 var NETLIFY_FUNCTION_URL =
-  "https://glossary-new-arch-2--easyeyes.netlify.app/.netlify/functions/glossary";
+  "https://easyeyes.app/.netlify/functions/glossary";
 
 function notify(message) {
   try {
