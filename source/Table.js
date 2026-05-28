@@ -20,6 +20,7 @@ import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 
 import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
+import { pinGlossaryVersion } from "./components/glossaryApi";
 
 export default class Table extends Component {
   constructor(props) {
@@ -60,6 +61,11 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
+    const { user, projectName } = this.props;
+    pinGlossaryVersion(user.username, projectName)
+      .then(({ version }) => console.log("Glossary version pinned:", version))
+      .catch((error) => console.warn("Failed to pin glossary version:", error));
+
     let resolvedResources;
 
     // Wait for resources to be loaded if they aren't already

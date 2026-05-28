@@ -35,6 +35,7 @@ import "./css/App.scss";
 import { signInAnonymously } from "firebase/auth";
 import { getSoundProfileStatement } from "./components/firebase_soundProfile";
 import { captureError } from "./sentry";
+import { fetchGlossaryData } from "./components/glossaryApi";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -100,6 +101,7 @@ export default class App extends Component {
       profileStatement: "Loading ...",
       isCompiledFromArchiveBool: false,
       archivedZip: null,
+      glossaryData: null,
     };
 
     this.functions = {
@@ -140,6 +142,10 @@ export default class App extends Component {
   }
 
   async componentDidMount() {
+    fetchGlossaryData()
+      .then((data) => this.setState({ glossaryData: data }))
+      .catch((error) => console.warn("Failed to fetch glossary data:", error));
+
     // get the actual changes from GitHub
     try {
       const websiteGitHubRepo = await fetch(
@@ -688,6 +694,7 @@ export default class App extends Component {
       isCompiledFromArchiveBool,
       archivedZip,
       resourcesLoaded,
+      glossaryData,
     } = this.state;
     const steps = [];
 
@@ -718,6 +725,7 @@ export default class App extends Component {
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
+          glossaryData={glossaryData}
         />,
       );
     else
@@ -740,6 +748,7 @@ export default class App extends Component {
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
+          glossaryData={glossaryData}
         />,
       );
 
@@ -747,7 +756,7 @@ export default class App extends Component {
       <>
         {readingGlossary && (
           <Suspense fallback={<></>}>
-            <Glossary closeGlossary={this.closeGlossary} />
+            <Glossary closeGlossary={this.closeGlossary} glossaryFull={glossaryData?.glossaryFull ?? []} />
           </Suspense>
         )}
 
