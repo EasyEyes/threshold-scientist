@@ -18,6 +18,13 @@
 var NETLIFY_FUNCTION_URL =
   "https://easyeyes.app/.netlify/functions/glossary";
 
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("EasyEyes")
+    .addItem("Update Glossary", "pushGlossary")
+    .addToUi();
+}
+
 function notify(message) {
   try {
     SpreadsheetApp.getUi().alert(message);
