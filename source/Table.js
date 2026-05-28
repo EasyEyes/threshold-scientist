@@ -61,10 +61,7 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
-    const { user, projectName } = this.props;
-    pinGlossaryVersion(user.username, projectName)
-      .then(({ version }) => console.log("Glossary version pinned:", version))
-      .catch((error) => console.warn("Failed to pin glossary version:", error));
+    const { user } = this.props;
 
     let resolvedResources;
 
@@ -219,9 +216,18 @@ export default class Table extends Component {
 
           if (user.id != undefined) {
             // user logged in
-            this.props.functions.handleSetProjectName(
-              await setRepoName(user, file.name.split(".")[0]),
+            const resolvedProjectName = await setRepoName(
+              user,
+              file.name.split(".")[0],
             );
+            this.props.functions.handleSetProjectName(resolvedProjectName);
+            pinGlossaryVersion(user.username, resolvedProjectName)
+              .then(({ version }) =>
+                console.log("Glossary version pinned:", version),
+              )
+              .catch((error) =>
+                console.warn("Failed to pin glossary version:", error),
+              );
 
             const projectsPromise = getAllProjects(user);
             const updatedProjects = await projectsPromise;
