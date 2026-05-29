@@ -20,6 +20,15 @@ import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 
 import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
+import {
+  fetchGlossaryData,
+  fetchGlossaryVersion,
+  pinGlossaryVersion,
+} from "./components/glossaryApi";
+import {
+  initGlossary,
+  getGlossaryVersion,
+} from "../threshold/parameters/glossaryRegistry";
 
 export default class Table extends Component {
   constructor(props) {
@@ -60,6 +69,33 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
+    const { user } = this.props;
+
+    try {
+      let shouldFetch = true;
+      try {
+        const { version: serverVersion } = await fetchGlossaryVersion();
+        const cachedVersion = getGlossaryVersion();
+        if (
+          serverVersion !== null &&
+          cachedVersion !== null &&
+          serverVersion === cachedVersion
+        ) {
+          shouldFetch = false;
+        }
+      } catch {
+        // fall through to full fetch
+      }
+
+      if (shouldFetch) {
+        const data = await fetchGlossaryData();
+        initGlossary(data);
+      }
+    } catch (err) {
+      console.error("Failed to refresh glossary:", err);
+      return;
+    }
+
     let resolvedResources;
 
     // Wait for resources to be loaded if they aren't already
@@ -213,9 +249,18 @@ export default class Table extends Component {
 
           if (user.id != undefined) {
             // user logged in
-            this.props.functions.handleSetProjectName(
-              await setRepoName(user, file.name.split(".")[0]),
+            const resolvedProjectName = await setRepoName(
+              user,
+              file.name.split(".")[0],
             );
+            this.props.functions.handleSetProjectName(resolvedProjectName);
+            pinGlossaryVersion(user.username, resolvedProjectName)
+              .then(({ version }) =>
+                console.log("Glossary version pinned:", version),
+              )
+              .catch((error) =>
+                console.warn("Failed to pin glossary version:", error),
+              );
 
             const projectsPromise = getAllProjects(user);
             const updatedProjects = await projectsPromise;

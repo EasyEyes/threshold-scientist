@@ -221,8 +221,8 @@ export default class Login extends Component {
       oauthClient.saveTokens();
 
       // Create user and get basic info immediately
-      const { User } = await import("../threshold/preprocess/gitlabUtils");
-      const user = new User(accessToken);
+      const { createUser } = await import("../threshold/preprocess/gitlabUtils");
+      const user = createUser(accessToken);
       await user.initUserDetails(); // TODO measure this is actually fast
 
       user.initProjectList();

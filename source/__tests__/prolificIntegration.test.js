@@ -19,6 +19,7 @@ describe("Prolific Integration - New Parameters", () => {
   let mockCompletionCode;
   let mockIncompatibleCode;
   let mockAbortedCode;
+  let mockGlossaryData;
 
   beforeEach(() => {
     // Reset all mocks before each test
@@ -26,6 +27,12 @@ describe("Prolific Integration - New Parameters", () => {
 
     // Setup default values
     mockToken = "test-prolific-token";
+    mockGlossaryData = {
+      glossary: {
+        _online1Title: { default: "Default Title" },
+        _online2Description: { default: "Default Description" },
+      },
+    };
     mockInternalName = "TestExperiment";
     mockCompletionCode = "COMPLETED123";
     mockIncompatibleCode = "INCOMPATIBLE456";
@@ -69,6 +76,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
@@ -106,6 +114,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -130,6 +139,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -154,6 +164,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -180,6 +191,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -209,6 +221,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -237,6 +250,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -263,6 +277,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -289,6 +304,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -315,6 +331,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -340,6 +357,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -364,6 +382,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -388,6 +407,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -415,6 +435,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -442,6 +463,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -470,6 +492,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -496,6 +519,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -526,6 +550,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -558,6 +583,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -595,6 +621,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -638,6 +665,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockIncompatibleCode,
         mockAbortedCode,
         mockToken,
+        mockGlossaryData,
       );
 
       const callArgs = global.fetch.mock.calls[0];
@@ -652,6 +680,42 @@ describe("Prolific Integration - New Parameters", () => {
         action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
         return_reason: "Incompatible device",
       });
+    });
+  });
+
+  describe("glossaryData fallback defaults", () => {
+    it("uses glossaryData title default when titleOfStudy is empty", async () => {
+      mockUser.currentExperiment.titleOfStudy = "";
+
+      await prolificCreateDraft(
+        mockUser,
+        mockInternalName,
+        mockCompletionCode,
+        mockIncompatibleCode,
+        mockAbortedCode,
+        mockToken,
+        mockGlossaryData,
+      );
+
+      const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(requestBody.name).toBe("Default Title");
+    });
+
+    it("uses glossaryData description default when descriptionOfStudy is empty", async () => {
+      mockUser.currentExperiment.descriptionOfStudy = "";
+
+      await prolificCreateDraft(
+        mockUser,
+        mockInternalName,
+        mockCompletionCode,
+        mockIncompatibleCode,
+        mockAbortedCode,
+        mockToken,
+        mockGlossaryData,
+      );
+
+      const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(requestBody.description).toBe("Default Description");
     });
   });
 });

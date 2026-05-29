@@ -17,7 +17,6 @@ import {
   VR_HEADSET_FREQUENCY_PROLIFIC_MAPPING,
   VR_HEADSET_USAGE_PROLIFIC_MAPPING,
 } from "./prolificConstants";
-import { GLOSSARY } from "../../threshold/parameters/glossary";
 import { captureError } from "../sentry";
 
 const prolificStudySubmissionStatus = {
@@ -361,6 +360,7 @@ export const prolificCreateDraft = async (
   incompatibleCompletionCode,
   abortedCompletionCode,
   token,
+  glossaryData,
 ) => {
   // const prolificStudyDraftApiUrl = "https://api.prolific.com/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
@@ -516,7 +516,7 @@ export const prolificCreateDraft = async (
       user.currentExperiment.titleOfStudy &&
       user.currentExperiment.titleOfStudy !== ""
         ? user.currentExperiment.titleOfStudy
-        : GLOSSARY["_online1Title"].default,
+        : glossaryData.glossary["_online1Title"].default,
     internal_name:
       user.currentExperiment._online1InternalName &&
       user.currentExperiment._online1InternalName !== ""
@@ -526,7 +526,7 @@ export const prolificCreateDraft = async (
       user.currentExperiment.descriptionOfStudy &&
       user.currentExperiment.descriptionOfStudy !== ""
         ? user.currentExperiment.descriptionOfStudy
-        : GLOSSARY["_online2Description"].default,
+        : glossaryData.glossary["_online2Description"].default,
     external_study_url: user.currentExperiment.experimentUrl,
     prolific_id_option: "url_parameters",
     completion_option: "url",

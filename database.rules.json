@@ -1,0 +1,38 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "currentVersion": {
+      ".read": true,
+      ".write": false
+    },
+    "versions": {
+      "$version": {
+        "glossary": {
+          ".read": true,
+          ".write": false
+        }
+      }
+    },
+    "users": {
+      "$username": {
+        "$experimentName": {
+          "glossaryVersion": {
+            ".read": true,
+            ".write": false
+          }
+        }
+      }
+    },
+    "compiles": {
+      "$id": {
+        ".write": "newData.hasChildren(['id', 'user', 'timestamp', 'timeZone'])"
+      }
+    },
+    "compileCounts": {
+      "$uid": {
+        ".write": "newData.isNumber()"
+      }
+    }
+  }
+}

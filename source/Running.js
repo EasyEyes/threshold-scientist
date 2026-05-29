@@ -605,6 +605,7 @@ export default class Running extends Component {
                             incompatibleCompletionCode,
                             abortedCompletionCode,
                             prolificToken,
+                            this.props.glossaryData,
                           );
 
                           if (result?.status === "UNPUBLISHED" && result.id) {
