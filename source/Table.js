@@ -22,9 +22,13 @@ import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
 import {
   fetchGlossaryData,
+  fetchGlossaryVersion,
   pinGlossaryVersion,
 } from "./components/glossaryApi";
-import { initGlossary } from "../threshold/parameters/glossaryRegistry";
+import {
+  initGlossary,
+  getGlossaryVersion,
+} from "../threshold/parameters/glossaryRegistry";
 
 export default class Table extends Component {
   constructor(props) {
@@ -68,8 +72,25 @@ export default class Table extends Component {
     const { user } = this.props;
 
     try {
-      const data = await fetchGlossaryData();
-      initGlossary(data);
+      let shouldFetch = true;
+      try {
+        const { version: serverVersion } = await fetchGlossaryVersion();
+        const cachedVersion = getGlossaryVersion();
+        if (
+          serverVersion !== null &&
+          cachedVersion !== null &&
+          serverVersion === cachedVersion
+        ) {
+          shouldFetch = false;
+        }
+      } catch {
+        // fall through to full fetch
+      }
+
+      if (shouldFetch) {
+        const data = await fetchGlossaryData();
+        initGlossary(data);
+      }
     } catch (err) {
       console.error("Failed to refresh glossary:", err);
       return;

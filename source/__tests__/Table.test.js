@@ -17,11 +17,13 @@ jest.mock("../components/dropzone", () => ({
 
 jest.mock("../components/glossaryApi", () => ({
   fetchGlossaryData: jest.fn(),
+  fetchGlossaryVersion: jest.fn(),
   pinGlossaryVersion: jest.fn().mockResolvedValue({ version: "1.0" }),
 }));
 
 jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
   initGlossary: jest.fn(),
+  getGlossaryVersion: jest.fn(),
 }));
 
 jest.mock("../../threshold/preprocess/main", () => ({
@@ -87,9 +89,11 @@ describe("Table.handleTable", () => {
   });
 
   it("fetches and initializes the latest glossary before preprocessing a fresh spreadsheet", async () => {
-    const { fetchGlossaryData } = require("../components/glossaryApi");
-    const { initGlossary } = require("../../threshold/parameters/glossaryRegistry");
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { initGlossary, getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
     const { preprocessExperimentFile } = require("../../threshold/preprocess/main");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
     fetchGlossaryData.mockResolvedValue(mockGlossaryData);
 
     const ref = React.createRef();
@@ -109,9 +113,11 @@ describe("Table.handleTable", () => {
   });
 
   it("refreshes the glossary even when compiling from an archive", async () => {
-    const { fetchGlossaryData } = require("../components/glossaryApi");
-    const { initGlossary } = require("../../threshold/parameters/glossaryRegistry");
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { initGlossary, getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
     const { preprocessExperimentFile } = require("../../threshold/preprocess/main");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
     fetchGlossaryData.mockResolvedValue(mockGlossaryData);
 
     const ref = React.createRef();
@@ -125,9 +131,11 @@ describe("Table.handleTable", () => {
   });
 
   it("aborts the compile and logs when the glossary refresh fails", async () => {
-    const { fetchGlossaryData } = require("../components/glossaryApi");
-    const { initGlossary } = require("../../threshold/parameters/glossaryRegistry");
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { initGlossary, getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
     const { preprocessExperimentFile } = require("../../threshold/preprocess/main");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
     const fetchError = new Error("network down");
     fetchGlossaryData.mockRejectedValue(fetchError);
     const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
@@ -145,5 +153,70 @@ describe("Table.handleTable", () => {
     );
 
     consoleError.mockRestore();
+  });
+
+  it("skips the full glossary download when the server version matches the cached version", async () => {
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { initGlossary, getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
+    const { preprocessExperimentFile } = require("../../threshold/preprocess/main");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue("2.0");
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(fetchGlossaryData).not.toHaveBeenCalled();
+    expect(initGlossary).not.toHaveBeenCalled();
+    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("downloads the full glossary when the server version differs from the cached version", async () => {
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { initGlossary, getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
+    fetchGlossaryVersion.mockResolvedValue({ version: "3.0" });
+    getGlossaryVersion.mockReturnValue("2.0");
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
+    expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
+  });
+
+  it("downloads the full glossary when the version check request fails", async () => {
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { initGlossary, getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
+    fetchGlossaryVersion.mockRejectedValue(new Error("timeout"));
+    getGlossaryVersion.mockReturnValue("2.0");
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
+    expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
+  });
+
+  it("downloads the full glossary when there is no cached version", async () => {
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { initGlossary, getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
+    expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
   });
 });

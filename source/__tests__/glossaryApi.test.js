@@ -1,4 +1,4 @@
-import { fetchGlossaryData, pinGlossaryVersion } from "../components/glossaryApi";
+import { fetchGlossaryData, fetchGlossaryVersion, pinGlossaryVersion } from "../components/glossaryApi";
 
 global.fetch = jest.fn();
 
@@ -25,6 +25,22 @@ describe("glossaryApi", () => {
 
       expect(global.fetch).toHaveBeenCalledWith("/.netlify/functions/glossary");
       expect(result).toEqual(mockGlossaryData);
+    });
+  });
+
+  describe("fetchGlossaryVersion", () => {
+    it("calls GET /.netlify/functions/glossary?versionOnly=1 and returns { version }", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce({ version: "2.5" }),
+      });
+
+      const result = await fetchGlossaryVersion();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/.netlify/functions/glossary?versionOnly=1"
+      );
+      expect(result).toEqual({ version: "2.5" });
     });
   });
 
