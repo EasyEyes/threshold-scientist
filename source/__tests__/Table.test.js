@@ -108,18 +108,19 @@ describe("Table.handleTable", () => {
     expect(initOrder).toBeLessThan(preprocessOrder);
   });
 
-  it("skips glossary refresh when compiling from an archive", async () => {
+  it("refreshes the glossary even when compiling from an archive", async () => {
     const { fetchGlossaryData } = require("../components/glossaryApi");
     const { initGlossary } = require("../../threshold/parameters/glossaryRegistry");
     const { preprocessExperimentFile } = require("../../threshold/preprocess/main");
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
 
     const ref = React.createRef();
     render(<Table ref={ref} {...makeProps({ isCompiledFromArchiveBool: true })} />);
 
     await ref.current.handleTable(new File(["a,b"], "exp.export.zip"));
 
-    expect(fetchGlossaryData).not.toHaveBeenCalled();
-    expect(initGlossary).not.toHaveBeenCalled();
+    expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
+    expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
     expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
   });
 

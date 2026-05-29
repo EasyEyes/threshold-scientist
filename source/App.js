@@ -17,7 +17,7 @@ import {
   getRecruitmentServiceConfig,
   getDurationForProject,
   getProlificStudyId,
-  User,
+  copyUser,
   getCommonResourcesNames,
 } from "../threshold/preprocess/gitlabUtils";
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
@@ -369,7 +369,7 @@ export default class App extends Component {
     if (this.state.currentStep !== step) {
       // Create a fresh User instance and refresh project list
       const currentUser = this.state.user;
-      const refreshedUser = new User(currentUser.accessToken);
+      const refreshedUser = copyUser(currentUser);
 
       // Copy existing user properties
       refreshedUser.username = currentUser.username;
