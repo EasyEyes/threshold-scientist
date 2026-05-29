@@ -763,7 +763,10 @@ export default class App extends Component {
       <>
         {readingGlossary && (
           <Suspense fallback={<></>}>
-            <Glossary closeGlossary={this.closeGlossary} glossaryFull={glossaryData?.glossaryFull ?? []} />
+            <Glossary
+              closeGlossary={this.closeGlossary}
+              glossaryFull={glossaryData?.glossaryFull ?? []}
+            />
           </Suspense>
         )}
 
@@ -850,7 +853,12 @@ export default class App extends Component {
                     <a href="https://github.com/EasyEyes/threshold/stargazers">
                       <img
                         alt="GitHub stars"
-                        src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square"
+                        src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square&cacheSeconds=86400"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://flat.badgen.net/github/stars/EasyEyes/threshold";
+                        }}
                       />
                     </a>
                     <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
