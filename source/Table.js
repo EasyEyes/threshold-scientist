@@ -20,7 +20,10 @@ import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 
 import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
-import { fetchGlossaryData, pinGlossaryVersion } from "./components/glossaryApi";
+import {
+  fetchGlossaryData,
+  pinGlossaryVersion,
+} from "./components/glossaryApi";
 import { initGlossary } from "../threshold/parameters/glossaryRegistry";
 
 export default class Table extends Component {
@@ -64,14 +67,12 @@ export default class Table extends Component {
   async handleTable(file) {
     const { user } = this.props;
 
-    if (!this.props.isCompiledFromArchiveBool) {
-      try {
-        const data = await fetchGlossaryData();
-        initGlossary(data);
-      } catch (err) {
-        console.error("Failed to refresh glossary:", err);
-        return;
-      }
+    try {
+      const data = await fetchGlossaryData();
+      initGlossary(data);
+    } catch (err) {
+      console.error("Failed to refresh glossary:", err);
+      return;
     }
 
     let resolvedResources;
