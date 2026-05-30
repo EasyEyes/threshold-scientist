@@ -1,4 +1,12 @@
-import { fetchGlossaryData, fetchGlossaryVersion, pinGlossaryVersion } from "../components/glossaryApi";
+import {
+  fetchGlossaryData,
+  fetchGlossaryVersion,
+  pinGlossaryVersion,
+} from "../components/glossaryApi";
+
+jest.mock("../../threshold/components/easyeyesBaseUrl", () => ({
+  getEasyEyesBaseUrl: () => "",
+}));
 
 global.fetch = jest.fn();
 
@@ -38,7 +46,7 @@ describe("glossaryApi", () => {
       const result = await fetchGlossaryVersion();
 
       expect(global.fetch).toHaveBeenCalledWith(
-        "/.netlify/functions/glossary?versionOnly=1"
+        "/.netlify/functions/glossary?versionOnly=1",
       );
       expect(result).toEqual({ version: "2.5" });
     });
@@ -53,11 +61,17 @@ describe("glossaryApi", () => {
 
       const result = await pinGlossaryVersion("alice", "my-experiment");
 
-      expect(global.fetch).toHaveBeenCalledWith("/.netlify/functions/glossary", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "alice", experimentName: "my-experiment" }),
-      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/.netlify/functions/glossary",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "alice",
+            experimentName: "my-experiment",
+          }),
+        },
+      );
       expect(result).toEqual({ version: "1.2" });
     });
   });
