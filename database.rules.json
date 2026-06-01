@@ -14,10 +14,28 @@
         }
       }
     },
+    "phrases": {
+      "currentVersion": {
+        ".read": true,
+        ".write": false
+      }
+    },
+    "phrasesVersions": {
+      "$version": {
+        "phrases": {
+          ".read": true,
+          ".write": false
+        }
+      }
+    },
     "users": {
       "$username": {
         "$experimentName": {
           "glossaryVersion": {
+            ".read": true,
+            ".write": false
+          },
+          "phrasesVersion": {
             ".read": true,
             ".write": false
           }
