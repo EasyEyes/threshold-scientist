@@ -347,8 +347,6 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          Welcome to the EasyEyes Compiler.
-          <br />
           To retrieve an already-compiled experiment:
           <ul>
             <li>Click SELECT COMPILED EXPERIMENT</li>
