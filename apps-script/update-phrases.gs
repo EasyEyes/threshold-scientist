@@ -163,7 +163,7 @@ function pushPhrases(isFullResync) {
 function extractEnglishMap(rows) {
   if (rows.length < 2) return {};
   var header = rows[0];
-  var keyIdx = header.indexOf("key");
+  var keyIdx = header.indexOf("language");
   var enIdx = header.indexOf("en");
   if (keyIdx === -1 || enIdx === -1) return {};
   var result = {};
@@ -178,14 +178,14 @@ function buildDiffPayload(english) {
   return { action: "diff", english: english };
 }
 
-function isWhiteBackground(hex) {
-  if (!hex) return true;
-  return hex.toLowerCase() === "#ffffff";
+function isCyanBackground(hex) {
+  if (!hex) return false;
+  return hex.toLowerCase() === "#00ffff";
 }
 
 function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, isFullResync) {
   var header = rows[0];
-  var keyIdx = header.indexOf("key");
+  var keyIdx = header.indexOf("language");
   var enIdx = header.indexOf("en");
   var targetLangs = [];
   var targetIdxs = [];
@@ -218,7 +218,7 @@ function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, i
     for (var j = 0; j < targetLangs.length; j++) {
       var lang = targetLangs[j];
       var ci = targetIdxs[j];
-      colorMask[key][lang] = !isWhiteBackground(bgRow[ci]);
+      colorMask[key][lang] = isCyanBackground(bgRow[ci]);
       sentValues[key][lang] = row[ci] || "";
     }
   }
@@ -246,7 +246,7 @@ function findMissingTranslatableKeys(colorMask, changedKeys) {
 
 function planWriteBack(translatedRows, rows) {
   var header = rows[0];
-  var keyIdx = header.indexOf("key");
+  var keyIdx = header.indexOf("language");
   var enIdx = header.indexOf("en");
 
   var keyToRowIdx = {};
