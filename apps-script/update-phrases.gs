@@ -53,9 +53,9 @@ function pushPhrases(isFullResync) {
     return;
   }
 
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Phrases");
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
   if (!sheet) {
-    notify('Sheet "Phrases" not found.');
+    notify('Sheet "Translations" not found.');
     return;
   }
 
