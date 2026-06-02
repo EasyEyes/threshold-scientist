@@ -26,6 +26,17 @@ jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
   getGlossaryVersion: jest.fn(),
 }));
 
+jest.mock("../components/phrasesApi", () => ({
+  fetchPhrasesData: jest.fn(),
+  fetchPhrasesVersion: jest.fn(),
+  pinPhrasesVersion: jest.fn().mockResolvedValue({ version: "1.0" }),
+}));
+
+jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
+  initPhrases: jest.fn(),
+  getPhrasesVersion: jest.fn(),
+}));
+
 jest.mock("../../threshold/preprocess/main", () => ({
   preprocessExperimentFile: jest.fn().mockResolvedValue(undefined),
 }));
@@ -52,6 +63,11 @@ const mockGlossaryData = {
   glossary: { paramX: { name: "paramX" } },
   glossaryFull: [],
   superMatchingParams: [],
+};
+
+const mockPhrasesData = {
+  version: "2.0",
+  phrases: { greeting: { en: "Hello", fr: "Bonjour" } },
 };
 
 function makeProps(overrides = {}) {
@@ -218,5 +234,137 @@ describe("Table.handleTable", () => {
 
     expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
+  });
+});
+
+describe("Table.handleTable phrases", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue("2.0");
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+  });
+
+  it("fetches and initializes phrases when version differs from cached", async () => {
+    const { fetchPhrasesData, fetchPhrasesVersion } = require("../components/phrasesApi");
+    const { initPhrases, getPhrasesVersion } = require("../../threshold/parameters/phrasesRegistry");
+    fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
+    getPhrasesVersion.mockReturnValue(null);
+    fetchPhrasesData.mockResolvedValue(mockPhrasesData);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(fetchPhrasesData).toHaveBeenCalledTimes(1);
+    expect(initPhrases).toHaveBeenCalledWith(mockPhrasesData);
+  });
+
+  it("skips phrases download when server version matches cached version", async () => {
+    const { fetchPhrasesData, fetchPhrasesVersion } = require("../components/phrasesApi");
+    const { initPhrases, getPhrasesVersion } = require("../../threshold/parameters/phrasesRegistry");
+    fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
+    getPhrasesVersion.mockReturnValue("2.0");
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(fetchPhrasesData).not.toHaveBeenCalled();
+    expect(initPhrases).not.toHaveBeenCalled();
+  });
+
+  it("fetches phrases when version check request fails", async () => {
+    const { fetchPhrasesData, fetchPhrasesVersion } = require("../components/phrasesApi");
+    const { initPhrases, getPhrasesVersion } = require("../../threshold/parameters/phrasesRegistry");
+    fetchPhrasesVersion.mockRejectedValue(new Error("timeout"));
+    getPhrasesVersion.mockReturnValue("2.0");
+    fetchPhrasesData.mockResolvedValue(mockPhrasesData);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(fetchPhrasesData).toHaveBeenCalledTimes(1);
+    expect(initPhrases).toHaveBeenCalledWith(mockPhrasesData);
+  });
+
+  it("aborts compile and logs when phrases refresh fails", async () => {
+    const { fetchPhrasesData, fetchPhrasesVersion } = require("../components/phrasesApi");
+    const { initPhrases, getPhrasesVersion } = require("../../threshold/parameters/phrasesRegistry");
+    const { preprocessExperimentFile } = require("../../threshold/preprocess/main");
+    fetchPhrasesVersion.mockResolvedValue({ version: "3.0" });
+    getPhrasesVersion.mockReturnValue("2.0");
+    const fetchError = new Error("network down");
+    fetchPhrasesData.mockRejectedValue(fetchError);
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(initPhrases).not.toHaveBeenCalled();
+    expect(preprocessExperimentFile).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith(
+      "Failed to refresh phrases:",
+      fetchError,
+    );
+
+    consoleError.mockRestore();
+  });
+
+  it("calls pinPhrasesVersion at compile time", async () => {
+    const { preprocessExperimentFile } = require("../../threshold/preprocess/main");
+    const { fetchPhrasesVersion, pinPhrasesVersion } = require("../components/phrasesApi");
+    const { getPhrasesVersion } = require("../../threshold/parameters/phrasesRegistry");
+    fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
+    getPhrasesVersion.mockReturnValue("2.0");
+    preprocessExperimentFile.mockImplementationOnce(
+      async (_f, user, _e, _r, _a, callback) => {
+        await callback(user, { debriefForm: null, consentForm: null }, [], [], [], [], [], [], [], [], [], []);
+      },
+    );
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps({ user: { ...makeProps().user, id: 1, username: "alice" } })} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(pinPhrasesVersion).toHaveBeenCalledWith("alice", "project");
+  });
+
+  it("aborts compile when pinPhrasesVersion rejects", async () => {
+    const { preprocessExperimentFile } = require("../../threshold/preprocess/main");
+    const { fetchPhrasesVersion, pinPhrasesVersion } = require("../components/phrasesApi");
+    const { getPhrasesVersion } = require("../../threshold/parameters/phrasesRegistry");
+    fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
+    getPhrasesVersion.mockReturnValue("2.0");
+    pinPhrasesVersion.mockRejectedValue(new Error("pin failed"));
+    preprocessExperimentFile.mockImplementationOnce(
+      async (_f, user, _e, _r, _a, callback) => {
+        await callback(user, { debriefForm: null, consentForm: null }, [], [], [], [], [], [], [], [], [], []);
+      },
+    );
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const props = makeProps({ user: { ...makeProps().user, id: 1, username: "alice" } });
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(props.functions.handleNextStep).not.toHaveBeenCalledWith("upload");
+    expect(consoleError).toHaveBeenCalledWith(
+      "Failed to pin phrases version:",
+      expect.any(Error),
+    );
+
+    consoleError.mockRestore();
   });
 });

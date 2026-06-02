@@ -83,6 +83,14 @@ jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
   initGlossary: jest.fn(),
 }));
 
+jest.mock("../components/phrasesApi", () => ({
+  fetchPhrasesData: jest.fn(),
+}));
+
+jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
+  initPhrases: jest.fn(),
+}));
+
 global.fetch = jest.fn().mockResolvedValue({ ok: false });
 
 const mockGlossaryData = {
@@ -92,11 +100,18 @@ const mockGlossaryData = {
   superMatchingParams: ["param1"],
 };
 
+const mockPhrasesData = {
+  version: "1.0",
+  phrases: { greeting: { en: "Hello", fr: "Bonjour" } },
+};
+
 describe("App", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     const { fetchGlossaryData } = require("../components/glossaryApi");
     fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    const { fetchPhrasesData } = require("../components/phrasesApi");
+    fetchPhrasesData.mockResolvedValue(mockPhrasesData);
     global.fetch.mockResolvedValue({ ok: false });
   });
 
@@ -107,6 +122,29 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
+    });
+  });
+
+  it("calls initPhrases with fetched phrases data when fetchPhrasesData resolves", async () => {
+    const { initPhrases } = require("../../threshold/parameters/phrasesRegistry");
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(initPhrases).toHaveBeenCalledWith(mockPhrasesData);
+    });
+  });
+
+  it("renders a phrases error message when fetchPhrasesData rejects", async () => {
+    const { fetchPhrasesData } = require("../components/phrasesApi");
+    fetchPhrasesData.mockRejectedValue(new Error("network error"));
+
+    const { getByText } = render(<App />);
+
+    await waitFor(() => {
+      expect(
+        getByText(/failed to load phrases/i),
+      ).toBeInTheDocument();
     });
   });
 });

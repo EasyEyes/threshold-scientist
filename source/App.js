@@ -37,6 +37,8 @@ import { getSoundProfileStatement } from "./components/firebase_soundProfile";
 import { captureError } from "./sentry";
 import { fetchGlossaryData } from "./components/glossaryApi";
 import { initGlossary } from "../threshold/parameters/glossaryRegistry";
+import { fetchPhrasesData } from "./components/phrasesApi";
+import { initPhrases } from "../threshold/parameters/phrasesRegistry";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -66,6 +68,7 @@ export default class App extends Component {
       websiteRepoLastCommitDeploy: null,
       websiteRepoLastCommitURL: null,
       readingGlossary: false,
+      phrasesError: false,
       /* -------------------------------------------------------------------------- */
       activeExperiment: "new",
       previousExperimentViewed: {
@@ -149,6 +152,15 @@ export default class App extends Component {
         this.setState({ glossaryData: data });
       })
       .catch((error) => console.warn("Failed to fetch glossary data:", error));
+
+    fetchPhrasesData()
+      .then((data) => {
+        initPhrases(data);
+      })
+      .catch((error) => {
+        console.error("Failed to load phrases:", error);
+        this.setState({ phrasesError: true });
+      });
 
     // get the actual changes from GitHub
     try {
@@ -678,6 +690,7 @@ export default class App extends Component {
       websiteRepoLastCommitDeploy,
       websiteRepoLastCommitURL,
       readingGlossary,
+      phrasesError,
       activeExperiment,
       previousExperimentViewed,
       currentStep,
@@ -700,6 +713,9 @@ export default class App extends Component {
       resourcesLoaded,
       glossaryData,
     } = this.state;
+
+    if (phrasesError)
+      return <div>Failed to load phrases. Please refresh the page.</div>;
 
     if (glossaryData === null) return null;
 

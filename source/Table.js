@@ -29,6 +29,15 @@ import {
   initGlossary,
   getGlossaryVersion,
 } from "../threshold/parameters/glossaryRegistry";
+import {
+  fetchPhrasesData,
+  fetchPhrasesVersion,
+  pinPhrasesVersion,
+} from "./components/phrasesApi";
+import {
+  initPhrases,
+  getPhrasesVersion,
+} from "../threshold/parameters/phrasesRegistry";
 
 export default class Table extends Component {
   constructor(props) {
@@ -93,6 +102,31 @@ export default class Table extends Component {
       }
     } catch (err) {
       console.error("Failed to refresh glossary:", err);
+      return;
+    }
+
+    try {
+      let shouldFetchPhrases = true;
+      try {
+        const { version: serverVersion } = await fetchPhrasesVersion();
+        const cachedVersion = getPhrasesVersion();
+        if (
+          serverVersion !== null &&
+          cachedVersion !== null &&
+          serverVersion === cachedVersion
+        ) {
+          shouldFetchPhrases = false;
+        }
+      } catch {
+        // fall through to full fetch
+      }
+
+      if (shouldFetchPhrases) {
+        const data = await fetchPhrasesData();
+        initPhrases(data);
+      }
+    } catch (err) {
+      console.error("Failed to refresh phrases:", err);
       return;
     }
 
@@ -261,6 +295,13 @@ export default class Table extends Component {
               .catch((error) =>
                 console.warn("Failed to pin glossary version:", error),
               );
+
+            try {
+              await pinPhrasesVersion(user.username, resolvedProjectName);
+            } catch (error) {
+              console.error("Failed to pin phrases version:", error);
+              return;
+            }
 
             const projectsPromise = getAllProjects(user);
             const updatedProjects = await projectsPromise;

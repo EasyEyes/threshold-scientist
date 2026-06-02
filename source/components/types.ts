@@ -1,3 +1,8 @@
+export interface PhrasesData {
+  version: string;
+  phrases: Record<string, Record<string, string>>;
+}
+
 export interface GlossaryEntry {
   name: string;
   availability: string;
