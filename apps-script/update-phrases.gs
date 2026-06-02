@@ -178,9 +178,9 @@ function buildDiffPayload(english) {
   return { action: "diff", english: english };
 }
 
-function isCyanBackground(hex) {
-  if (!hex) return false;
-  return hex.toLowerCase() === "#00ffff";
+function isWhiteBackground(hex) {
+  if (!hex) return true;
+  return hex.toLowerCase() === "#ffffff";
 }
 
 function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, isFullResync) {
@@ -218,7 +218,7 @@ function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, i
     for (var j = 0; j < targetLangs.length; j++) {
       var lang = targetLangs[j];
       var ci = targetIdxs[j];
-      colorMask[key][lang] = isCyanBackground(bgRow[ci]);
+      colorMask[key][lang] = !isWhiteBackground(bgRow[ci]);
       sentValues[key][lang] = row[ci] || "";
     }
   }
