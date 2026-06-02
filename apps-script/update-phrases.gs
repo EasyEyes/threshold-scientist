@@ -168,7 +168,7 @@ function extractEnglishMap(rows) {
   if (keyIdx === -1 || enIdx === -1) return {};
   var result = {};
   for (var i = 1; i < rows.length; i++) {
-    var key = rows[i][keyIdx];
+    var key = (rows[i][keyIdx] || "").trim();
     if (key) result[key] = rows[i][enIdx] || "";
   }
   return result;
@@ -198,7 +198,7 @@ function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, i
 
   var keyToRowIdx = {};
   for (var i = 1; i < rows.length; i++) {
-    var k = rows[i][keyIdx];
+    var k = (rows[i][keyIdx] || "").trim();
     if (k) keyToRowIdx[k] = i;
   }
 
@@ -251,7 +251,7 @@ function planWriteBack(translatedRows, rows) {
 
   var keyToRowIdx = {};
   for (var i = 1; i < rows.length; i++) {
-    var k = rows[i][keyIdx];
+    var k = (rows[i][keyIdx] || "").trim();
     if (k) keyToRowIdx[k] = i;
   }
 
