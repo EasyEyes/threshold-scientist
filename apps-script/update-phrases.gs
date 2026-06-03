@@ -22,6 +22,7 @@ function onOpen() {
     .createMenu("EasyEyes")
     .addItem("Update Phrases", "updatePhrases")
     .addItem("Full Resync Phrases", "fullResyncPhrases")
+    .addItem("Re-translate Selected Cells", "retranslateSelectedCells")
     .addToUi();
 }
 
@@ -157,6 +158,171 @@ function pushPhrases(isFullResync) {
     var label = isFullResync ? "Full Resync" : "Update";
     notify("Phrases " + label + " complete. New version: " + translateResult.newVersion);
   }
+}
+
+function retranslateSelectedCells() {
+  var secret = PropertiesService.getScriptProperties().getProperty(
+    "PHRASES_SECRET"
+  );
+  if (!secret) {
+    notify(
+      "PHRASES_SECRET is not set in Script Properties. " +
+        "Add it under File > Project settings > Script properties."
+    );
+    return;
+  }
+
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
+  if (!sheet) {
+    notify('Sheet "Translations" not found.');
+    return;
+  }
+
+  var dataRange = sheet.getDataRange();
+  var rows = dataRange.getDisplayValues();
+  var backgrounds = dataRange.getBackgrounds();
+
+  if (rows.length < 2) {
+    notify("No data found in the Translations sheet.");
+    return;
+  }
+
+  var header = rows[0];
+  var keyIdx = header.indexOf("language");
+  var enIdx = header.indexOf("en");
+  if (keyIdx === -1 || enIdx === -1) {
+    notify('Required columns "language" and "en" not found in header row.');
+    return;
+  }
+
+  var rangeList = sheet.getActiveRangeList();
+  if (!rangeList) {
+    notify("No cells selected.");
+    return;
+  }
+  var ranges = rangeList.getRanges();
+
+  var nonCyanCells = [];
+  var cyanCells = [];
+
+  for (var r = 0; r < ranges.length; r++) {
+    var range = ranges[r];
+    var startRow = range.getRow();
+    var startCol = range.getColumn();
+    var numRows = range.getNumRows();
+    var numCols = range.getNumColumns();
+
+    for (var dr = 0; dr < numRows; dr++) {
+      var rowIdx = startRow + dr - 1;
+      if (rowIdx === 0) continue; // header
+      if (rowIdx >= rows.length) continue;
+      var key = (rows[rowIdx][keyIdx] || "").trim();
+
+      for (var dc = 0; dc < numCols; dc++) {
+        var colIdx = startCol + dc - 1;
+        if (colIdx === keyIdx || colIdx === enIdx) continue; // non-target columns
+        if (colIdx >= header.length) continue;
+        var lang = header[colIdx];
+        if (!lang) continue;
+        if (!key) continue;
+
+        var bg = backgrounds[rowIdx][colIdx];
+        if (isTranslatableBackground(bg)) {
+          cyanCells.push({
+            rowIdx: rowIdx,
+            colIdx: colIdx,
+            key: key,
+            lang: lang,
+            engText: rows[rowIdx][enIdx] || "",
+            currentValue: rows[rowIdx][colIdx] || "",
+          });
+        } else {
+          nonCyanCells.push({ sheetRow: startRow + dr, lang: lang });
+        }
+      }
+    }
+  }
+
+  if (nonCyanCells.length > 0) {
+    var lines = nonCyanCells.map(function (c) {
+      return "  Row " + c.sheetRow + " / '" + c.lang + "'";
+    });
+    notify(
+      "The following selected cells are not cyan and cannot be re-translated:\n" +
+        lines.join("\n") +
+        "\nChange their background to #00ffff and retry."
+    );
+    return;
+  }
+
+  if (cyanCells.length === 0) {
+    notify("No translatable cells found in selection.");
+    return;
+  }
+
+  var versionResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL + "?versionOnly", {
+    method: "get",
+    muteHttpExceptions: true,
+  });
+  if (versionResponse.getResponseCode() !== 200) {
+    notify("Failed to fetch current phrase version. Please try again.");
+    return;
+  }
+  var currentVersion = JSON.parse(versionResponse.getContentText()).version;
+
+  var changedPhrases = {};
+  var colorMask = {};
+  var sentValues = {};
+
+  for (var i = 0; i < cyanCells.length; i++) {
+    var cell = cyanCells[i];
+    if (!changedPhrases[cell.key]) {
+      changedPhrases[cell.key] = cell.engText;
+      colorMask[cell.key] = {};
+      sentValues[cell.key] = {};
+    }
+    colorMask[cell.key][cell.lang] = "#00ffff";
+    sentValues[cell.key][cell.lang] = cell.currentValue;
+  }
+
+  var payload = {
+    action: "translate",
+    changedPhrases: changedPhrases,
+    colorMask: colorMask,
+    sentValues: sentValues,
+    currentVersion: currentVersion,
+  };
+
+  console.log("[phrases] Re-translate: POSTing translate to: " + PHRASES_FUNCTION_URL);
+  var response = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, payload));
+  var responseCode = response.getResponseCode();
+  var responseText = response.getContentText();
+  console.log("[phrases] Re-translate response code: " + responseCode);
+
+  if (responseCode === 409) {
+    notify("Re-translation aborted: phrase data was modified while running. Please try again.");
+    return;
+  }
+
+  if (responseCode !== 200) {
+    notify("Re-translation failed (" + responseCode + "): " + responseText);
+    return;
+  }
+
+  var result = JSON.parse(responseText);
+  var translatedRows = result.translatedRows || {};
+
+  var writes = planWriteBack(translatedRows, rows);
+  for (var j = 0; j < writes.length; j++) {
+    var w = writes[j];
+    try {
+      sheet.getRange(w.rowIndex + 1, w.colIndex + 1).setValue(w.value);
+    } catch (e) {
+      Logger.log("[phrases] Write-back failed for rowIndex=" + w.rowIndex + " colIndex=" + w.colIndex + ": " + e);
+    }
+  }
+
+  notify("Re-translated " + writes.length + " cell(s). New version: " + result.newVersion);
 }
 
 // ─── Pure helpers (duplicated here; source of truth: source/appsScript/phrasesPush.js) ──
