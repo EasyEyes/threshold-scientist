@@ -242,7 +242,7 @@ function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, i
     for (var j = 0; j < targetLangs.length; j++) {
       var lang = targetLangs[j];
       var ci = targetIdxs[j];
-      colorMask[key][lang] = isTranslatableBackground(bgRow[ci]);
+      colorMask[key][lang] = bgRow[ci];
       sentValues[key][lang] = row[ci] || "";
     }
   }
@@ -263,7 +263,7 @@ function findMissingTranslatableKeys(colorMask, changedKeys) {
     var mask = colorMask[key];
     if (!mask) { result.push(key); continue; }
     var values = Object.values(mask);
-    if (values.every(function(v) { return !v; })) result.push(key);
+    if (values.every(function(v) { return v.toLowerCase().trim() !== "#00ffff"; })) result.push(key);
   }
   return result;
 }
