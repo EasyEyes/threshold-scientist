@@ -65,7 +65,8 @@ function pushPhrases(isFullResync) {
 
   // Phase 1: diff
   var english = extractEnglishMap(rows);
-  var diffPayload = buildDiffPayload(english);
+  var nonCyanValues = extractNonTranslatableValues(rows, backgrounds);
+  var diffPayload = buildDiffPayload(english, nonCyanValues);
   var diffOptions = buildFetchOptions(secret, diffPayload);
 
   console.log("[phrases] Phase 1: POSTing diff to: " + PHRASES_FUNCTION_URL);
@@ -174,13 +175,36 @@ function extractEnglishMap(rows) {
   return result;
 }
 
-function buildDiffPayload(english) {
-  return { action: "diff", english: english };
+function buildDiffPayload(english, nonCyanValues) {
+  return { action: "diff", english: english, nonCyanValues: nonCyanValues };
 }
 
-function isCyanBackground(hex) {
+function extractNonTranslatableValues(rows, backgrounds) {
+  if (rows.length < 2) return {};
+  var header = rows[0];
+  var keyIdx = header.indexOf("language");
+  var enIdx = header.indexOf("en");
+  if (keyIdx === -1 || enIdx === -1) return {};
+  var result = {};
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    var bgRow = backgrounds[i];
+    var rowVals = {};
+    for (var h = 0; h < header.length; h++) {
+      if (!header[h] || h === keyIdx || h === enIdx) continue;
+      if (!isTranslatableBackground(bgRow[h])) {
+        rowVals[header[h]] = rows[i][h] || "";
+      }
+    }
+    if (Object.keys(rowVals).length > 0) result[key] = rowVals;
+  }
+  return result;
+}
+
+function isTranslatableBackground(hex) {
   if (!hex) return false;
-  return hex.toLowerCase() === "#00ffff"
+  return hex.toLowerCase().trim() === "#00ffff"; //cyan color on google sheet
 }
 
 function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, isFullResync) {
@@ -218,7 +242,7 @@ function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, i
     for (var j = 0; j < targetLangs.length; j++) {
       var lang = targetLangs[j];
       var ci = targetIdxs[j];
-      colorMask[key][lang] = isCyanBackground(bgRow[ci]);
+      colorMask[key][lang] = isTranslatableBackground(bgRow[ci]);
       sentValues[key][lang] = row[ci] || "";
     }
   }

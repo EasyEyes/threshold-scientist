@@ -12,13 +12,36 @@ export function extractEnglishMap(rows) {
   return result;
 }
 
-export function buildDiffPayload(english) {
-  return { action: "diff", english };
+export function buildDiffPayload(english, nonCyanValues) {
+  return { action: "diff", english, nonCyanValues };
 }
 
-export function isWhiteBackground(hex) {
-  if (!hex) return true;
-  return hex.toLowerCase() === "#ffffff";
+export function extractNonTranslatableValues(rows, backgrounds) {
+  if (rows.length < 2) return {};
+  const header = rows[0];
+  const keyIdx = header.indexOf("key");
+  const enIdx = header.indexOf("en");
+  if (keyIdx === -1 || enIdx === -1) return {};
+  const result = {};
+  for (let i = 1; i < rows.length; i++) {
+    const key = rows[i][keyIdx];
+    if (!key) continue;
+    const bgRow = backgrounds[i];
+    const rowVals = {};
+    for (let h = 0; h < header.length; h++) {
+      if (!header[h] || h === keyIdx || h === enIdx) continue;
+      if (!isTranslatableBackground(bgRow[h])) {
+        rowVals[header[h]] = rows[i][h] || "";
+      }
+    }
+    if (Object.keys(rowVals).length > 0) result[key] = rowVals;
+  }
+  return result;
+}
+
+export function isTranslatableBackground(hex) {
+  if (!hex) return false;
+  return hex.toLowerCase().trim() === "#00ffff";
 }
 
 export function buildTranslatePayload(
@@ -26,7 +49,7 @@ export function buildTranslatePayload(
   backgrounds,
   changedKeys,
   currentVersion,
-  isFullResync
+  isFullResync,
 ) {
   const header = rows[0];
   const keyIdx = header.indexOf("key");
@@ -55,7 +78,7 @@ export function buildTranslatePayload(
     for (let j = 0; j < targetLangs.length; j++) {
       const lang = targetLangs[j];
       const ci = targetIdxs[j];
-      colorMask[key][lang] = !isWhiteBackground(bgRow[ci]);
+      colorMask[key][lang] = isTranslatableBackground(bgRow[ci]);
       sentValues[key][lang] = row[ci] || "";
     }
   }
