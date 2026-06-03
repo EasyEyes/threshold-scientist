@@ -43,12 +43,12 @@ function fullResyncPhrases() {
 
 function pushPhrases(isFullResync) {
   var secret = PropertiesService.getScriptProperties().getProperty(
-    "PHRASES_SECRET",
+    "PHRASES_SECRET"
   );
   if (!secret) {
     notify(
       "PHRASES_SECRET is not set in Script Properties. " +
-        "Add it under File > Project settings > Script properties.",
+        "Add it under File > Project settings > Script properties."
     );
     return;
   }
@@ -94,7 +94,7 @@ function pushPhrases(isFullResync) {
     backgrounds,
     changedKeys,
     currentVersion,
-    isFullResync,
+    isFullResync
   );
   var translateOptions = buildFetchOptions(secret, translatePayload);
 
@@ -107,7 +107,7 @@ function pushPhrases(isFullResync) {
   if (translateCode === 409) {
     notify(
       "Phrases push aborted: another push modified the phrases while this one was running. " +
-        "Please try again.",
+        "Please try again."
     );
     return;
   }
@@ -148,9 +148,9 @@ function pushPhrases(isFullResync) {
   var missingKeys = findMissingTranslatableKeys(colorMask, changedKeys);
   if (missingKeys.length > 0) {
     notify(
-      "Warning: the following phrase keys have no translatable (non-white) " +
+      "Warning: the following phrase keys have no translatable (cyan) " +
         "target-language cells and were not translated:\n" +
-        missingKeys.join(", "),
+        missingKeys.join(", ")
     );
   } else {
     var label = isFullResync ? "Full Resync" : "Update";
@@ -178,9 +178,9 @@ function buildDiffPayload(english) {
   return { action: "diff", english: english };
 }
 
-function isWhiteBackground(hex) {
-  if (!hex) return true;
-  return hex.toLowerCase() === "#ffffff";
+function isCyanBackground(hex) {
+  if (!hex) return false;
+  return hex.toLowerCase() === "#00ffff"
 }
 
 function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, isFullResync) {
@@ -218,7 +218,7 @@ function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, i
     for (var j = 0; j < targetLangs.length; j++) {
       var lang = targetLangs[j];
       var ci = targetIdxs[j];
-      colorMask[key][lang] = !isWhiteBackground(bgRow[ci]);
+      colorMask[key][lang] = isCyanBackground(bgRow[ci]);
       sentValues[key][lang] = row[ci] || "";
     }
   }
