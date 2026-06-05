@@ -711,8 +711,10 @@ export default class App extends Component {
       compileWarnings,
     } = this.state;
 
-    if (glossaryData === null) return null;
-
+    // The glossary download is kicked off in componentDidMount and runs in
+    // parallel. We deliberately do NOT block the UI on it: the scientist can
+    // log in and make selections without it. The glossary is only required to
+    // compile, where Table.js waits for it (showing a "Glossary …" status).
     const steps = [];
 
     const viewingPreviousExperiment =
