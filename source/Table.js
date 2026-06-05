@@ -227,16 +227,28 @@ export default class Table extends Component {
         userRepoFiles.requestedTargetSoundLists = requestedTargetSoundListList;
         userRepoFiles.blockFiles = fileList;
 
-        if (errorList.length) {
-          // sort errorList according to parameter name
-          errorList.sort((errA, errB) => {
+        // Warnings (kind === "warning") do not block compilation; only real
+        // errors do. They are shown alongside the success message below.
+        const hasBlockingError = errorList.some((err) => err.kind === "error");
+        const warningList = errorList.filter((err) => err.kind === "warning");
+
+        if (hasBlockingError) {
+          // When compilation fails, show only the blocking errors (not the
+          // non-blocking warnings), so the experimenter focuses on what must be
+          // fixed.
+          const blockingErrors = errorList.filter(
+            (err) => err.kind === "error",
+          );
+
+          // sort according to parameter name
+          blockingErrors.sort((errA, errB) => {
             if (errA.parameters < errB.parameters) return -1;
             else return 1;
           });
 
           // show errors
           this.setState({
-            errors: [...errorList],
+            errors: [...blockingErrors],
             showDropZone: true,
           });
 
@@ -273,10 +285,17 @@ export default class Table extends Component {
             this.props.functions.handleNextStep("upload");
           }
 
-          // show success log
+          // Surface any non-blocking warnings (e.g. LOGGING CAUTION) so they are
+          // shown on the "Experiment ready to run" page, above the green banner.
+          if (this.props.functions.handleSetCompileWarnings) {
+            this.props.functions.handleSetCompileWarnings(warningList);
+          }
+
+          // show success log, preceded by any non-blocking warnings
           this.props.functions.handleUpdateUser(user);
           this.setState({
             errors: [
+              ...warningList,
               {
                 context: "preprocessor",
                 kind: "correct",

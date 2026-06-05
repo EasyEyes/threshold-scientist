@@ -354,6 +354,38 @@ export default class Running extends Component {
 
     return (
       <>
+        {Array.isArray(this.props.compileWarnings) &&
+          this.props.compileWarnings.length > 0 && (
+            <div className="compile-warnings">
+              {this.props.compileWarnings.map((w, index) => (
+                <div
+                  className="compile-warning-item"
+                  key={`compile-warning-${index}`}
+                >
+                  {w.parameters && w.parameters.length ? (
+                    <div className="compile-warning-parameters">
+                      {w.parameters.join(" ")}
+                    </div>
+                  ) : null}
+                  <div className="compile-warning-name">{w.name}</div>
+                  {w.message && (
+                    <p
+                      className="compile-warning-message"
+                      dangerouslySetInnerHTML={{ __html: w.message }}
+                    ></p>
+                  )}
+                  {w.hint && (
+                    <p className="compile-warning-hint">
+                      <span className="compile-warning-hint-prefix">
+                        HINT:{" "}
+                      </span>
+                      <span dangerouslySetInnerHTML={{ __html: w.hint }}></span>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         <div className="green-status-banner">
           {isRunning
             ? pavloviaIsReady

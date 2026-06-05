@@ -103,6 +103,7 @@ export default class App extends Component {
       isCompiledFromArchiveBool: false,
       archivedZip: null,
       glossaryData: null,
+      compileWarnings: [],
     };
 
     this.functions = {
@@ -136,6 +137,7 @@ export default class App extends Component {
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
       handleSetCompileCount: this.handleSetCompileCount.bind(this),
+      handleSetCompileWarnings: this.handleSetCompileWarnings.bind(this),
       getprofileStatement: this.getprofileStatement.bind(this),
     };
 
@@ -356,6 +358,7 @@ export default class App extends Component {
       previousExperimentDuration: null,
       prolificStudyStatus: "",
       profileStatement: "Loading ...",
+      compileWarnings: [],
     });
   }
 
@@ -569,6 +572,12 @@ export default class App extends Component {
     });
   }
 
+  handleSetCompileWarnings(warnings) {
+    this.setState({
+      compileWarnings: Array.isArray(warnings) ? warnings : [],
+    });
+  }
+
   handleSetExperiment(experiment) {
     // Mutate directly to preserve User class prototype (spread operator loses it)
     const updatedUser = this.state.user;
@@ -699,6 +708,7 @@ export default class App extends Component {
       archivedZip,
       resourcesLoaded,
       glossaryData,
+      compileWarnings,
     } = this.state;
 
     if (glossaryData === null) return null;
@@ -756,6 +766,7 @@ export default class App extends Component {
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
           glossaryData={glossaryData}
+          compileWarnings={compileWarnings}
         />,
       );
 
