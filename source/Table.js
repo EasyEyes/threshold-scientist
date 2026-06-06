@@ -73,8 +73,9 @@ export default class Table extends Component {
 
     try {
       let shouldFetch = true;
+      let serverVersion = null;
       try {
-        const { version: serverVersion } = await fetchGlossaryVersion();
+        ({ version: serverVersion } = await fetchGlossaryVersion());
         const cachedVersion = getGlossaryVersion();
         if (
           serverVersion !== null &&
@@ -88,7 +89,10 @@ export default class Table extends Component {
       }
 
       if (shouldFetch) {
-        const data = await fetchGlossaryData();
+        // Fetch by explicit version so the CDN returns the just-published
+        // glossary (new version = new URL = cache miss), never a stale copy.
+        // If the probe failed, serverVersion is null → falls back to current.
+        const data = await fetchGlossaryData(serverVersion);
         initGlossary(data);
       }
     } catch (err) {
