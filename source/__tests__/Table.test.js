@@ -102,6 +102,7 @@ describe("Table.handleTable", () => {
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
     expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
+    expect(fetchGlossaryData).toHaveBeenCalledWith("2.0");
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
     expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
 
