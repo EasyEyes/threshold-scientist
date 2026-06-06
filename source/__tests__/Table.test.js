@@ -1,6 +1,8 @@
 import React from "react";
 import { render } from "@testing-library/react";
 import Table from "../Table";
+import Swal from "sweetalert2";
+import { preprocessExperimentFile } from "../../threshold/preprocess/main";
 
 jest.mock("sweetalert2", () => ({
   fire: jest.fn(),
@@ -219,5 +221,78 @@ describe("Table.handleTable", () => {
 
     expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
+  });
+});
+
+describe("Table.handleTable glossary loading dialog", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const glossaryFireCalls = () =>
+    Swal.fire.mock.calls.filter(
+      ([opts]) => opts && opts.title === "Glossary …",
+    );
+
+  it("shows the 'Glossary …' status while downloading and closes it before handing off", async () => {
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    // The loading dialog is opened exactly once...
+    expect(glossaryFireCalls()).toHaveLength(1);
+    // ...before the download starts...
+    const fireOrder = Swal.fire.mock.invocationCallOrder[0];
+    const fetchOrder = fetchGlossaryData.mock.invocationCallOrder[0];
+    expect(fireOrder).toBeLessThan(fetchOrder);
+    // ...and is closed before preprocessing takes over its own dialog.
+    expect(Swal.close).toHaveBeenCalledTimes(1);
+    const closeOrder = Swal.close.mock.invocationCallOrder[0];
+    const preprocessOrder = preprocessExperimentFile.mock.invocationCallOrder[0];
+    expect(closeOrder).toBeLessThan(preprocessOrder);
+  });
+
+  it("does not show the 'Glossary …' status when the cached version is current", async () => {
+    const { fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue("2.0");
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(glossaryFireCalls()).toHaveLength(0);
+    // Nothing was opened, so nothing needs closing for the glossary step.
+    expect(Swal.close).not.toHaveBeenCalled();
+  });
+
+  it("closes the 'Glossary …' status when the download fails", async () => {
+    const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
+    const { getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
+    fetchGlossaryData.mockRejectedValue(new Error("network down"));
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(glossaryFireCalls()).toHaveLength(1);
+    // The error path closes the dialog instead of leaving it spinning forever.
+    expect(Swal.close).toHaveBeenCalledTimes(1);
+    expect(preprocessExperimentFile).not.toHaveBeenCalled();
+
+    consoleError.mockRestore();
   });
 });
