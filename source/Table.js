@@ -71,9 +71,6 @@ export default class Table extends Component {
   async handleTable(file) {
     const { user } = this.props;
 
-    // The glossary download is started at app launch and runs in parallel. We
-    // need it to compile, so here we wait for it to finish if it hasn't yet.
-    let waitingForGlossarySwal = false;
     try {
       let shouldFetch = true;
       try {
@@ -91,28 +88,13 @@ export default class Table extends Component {
       }
 
       if (shouldFetch) {
-        // The glossary isn't ready yet; tell the scientist we're waiting on it.
-        Swal.fire({
-          title: "Glossary …",
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          willOpen: () => {
-            Swal.showLoading(null);
-          },
-        });
-        waitingForGlossarySwal = true;
         const data = await fetchGlossaryData();
         initGlossary(data);
       }
     } catch (err) {
-      if (waitingForGlossarySwal) Swal.close();
       console.error("Failed to refresh glossary:", err);
       return;
     }
-    // Close the "Glossary …" status before handing off to the resource/compile
-    // flow, which manages its own status dialog.
-    if (waitingForGlossarySwal) Swal.close();
 
     let resolvedResources;
 
