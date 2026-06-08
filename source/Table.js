@@ -69,36 +69,46 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
-    const { user } = this.props;
-
+    // The glossary is fetched lazily on first compile (no longer at app launch).
+    // handleDrop has already opened a "Compiling ..." dialog before calling us;
+    // we relabel that same dialog for each phase instead of firing/closing our
+    // own, so the modal stays open continuously — closing it would leave a blank
+    // screen through the rest of the compile.
+    let shouldFetch = true;
+    let serverVersion = null;
     try {
-      let shouldFetch = true;
-      let serverVersion = null;
-      try {
-        ({ version: serverVersion } = await fetchGlossaryVersion());
-        const cachedVersion = getGlossaryVersion();
-        if (
-          serverVersion !== null &&
-          cachedVersion !== null &&
-          serverVersion === cachedVersion
-        ) {
-          shouldFetch = false;
-        }
-      } catch {
-        // fall through to full fetch
+      ({ version: serverVersion } = await fetchGlossaryVersion());
+      const cachedVersion = getGlossaryVersion();
+      if (
+        serverVersion !== null &&
+        cachedVersion !== null &&
+        serverVersion === cachedVersion
+      ) {
+        shouldFetch = false;
       }
+    } catch {
+      // fall through to full fetch
+    }
 
-      if (shouldFetch) {
+    if (shouldFetch) {
+      // The glossary isn't ready yet; tell the scientist we're waiting on it.
+      manuallySetSwalTitle("Loading glossary …");
+      Swal.showLoading(null);
+      try {
         // Fetch by explicit version so the CDN returns the just-published
         // glossary (new version = new URL = cache miss), never a stale copy.
         // If the probe failed, serverVersion is null → falls back to current.
         const data = await fetchGlossaryData(serverVersion);
         initGlossary(data);
+      } catch (err) {
+        Swal.close();
+        console.error("Failed to refresh glossary:", err);
+        return;
       }
-    } catch (err) {
-      console.error("Failed to refresh glossary:", err);
-      return;
     }
+    // Restore the compiling status before handing off to the resource/compile
+    // flow, which manages its own status dialog.
+    manuallySetSwalTitle("Compiling ...");
 
     let resolvedResources;
 

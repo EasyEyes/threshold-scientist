@@ -8,6 +8,11 @@ import {
   COMPLETION_CODE_ACTION,
   COMPLETION_CODE_TYPE,
 } from "../components/prolificConstants";
+import { getGlossary } from "../../threshold/parameters/glossaryRegistry";
+
+jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
+  getGlossary: jest.fn(),
+}));
 
 // Mock global fetch
 global.fetch = jest.fn();
@@ -33,6 +38,7 @@ describe("Prolific Integration - New Parameters", () => {
         _online2Description: { default: "Default Description" },
       },
     };
+    getGlossary.mockReturnValue(mockGlossaryData.glossary);
     mockInternalName = "TestExperiment";
     mockCompletionCode = "COMPLETED123";
     mockIncompatibleCode = "INCOMPATIBLE456";
