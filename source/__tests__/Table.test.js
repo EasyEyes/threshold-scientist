@@ -229,14 +229,15 @@ describe("Table.handleTable glossary loading dialog", () => {
     jest.clearAllMocks();
   });
 
-  const glossaryFireCalls = () =>
-    Swal.fire.mock.calls.filter(
-      ([opts]) => opts && opts.title === "Glossary …",
-    );
+  const swalTitles = () => {
+    const { manuallySetSwalTitle } = require("../../threshold/preprocess/gitlabUtils");
+    return manuallySetSwalTitle.mock.calls.map(([title]) => title);
+  };
 
-  it("shows the 'Glossary …' status while downloading and closes it before handing off", async () => {
+  it("relabels the open dialog to 'Glossary …' while downloading, then restores 'Compiling ...' without closing it", async () => {
     const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
     const { getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
+    const { manuallySetSwalTitle } = require("../../threshold/preprocess/gitlabUtils");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
     fetchGlossaryData.mockResolvedValue(mockGlossaryData);
@@ -246,20 +247,21 @@ describe("Table.handleTable glossary loading dialog", () => {
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    // The loading dialog is opened exactly once...
-    expect(glossaryFireCalls()).toHaveLength(1);
+    const titles = swalTitles();
+    // The dialog opened by handleDrop is relabeled to show the glossary download...
+    expect(titles).toContain("Glossary …");
     // ...before the download starts...
-    const fireOrder = Swal.fire.mock.invocationCallOrder[0];
+    const glossaryTitleOrder =
+      manuallySetSwalTitle.mock.invocationCallOrder[titles.indexOf("Glossary …")];
     const fetchOrder = fetchGlossaryData.mock.invocationCallOrder[0];
-    expect(fireOrder).toBeLessThan(fetchOrder);
-    // ...and is closed before preprocessing takes over its own dialog.
-    expect(Swal.close).toHaveBeenCalledTimes(1);
-    const closeOrder = Swal.close.mock.invocationCallOrder[0];
-    const preprocessOrder = preprocessExperimentFile.mock.invocationCallOrder[0];
-    expect(closeOrder).toBeLessThan(preprocessOrder);
+    expect(glossaryTitleOrder).toBeLessThan(fetchOrder);
+    // ...and is restored to "Compiling ..." (never closed) before preprocessing.
+    expect(titles).toContain("Compiling ...");
+    expect(Swal.close).not.toHaveBeenCalled();
+    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
   });
 
-  it("does not show the 'Glossary …' status when the cached version is current", async () => {
+  it("does not relabel to 'Glossary …' when the cached version is current", async () => {
     const { fetchGlossaryVersion } = require("../components/glossaryApi");
     const { getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
@@ -270,12 +272,12 @@ describe("Table.handleTable glossary loading dialog", () => {
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(glossaryFireCalls()).toHaveLength(0);
-    // Nothing was opened, so nothing needs closing for the glossary step.
+    // No download, so no glossary status; the shared dialog stays open (never closed).
+    expect(swalTitles()).not.toContain("Glossary …");
     expect(Swal.close).not.toHaveBeenCalled();
   });
 
-  it("closes the 'Glossary …' status when the download fails", async () => {
+  it("closes the dialog when the glossary download fails", async () => {
     const { fetchGlossaryData, fetchGlossaryVersion } = require("../components/glossaryApi");
     const { getGlossaryVersion } = require("../../threshold/parameters/glossaryRegistry");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
@@ -288,7 +290,7 @@ describe("Table.handleTable glossary loading dialog", () => {
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(glossaryFireCalls()).toHaveLength(1);
+    expect(swalTitles()).toContain("Glossary …");
     // The error path closes the dialog instead of leaving it spinning forever.
     expect(Swal.close).toHaveBeenCalledTimes(1);
     expect(preprocessExperimentFile).not.toHaveBeenCalled();

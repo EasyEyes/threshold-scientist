@@ -69,52 +69,46 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
-    // The glossary download is started at app launch and runs in parallel. We
-    // need it to compile, so here we wait for it to finish if it hasn't yet.
-    let waitingForGlossarySwal = false;
+    // The glossary is fetched lazily on first compile (no longer at app launch).
+    // handleDrop has already opened a "Compiling ..." dialog before calling us;
+    // we relabel that same dialog for each phase instead of firing/closing our
+    // own, so the modal stays open continuously — closing it would leave a blank
+    // screen through the rest of the compile.
+    let shouldFetch = true;
+    let serverVersion = null;
     try {
-      let shouldFetch = true;
-      let serverVersion = null;
-      try {
-        ({ version: serverVersion } = await fetchGlossaryVersion());
-        const cachedVersion = getGlossaryVersion();
-        if (
-          serverVersion !== null &&
-          cachedVersion !== null &&
-          serverVersion === cachedVersion
-        ) {
-          shouldFetch = false;
-        }
-      } catch {
-        // fall through to full fetch
+      ({ version: serverVersion } = await fetchGlossaryVersion());
+      const cachedVersion = getGlossaryVersion();
+      if (
+        serverVersion !== null &&
+        cachedVersion !== null &&
+        serverVersion === cachedVersion
+      ) {
+        shouldFetch = false;
       }
+    } catch {
+      // fall through to full fetch
+    }
 
-      if (shouldFetch) {
-        // The glossary isn't ready yet; tell the scientist we're waiting on it.
-        Swal.fire({
-          title: "Glossary …",
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          willOpen: () => {
-            Swal.showLoading(null);
-          },
-        });
-        waitingForGlossarySwal = true;
+    if (shouldFetch) {
+      // The glossary isn't ready yet; tell the scientist we're waiting on it.
+      manuallySetSwalTitle("Loading glossary …");
+      Swal.showLoading(null);
+      try {
         // Fetch by explicit version so the CDN returns the just-published
         // glossary (new version = new URL = cache miss), never a stale copy.
         // If the probe failed, serverVersion is null → falls back to current.
         const data = await fetchGlossaryData(serverVersion);
         initGlossary(data);
+      } catch (err) {
+        Swal.close();
+        console.error("Failed to refresh glossary:", err);
+        return;
       }
-    } catch (err) {
-      if (waitingForGlossarySwal) Swal.close();
-      console.error("Failed to refresh glossary:", err);
-      return;
     }
-    // Close the "Glossary …" status before handing off to the resource/compile
+    // Restore the compiling status before handing off to the resource/compile
     // flow, which manages its own status dialog.
-    if (waitingForGlossarySwal) Swal.close();
+    manuallySetSwalTitle("Compiling ...");
 
     let resolvedResources;
 
