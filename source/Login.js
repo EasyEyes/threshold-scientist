@@ -139,7 +139,7 @@ export default class Login extends Component {
           if (loadingShown) {
             Swal.update({
               title: "Still loading",
-              text: "Pavlovia may be slow or temporarily unreachable — this will resume automatically when it recovers.",
+              html: "Pavlovia may be slow or temporarily unreachable <br> This will resume automatically when it recovers.",
             });
             Swal.showLoading(null);
           }
