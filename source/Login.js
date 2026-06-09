@@ -138,7 +138,7 @@ export default class Login extends Component {
         const outageTimer = setTimeout(() => {
           if (loadingShown) {
             Swal.update({
-              title: "Still loading",
+              title: "Still loading ...",
               html: "Pavlovia may be slow or temporarily unreachable <br> This will resume automatically when it recovers.",
             });
             Swal.showLoading(null);
