@@ -122,6 +122,28 @@ export default class Login extends Component {
       const hasTokensInStorage = localStorage.getItem("gitlab_oauth_tokens");
 
       if (hasTokensInStorage) {
+        let loadingShown = false;
+        const loadingTimer = setTimeout(() => {
+          loadingShown = true;
+          Swal.fire({
+            title: "Loading ...",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+              Swal.showLoading(null);
+            },
+          });
+        }, 1000);
+        const outageTimer = setTimeout(() => {
+          if (loadingShown) {
+            Swal.update({
+              title: "Still loading ...",
+              html: "Pavlovia may be slow or temporarily unreachable <br> This will resume automatically when it recovers.",
+            });
+            Swal.showLoading(null);
+          }
+        }, 12000);
         try {
           console.log("Checking stored session validity...");
           const { loadStoredSession } = await import(
@@ -163,6 +185,10 @@ export default class Login extends Component {
         } catch (error) {
           // Stored session invalid or error loading it
           console.log("Stored session invalid, initiating login", error);
+        } finally {
+          clearTimeout(loadingTimer);
+          clearTimeout(outageTimer);
+          if (loadingShown) Swal.close();
         }
       } else {
         console.log("No tokens in localStorage, initiating OAuth login");
@@ -221,7 +247,9 @@ export default class Login extends Component {
       oauthClient.saveTokens();
 
       // Create user and get basic info immediately
-      const { createUser } = await import("../threshold/preprocess/gitlabUtils");
+      const { createUser } = await import(
+        "../threshold/preprocess/gitlabUtils"
+      );
       const user = createUser(accessToken);
       await user.initUserDetails(); // TODO measure this is actually fast
 

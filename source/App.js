@@ -35,8 +35,7 @@ import "./css/App.scss";
 import { signInAnonymously } from "firebase/auth";
 import { getSoundProfileStatement } from "./components/firebase_soundProfile";
 import { captureError } from "./sentry";
-import { fetchGlossaryData } from "./components/glossaryApi";
-import { initGlossary } from "../threshold/parameters/glossaryRegistry";
+import { getGlossaryFull } from "../threshold/parameters/glossaryRegistry";
 import { fetchPhrasesData } from "./components/phrasesApi";
 import { initPhrases } from "../threshold/parameters/phrasesRegistry";
 
@@ -105,7 +104,7 @@ export default class App extends Component {
       profileStatement: "Loading ...",
       isCompiledFromArchiveBool: false,
       archivedZip: null,
-      glossaryData: null,
+      compileWarnings: [],
     };
 
     this.functions = {
@@ -139,6 +138,7 @@ export default class App extends Component {
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
       handleSetCompileCount: this.handleSetCompileCount.bind(this),
+      handleSetCompileWarnings: this.handleSetCompileWarnings.bind(this),
       getprofileStatement: this.getprofileStatement.bind(this),
     };
 
@@ -146,13 +146,6 @@ export default class App extends Component {
   }
 
   async componentDidMount() {
-    fetchGlossaryData()
-      .then((data) => {
-        initGlossary(data);
-        this.setState({ glossaryData: data });
-      })
-      .catch((error) => console.warn("Failed to fetch glossary data:", error));
-
     fetchPhrasesData()
       .then((data) => {
         initPhrases(data);
@@ -368,6 +361,7 @@ export default class App extends Component {
       previousExperimentDuration: null,
       prolificStudyStatus: "",
       profileStatement: "Loading ...",
+      compileWarnings: [],
     });
   }
 
@@ -581,6 +575,12 @@ export default class App extends Component {
     });
   }
 
+  handleSetCompileWarnings(warnings) {
+    this.setState({
+      compileWarnings: Array.isArray(warnings) ? warnings : [],
+    });
+  }
+
   handleSetExperiment(experiment) {
     // Mutate directly to preserve User class prototype (spread operator loses it)
     const updatedUser = this.state.user;
@@ -711,13 +711,11 @@ export default class App extends Component {
       isCompiledFromArchiveBool,
       archivedZip,
       resourcesLoaded,
-      glossaryData,
+      compileWarnings,
     } = this.state;
 
     if (phrasesError)
       return <div>Failed to load phrases. Please refresh the page.</div>;
-
-    if (glossaryData === null) return null;
 
     const steps = [];
 
@@ -748,7 +746,6 @@ export default class App extends Component {
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
-          glossaryData={glossaryData}
         />,
       );
     else
@@ -771,7 +768,7 @@ export default class App extends Component {
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
-          glossaryData={glossaryData}
+          compileWarnings={compileWarnings}
         />,
       );
 
@@ -781,7 +778,7 @@ export default class App extends Component {
           <Suspense fallback={<></>}>
             <Glossary
               closeGlossary={this.closeGlossary}
-              glossaryFull={glossaryData?.glossaryFull ?? []}
+              glossaryFull={getGlossaryFull()}
             />
           </Suspense>
         )}

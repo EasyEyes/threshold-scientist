@@ -78,32 +78,46 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
-    const { user } = this.props;
-
+    // The glossary is fetched lazily on first compile (no longer at app launch).
+    // handleDrop has already opened a "Compiling ..." dialog before calling us;
+    // we relabel that same dialog for each phase instead of firing/closing our
+    // own, so the modal stays open continuously — closing it would leave a blank
+    // screen through the rest of the compile.
+    let shouldFetch = true;
+    let serverVersion = null;
     try {
-      let shouldFetch = true;
-      try {
-        const { version: serverVersion } = await fetchGlossaryVersion();
-        const cachedVersion = getGlossaryVersion();
-        if (
-          serverVersion !== null &&
-          cachedVersion !== null &&
-          serverVersion === cachedVersion
-        ) {
-          shouldFetch = false;
-        }
-      } catch {
-        // fall through to full fetch
+      ({ version: serverVersion } = await fetchGlossaryVersion());
+      const cachedVersion = getGlossaryVersion();
+      if (
+        serverVersion !== null &&
+        cachedVersion !== null &&
+        serverVersion === cachedVersion
+      ) {
+        shouldFetch = false;
       }
-
-      if (shouldFetch) {
-        const data = await fetchGlossaryData();
-        initGlossary(data);
-      }
-    } catch (err) {
-      console.error("Failed to refresh glossary:", err);
-      return;
+    } catch {
+      // fall through to full fetch
     }
+
+    if (shouldFetch) {
+      // The glossary isn't ready yet; tell the scientist we're waiting on it.
+      manuallySetSwalTitle("Loading glossary …");
+      Swal.showLoading(null);
+      try {
+        // Fetch by explicit version so the CDN returns the just-published
+        // glossary (new version = new URL = cache miss), never a stale copy.
+        // If the probe failed, serverVersion is null → falls back to current.
+        const data = await fetchGlossaryData(serverVersion);
+        initGlossary(data);
+      } catch (err) {
+        Swal.close();
+        console.error("Failed to refresh glossary:", err);
+        return;
+      }
+    }
+    // Restore the compiling status before handing off to the resource/compile
+    // flow, which manages its own status dialog.
+    manuallySetSwalTitle("Compiling ...");
 
     try {
       let shouldFetchPhrases = true;
@@ -261,16 +275,28 @@ export default class Table extends Component {
         userRepoFiles.requestedTargetSoundLists = requestedTargetSoundListList;
         userRepoFiles.blockFiles = fileList;
 
-        if (errorList.length) {
-          // sort errorList according to parameter name
-          errorList.sort((errA, errB) => {
+        // Warnings (kind === "warning") do not block compilation; only real
+        // errors do. They are shown alongside the success message below.
+        const hasBlockingError = errorList.some((err) => err.kind === "error");
+        const warningList = errorList.filter((err) => err.kind === "warning");
+
+        if (hasBlockingError) {
+          // When compilation fails, show only the blocking errors (not the
+          // non-blocking warnings), so the experimenter focuses on what must be
+          // fixed.
+          const blockingErrors = errorList.filter(
+            (err) => err.kind === "error",
+          );
+
+          // sort according to parameter name
+          blockingErrors.sort((errA, errB) => {
             if (errA.parameters < errB.parameters) return -1;
             else return 1;
           });
 
           // show errors
           this.setState({
-            errors: [...errorList],
+            errors: [...blockingErrors],
             showDropZone: true,
           });
 
@@ -314,10 +340,17 @@ export default class Table extends Component {
             this.props.functions.handleNextStep("upload");
           }
 
-          // show success log
+          // Surface any non-blocking warnings (e.g. LOGGING CAUTION) so they are
+          // shown on the "Experiment ready to run" page, above the green banner.
+          if (this.props.functions.handleSetCompileWarnings) {
+            this.props.functions.handleSetCompileWarnings(warningList);
+          }
+
+          // show success log, preceded by any non-blocking warnings
           this.props.functions.handleUpdateUser(user);
           this.setState({
             errors: [
+              ...warningList,
               {
                 context: "preprocessor",
                 kind: "correct",

@@ -34,6 +34,33 @@ describe("glossaryApi", () => {
       expect(global.fetch).toHaveBeenCalledWith("/.netlify/functions/glossary");
       expect(result).toEqual(mockGlossaryData);
     });
+
+    it("fetches an explicit version via ?v= when given", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce(mockGlossaryData),
+      });
+
+      await fetchGlossaryData("2.0");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/.netlify/functions/glossary?v=2.0",
+      );
+    });
+
+    it("retries on a failed response and then resolves", async () => {
+      global.fetch
+        .mockResolvedValueOnce({ ok: false, status: 503 })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: jest.fn().mockResolvedValueOnce(mockGlossaryData),
+        });
+
+      const result = await fetchGlossaryData();
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(result).toEqual(mockGlossaryData);
+    });
   });
 
   describe("fetchGlossaryVersion", () => {

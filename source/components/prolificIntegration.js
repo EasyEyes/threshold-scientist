@@ -18,6 +18,7 @@ import {
   VR_HEADSET_USAGE_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 import { captureError } from "../sentry";
+import { getGlossary } from "../../threshold/parameters/glossaryRegistry";
 
 const prolificStudySubmissionStatus = {
   RESERVED: "RESERVED",
@@ -110,9 +111,7 @@ const fetchProlificFilterSets = async (token) => {
 const findFilterSetId = (filterSets, name) => {
   if (!name || name === "") return null;
   const target = name.trim().toLowerCase();
-  const set = filterSets.find(
-    (fs) => fs.name?.trim().toLowerCase() === target,
-  );
+  const set = filterSets.find((fs) => fs.name?.trim().toLowerCase() === target);
   return set?.id || null;
 };
 
@@ -360,7 +359,6 @@ export const prolificCreateDraft = async (
   incompatibleCompletionCode,
   abortedCompletionCode,
   token,
-  glossaryData,
 ) => {
   // const prolificStudyDraftApiUrl = "https://api.prolific.com/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
@@ -416,11 +414,11 @@ export const prolificCreateDraft = async (
   if (user.currentExperiment._prolific3AllowCompletedExperiment) {
     const allowAfterHours =
       parseFloat(user.currentExperiment._prolific3AllowAfterHours) || 0;
-    const completedStudyNames = user.currentExperiment
-      ._prolific3AllowCompletedExperiment
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const completedStudyNames =
+      user.currentExperiment._prolific3AllowCompletedExperiment
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     const completedStudyIds = findStudyIdsByNames(
       projectStudies,
       completedStudyNames,
@@ -449,8 +447,7 @@ export const prolificCreateDraft = async (
 
   // _prolific2ScreenerSet: resolve screener set name -> filter_set_id.
   // When set, Prolific ignores the filters array, so we skip building it.
-  const screenerSetName =
-    user.currentExperiment._prolific2ScreenerSet?.trim();
+  const screenerSetName = user.currentExperiment._prolific2ScreenerSet?.trim();
   const participantGroupName =
     user.currentExperiment._prolific2CompletionPathAddToGroup?.trim();
   const abortedParticipantGroupName =
@@ -516,7 +513,7 @@ export const prolificCreateDraft = async (
       user.currentExperiment.titleOfStudy &&
       user.currentExperiment.titleOfStudy !== ""
         ? user.currentExperiment.titleOfStudy
-        : glossaryData.glossary["_online1Title"].default,
+        : getGlossary()["_online1Title"].default,
     internal_name:
       user.currentExperiment._online1InternalName &&
       user.currentExperiment._online1InternalName !== ""
@@ -526,7 +523,7 @@ export const prolificCreateDraft = async (
       user.currentExperiment.descriptionOfStudy &&
       user.currentExperiment.descriptionOfStudy !== ""
         ? user.currentExperiment.descriptionOfStudy
-        : glossaryData.glossary["_online2Description"].default,
+        : getGlossary()["_online2Description"].default,
     external_study_url: user.currentExperiment.experimentUrl,
     prolific_id_option: "url_parameters",
     completion_option: "url",

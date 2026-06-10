@@ -48,7 +48,9 @@
       }
     },
     "compileCounts": {
+      ".read": true,
       "$uid": {
+        ".read": true,
         ".write": "newData.isNumber()"
       }
     }

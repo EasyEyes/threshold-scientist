@@ -19,7 +19,6 @@ jest.mock("sweetalert2", () => ({
 }));
 
 jest.mock("../Step", () => () => null);
-jest.mock("../Glossary", () => ({ default: () => null }));
 jest.mock("../StatusLines", () => () => null);
 
 jest.mock("../components/steps", () => ({
@@ -75,14 +74,6 @@ jest.mock("../sentry", () => ({
   captureError: jest.fn(),
 }));
 
-jest.mock("../components/glossaryApi", () => ({
-  fetchGlossaryData: jest.fn(),
-}));
-
-jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
-  initGlossary: jest.fn(),
-}));
-
 jest.mock("../components/phrasesApi", () => ({
   fetchPhrasesData: jest.fn(),
 }));
@@ -93,13 +84,6 @@ jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
 
 global.fetch = jest.fn().mockResolvedValue({ ok: false });
 
-const mockGlossaryData = {
-  version: "1.0",
-  glossary: { param1: { name: "param1" } },
-  glossaryFull: [],
-  superMatchingParams: ["param1"],
-};
-
 const mockPhrasesData = {
   version: "1.0",
   phrases: { greeting: { en: "Hello", fr: "Bonjour" } },
@@ -108,25 +92,15 @@ const mockPhrasesData = {
 describe("App", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    const { fetchGlossaryData } = require("../components/glossaryApi");
-    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
     const { fetchPhrasesData } = require("../components/phrasesApi");
     fetchPhrasesData.mockResolvedValue(mockPhrasesData);
     global.fetch.mockResolvedValue({ ok: false });
   });
 
-  it("calls initGlossary with fetched glossary data when fetchGlossaryData resolves", async () => {
-    const { initGlossary } = require("../../threshold/parameters/glossaryRegistry");
-
-    render(<App />);
-
-    await waitFor(() => {
-      expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
-    });
-  });
-
   it("calls initPhrases with fetched phrases data when fetchPhrasesData resolves", async () => {
-    const { initPhrases } = require("../../threshold/parameters/phrasesRegistry");
+    const {
+      initPhrases,
+    } = require("../../threshold/parameters/phrasesRegistry");
 
     render(<App />);
 
@@ -142,9 +116,7 @@ describe("App", () => {
     const { getByText } = render(<App />);
 
     await waitFor(() => {
-      expect(
-        getByText(/failed to load phrases/i),
-      ).toBeInTheDocument();
+      expect(getByText(/failed to load phrases/i)).toBeInTheDocument();
     });
   });
 });
