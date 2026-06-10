@@ -323,7 +323,7 @@ describe("Prolific Integration - New Parameters", () => {
       expect(abortedCode).toBeDefined();
       expect(abortedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.REQUEST_RETURN,
-        return_reason: "Study aborted"
+        return_reason: "Study aborted",
       });
     });
 

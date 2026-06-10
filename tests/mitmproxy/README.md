@@ -36,8 +36,8 @@ mitmdump -s <script>.py
 
 ### Stored-session probe outage + recovery (issue #124, Bug A)
 
-| Script | What it injects | Expected outcome |
-|--------|----------------|-----------------|
+| Script                              | What it injects                                                                                                                                       | Expected outcome                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `stored_session_outage_recovery.py` | CORS-masked 503 (no `Access-Control-Allow-Origin`) on the first `FAIL_FIRST` (=8) `GET /api/v4/user` probes, then passes through to the real endpoint | **Without the fix:** page sits silently on "Checking stored session validity…", console shows the CORS / `ERR_FAILED` pair (fast at first, then ~2 lines/min). **With the fix:** a "Loading …" SweetAlert appears after 1s, swaps to "Still loading — Pavlovia may be slow or temporarily unreachable…" after 12s, then auto-closes into the Compiler table once the injected outage ends. |
 
 **Setup:** sign in to Pavlovia once so a session is stored in `localStorage`, close
@@ -52,17 +52,20 @@ recovery.
 ## What to verify
 
 ### In the mitmdump log
+
 - `[stored_session_outage_recovery]` lines show each `/user` probe. The counter rises
   while the outage is injected, then prints `passing through to real … (outage ended)`
   and stops once it exceeds `FAIL_FIRST`.
 
 ### In the EasyEyes Compiler UI
+
 - No silent freeze: the "Loading …" dialog appears within ~1s.
 - After ~12s the dialog text changes to the outage message.
 - Once the outage ends, the dialog **closes by itself** and the table renders — no
   manual refresh, no forced re-login.
 
 ### In Chrome DevTools → Console
+
 - The CORS / `ERR_FAILED` pair logs during the injected outage (this fix is
   presentation-layer only and deliberately does **not** silence the console flood;
   see issue #124).

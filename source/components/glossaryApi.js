@@ -7,9 +7,7 @@ async function fetchJsonWithRetry(url, options, retries = 2) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const response = options
-        ? await fetch(url, options)
-        : await fetch(url);
+      const response = options ? await fetch(url, options) : await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.json();
     } catch (err) {

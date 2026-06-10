@@ -111,9 +111,7 @@ const fetchProlificFilterSets = async (token) => {
 const findFilterSetId = (filterSets, name) => {
   if (!name || name === "") return null;
   const target = name.trim().toLowerCase();
-  const set = filterSets.find(
-    (fs) => fs.name?.trim().toLowerCase() === target,
-  );
+  const set = filterSets.find((fs) => fs.name?.trim().toLowerCase() === target);
   return set?.id || null;
 };
 
@@ -416,11 +414,11 @@ export const prolificCreateDraft = async (
   if (user.currentExperiment._prolific3AllowCompletedExperiment) {
     const allowAfterHours =
       parseFloat(user.currentExperiment._prolific3AllowAfterHours) || 0;
-    const completedStudyNames = user.currentExperiment
-      ._prolific3AllowCompletedExperiment
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const completedStudyNames =
+      user.currentExperiment._prolific3AllowCompletedExperiment
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     const completedStudyIds = findStudyIdsByNames(
       projectStudies,
       completedStudyNames,
@@ -449,8 +447,7 @@ export const prolificCreateDraft = async (
 
   // _prolific2ScreenerSet: resolve screener set name -> filter_set_id.
   // When set, Prolific ignores the filters array, so we skip building it.
-  const screenerSetName =
-    user.currentExperiment._prolific2ScreenerSet?.trim();
+  const screenerSetName = user.currentExperiment._prolific2ScreenerSet?.trim();
   const participantGroupName =
     user.currentExperiment._prolific2CompletionPathAddToGroup?.trim();
   const abortedParticipantGroupName =
