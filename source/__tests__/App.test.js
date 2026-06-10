@@ -75,7 +75,8 @@ jest.mock("../sentry", () => ({
 }));
 
 jest.mock("../components/phrasesApi", () => ({
-  fetchPhrasesData: jest.fn(),
+  fetchPhrasesVersion: jest.fn(),
+  fetchPhrasesByVersion: jest.fn(),
 }));
 
 jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
@@ -92,12 +93,20 @@ const mockPhrasesData = {
 describe("App", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    const { fetchPhrasesData } = require("../components/phrasesApi");
-    fetchPhrasesData.mockResolvedValue(mockPhrasesData);
+    const {
+      fetchPhrasesVersion,
+      fetchPhrasesByVersion,
+    } = require("../components/phrasesApi");
+    fetchPhrasesVersion.mockResolvedValue({ version: mockPhrasesData.version });
+    fetchPhrasesByVersion.mockResolvedValue(mockPhrasesData);
     global.fetch.mockResolvedValue({ ok: false });
   });
 
-  it("calls initPhrases with fetched phrases data when fetchPhrasesData resolves", async () => {
+  it("checks the latest version, then fetches that specific version and calls initPhrases", async () => {
+    const {
+      fetchPhrasesVersion,
+      fetchPhrasesByVersion,
+    } = require("../components/phrasesApi");
     const {
       initPhrases,
     } = require("../../threshold/parameters/phrasesRegistry");
@@ -107,11 +116,13 @@ describe("App", () => {
     await waitFor(() => {
       expect(initPhrases).toHaveBeenCalledWith(mockPhrasesData);
     });
+    expect(fetchPhrasesVersion).toHaveBeenCalledTimes(1);
+    expect(fetchPhrasesByVersion).toHaveBeenCalledWith(mockPhrasesData.version);
   });
 
-  it("renders a phrases error message when fetchPhrasesData rejects", async () => {
-    const { fetchPhrasesData } = require("../components/phrasesApi");
-    fetchPhrasesData.mockRejectedValue(new Error("network error"));
+  it("renders a phrases error message when the version probe rejects", async () => {
+    const { fetchPhrasesVersion } = require("../components/phrasesApi");
+    fetchPhrasesVersion.mockRejectedValue(new Error("network error"));
 
     const { getByText } = render(<App />);
 

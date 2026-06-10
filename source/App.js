@@ -36,7 +36,10 @@ import { signInAnonymously } from "firebase/auth";
 import { getSoundProfileStatement } from "./components/firebase_soundProfile";
 import { captureError } from "./sentry";
 import { getGlossaryFull } from "../threshold/parameters/glossaryRegistry";
-import { fetchPhrasesData } from "./components/phrasesApi";
+import {
+  fetchPhrasesVersion,
+  fetchPhrasesByVersion,
+} from "./components/phrasesApi";
 import { initPhrases } from "../threshold/parameters/phrasesRegistry";
 
 // Utility function to create empty resources object from constants
@@ -146,7 +149,14 @@ export default class App extends Component {
   }
 
   async componentDidMount() {
-    fetchPhrasesData()
+    // Check the latest version first (uncached), then download that specific
+    // version (cached immutably in the browser), so an unchanged version is
+    // not re-downloaded on subsequent visits.
+    fetchPhrasesVersion()
+      .then(({ version }) => {
+        if (!version) throw new Error("No current phrases version");
+        return fetchPhrasesByVersion(version);
+      })
       .then((data) => {
         initPhrases(data);
       })

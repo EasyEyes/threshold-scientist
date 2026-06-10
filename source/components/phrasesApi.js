@@ -14,6 +14,18 @@ export async function fetchPhrasesVersion() {
   return response.json();
 }
 
+export async function fetchPhrasesByVersion(version) {
+  const response = await fetch(
+    `${await getEasyEyesBaseUrl()}/.netlify/functions/phrases?v=${encodeURIComponent(
+      version,
+    )}`,
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to fetch phrases version ${version}`);
+  }
+  return response.json();
+}
+
 export async function pinPhrasesVersion(username, experimentName) {
   const response = await fetch(
     `${await getEasyEyesBaseUrl()}/.netlify/functions/phrases`,
