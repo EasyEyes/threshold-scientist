@@ -307,7 +307,7 @@ describe("Table.handleTable glossary loading dialog", () => {
     return manuallySetSwalTitle.mock.calls.map(([title]) => title);
   };
 
-  it("relabels the open dialog to 'Glossary …' while downloading, then restores 'Compiling ...' without closing it", async () => {
+  it("relabels the open dialog to 'Loading glossary …' while downloading, then restores 'Compiling ...' without closing it", async () => {
     const {
       fetchGlossaryData,
       fetchGlossaryVersion,
@@ -329,11 +329,11 @@ describe("Table.handleTable glossary loading dialog", () => {
 
     const titles = swalTitles();
     // The dialog opened by handleDrop is relabeled to show the glossary download...
-    expect(titles).toContain("Glossary …");
+    expect(titles).toContain("Loading glossary …");
     // ...before the download starts...
     const glossaryTitleOrder =
       manuallySetSwalTitle.mock.invocationCallOrder[
-        titles.indexOf("Glossary …")
+        titles.indexOf("Loading glossary …")
       ];
     const fetchOrder = fetchGlossaryData.mock.invocationCallOrder[0];
     expect(glossaryTitleOrder).toBeLessThan(fetchOrder);
@@ -343,7 +343,7 @@ describe("Table.handleTable glossary loading dialog", () => {
     expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
   });
 
-  it("does not relabel to 'Glossary …' when the cached version is current", async () => {
+  it("does not relabel to 'Loading glossary …' when the cached version is current", async () => {
     const { fetchGlossaryVersion } = require("../components/glossaryApi");
     const {
       getGlossaryVersion,
@@ -357,7 +357,7 @@ describe("Table.handleTable glossary loading dialog", () => {
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
     // No download, so no glossary status; the shared dialog stays open (never closed).
-    expect(swalTitles()).not.toContain("Glossary …");
+    expect(swalTitles()).not.toContain("Loading glossary …");
     expect(Swal.close).not.toHaveBeenCalled();
   });
 
@@ -381,7 +381,7 @@ describe("Table.handleTable glossary loading dialog", () => {
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(swalTitles()).toContain("Glossary …");
+    expect(swalTitles()).toContain("Loading glossary …");
     // The error path closes the dialog instead of leaving it spinning forever.
     expect(Swal.close).toHaveBeenCalledTimes(1);
     expect(preprocessExperimentFile).not.toHaveBeenCalled();
