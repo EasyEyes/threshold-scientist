@@ -60,6 +60,10 @@ jest.mock("../../threshold/preprocess/fileUtils", () => ({
   getTextFileDataFromGitLab: jest.fn(),
 }));
 
+jest.mock("../../threshold/preprocess/gitlabSearch", () => ({
+  searchProjectByName: jest.fn(),
+}));
+
 const mockGlossaryData = {
   version: "2.0",
   glossary: { paramX: { name: "paramX" } },
@@ -603,5 +607,29 @@ describe("Table.handleTable phrases", () => {
     );
 
     consoleError.mockRestore();
+  });
+});
+
+describe("Table.handleTable — EasyEyesResources lookup uses searchProjectByName", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("calls searchProjectByName(user, resourcesRepoName) for the resources repo", async () => {
+    const {
+      searchProjectByName,
+    } = require("../../threshold/preprocess/gitlabSearch");
+    searchProjectByName.mockResolvedValue(null);
+
+    const props = makeProps();
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(searchProjectByName).toHaveBeenCalledWith(
+      props.user,
+      "EasyEyesResources",
+    );
   });
 });
