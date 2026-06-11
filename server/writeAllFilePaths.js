@@ -76,7 +76,6 @@ const matchPattern = [
   "js/first.min.js.map",
 
   // Build outputs - chunks (stable names, no hashes)
-  "js/i18n.js",
   "js/easyeyes_wasm.js",
 
   // Component assets needed at runtime

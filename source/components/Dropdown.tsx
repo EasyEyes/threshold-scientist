@@ -40,7 +40,7 @@ const getButtonText = (
   selected: Project | null,
   newExperimentProjectName?: string,
 ): string => {
-  const fallback = "Select a compiled experiment";
+  const fallback = "Select compiled experiment";
   if (selected === null) return newExperimentProjectName || fallback;
   if (selected?.id) {
     return `${selected.name} (${formatProjectDate(selected.created_at)})`;

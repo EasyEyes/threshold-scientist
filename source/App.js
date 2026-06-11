@@ -17,7 +17,7 @@ import {
   getRecruitmentServiceConfig,
   getDurationForProject,
   getProlificStudyId,
-  User,
+  copyUser,
   getCommonResourcesNames,
 } from "../threshold/preprocess/gitlabUtils";
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
@@ -35,6 +35,12 @@ import "./css/App.scss";
 import { signInAnonymously } from "firebase/auth";
 import { getSoundProfileStatement } from "./components/firebase_soundProfile";
 import { captureError } from "./sentry";
+import { getGlossaryFull } from "../threshold/parameters/glossaryRegistry";
+import {
+  fetchPhrasesVersion,
+  fetchPhrasesByVersion,
+} from "./components/phrasesApi";
+import { initPhrases } from "../threshold/parameters/phrasesRegistry";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -64,6 +70,7 @@ export default class App extends Component {
       websiteRepoLastCommitDeploy: null,
       websiteRepoLastCommitURL: null,
       readingGlossary: false,
+      phrasesError: false,
       /* -------------------------------------------------------------------------- */
       activeExperiment: "new",
       previousExperimentViewed: {
@@ -100,6 +107,7 @@ export default class App extends Component {
       profileStatement: "Loading ...",
       isCompiledFromArchiveBool: false,
       archivedZip: null,
+      compileWarnings: [],
     };
 
     this.functions = {
@@ -133,6 +141,7 @@ export default class App extends Component {
       /* -------------------------------------------------------------------------- */
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
       handleSetCompileCount: this.handleSetCompileCount.bind(this),
+      handleSetCompileWarnings: this.handleSetCompileWarnings.bind(this),
       getprofileStatement: this.getprofileStatement.bind(this),
     };
 
@@ -140,6 +149,22 @@ export default class App extends Component {
   }
 
   async componentDidMount() {
+    // Check the latest version first (uncached), then download that specific
+    // version (cached immutably in the browser), so an unchanged version is
+    // not re-downloaded on subsequent visits.
+    fetchPhrasesVersion()
+      .then(({ version }) => {
+        if (!version) throw new Error("No current phrases version");
+        return fetchPhrasesByVersion(version);
+      })
+      .then((data) => {
+        initPhrases(data);
+      })
+      .catch((error) => {
+        console.error("Failed to load phrases:", error);
+        this.setState({ phrasesError: true });
+      });
+
     // get the actual changes from GitHub
     try {
       const websiteGitHubRepo = await fetch(
@@ -346,6 +371,7 @@ export default class App extends Component {
       previousExperimentDuration: null,
       prolificStudyStatus: "",
       profileStatement: "Loading ...",
+      compileWarnings: [],
     });
   }
 
@@ -359,7 +385,7 @@ export default class App extends Component {
     if (this.state.currentStep !== step) {
       // Create a fresh User instance and refresh project list
       const currentUser = this.state.user;
-      const refreshedUser = new User(currentUser.accessToken);
+      const refreshedUser = copyUser(currentUser);
 
       // Copy existing user properties
       refreshedUser.username = currentUser.username;
@@ -560,6 +586,12 @@ export default class App extends Component {
     });
   }
 
+  handleSetCompileWarnings(warnings) {
+    this.setState({
+      compileWarnings: Array.isArray(warnings) ? warnings : [],
+    });
+  }
+
   handleSetExperiment(experiment) {
     // Mutate directly to preserve User class prototype (spread operator loses it)
     const updatedUser = this.state.user;
@@ -669,6 +701,7 @@ export default class App extends Component {
       websiteRepoLastCommitDeploy,
       websiteRepoLastCommitURL,
       readingGlossary,
+      phrasesError,
       activeExperiment,
       previousExperimentViewed,
       currentStep,
@@ -689,7 +722,12 @@ export default class App extends Component {
       isCompiledFromArchiveBool,
       archivedZip,
       resourcesLoaded,
+      compileWarnings,
     } = this.state;
+
+    if (phrasesError)
+      return <div>Failed to load phrases. Please refresh the page.</div>;
+
     const steps = [];
 
     const viewingPreviousExperiment =
@@ -741,6 +779,7 @@ export default class App extends Component {
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
+          compileWarnings={compileWarnings}
         />,
       );
 
@@ -748,7 +787,10 @@ export default class App extends Component {
       <>
         {readingGlossary && (
           <Suspense fallback={<></>}>
-            <Glossary closeGlossary={this.closeGlossary} />
+            <Glossary
+              closeGlossary={this.closeGlossary}
+              glossaryFull={getGlossaryFull()}
+            />
           </Suspense>
         )}
 
@@ -835,7 +877,12 @@ export default class App extends Component {
                     <a href="https://github.com/EasyEyes/threshold/stargazers">
                       <img
                         alt="GitHub stars"
-                        src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square"
+                        src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square&cacheSeconds=86400"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://flat.badgen.net/github/stars/EasyEyes/threshold";
+                        }}
                       />
                     </a>
                     <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">

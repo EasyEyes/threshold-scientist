@@ -1,11 +1,9 @@
 import React, { Suspense } from "react";
 import { useTable, useFlexLayout } from "react-table";
 
-import { GLOSSARY } from "../threshold/parameters/glossary-full.ts";
-
 import "./css/Glossary.scss";
 
-export default function Glossary({ closeGlossary }) {
+export default function Glossary({ closeGlossary, glossaryFull }) {
   const columns = React.useMemo(
     () => [
       { accessor: "name", Header: "Name", className: "name" },
@@ -15,10 +13,10 @@ export default function Glossary({ closeGlossary }) {
         className: "explanation",
       },
     ],
-    []
+    [],
   );
 
-  const data = React.useMemo(() => GLOSSARY, []);
+  const data = React.useMemo(() => glossaryFull, [glossaryFull]);
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
     useTable(
@@ -26,7 +24,7 @@ export default function Glossary({ closeGlossary }) {
         columns,
         data,
       },
-      useFlexLayout
+      useFlexLayout,
     );
 
   return (

@@ -20,6 +20,24 @@ import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 
 import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
+import {
+  fetchGlossaryData,
+  fetchGlossaryVersion,
+  pinGlossaryVersion,
+} from "./components/glossaryApi";
+import {
+  initGlossary,
+  getGlossaryVersion,
+} from "../threshold/parameters/glossaryRegistry";
+import {
+  fetchPhrasesData,
+  fetchPhrasesVersion,
+  pinPhrasesVersion,
+} from "./components/phrasesApi";
+import {
+  initPhrases,
+  getPhrasesVersion,
+} from "../threshold/parameters/phrasesRegistry";
 
 export default class Table extends Component {
   constructor(props) {
@@ -60,6 +78,72 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
+    // The glossary is fetched lazily on first compile (no longer at app launch).
+    // handleDrop has already opened a "Compiling ..." dialog before calling us;
+    // we relabel that same dialog for each phase instead of firing/closing our
+    // own, so the modal stays open continuously — closing it would leave a blank
+    // screen through the rest of the compile.
+    let shouldFetch = true;
+    let serverVersion = null;
+    try {
+      ({ version: serverVersion } = await fetchGlossaryVersion());
+      const cachedVersion = getGlossaryVersion();
+      if (
+        serverVersion !== null &&
+        cachedVersion !== null &&
+        serverVersion === cachedVersion
+      ) {
+        shouldFetch = false;
+      }
+    } catch {
+      // fall through to full fetch
+    }
+
+    if (shouldFetch) {
+      // The glossary isn't ready yet; tell the scientist we're waiting on it.
+      manuallySetSwalTitle("Loading glossary …");
+      Swal.showLoading(null);
+      try {
+        // Fetch by explicit version so the CDN returns the just-published
+        // glossary (new version = new URL = cache miss), never a stale copy.
+        // If the probe failed, serverVersion is null → falls back to current.
+        const data = await fetchGlossaryData(serverVersion);
+        initGlossary(data);
+      } catch (err) {
+        Swal.close();
+        console.error("Failed to refresh glossary:", err);
+        return;
+      }
+    }
+    // Restore the compiling status before handing off to the resource/compile
+    // flow, which manages its own status dialog.
+    manuallySetSwalTitle("Compiling ...");
+
+    try {
+      let shouldFetchPhrases = true;
+      try {
+        const { version: serverVersion } = await fetchPhrasesVersion();
+        const cachedVersion = getPhrasesVersion();
+        if (
+          serverVersion !== null &&
+          cachedVersion !== null &&
+          serverVersion === cachedVersion
+        ) {
+          shouldFetchPhrases = false;
+        }
+      } catch {
+        // fall through to full fetch
+      }
+
+      if (shouldFetchPhrases) {
+        const data = await fetchPhrasesData();
+        initPhrases(data);
+      }
+    } catch (err) {
+      console.error("Failed to refresh phrases:", err);
+      return;
+    }
+
     let resolvedResources;
 
     // Wait for resources to be loaded if they aren't already
@@ -190,16 +274,28 @@ export default class Table extends Component {
         userRepoFiles.requestedTargetSoundLists = requestedTargetSoundListList;
         userRepoFiles.blockFiles = fileList;
 
-        if (errorList.length) {
-          // sort errorList according to parameter name
-          errorList.sort((errA, errB) => {
+        // Warnings (kind === "warning") do not block compilation; only real
+        // errors do. They are shown alongside the success message below.
+        const hasBlockingError = errorList.some((err) => err.kind === "error");
+        const warningList = errorList.filter((err) => err.kind === "warning");
+
+        if (hasBlockingError) {
+          // When compilation fails, show only the blocking errors (not the
+          // non-blocking warnings), so the experimenter focuses on what must be
+          // fixed.
+          const blockingErrors = errorList.filter(
+            (err) => err.kind === "error",
+          );
+
+          // sort according to parameter name
+          blockingErrors.sort((errA, errB) => {
             if (errA.parameters < errB.parameters) return -1;
             else return 1;
           });
 
           // show errors
           this.setState({
-            errors: [...errorList],
+            errors: [...blockingErrors],
             showDropZone: true,
           });
 
@@ -212,9 +308,25 @@ export default class Table extends Component {
 
           if (user.id != undefined) {
             // user logged in
-            this.props.functions.handleSetProjectName(
-              await setRepoName(user, file.name.split(".")[0]),
+            const resolvedProjectName = await setRepoName(
+              user,
+              file.name.split(".")[0],
             );
+            this.props.functions.handleSetProjectName(resolvedProjectName);
+            pinGlossaryVersion(user.username, resolvedProjectName)
+              .then(({ version }) =>
+                console.log("Glossary version pinned:", version),
+              )
+              .catch((error) =>
+                console.warn("Failed to pin glossary version:", error),
+              );
+
+            try {
+              await pinPhrasesVersion(user.username, resolvedProjectName);
+            } catch (error) {
+              console.error("Failed to pin phrases version:", error);
+              return;
+            }
 
             const projectsPromise = getAllProjects(user);
             const updatedProjects = await projectsPromise;
@@ -227,10 +339,17 @@ export default class Table extends Component {
             this.props.functions.handleNextStep("upload");
           }
 
-          // show success log
+          // Surface any non-blocking warnings (e.g. LOGGING CAUTION) so they are
+          // shown on the "Experiment ready to run" page, above the green banner.
+          if (this.props.functions.handleSetCompileWarnings) {
+            this.props.functions.handleSetCompileWarnings(warningList);
+          }
+
+          // show success log, preceded by any non-blocking warnings
           this.props.functions.handleUpdateUser(user);
           this.setState({
             errors: [
+              ...warningList,
               {
                 context: "preprocessor",
                 kind: "correct",
@@ -301,15 +420,28 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          Welcome to the EasyEyes Compiler. Use the grey &quot;Select a compiled
-          experiment&quot; button to select an already-compiled experiment, or
-          use the green &quot;Select file&quot; button to compile a new one. For
-          new compilations, click &quot;Select file&quot; to upload any
-          necessary resources (fonts, forms, sounds, etc.) before submitting the
-          experiment spreadsheet. Alternatively, use &quot;Select file&quot; to
-          submit an export.zip file containing both the spreadsheet and
-          resources. Resources uploaded individually are stored in your Pavlovia
-          account for future use, whereas those in an export.zip are not.
+          To retrieve an already-compiled experiment:
+          <ul>
+            <li>Click SELECT COMPILED EXPERIMENT</li>
+          </ul>
+          To compile a new experiment spreadsheet:
+          <ul>
+            <li>
+              Click SELECT FILE to upload any required resources: fonts, sounds,
+              images, forms, … .
+            </li>
+            <li>
+              Then click SELECT FILE again to select and compile the
+              spreadsheet.
+            </li>
+          </ul>
+          To compile an export.zip archive containing both the spreadsheet and
+          its resources:
+          <ul>
+            <li>Click SELECT FILE.</li>
+          </ul>
+          Resources uploaded individually are stored in your Pavlovia account
+          for future use. Resources in an export.zip are not.
         </div>
         <div style={{ marginTop: "8px", marginBottom: "10px" }}>
           <span
