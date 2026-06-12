@@ -33,6 +33,7 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getDurationForProject: jest.fn(),
   getProlificStudyId: jest.fn(),
   User: jest.fn(() => ({})),
+  copyUser: jest.fn((u) => ({ ...u })),
   getCommonResourcesNames: jest.fn(),
 }));
 
@@ -129,5 +130,61 @@ describe("App", () => {
     await waitFor(() => {
       expect(getByText(/failed to load phrases/i)).toBeInTheDocument();
     });
+  });
+});
+
+describe("App - handleReturnToStep", () => {
+  const STEPS = ["login", "table", "upload", "running"];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("preserves the projectList promise reference on the refreshed User", async () => {
+    const { copyUser } = require("../../threshold/preprocess/gitlabUtils");
+    const existingProjectList = Promise.resolve([{ name: "MyExperiment" }]);
+
+    // Capture this.projectList at the moment initProjectList is called, so we
+    // can confirm the refreshed User keeps the original promise rather than
+    // triggering a fresh project-list fetch.
+    let projectListAtCallTime;
+    const initProjectList = jest.fn(function () {
+      projectListAtCallTime = this.projectList;
+      return Promise.resolve();
+    });
+    // Mimic a freshly constructed User: projectList starts empty, so the only
+    // way it can equal the original promise at initProjectList time is if
+    // handleReturnToStep explicitly carries it over.
+    copyUser.mockImplementation((u) => ({
+      ...u,
+      projectList: Promise.resolve([]),
+      initProjectList,
+    }));
+
+    const currentUser = {
+      accessToken: "test-token",
+      username: "testuser",
+      name: "Test User",
+      id: "42",
+      avatar_url: "https://example.com/avatar.png",
+      projectList: existingProjectList,
+    };
+
+    // Call the method directly on a fake 'this', avoiding full App construction
+    const fakeThis = {
+      state: { user: currentUser, currentStep: "running" },
+      setState: jest.fn((update) => {
+        fakeThis.state = { ...fakeThis.state, ...update };
+      }),
+      allSteps: STEPS,
+    };
+
+    await App.prototype.handleReturnToStep.call(fakeThis, "table");
+
+    // initProjectList must have been called with force-refresh = true
+    expect(initProjectList).toHaveBeenCalledWith(true);
+
+    // At the time initProjectList ran, this.projectList must be the original promise
+    expect(projectListAtCallTime).toBe(existingProjectList);
   });
 });

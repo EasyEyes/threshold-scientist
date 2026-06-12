@@ -393,7 +393,8 @@ export default class App extends Component {
       refreshedUser.id = currentUser.id;
       refreshedUser.avatar_url = currentUser.avatar_url;
 
-      refreshedUser.initProjectList();
+      refreshedUser.projectList = currentUser.projectList;
+      refreshedUser.initProjectList(true);
 
       // Reset experiment settings
       refreshedUser.currentExperiment = {
@@ -615,6 +616,7 @@ export default class App extends Component {
       activeExperiment: newRepo,
       experimentStatus: "INACTIVE",
       user: updatedUser,
+      projectName: newRepo.path,
       ...this.nextStepStatus("running"),
     });
     // Notify other open tabs that the experiment list has changed

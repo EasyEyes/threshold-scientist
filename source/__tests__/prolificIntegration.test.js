@@ -72,6 +72,34 @@ describe("Prolific Integration - New Parameters", () => {
     });
   });
 
+  // Resolve the studies POST among all fetch calls. When a participant-group
+  // or screener name is set, prolificCreateDraft also issues GET requests, so
+  // the POST is no longer guaranteed to be fetch.mock.calls[0].
+  const getDraftRequestBody = () => {
+    const postCall = global.fetch.mock.calls.find(
+      (call) =>
+        call[0] === "/.netlify/functions/prolific/studies/" &&
+        call[1]?.method === "POST",
+    );
+    return JSON.parse(postCall[1].body);
+  };
+
+  // Mock fetch so participant-group name->id resolution succeeds, while the
+  // studies POST still resolves to a successful draft.
+  const mockParticipantGroups = (groups) => {
+    global.fetch.mockImplementation((url) => {
+      if (url.includes("participant-groups")) {
+        return Promise.resolve({
+          json: () => Promise.resolve({ results: groups }),
+        });
+      }
+      return Promise.resolve({
+        json: () =>
+          Promise.resolve({ status: "UNPUBLISHED", id: "test-study-id" }),
+      });
+    });
+  };
+
   describe("_prolific2CompletionPath Parameter", () => {
     it("should default to AUTOMATICALLY_APPROVE when _prolific2CompletionPath is not set", async () => {
       // Don't set _prolific2CompletionPath, should default to approveAndPay
@@ -246,8 +274,10 @@ describe("Prolific Integration - New Parameters", () => {
     });
 
     it("should add participant group action when _prolific2CompletionPathAddToGroup is specified", async () => {
+      const groupName = "Completed Group";
       const groupId = "test-group-id-123";
-      mockUser.currentExperiment._prolific2CompletionPathAddToGroup = groupId;
+      mockUser.currentExperiment._prolific2CompletionPathAddToGroup = groupName;
+      mockParticipantGroups([{ id: groupId, name: groupName }]);
 
       await prolificCreateDraft(
         mockUser,
@@ -259,8 +289,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockGlossaryData,
       );
 
-      const callArgs = global.fetch.mock.calls[0];
-      const requestBody = JSON.parse(callArgs[1].body);
+      const requestBody = getDraftRequestBody();
 
       const completedCode = requestBody.completion_codes.find(
         (code) => code.code_type === COMPLETION_CODE_TYPE.COMPLETED,
@@ -268,13 +297,15 @@ describe("Prolific Integration - New Parameters", () => {
 
       expect(completedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-        participant_group_id: groupId,
+        participant_group: groupId,
       });
     });
 
     it("should trim whitespace from _prolific2CompletionPathAddToGroup", async () => {
+      const groupName = "Completed Group";
       const groupId = "test-group-id-456";
-      mockUser.currentExperiment._prolific2CompletionPathAddToGroup = `  ${groupId}  `;
+      mockUser.currentExperiment._prolific2CompletionPathAddToGroup = `  ${groupName}  `;
+      mockParticipantGroups([{ id: groupId, name: groupName }]);
 
       await prolificCreateDraft(
         mockUser,
@@ -286,8 +317,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockGlossaryData,
       );
 
-      const callArgs = global.fetch.mock.calls[0];
-      const requestBody = JSON.parse(callArgs[1].body);
+      const requestBody = getDraftRequestBody();
 
       const completedCode = requestBody.completion_codes.find(
         (code) => code.code_type === COMPLETION_CODE_TYPE.COMPLETED,
@@ -295,7 +325,7 @@ describe("Prolific Integration - New Parameters", () => {
 
       expect(completedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-        participant_group_id: groupId,
+        participant_group: groupId,
       });
     });
   });
@@ -488,8 +518,10 @@ describe("Prolific Integration - New Parameters", () => {
     });
 
     it("should add participant group action when _prolific2AbortedAddToGroup is specified", async () => {
+      const groupName = "Aborted Group";
       const groupId = "aborted-group-id-123";
-      mockUser.currentExperiment._prolific2AbortedAddToGroup = groupId;
+      mockUser.currentExperiment._prolific2AbortedAddToGroup = groupName;
+      mockParticipantGroups([{ id: groupId, name: groupName }]);
 
       await prolificCreateDraft(
         mockUser,
@@ -501,8 +533,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockGlossaryData,
       );
 
-      const callArgs = global.fetch.mock.calls[0];
-      const requestBody = JSON.parse(callArgs[1].body);
+      const requestBody = getDraftRequestBody();
 
       const abortedCode = requestBody.completion_codes.find(
         (code) => code.code_type === COMPLETION_CODE_TYPE.ABORTED,
@@ -510,13 +541,15 @@ describe("Prolific Integration - New Parameters", () => {
 
       expect(abortedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-        participant_group_id: groupId,
+        participant_group: groupId,
       });
     });
 
     it("should trim whitespace from _prolific2AbortedAddToGroup", async () => {
+      const groupName = "Aborted Group";
       const groupId = "aborted-group-id-456";
-      mockUser.currentExperiment._prolific2AbortedAddToGroup = `  ${groupId}  `;
+      mockUser.currentExperiment._prolific2AbortedAddToGroup = `  ${groupName}  `;
+      mockParticipantGroups([{ id: groupId, name: groupName }]);
 
       await prolificCreateDraft(
         mockUser,
@@ -528,8 +561,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockGlossaryData,
       );
 
-      const callArgs = global.fetch.mock.calls[0];
-      const requestBody = JSON.parse(callArgs[1].body);
+      const requestBody = getDraftRequestBody();
 
       const abortedCode = requestBody.completion_codes.find(
         (code) => code.code_type === COMPLETION_CODE_TYPE.ABORTED,
@@ -537,17 +569,21 @@ describe("Prolific Integration - New Parameters", () => {
 
       expect(abortedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-        participant_group_id: groupId,
+        participant_group: groupId,
       });
     });
   });
 
   describe("Combined Parameter Tests", () => {
     it("should correctly handle both completion path and group for completed participants", async () => {
+      const completionGroupName = "Completed Group";
       const completionGroupId = "completion-group-789";
       mockUser.currentExperiment._prolific2CompletionPath = "manuallyReview";
       mockUser.currentExperiment._prolific2CompletionPathAddToGroup =
-        completionGroupId;
+        completionGroupName;
+      mockParticipantGroups([
+        { id: completionGroupId, name: completionGroupName },
+      ]);
 
       await prolificCreateDraft(
         mockUser,
@@ -559,8 +595,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockGlossaryData,
       );
 
-      const callArgs = global.fetch.mock.calls[0];
-      const requestBody = JSON.parse(callArgs[1].body);
+      const requestBody = getDraftRequestBody();
 
       const completedCode = requestBody.completion_codes.find(
         (code) => code.code_type === COMPLETION_CODE_TYPE.COMPLETED,
@@ -572,15 +607,17 @@ describe("Prolific Integration - New Parameters", () => {
       });
       expect(completedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-        participant_group_id: completionGroupId,
+        participant_group: completionGroupId,
       });
       expect(completedCode.actions).toHaveLength(2);
     });
 
     it("should correctly handle both aborted path and group for aborted participants", async () => {
+      const abortedGroupName = "Aborted Group";
       const abortedGroupId = "aborted-group-999";
       mockUser.currentExperiment._prolific2Aborted = "approveAndPay";
-      mockUser.currentExperiment._prolific2AbortedAddToGroup = abortedGroupId;
+      mockUser.currentExperiment._prolific2AbortedAddToGroup = abortedGroupName;
+      mockParticipantGroups([{ id: abortedGroupId, name: abortedGroupName }]);
 
       await prolificCreateDraft(
         mockUser,
@@ -592,8 +629,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockGlossaryData,
       );
 
-      const callArgs = global.fetch.mock.calls[0];
-      const requestBody = JSON.parse(callArgs[1].body);
+      const requestBody = getDraftRequestBody();
 
       const abortedCode = requestBody.completion_codes.find(
         (code) => code.code_type === COMPLETION_CODE_TYPE.ABORTED,
@@ -605,20 +641,26 @@ describe("Prolific Integration - New Parameters", () => {
       });
       expect(abortedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-        participant_group_id: abortedGroupId,
+        participant_group: abortedGroupId,
       });
       expect(abortedCode.actions).toHaveLength(2);
     });
 
     it("should handle all four parameters simultaneously", async () => {
+      const completionGroupName = "Completed Group";
+      const abortedGroupName = "Aborted Group";
       const completionGroupId = "completion-all-test";
       const abortedGroupId = "aborted-all-test";
 
       mockUser.currentExperiment._prolific2CompletionPath = "requestAReturn";
       mockUser.currentExperiment._prolific2CompletionPathAddToGroup =
-        completionGroupId;
+        completionGroupName;
       mockUser.currentExperiment._prolific2Aborted = "manuallyReview";
-      mockUser.currentExperiment._prolific2AbortedAddToGroup = abortedGroupId;
+      mockUser.currentExperiment._prolific2AbortedAddToGroup = abortedGroupName;
+      mockParticipantGroups([
+        { id: completionGroupId, name: completionGroupName },
+        { id: abortedGroupId, name: abortedGroupName },
+      ]);
 
       await prolificCreateDraft(
         mockUser,
@@ -630,8 +672,7 @@ describe("Prolific Integration - New Parameters", () => {
         mockGlossaryData,
       );
 
-      const callArgs = global.fetch.mock.calls[0];
-      const requestBody = JSON.parse(callArgs[1].body);
+      const requestBody = getDraftRequestBody();
 
       // Verify completed code actions
       const completedCode = requestBody.completion_codes.find(
@@ -642,7 +683,7 @@ describe("Prolific Integration - New Parameters", () => {
       });
       expect(completedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-        participant_group_id: completionGroupId,
+        participant_group: completionGroupId,
       });
 
       // Verify aborted code actions
@@ -654,7 +695,7 @@ describe("Prolific Integration - New Parameters", () => {
       });
       expect(abortedCode.actions).toContainEqual({
         action: COMPLETION_CODE_ACTION.ADD_TO_PARTICIPANT_GROUP,
-        participant_group_id: abortedGroupId,
+        participant_group: abortedGroupId,
       });
     });
   });

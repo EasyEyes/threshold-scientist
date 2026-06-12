@@ -13,7 +13,7 @@ export default function Glossary({ closeGlossary, glossaryFull }) {
         className: "explanation",
       },
     ],
-    []
+    [],
   );
 
   const data = React.useMemo(() => glossaryFull, [glossaryFull]);
@@ -24,7 +24,7 @@ export default function Glossary({ closeGlossary, glossaryFull }) {
         columns,
         data,
       },
-      useFlexLayout
+      useFlexLayout,
     );
 
   return (

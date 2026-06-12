@@ -34,7 +34,10 @@ describe("extractEnglishMap", () => {
   });
 
   it("returns empty object when key or en column is missing", () => {
-    const rows = [["phrase", "fr"], ["hello", "Bonjour"]];
+    const rows = [
+      ["phrase", "fr"],
+      ["hello", "Bonjour"],
+    ];
     expect(extractEnglishMap(rows)).toEqual({});
   });
 });
@@ -97,7 +100,7 @@ describe("buildTranslatePayload", () => {
       backgrounds,
       ["greeting"],
       "v1",
-      false
+      false,
     );
     expect(result).toEqual({
       action: "translate",
@@ -109,22 +112,46 @@ describe("buildTranslatePayload", () => {
   });
 
   it("uses action fullResync when isFullResync is true", () => {
-    const result = buildTranslatePayload(rows, backgrounds, ["greeting"], "v2", true);
+    const result = buildTranslatePayload(
+      rows,
+      backgrounds,
+      ["greeting"],
+      "v2",
+      true,
+    );
     expect(result.action).toBe("fullResync");
   });
 
   it("handles null currentVersion", () => {
-    const result = buildTranslatePayload(rows, backgrounds, ["greeting"], null, false);
+    const result = buildTranslatePayload(
+      rows,
+      backgrounds,
+      ["greeting"],
+      null,
+      false,
+    );
     expect(result.currentVersion).toBeNull();
   });
 
   it("only includes changedKeys, not all rows", () => {
-    const result = buildTranslatePayload(rows, backgrounds, ["greeting"], "v1", false);
+    const result = buildTranslatePayload(
+      rows,
+      backgrounds,
+      ["greeting"],
+      "v1",
+      false,
+    );
     expect(Object.keys(result.changedPhrases)).toEqual(["greeting"]);
   });
 
   it("skips keys not found in the sheet", () => {
-    const result = buildTranslatePayload(rows, backgrounds, ["missing_key"], "v1", false);
+    const result = buildTranslatePayload(
+      rows,
+      backgrounds,
+      ["missing_key"],
+      "v1",
+      false,
+    );
     expect(result.changedPhrases).toEqual({});
   });
 });
@@ -136,9 +163,13 @@ describe("findMissingTranslatableKeys", () => {
       farewell: { fr: false, de: false },
       newPhrase: { fr: false, de: false },
     };
-    expect(findMissingTranslatableKeys(colorMask, ["greeting", "farewell", "newPhrase"])).toEqual(
-      ["farewell", "newPhrase"]
-    );
+    expect(
+      findMissingTranslatableKeys(colorMask, [
+        "greeting",
+        "farewell",
+        "newPhrase",
+      ]),
+    ).toEqual(["farewell", "newPhrase"]);
   });
 
   it("returns empty array when all keys have at least one translatable cell", () => {
@@ -146,12 +177,16 @@ describe("findMissingTranslatableKeys", () => {
       greeting: { fr: true, de: false },
       farewell: { fr: false, de: true },
     };
-    expect(findMissingTranslatableKeys(colorMask, ["greeting", "farewell"])).toEqual([]);
+    expect(
+      findMissingTranslatableKeys(colorMask, ["greeting", "farewell"]),
+    ).toEqual([]);
   });
 
   it("returns key when it has no target language cells at all", () => {
     const colorMask = { orphan: {} };
-    expect(findMissingTranslatableKeys(colorMask, ["orphan"])).toEqual(["orphan"]);
+    expect(findMissingTranslatableKeys(colorMask, ["orphan"])).toEqual([
+      "orphan",
+    ]);
   });
 });
 
