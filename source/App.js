@@ -616,6 +616,7 @@ export default class App extends Component {
       activeExperiment: newRepo,
       experimentStatus: "INACTIVE",
       user: updatedUser,
+      projectName: newRepo.path,
       ...this.nextStepStatus("running"),
     });
     // Notify other open tabs that the experiment list has changed
