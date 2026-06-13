@@ -285,44 +285,86 @@ function retranslateSelectedCells() {
     sentValues[cell.key][cell.lang] = cell.currentValue;
   }
 
-  var payload = {
-    action: "translate",
-    changedPhrases: changedPhrases,
-    colorMask: colorMask,
-    sentValues: sentValues,
-    currentVersion: currentVersion,
-  };
+  var BATCH_SIZE = 50;
+  var allKeys = Object.keys(changedPhrases);
+  var totalBatches = Math.ceil(allKeys.length / BATCH_SIZE);
+  var totalCellCount = 0;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  console.log("[phrases] Re-translate: POSTing translate to: " + PHRASES_FUNCTION_URL);
-  var response = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, payload));
-  var responseCode = response.getResponseCode();
-  var responseText = response.getContentText();
-  console.log("[phrases] Re-translate response code: " + responseCode);
+  for (var b = 0; b < totalBatches; b++) {
+    var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
 
-  if (responseCode === 409) {
-    notify("Re-translation aborted: phrase data was modified while running. Please try again.");
-    return;
-  }
+    ss.toast(
+      "Translating batch " + (b + 1) + " of " + totalBatches +
+        " (" + (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done)…",
+      "Re-translating",
+      -1
+    );
 
-  if (responseCode !== 200) {
-    notify("Re-translation failed (" + responseCode + "): " + responseText);
-    return;
-  }
-
-  var result = JSON.parse(responseText);
-  var translatedRows = result.translatedRows || {};
-
-  var writes = planWriteBack(translatedRows, rows);
-  for (var j = 0; j < writes.length; j++) {
-    var w = writes[j];
-    try {
-      sheet.getRange(w.rowIndex + 1, w.colIndex + 1).setValue(w.value);
-    } catch (e) {
-      Logger.log("[phrases] Write-back failed for rowIndex=" + w.rowIndex + " colIndex=" + w.colIndex + ": " + e);
+    var batchChangedPhrases = {};
+    var batchColorMask = {};
+    var batchSentValues = {};
+    for (var ki = 0; ki < batchKeys.length; ki++) {
+      var bk = batchKeys[ki];
+      batchChangedPhrases[bk] = changedPhrases[bk];
+      batchColorMask[bk] = colorMask[bk];
+      batchSentValues[bk] = sentValues[bk];
     }
+
+    var payload = {
+      action: "translate",
+      changedPhrases: batchChangedPhrases,
+      colorMask: batchColorMask,
+      sentValues: batchSentValues,
+      currentVersion: currentVersion,
+    };
+
+    console.log("[phrases] Re-translate batch " + (b + 1) + "/" + totalBatches + ": POSTing to: " + PHRASES_FUNCTION_URL);
+    var response = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, payload));
+    var responseCode = response.getResponseCode();
+    var responseText = response.getContentText();
+    console.log("[phrases] Re-translate batch " + (b + 1) + " response code: " + responseCode);
+
+    if (responseCode === 409) {
+      var retryVersion = UrlFetchApp.fetch(PHRASES_FUNCTION_URL + "?versionOnly", {
+        method: "get",
+        muteHttpExceptions: true,
+      });
+      if (retryVersion.getResponseCode() !== 200) {
+        notify("Batch " + (b + 1) + " of " + totalBatches + " had a version conflict and the version re-fetch failed.\n\n" +
+               "Completed " + totalCellCount + " of " + cyanCells.length + " cells. Please retry the remaining selection.");
+        return;
+      }
+      currentVersion = JSON.parse(retryVersion.getContentText()).version;
+      payload.currentVersion = currentVersion;
+      response = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, payload));
+      responseCode = response.getResponseCode();
+      responseText = response.getContentText();
+      console.log("[phrases] Re-translate batch " + (b + 1) + " retry response code: " + responseCode);
+    }
+
+    if (responseCode !== 200) {
+      notify("Batch " + (b + 1) + " of " + totalBatches + " failed (" + responseCode + "): " + responseText +
+             "\n\nCompleted " + totalCellCount + " of " + cyanCells.length + " cells before failure.");
+      return;
+    }
+
+    var result = JSON.parse(responseText);
+    currentVersion = result.newVersion;
+
+    var writes = planWriteBack(result.translatedRows || {}, rows);
+    for (var j = 0; j < writes.length; j++) {
+      var w = writes[j];
+      try {
+        sheet.getRange(w.rowIndex + 1, w.colIndex + 1).setValue(w.value);
+      } catch (e) {
+        Logger.log("[phrases] Write-back failed for rowIndex=" + w.rowIndex + " colIndex=" + w.colIndex + ": " + e);
+      }
+    }
+    totalCellCount += writes.length;
   }
 
-  notify("Re-translated " + writes.length + " cell(s). New version: " + result.newVersion);
+  notify("Re-translated " + totalCellCount + " cell(s) across " + totalBatches + " batch(es). New version: " + currentVersion);
 }
 
 // ─── Pure helpers (duplicated here; source of truth: source/appsScript/phrasesPush.js) ──
