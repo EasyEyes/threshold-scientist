@@ -20,8 +20,7 @@ var PHRASES_FUNCTION_URL =
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("EasyEyes")
-    .addItem("Update Phrases", "updatePhrases")
-    .addItem("Full Resync Phrases", "fullResyncPhrases")
+    .addItem("Update EasyEyes to use current phrases", "updatePhrases")
     .addItem("Re-translate Selected Cells", "retranslateSelectedCells")
     .addToUi();
 }
@@ -243,20 +242,17 @@ function retranslateSelectedCells() {
     }
   }
 
-  if (nonCyanCells.length > 0) {
-    var lines = nonCyanCells.map(function (c) {
-      return "  Row " + c.sheetRow + " / '" + c.lang + "'";
-    });
-    notify(
-      "The following selected cells are not cyan and cannot be re-translated:\n" +
-        lines.join("\n") +
-        "\nChange their background to #00ffff and retry."
-    );
-    return;
-  }
+  var nonCyanWarning =
+    nonCyanCells.length > 0
+      ? nonCyanCells.length +
+        " selected cell(s) were not cyan and skipped. Change their background to cyan to include them."
+      : "";
 
   if (cyanCells.length === 0) {
-    notify("No translatable cells found in selection.");
+    notify(
+      "No translatable cells found in selection." +
+        (nonCyanWarning ? "\n\n" + nonCyanWarning : "")
+    );
     return;
   }
 
@@ -364,7 +360,17 @@ function retranslateSelectedCells() {
     totalCellCount += writes.length;
   }
 
-  notify("Re-translated " + totalCellCount + " cell(s) across " + totalBatches + " batch(es). New version: " + currentVersion);
+  ss.toast(
+    "Re-translated " +
+      totalCellCount +
+      " cell(s) across " +
+      totalBatches +
+      " batch(es). New version: " +
+      currentVersion + "\n\n" +
+      (nonCyanWarning ? " | " + nonCyanWarning : ""),
+    "Done",
+    30
+  );
 }
 
 // ─── Pure helpers (duplicated here; source of truth: source/appsScript/phrasesPush.js) ──
