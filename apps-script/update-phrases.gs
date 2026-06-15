@@ -146,6 +146,7 @@ function notify(message, type) {
 }
 
 function showSpinner() {
+  CacheService.getUserCache().remove('spinnerProgress');
   var html = `
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -168,20 +169,38 @@ function showSpinner() {
       }
       @keyframes spin { to { transform: rotate(360deg); } }
       .label { font-size: 14px; color: #374151; letter-spacing: 0.1px; }
+      .progress { font-size: 12px; color: #6b7280; margin-top: 6px; min-height: 18px; }
     </style>
     <div class="container">
       <div class="spinner"></div>
       <div class="label">Translating…</div>
+      <div class="progress" id="progress"></div>
     </div>
+    <script>
+      function poll() {
+        google.script.run
+          .withSuccessHandler(function(text) {
+            document.getElementById('progress').textContent = text || '';
+            setTimeout(poll, 500);
+          })
+          .withFailureHandler(function() { setTimeout(poll, 500); })
+          .getSpinnerProgress();
+      }
+      poll();
+    </script>
   `;
   try {
     SpreadsheetApp.getUi().showModelessDialog(
-      HtmlService.createHtmlOutput(html).setHeight(130).setWidth(200),
+      HtmlService.createHtmlOutput(html).setHeight(155).setWidth(200),
       "Translating …"
     );
   } catch (e) {
     Logger.log("[phrases] showSpinner");
   }
+}
+
+function getSpinnerProgress() {
+  return CacheService.getUserCache().get('spinnerProgress') || '';
 }
 
 function updatePhrases() {
@@ -262,6 +281,9 @@ function pushPhrases(isFullResync) {
 
   showSpinner();
   for (var b = 0; b < totalBatches; b++) {
+    if (totalBatches > 1) {
+      CacheService.getUserCache().put('spinnerProgress', (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done", 60);
+    }
     var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
 
     var batchChangedPhrases = {};
@@ -484,6 +506,9 @@ function retranslateSelectedCells() {
 
   showSpinner();
   for (var b = 0; b < totalBatches; b++) {
+    if (totalBatches > 1) {
+      CacheService.getUserCache().put('spinnerProgress', (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done", 60);
+    }
     var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
 
     var batchChangedPhrases = {};
