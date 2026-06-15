@@ -180,6 +180,19 @@ export const handleDrop = async (
         Swal.close();
       },
     });
+
+    if (experimentFile) {
+      Swal.fire({
+        title: "Compiling ...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+      });
+
+      // Build an experiment
+      userRepoFiles.experiment = experimentFile;
+      handleExperimentFile(experimentFile);
+    }
   } else if (experimentFile) {
     Swal.fire({
       title: "Compiling ...",
