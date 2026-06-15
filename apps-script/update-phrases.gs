@@ -21,13 +21,125 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("EasyEyes")
     .addItem("Update EasyEyes to use current phrases", "updatePhrases")
-    .addItem("Re-translate Selected Cells", "retranslateSelectedCells")
+    .addItem("Translate Selected Cells", "retranslateSelectedCells")
     .addToUi();
 }
 
-function notify(message) {
+function notify(message, type) {
+  type = type || "warning";
+  var isSuccess = type === "success";
+
+  // Modern color palette
+  var colors = isSuccess ? {
+    bg: "#f0fdf4",
+    accent: "#16a34a",
+    text: "#166534",
+    border: "#dcfce7",
+    hoverDark: "#15803d"
+  } : {
+    bg: "#fffbeb",
+    accent: "#d97706",
+    text: "#92400e",
+    border: "#fef3c7",
+    hoverDark: "#b45309"
+  };
+
+  var title = isSuccess ? "Success" : "Warning";
+  var safeMsg = message
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  var html = `
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+      }
+      .container {
+        width: 100%;
+        padding: 16px;
+      }
+      .card {
+        background: ` + colors.bg + `;
+        border: 1.5px solid ` + colors.border + `;
+        border-radius: 12px;
+        padding: 8px 24px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+        text-align: center;
+        animation: slideUp 0.3s ease-out;
+      }
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .icon-wrapper {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 16px;
+        color: ` + colors.accent + `;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .title {
+        font-size: 18px;
+        font-weight: 600;
+        color: ` + colors.accent + `;
+        margin-bottom: 10px;
+        letter-spacing: -0.3px;
+      }
+      .message {
+        font-size: 14px;
+        color: ` + colors.text + `;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
+      .button {
+        background: ` + colors.accent + `;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 28px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        letter-spacing: 0.3px;
+      }
+      .button:hover {
+        background: ` + colors.hoverDark + `;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+      }
+      .button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+    <div class="container">
+      <div class="card">
+        <div class="icon-wrapper">` + (isSuccess ? "✅" : "⚠️") + `</div>
+        <div class="message">` + safeMsg + `</div>
+        <button class="button" onclick="google.script.host.close()">OK</button>
+      </div>
+    </div>
+  `;
+
   try {
-    SpreadsheetApp.getUi().alert(message);
+    SpreadsheetApp.getUi().showModelessDialog(
+      HtmlService.createHtmlOutput(html),
+      title
+    );
   } catch (e) {
     Logger.log("[phrases] " + message);
   }
@@ -85,11 +197,11 @@ function pushPhrases(isFullResync) {
   var currentVersion = diffResult.currentVersion;
 
   if (!changedKeys || changedKeys.length === 0) {
-    notify("Phrases are up to date. No changes detected.");
+    notify("Phrases are up to date. No changes detected.", "success");
     return;
   }
 
-  // Phase 2: translate / fullResync
+  // Phase 2: translate / fullResync (batched)
   var translatePayload = buildTranslatePayload(
     rows,
     backgrounds,
@@ -97,55 +209,106 @@ function pushPhrases(isFullResync) {
     currentVersion,
     isFullResync
   );
-  var translateOptions = buildFetchOptions(secret, translatePayload);
 
-  console.log("[phrases] Phase 2: POSTing translate to: " + PHRASES_FUNCTION_URL);
-  var translateResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, translateOptions);
-  var translateCode = translateResponse.getResponseCode();
-  var translateText = translateResponse.getContentText();
-  console.log("[phrases] Phase 2 response code: " + translateCode);
+  var action = translatePayload.action;
+  var changedPhrases = translatePayload.changedPhrases;
+  var colorMask = translatePayload.colorMask;
+  var sentValues = translatePayload.sentValues;
 
-  if (translateCode === 409) {
-    notify(
-      "Phrases push aborted: another push modified the phrases while this one was running. " +
-        "Please try again."
+  var BATCH_SIZE = 50;
+  var allKeys = Object.keys(changedPhrases);
+  var totalBatches = Math.ceil(allKeys.length / BATCH_SIZE);
+  var totalCellCount = 0;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var newVersion = currentVersion;
+
+  for (var b = 0; b < totalBatches; b++) {
+    var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
+
+    ss.toast(
+      (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done.",
+      "Translating …",
+      -1
     );
-    return;
-  }
 
-  if (translateCode === 400) {
-    var errMsg = "";
-    try {
-      errMsg = JSON.parse(translateText).error || translateText;
-    } catch (e) {
-      errMsg = translateText;
+    var batchChangedPhrases = {};
+    var batchColorMask = {};
+    var batchSentValues = {};
+    for (var ki = 0; ki < batchKeys.length; ki++) {
+      var bk = batchKeys[ki];
+      batchChangedPhrases[bk] = changedPhrases[bk];
+      batchColorMask[bk] = colorMask[bk];
+      batchSentValues[bk] = sentValues[bk];
     }
-    notify("Phrases push rejected: " + errMsg);
-    return;
-  }
 
-  if (translateCode !== 200) {
-    notify("Phrases translate failed (" + translateCode + "): " + translateText);
-    return;
-  }
+    var batchPayload = {
+      action: action,
+      changedPhrases: batchChangedPhrases,
+      colorMask: batchColorMask,
+      sentValues: batchSentValues,
+      currentVersion: newVersion,
+    };
 
-  var translateResult = JSON.parse(translateText);
-  var translatedRows = translateResult.translatedRows || {};
+    console.log("[phrases] Phase 2 batch " + (b + 1) + "/" + totalBatches + ": POSTing to: " + PHRASES_FUNCTION_URL);
+    var translateResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, batchPayload));
+    var translateCode = translateResponse.getResponseCode();
+    var translateText = translateResponse.getContentText();
+    console.log("[phrases] Phase 2 batch " + (b + 1) + " response code: " + translateCode);
 
-  // Write-back: update target-language cells only
-  var writes = planWriteBack(translatedRows, rows);
-  for (var i = 0; i < writes.length; i++) {
-    var w = writes[i];
-    try {
-      // Sheet rows and columns are 1-indexed; our indices are 0-indexed
-      sheet.getRange(w.rowIndex + 1, w.colIndex + 1).setValue(w.value);
-    } catch (e) {
-      Logger.log("[phrases] Write-back failed for rowIndex=" + w.rowIndex + " colIndex=" + w.colIndex + ": " + e);
+    if (translateCode === 409) {
+      var retryVersion = UrlFetchApp.fetch(PHRASES_FUNCTION_URL + "?versionOnly", {
+        method: "get",
+        muteHttpExceptions: true,
+      });
+      if (retryVersion.getResponseCode() !== 200) {
+        notify("Batch " + (b + 1) + " of " + totalBatches + " had a version conflict and the version re-fetch failed.\n\n" +
+               "Completed " + totalCellCount + " cell(s). Please try again.");
+        return;
+      }
+      newVersion = JSON.parse(retryVersion.getContentText()).version;
+      batchPayload.currentVersion = newVersion;
+      translateResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, batchPayload));
+      translateCode = translateResponse.getResponseCode();
+      translateText = translateResponse.getContentText();
+      console.log("[phrases] Phase 2 batch " + (b + 1) + " retry response code: " + translateCode);
     }
+
+    if (translateCode === 400) {
+      var errMsg = "";
+      try {
+        errMsg = JSON.parse(translateText).error || translateText;
+      } catch (e) {
+        errMsg = translateText;
+      }
+      notify("Phrases push rejected: " + errMsg +
+             "\n\nCompleted " + totalCellCount + " cell(s) before failure.");
+      return;
+    }
+
+    if (translateCode !== 200) {
+      notify("Batch " + (b + 1) + " of " + totalBatches + " failed (" + translateCode + "): " + translateText +
+             "\n\nCompleted " + totalCellCount + " cell(s) before failure.");
+      return;
+    }
+
+    var translateResult = JSON.parse(translateText);
+    newVersion = translateResult.newVersion;
+
+    // Write-back: update target-language cells only
+    var writes = planWriteBack(translateResult.translatedRows || {}, rows);
+    for (var j = 0; j < writes.length; j++) {
+      var w = writes[j];
+      try {
+        // Sheet rows and columns are 1-indexed; our indices are 0-indexed
+        sheet.getRange(w.rowIndex + 1, w.colIndex + 1).setValue(w.value);
+      } catch (e) {
+        Logger.log("[phrases] Write-back failed for rowIndex=" + w.rowIndex + " colIndex=" + w.colIndex + ": " + e);
+      }
+    }
+    totalCellCount += writes.length;
   }
 
   // Warning: keys with no translatable target cells
-  var colorMask = translatePayload.colorMask;
   var missingKeys = findMissingTranslatableKeys(colorMask, changedKeys);
   if (missingKeys.length > 0) {
     notify(
@@ -155,7 +318,7 @@ function pushPhrases(isFullResync) {
     );
   } else {
     var label = isFullResync ? "Full Resync" : "Update";
-    notify("Phrases " + label + " complete. New version: " + translateResult.newVersion);
+    notify("Phrases " + label + " complete. New version: " + newVersion, "success");
   }
 }
 
@@ -244,8 +407,8 @@ function retranslateSelectedCells() {
 
   var nonCyanWarning =
     nonCyanCells.length > 0
-      ? nonCyanCells.length +
-        " selected cell(s) were not cyan and skipped. Change their background to cyan to include them."
+      ? "Skipped " + nonCyanCells.length +
+        " non-cyan-colored cells. Change their background to cyan to include them."
       : "";
 
   if (cyanCells.length === 0) {
@@ -291,9 +454,8 @@ function retranslateSelectedCells() {
     var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
 
     ss.toast(
-      "Translating batch " + (b + 1) + " of " + totalBatches +
-        " (" + (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done)…",
-      "Re-translating",
+      (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done.",
+      "Translating …",
       -1
     );
 
@@ -360,16 +522,13 @@ function retranslateSelectedCells() {
     totalCellCount += writes.length;
   }
 
-  ss.toast(
-    "Re-translated " +
+  notify(
+    "Translated " +
       totalCellCount +
-      " cell(s) across " +
-      totalBatches +
-      " batch(es). New version: " +
-      currentVersion + "\n\n" +
-      (nonCyanWarning ? " | " + nonCyanWarning : ""),
-    "Done",
-    30
+      " cell(s). New version: " +
+      currentVersion +
+      (nonCyanWarning ? "\n\n" + nonCyanWarning : ""),
+     nonCyanWarning ? "warning" : "success"
   );
 }
 
