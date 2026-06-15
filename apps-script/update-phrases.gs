@@ -350,7 +350,7 @@ function pushPhrases(isFullResync) {
         missingKeys.join(", ")
     );
   } else {
-    var label = isFullResync ? "Full Resync" : "Update";
+    var label = isFullResync ? "Full Resync" : "update";
     notify("Phrases " + label + " complete. New version: " + newVersion, "success");
   }
 }
