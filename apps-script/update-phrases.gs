@@ -528,7 +528,7 @@ function retranslateSelectedCells() {
       " cell(s). New version: " +
       currentVersion +
       (nonCyanWarning ? "\n\n" + nonCyanWarning : ""),
-    "success"
+     nonCyanWarning ? "warning" : "success"
   );
 }
 
