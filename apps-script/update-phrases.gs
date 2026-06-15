@@ -21,7 +21,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("EasyEyes")
     .addItem("Update EasyEyes to use current phrases", "updatePhrases")
-    .addItem("Re-translate Selected Cells", "retranslateSelectedCells")
+    .addItem("Translate Selected Cells", "retranslateSelectedCells")
     .addToUi();
 }
 
@@ -226,10 +226,9 @@ function pushPhrases(isFullResync) {
     var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
 
     ss.toast(
-      "Translating batch " + (b + 1) + " of " + totalBatches +
-        " (" + (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done)…",
-      "Updating phrases",
-    -1
+      (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done.",
+      "Translating …",
+      -1
     );
 
     var batchChangedPhrases = {};
@@ -408,8 +407,8 @@ function retranslateSelectedCells() {
 
   var nonCyanWarning =
     nonCyanCells.length > 0
-      ? nonCyanCells.length +
-        " selected cell(s) were not cyan and skipped. Change their background to cyan to include them."
+      ? "Skipped " + nonCyanCells.length +
+        " non-cyan-colored cells. Change their background to cyan to include them."
       : "";
 
   if (cyanCells.length === 0) {
@@ -455,9 +454,8 @@ function retranslateSelectedCells() {
     var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
 
     ss.toast(
-      "Translating batch " + (b + 1) + " of " + totalBatches +
-        " (" + (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done)…",
-      "Re-translating",
+      (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done.",
+      "Translating …",
       -1
     );
 
@@ -525,11 +523,9 @@ function retranslateSelectedCells() {
   }
 
   notify(
-    "Re-translated " +
+    "Translated " +
       totalCellCount +
-      " cell(s) across " +
-      totalBatches +
-      " batch(es). New version: " +
+      " cell(s). New version: " +
       currentVersion +
       (nonCyanWarning ? "\n\n" + nonCyanWarning : ""),
     "success"
