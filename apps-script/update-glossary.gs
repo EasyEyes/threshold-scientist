@@ -21,7 +21,7 @@ var NETLIFY_FUNCTION_URL =
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("EasyEyes")
-    .addItem("Update Glossary", "pushGlossary")
+    .addItem("Update EasyEyes to use current Glossary", "pushGlossary")
     .addToUi();
 }
 
