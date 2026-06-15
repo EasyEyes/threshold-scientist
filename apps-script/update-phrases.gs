@@ -21,7 +21,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("EasyEyes")
     .addItem("Update EasyEyes to use current phrases", "updatePhrases")
-    .addItem("Translate Selected Cells", "retranslateSelectedCells")
+    .addItem("Redo selected cyan translations", "retranslateSelectedCells")
     .addToUi();
 }
 
@@ -145,6 +145,45 @@ function notify(message, type) {
   }
 }
 
+function showSpinner() {
+  var html = `
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+      }
+      .container { text-align: center; padding: 24px 32px; }
+      .spinner {
+        width: 44px;
+        height: 44px;
+        border: 4px solid #e5e7eb;
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+        margin: 0 auto 14px;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .label { font-size: 14px; color: #374151; letter-spacing: 0.1px; }
+    </style>
+    <div class="container">
+      <div class="spinner"></div>
+      <div class="label">Translating…</div>
+    </div>
+  `;
+  try {
+    SpreadsheetApp.getUi().showModelessDialog(
+      HtmlService.createHtmlOutput(html).setHeight(130).setWidth(200),
+      "Translating …"
+    );
+  } catch (e) {
+    Logger.log("[phrases] showSpinner");
+  }
+}
+
 function updatePhrases() {
   pushPhrases(false);
 }
@@ -219,17 +258,11 @@ function pushPhrases(isFullResync) {
   var allKeys = Object.keys(changedPhrases);
   var totalBatches = Math.ceil(allKeys.length / BATCH_SIZE);
   var totalCellCount = 0;
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
   var newVersion = currentVersion;
 
+  showSpinner();
   for (var b = 0; b < totalBatches; b++) {
     var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
-
-    ss.toast(
-      (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done.",
-      "Translating …",
-      -1
-    );
 
     var batchChangedPhrases = {};
     var batchColorMask = {};
@@ -448,16 +481,10 @@ function retranslateSelectedCells() {
   var allKeys = Object.keys(changedPhrases);
   var totalBatches = Math.ceil(allKeys.length / BATCH_SIZE);
   var totalCellCount = 0;
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
 
+  showSpinner();
   for (var b = 0; b < totalBatches; b++) {
     var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
-
-    ss.toast(
-      (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done.",
-      "Translating …",
-      -1
-    );
 
     var batchChangedPhrases = {};
     var batchColorMask = {};
@@ -527,8 +554,8 @@ function retranslateSelectedCells() {
       totalCellCount +
       " cell(s). New version: " +
       currentVersion +
-      (nonCyanWarning ? "\n\n" + nonCyanWarning : ""),
-     nonCyanWarning ? "warning" : "success"
+      (nonCyanWarning ? "\n\n⚠️ " + nonCyanWarning : ""),
+    "success"
   );
 }
 
