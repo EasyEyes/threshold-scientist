@@ -878,18 +878,13 @@ export default class App extends Component {
                     <a href="https://github.com/EasyEyes/threshold/stargazers">
                       <img
                         alt="GitHub stars"
-                        src="https://img.shields.io/github/stars/EasyEyes/threshold?style=flat-square&cacheSeconds=86400"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src =
-                            "https://flat.badgen.net/github/stars/EasyEyes/threshold";
-                        }}
+                        src="https://flat.badgen.net/github/stars/EasyEyes/threshold"
                       />
                     </a>
                     <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
                       <img
                         alt="GitHub license"
-                        src="https://img.shields.io/github/license/EasyEyes/threshold?style=flat-square"
+                        src="https://flat.badgen.net/github/license/EasyEyes/threshold"
                       />
                     </a>
                     <a href="https://app.netlify.com/sites/easyeyes/deploys">
