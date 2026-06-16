@@ -40,7 +40,7 @@ const getButtonText = (
   selected: Project | null,
   newExperimentProjectName?: string,
 ): string => {
-  const fallback = "Select compiled experiment";
+  const fallback = "Select compiled study";
   if (selected === null) return newExperimentProjectName || fallback;
   if (selected?.id) {
     return `${selected.name} (${formatProjectDate(selected.created_at)})`;
@@ -95,7 +95,7 @@ const buildModalHTML = (projects: Project[]): string => {
       </div>
       <div class="experiment-table-container">
         <table class="experiment-table">
-          <thead><tr><th>Experiment name</th><th>Date</th></tr></thead>
+          <thead><tr><th>Study name</th><th>Date</th></tr></thead>
           <tbody id="experiment-table-body">${rows}</tbody>
         </table>
       </div>

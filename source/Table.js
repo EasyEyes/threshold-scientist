@@ -420,11 +420,11 @@ export default class Table extends Component {
     return (
       <div className="table" ref={this.ref}>
         <div className="green-status-banner">
-          To retrieve an already-compiled experiment:
+          To retrieve an already-compiled study:
           <ul>
-            <li>Click SELECT COMPILED EXPERIMENT</li>
+            <li>Click SELECT COMPILED STUDY.</li>
           </ul>
-          To compile a new experiment spreadsheet:
+          To compile a new study spreadsheet:
           <ul>
             <li>
               Click SELECT FILE to upload any required resources: fonts, sounds,
@@ -435,8 +435,8 @@ export default class Table extends Component {
               spreadsheet.
             </li>
           </ul>
-          To compile an export.zip archive containing both the spreadsheet and
-          its resources:
+          To compile an export.zip archive (containing both the spreadsheet and
+          its resources):
           <ul>
             <li>Click SELECT FILE.</li>
           </ul>

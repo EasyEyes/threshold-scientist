@@ -263,7 +263,7 @@ export default class App extends Component {
       const { user } = this.state;
 
       await Swal.fire({
-        title: "Retrieving experiment ...",
+        title: "Retrieving study ...",
         allowOutsideClick: false,
         allowEscapeKey: false,
         didOpen: async () => {
@@ -840,7 +840,7 @@ export default class App extends Component {
               <div className="copyright-info">
                 <div className="info-paragraph">
                   <div className="item">
-                    {totalCompileCounts} experiments compiled since 1 February,
+                    {totalCompileCounts} studies compiled since 1 February,
                     2023.
                     <br />
                     Compiler updated{" "}

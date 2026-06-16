@@ -174,9 +174,9 @@ export default class StatusLines extends Component {
 
   getExperimentStatus = (status) => {
     if (status === "RUNNING") {
-      return "RUNNING MODE. Experiment ready to run online.";
+      return "RUNNING MODE. Study ready to run online.";
     } else if (status === "INACTIVE") {
-      return "INACTIVE. Go to Pavlovia to assign credits and set RUNNING mode, or to set PILOTING mode and Pilot the experiment there.";
+      return "INACTIVE. Go to Pavlovia to assign credits and set RUNNING mode, or to set PILOTING mode and Pilot the study there.";
     } else {
       return "PILOTING MODE. Use Pavlovia’s Pilot button to run here.";
     }

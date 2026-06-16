@@ -389,10 +389,10 @@ export default class Running extends Component {
         <div className="green-status-banner">
           {isRunning
             ? pavloviaIsReady
-              ? "Experiment ready to run."
-              : "Local. Experiment compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new experiment, you need to assign tokens to it in Pavlovia."
+              ? "Study ready to run."
+              : "Local. Study compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new study, you need to assign tokens to it in Pavlovia."
             : viewingPreviousExperiment
-            ? "Experiment not running. Please go to Pavlovia to set it to RUNNING mode."
+            ? "Study not running. Please go to Pavlovia to set it to RUNNING mode."
             : `Local. Upload successful! ${
                 offerPilotingOption
                   ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."

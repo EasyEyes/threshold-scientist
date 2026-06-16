@@ -19,7 +19,7 @@ export default class StatusBar extends Component {
       case "table":
         return (
           <div className="status-bar">
-            Please submit your files and experiment table here
+            Please submit your files and study table here
           </div>
         );
 
@@ -27,9 +27,7 @@ export default class StatusBar extends Component {
         return <div className="status-bar">Uploading ...</div>;
 
       case "running":
-        return (
-          <div className="status-bar">Your experiment is ready to run</div>
-        );
+        return <div className="status-bar">Your study is ready to run</div>;
 
       case "deploy":
         return <div className="status-bar"></div>;
