@@ -180,6 +180,11 @@ export const handleDrop = async (
         Swal.close();
       },
     });
+
+    if (experimentFile) {
+      userRepoFiles.experiment = experimentFile;
+      handleExperimentFile(experimentFile);
+    }
   } else if (experimentFile) {
     Swal.fire({
       title: "Compiling ...",
