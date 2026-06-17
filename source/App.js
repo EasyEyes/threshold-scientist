@@ -876,12 +876,22 @@ export default class App extends Component {
                     <div style={{ marginTop: "5px" }}></div>
                     {githubStars != null && (
                       <a href="https://github.com/EasyEyes/threshold/stargazers">
-                        ★ {githubStars} stars
+                        <img
+                          alt="GitHub stars"
+                          src={`https://img.shields.io/badge/stars-${encodeURIComponent(
+                            githubStars,
+                          )}-blue?style=flat-square&logo=github&logoColor=white`}
+                        />
                       </a>
                     )}{" "}
                     {githubLicense && (
                       <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
-                        {githubLicense} license
+                        <img
+                          alt="GitHub license"
+                          src={`https://img.shields.io/badge/license-${encodeURIComponent(
+                            githubLicense,
+                          )}-green?style=flat-square`}
+                        />
                       </a>
                     )}{" "}
                     <a href="https://app.netlify.com/sites/easyeyes/deploys">
