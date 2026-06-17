@@ -41,6 +41,7 @@ import {
   fetchPhrasesByVersion,
 } from "./components/phrasesApi";
 import { initPhrases } from "../threshold/parameters/phrasesRegistry";
+import { fetchGitHubStats } from "./components/githubStatsApi";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -69,6 +70,8 @@ export default class App extends Component {
     this.state = {
       websiteRepoLastCommitDeploy: null,
       websiteRepoLastCommitURL: null,
+      githubStars: null,
+      githubLicense: null,
       readingGlossary: false,
       phrasesError: false,
       /* -------------------------------------------------------------------------- */
@@ -165,27 +168,21 @@ export default class App extends Component {
         this.setState({ phrasesError: true });
       });
 
-    // get the actual changes from GitHub
-    try {
-      const websiteGitHubRepo = await fetch(
-        "https://api.github.com/repos/EasyEyes/website/commits",
-      );
-      if (websiteGitHubRepo.ok) {
-        websiteGitHubRepo
-          .json()
-          .then((data) => {
-            this.setState({
-              websiteRepoLastCommitURL: data[0].html_url,
-            });
-          })
-          .catch((error) => {
-            console.warn("Failed to parse GitHub API response:", error);
-          });
-      }
-    } catch (error) {
-      // Silently fail - this is not critical for app functionality
-      console.warn("Failed to fetch GitHub commits:", error);
-    }
+    // get the GitHub footer values (latest commit URL, stars, license) via our
+    // cached Netlify proxy instead of calling GitHub directly. Not critical, so
+    // it degrades silently.
+    fetchGitHubStats()
+      .then((stats) => {
+        if (!stats || stats.available === false) return;
+        this.setState({
+          websiteRepoLastCommitURL: stats.lastCommitUrl,
+          githubStars: stats.stars,
+          githubLicense: stats.license,
+        });
+      })
+      .catch((error) => {
+        console.warn("Failed to fetch GitHub stats:", error);
+      });
 
     // get the deployed time from Netlify
     try {
@@ -701,6 +698,8 @@ export default class App extends Component {
     const {
       websiteRepoLastCommitDeploy,
       websiteRepoLastCommitURL,
+      githubStars,
+      githubLicense,
       readingGlossary,
       phrasesError,
       activeExperiment,
@@ -875,18 +874,16 @@ export default class App extends Component {
 
                   <div className="item">
                     <div style={{ marginTop: "5px" }}></div>
-                    <a href="https://github.com/EasyEyes/threshold/stargazers">
-                      <img
-                        alt="GitHub stars"
-                        src="https://flat.badgen.net/github/stars/EasyEyes/threshold"
-                      />
-                    </a>
-                    <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
-                      <img
-                        alt="GitHub license"
-                        src="https://flat.badgen.net/github/license/EasyEyes/threshold"
-                      />
-                    </a>
+                    {githubStars != null && (
+                      <a href="https://github.com/EasyEyes/threshold/stargazers">
+                        ★ {githubStars} stars
+                      </a>
+                    )}{" "}
+                    {githubLicense && (
+                      <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
+                        {githubLicense} license
+                      </a>
+                    )}{" "}
                     <a href="https://app.netlify.com/sites/easyeyes/deploys">
                       <img
                         alt="Netlify Status"
