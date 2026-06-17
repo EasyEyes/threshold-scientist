@@ -24,6 +24,7 @@ import {
   fetchGlossaryData,
   fetchGlossaryVersion,
   pinGlossaryVersion,
+  getGlossaryPrefetch,
 } from "./components/glossaryApi";
 import {
   initGlossary,
@@ -83,6 +84,14 @@ export default class Table extends Component {
     // we relabel that same dialog for each phase instead of firing/closing our
     // own, so the modal stays open continuously — closing it would leave a blank
     // screen through the rest of the compile.
+    const prefetchPromise = getGlossaryPrefetch();
+    if (prefetchPromise !== null) {
+      manuallySetSwalTitle("Loading glossary …");
+      Swal.showLoading(null);
+      try {
+        await prefetchPromise;
+      } catch {}
+    }
     let shouldFetch = true;
     let serverVersion = null;
     try {

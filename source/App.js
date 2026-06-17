@@ -41,6 +41,7 @@ import {
   fetchPhrasesByVersion,
 } from "./components/phrasesApi";
 import { initPhrases } from "../threshold/parameters/phrasesRegistry";
+import { startGlossaryPrefetch } from "./components/glossaryApi";
 import { fetchGitHubStats } from "./components/githubStatsApi";
 
 // Utility function to create empty resources object from constants
@@ -152,6 +153,7 @@ export default class App extends Component {
   }
 
   async componentDidMount() {
+    startGlossaryPrefetch();
     // Check the latest version first (uncached), then download that specific
     // version (cached immutably in the browser), so an unchanged version is
     // not re-downloaded on subsequent visits.

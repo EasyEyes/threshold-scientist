@@ -1,4 +1,5 @@
 import { getEasyEyesBaseUrl } from "../../threshold/components/easyeyesBaseUrl";
+import { initGlossary } from "../../threshold/parameters/glossaryRegistry";
 
 // A single transient 502/503 from the glossary function (e.g. a Firebase blip)
 // shouldn't break the compiler. Retry with a short backoff and surface non-2xx
@@ -44,4 +45,24 @@ export async function pinGlossaryVersion(username, experimentName) {
       body: JSON.stringify({ username, experimentName }),
     },
   );
+}
+
+let _prefetchPromise = null;
+let _settled = false;
+
+export function startGlossaryPrefetch() {
+  if (_prefetchPromise !== null || _settled) return;
+  _prefetchPromise = fetchGlossaryData()
+    .then((data) => {
+      initGlossary(data);
+    })
+    .finally(() => {
+      _prefetchPromise = null;
+      _settled = true;
+    });
+  _prefetchPromise.catch(() => {});
+}
+
+export function getGlossaryPrefetch() {
+  return _prefetchPromise;
 }

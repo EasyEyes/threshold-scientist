@@ -103,3 +103,89 @@ describe("glossaryApi", () => {
     });
   });
 });
+
+describe("glossaryApi prefetch singleton", () => {
+  const mockData = {
+    version: "1.0",
+    glossary: {},
+    glossaryFull: [],
+    superMatchingParams: [],
+  };
+
+  let mod;
+  let initGlossary;
+
+  beforeEach(() => {
+    jest.resetModules();
+    jest.doMock("../../threshold/components/easyeyesBaseUrl", () => ({
+      getEasyEyesBaseUrl: () => "",
+    }));
+    jest.doMock("../../threshold/parameters/glossaryRegistry", () => ({
+      initGlossary: jest.fn(),
+    }));
+    global.fetch = jest.fn();
+    mod = require("../components/glossaryApi");
+    initGlossary =
+      require("../../threshold/parameters/glossaryRegistry").initGlossary;
+  });
+
+  it("getGlossaryPrefetch() returns null before startGlossaryPrefetch is called", () => {
+    expect(mod.getGlossaryPrefetch()).toBeNull();
+  });
+
+  it("getGlossaryPrefetch() returns a Promise while the fetch is pending", () => {
+    global.fetch.mockReturnValueOnce(new Promise(() => {}));
+    mod.startGlossaryPrefetch();
+    expect(mod.getGlossaryPrefetch()).toBeInstanceOf(Promise);
+  });
+
+  it("getGlossaryPrefetch() returns null after the fetch resolves successfully", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockData,
+    });
+    mod.startGlossaryPrefetch();
+    await mod.getGlossaryPrefetch();
+    expect(mod.getGlossaryPrefetch()).toBeNull();
+  });
+
+  it("getGlossaryPrefetch() returns null after the fetch rejects", async () => {
+    jest.useFakeTimers();
+    global.fetch.mockRejectedValue(new Error("network error"));
+    mod.startGlossaryPrefetch();
+    const p = mod.getGlossaryPrefetch();
+    await jest.runAllTimersAsync();
+    await p.catch(() => {});
+    expect(mod.getGlossaryPrefetch()).toBeNull();
+    jest.useRealTimers();
+  });
+
+  it("calls initGlossary with the fetched data on success", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockData,
+    });
+    mod.startGlossaryPrefetch();
+    await mod.getGlossaryPrefetch();
+    expect(initGlossary).toHaveBeenCalledWith(mockData);
+  });
+
+  it("does not call initGlossary when the fetch fails", async () => {
+    jest.useFakeTimers();
+    global.fetch.mockRejectedValue(new Error("network error"));
+    mod.startGlossaryPrefetch();
+    const p = mod.getGlossaryPrefetch();
+    await jest.runAllTimersAsync();
+    await p.catch(() => {});
+    expect(initGlossary).not.toHaveBeenCalled();
+    jest.useRealTimers();
+  });
+
+  it("calling startGlossaryPrefetch a second time does not trigger a second fetch", async () => {
+    global.fetch.mockReturnValue(new Promise(() => {}));
+    mod.startGlossaryPrefetch();
+    await Promise.resolve(); // flush microtasks so fetch() is actually called once
+    mod.startGlossaryPrefetch();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+});
