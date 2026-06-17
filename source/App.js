@@ -41,6 +41,7 @@ import {
   fetchPhrasesByVersion,
 } from "./components/phrasesApi";
 import { initPhrases } from "../threshold/parameters/phrasesRegistry";
+import { fetchGitHubStats } from "./components/githubStatsApi";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -69,6 +70,8 @@ export default class App extends Component {
     this.state = {
       websiteRepoLastCommitDeploy: null,
       websiteRepoLastCommitURL: null,
+      githubStars: null,
+      githubLicense: null,
       readingGlossary: false,
       phrasesError: false,
       /* -------------------------------------------------------------------------- */
@@ -165,49 +168,39 @@ export default class App extends Component {
         this.setState({ phrasesError: true });
       });
 
-    // get the actual changes from GitHub
-    try {
-      const websiteGitHubRepo = await fetch(
-        "https://api.github.com/repos/EasyEyes/website/commits",
-      );
-      if (websiteGitHubRepo.ok) {
-        websiteGitHubRepo
-          .json()
-          .then((data) => {
-            this.setState({
-              websiteRepoLastCommitURL: data[0].html_url,
-            });
-          })
-          .catch((error) => {
-            console.warn("Failed to parse GitHub API response:", error);
-          });
-      }
-    } catch (error) {
-      // Silently fail - this is not critical for app functionality
-      console.warn("Failed to fetch GitHub commits:", error);
-    }
+    // get the GitHub footer values (latest commit URL, stars, license) via our
+    // cached Netlify proxy instead of calling GitHub directly. Not critical, so
+    // it degrades silently.
+    fetchGitHubStats()
+      .then((stats) => {
+        if (!stats || stats.available === false) return;
+        this.setState({
+          websiteRepoLastCommitURL: stats.lastCommitUrl,
+          githubStars: stats.stars,
+          githubLicense: stats.license,
+        });
+      })
+      .catch((error) => {
+        console.warn("Failed to fetch GitHub stats:", error);
+      });
 
-    // get the deployed time from Netlify
-    try {
-      const websiteNetlifySite = await fetch(
-        "https://api.netlify.com/api/v1/sites/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/",
-      );
-      if (websiteNetlifySite.ok) {
-        websiteNetlifySite
-          .json()
-          .then((data) => {
-            this.setState({
-              websiteRepoLastCommitDeploy: data.published_deploy.published_at,
-            });
-          })
-          .catch((error) => {
-            console.warn("Failed to parse Netlify API response:", error);
+    // get the deployed time from Netlify. Not critical, so it runs
+    // fire-and-forget (no await) and degrades silently.
+    fetch(
+      "https://api.netlify.com/api/v1/sites/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/",
+    )
+      .then((websiteNetlifySite) => {
+        if (!websiteNetlifySite.ok) return;
+        return websiteNetlifySite.json().then((data) => {
+          this.setState({
+            websiteRepoLastCommitDeploy: data.published_deploy.published_at,
           });
-      }
-    } catch (error) {
-      // Silently fail - this is not critical for app functionality
-      console.warn("Failed to fetch Netlify deployment info:", error);
-    }
+        });
+      })
+      .catch((error) => {
+        // Silently fail - this is not critical for app functionality
+        console.warn("Failed to fetch Netlify deployment info:", error);
+      });
 
     // auth anonymous user for firebase
     signInAnonymously(auth)
@@ -701,6 +694,8 @@ export default class App extends Component {
     const {
       websiteRepoLastCommitDeploy,
       websiteRepoLastCommitURL,
+      githubStars,
+      githubLicense,
       readingGlossary,
       phrasesError,
       activeExperiment,
@@ -875,18 +870,26 @@ export default class App extends Component {
 
                   <div className="item">
                     <div style={{ marginTop: "5px" }}></div>
-                    <a href="https://github.com/EasyEyes/threshold/stargazers">
-                      <img
-                        alt="GitHub stars"
-                        src="https://flat.badgen.net/github/stars/EasyEyes/threshold"
-                      />
-                    </a>
-                    <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
-                      <img
-                        alt="GitHub license"
-                        src="https://flat.badgen.net/github/license/EasyEyes/threshold"
-                      />
-                    </a>
+                    {githubStars != null && (
+                      <a href="https://github.com/EasyEyes/threshold/stargazers">
+                        <img
+                          alt="GitHub stars"
+                          src={`https://img.shields.io/badge/stars-${encodeURIComponent(
+                            githubStars,
+                          )}-blue?style=flat-square&logo=github&logoColor=white`}
+                        />
+                      </a>
+                    )}{" "}
+                    {githubLicense && (
+                      <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
+                        <img
+                          alt="GitHub license"
+                          src={`https://img.shields.io/badge/license-${encodeURIComponent(
+                            githubLicense,
+                          )}-green?style=flat-square`}
+                        />
+                      </a>
+                    )}{" "}
                     <a href="https://app.netlify.com/sites/easyeyes/deploys">
                       <img
                         alt="Netlify Status"
