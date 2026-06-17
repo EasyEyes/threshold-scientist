@@ -1,5 +1,6 @@
 import {
   fetchGlossaryData,
+  fetchGlossaryFiltered,
   fetchGlossaryVersion,
   pinGlossaryVersion,
 } from "../components/glossaryApi";
@@ -76,6 +77,41 @@ describe("glossaryApi", () => {
         "/.netlify/functions/glossary?versionOnly=1",
       );
       expect(result).toEqual({ version: "2.5" });
+    });
+  });
+
+  describe("fetchGlossaryFiltered", () => {
+    it("POSTs { v, keys } to /.netlify/functions/glossary-filter and returns parsed data", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValueOnce(mockGlossaryData),
+      });
+
+      const result = await fetchGlossaryFiltered("2.0", ["paramA", "paramB"]);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/.netlify/functions/glossary-filter",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ v: "2.0", keys: ["paramA", "paramB"] }),
+        },
+      );
+      expect(result).toEqual(mockGlossaryData);
+    });
+
+    it("retries on a failed response and then resolves", async () => {
+      global.fetch
+        .mockResolvedValueOnce({ ok: false, status: 503 })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: jest.fn().mockResolvedValueOnce(mockGlossaryData),
+        });
+
+      const result = await fetchGlossaryFiltered("2.0", ["paramA"]);
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(result).toEqual(mockGlossaryData);
     });
   });
 

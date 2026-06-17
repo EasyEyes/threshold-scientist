@@ -20,8 +20,9 @@ import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 
 import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
+import * as XLSX from "xlsx";
 import {
-  fetchGlossaryData,
+  fetchGlossaryFiltered,
   fetchGlossaryVersion,
   pinGlossaryVersion,
 } from "./components/glossaryApi";
@@ -83,6 +84,15 @@ export default class Table extends Component {
     // we relabel that same dialog for each phase instead of firing/closing our
     // own, so the modal stays open continuously — closing it would leave a blank
     // screen through the rest of the compile.
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    const parameterNames = rows
+      .slice(1)
+      .map((row) => row[0])
+      .filter(Boolean);
+
     let shouldFetch = true;
     let serverVersion = null;
     try {
@@ -107,7 +117,7 @@ export default class Table extends Component {
         // Fetch by explicit version so the CDN returns the just-published
         // glossary (new version = new URL = cache miss), never a stale copy.
         // If the probe failed, serverVersion is null → falls back to current.
-        const data = await fetchGlossaryData(serverVersion);
+        const data = await fetchGlossaryFiltered(serverVersion, parameterNames);
         initGlossary(data);
       } catch (err) {
         Swal.close();

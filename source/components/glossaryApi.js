@@ -29,6 +29,17 @@ export async function fetchGlossaryData(version) {
   return fetchJsonWithRetry(url);
 }
 
+export async function fetchGlossaryFiltered(version, keys) {
+  return fetchJsonWithRetry(
+    `${await getEasyEyesBaseUrl()}/.netlify/functions/glossary-filter`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ v: version, keys }),
+    },
+  );
+}
+
 export async function fetchGlossaryVersion() {
   return fetchJsonWithRetry(
     `${await getEasyEyesBaseUrl()}/.netlify/functions/glossary?versionOnly=1`,

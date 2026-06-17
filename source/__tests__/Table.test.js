@@ -4,6 +4,18 @@ import Table from "../Table";
 import Swal from "sweetalert2";
 import { preprocessExperimentFile } from "../../threshold/preprocess/main";
 
+// jsdom < 22 does not implement Blob.prototype.arrayBuffer; polyfill via FileReader
+if (!Blob.prototype.arrayBuffer) {
+  Blob.prototype.arrayBuffer = function () {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(this);
+    });
+  };
+}
+
 jest.mock("sweetalert2", () => ({
   fire: jest.fn(),
   showLoading: jest.fn(),
@@ -19,8 +31,21 @@ jest.mock("../components/dropzone", () => ({
 
 jest.mock("../components/glossaryApi", () => ({
   fetchGlossaryData: jest.fn(),
+  fetchGlossaryFiltered: jest.fn(),
   fetchGlossaryVersion: jest.fn(),
   pinGlossaryVersion: jest.fn().mockResolvedValue({ version: "1.0" }),
+}));
+
+jest.mock("xlsx", () => ({
+  read: jest.fn().mockReturnValue({
+    SheetNames: ["Sheet1"],
+    Sheets: { Sheet1: {} },
+  }),
+  utils: {
+    sheet_to_json: jest
+      .fn()
+      .mockReturnValue([["parameter"], ["paramA"], ["paramB"]]),
+  },
 }));
 
 jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
@@ -112,7 +137,7 @@ describe("Table.handleTable", () => {
 
   it("fetches and initializes the latest glossary before preprocessing a fresh spreadsheet", async () => {
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -124,19 +149,22 @@ describe("Table.handleTable", () => {
     } = require("../../threshold/preprocess/main");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
-    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    fetchGlossaryFiltered.mockResolvedValue(mockGlossaryData);
 
     const ref = React.createRef();
     render(<Table ref={ref} {...makeProps()} />);
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
-    expect(fetchGlossaryData).toHaveBeenCalledWith("2.0");
+    expect(fetchGlossaryFiltered).toHaveBeenCalledTimes(1);
+    expect(fetchGlossaryFiltered).toHaveBeenCalledWith(
+      "2.0",
+      expect.any(Array),
+    );
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
     expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
 
-    const fetchOrder = fetchGlossaryData.mock.invocationCallOrder[0];
+    const fetchOrder = fetchGlossaryFiltered.mock.invocationCallOrder[0];
     const initOrder = initGlossary.mock.invocationCallOrder[0];
     const preprocessOrder =
       preprocessExperimentFile.mock.invocationCallOrder[0];
@@ -146,7 +174,7 @@ describe("Table.handleTable", () => {
 
   it("refreshes the glossary even when compiling from an archive", async () => {
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -158,7 +186,7 @@ describe("Table.handleTable", () => {
     } = require("../../threshold/preprocess/main");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
-    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    fetchGlossaryFiltered.mockResolvedValue(mockGlossaryData);
 
     const ref = React.createRef();
     render(
@@ -167,14 +195,14 @@ describe("Table.handleTable", () => {
 
     await ref.current.handleTable(new File(["a,b"], "exp.export.zip"));
 
-    expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
+    expect(fetchGlossaryFiltered).toHaveBeenCalledTimes(1);
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
     expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
   });
 
   it("aborts the compile and logs when the glossary refresh fails", async () => {
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -187,7 +215,7 @@ describe("Table.handleTable", () => {
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
     const fetchError = new Error("network down");
-    fetchGlossaryData.mockRejectedValue(fetchError);
+    fetchGlossaryFiltered.mockRejectedValue(fetchError);
     const consoleError = jest
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -209,7 +237,7 @@ describe("Table.handleTable", () => {
 
   it("skips the full glossary download when the server version matches the cached version", async () => {
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -227,14 +255,14 @@ describe("Table.handleTable", () => {
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(fetchGlossaryData).not.toHaveBeenCalled();
+    expect(fetchGlossaryFiltered).not.toHaveBeenCalled();
     expect(initGlossary).not.toHaveBeenCalled();
     expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
   });
 
   it("downloads the full glossary when the server version differs from the cached version", async () => {
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -243,20 +271,20 @@ describe("Table.handleTable", () => {
     } = require("../../threshold/parameters/glossaryRegistry");
     fetchGlossaryVersion.mockResolvedValue({ version: "3.0" });
     getGlossaryVersion.mockReturnValue("2.0");
-    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    fetchGlossaryFiltered.mockResolvedValue(mockGlossaryData);
 
     const ref = React.createRef();
     render(<Table ref={ref} {...makeProps()} />);
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
+    expect(fetchGlossaryFiltered).toHaveBeenCalledTimes(1);
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
   });
 
   it("downloads the full glossary when the version check request fails", async () => {
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -265,20 +293,20 @@ describe("Table.handleTable", () => {
     } = require("../../threshold/parameters/glossaryRegistry");
     fetchGlossaryVersion.mockRejectedValue(new Error("timeout"));
     getGlossaryVersion.mockReturnValue("2.0");
-    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    fetchGlossaryFiltered.mockResolvedValue(mockGlossaryData);
 
     const ref = React.createRef();
     render(<Table ref={ref} {...makeProps()} />);
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
+    expect(fetchGlossaryFiltered).toHaveBeenCalledTimes(1);
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
   });
 
   it("downloads the full glossary when there is no cached version", async () => {
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -287,15 +315,46 @@ describe("Table.handleTable", () => {
     } = require("../../threshold/parameters/glossaryRegistry");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
-    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    fetchGlossaryFiltered.mockResolvedValue(mockGlossaryData);
 
     const ref = React.createRef();
     render(<Table ref={ref} {...makeProps()} />);
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
+    expect(fetchGlossaryFiltered).toHaveBeenCalledTimes(1);
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
+  });
+
+  it("passes first-column parameter names (skipping header) to fetchGlossaryFiltered", async () => {
+    const XLSX = require("xlsx");
+    const {
+      fetchGlossaryFiltered,
+      fetchGlossaryVersion,
+    } = require("../components/glossaryApi");
+    const {
+      getGlossaryVersion,
+    } = require("../../threshold/parameters/glossaryRegistry");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
+    fetchGlossaryFiltered.mockResolvedValue(mockGlossaryData);
+    XLSX.utils.sheet_to_json.mockReturnValue([
+      ["parameter"],
+      ["targetKind"],
+      ["font"],
+      ["spacingDeg"],
+    ]);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(fetchGlossaryFiltered).toHaveBeenCalledWith("2.0", [
+      "targetKind",
+      "font",
+      "spacingDeg",
+    ]);
   });
 });
 
@@ -313,7 +372,7 @@ describe("Table.handleTable glossary loading dialog", () => {
 
   it("relabels the open dialog to 'Loading glossary …' while downloading, then restores 'Compiling ...' without closing it", async () => {
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -324,7 +383,7 @@ describe("Table.handleTable glossary loading dialog", () => {
     } = require("../../threshold/preprocess/gitlabUtils");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
-    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    fetchGlossaryFiltered.mockResolvedValue(mockGlossaryData);
 
     const ref = React.createRef();
     render(<Table ref={ref} {...makeProps()} />);
@@ -339,7 +398,7 @@ describe("Table.handleTable glossary loading dialog", () => {
       manuallySetSwalTitle.mock.invocationCallOrder[
         titles.indexOf("Loading glossary …")
       ];
-    const fetchOrder = fetchGlossaryData.mock.invocationCallOrder[0];
+    const fetchOrder = fetchGlossaryFiltered.mock.invocationCallOrder[0];
     expect(glossaryTitleOrder).toBeLessThan(fetchOrder);
     // ...and is restored to "Compiling ..." (never closed) before preprocessing.
     expect(titles).toContain("Compiling ...");
@@ -367,7 +426,7 @@ describe("Table.handleTable glossary loading dialog", () => {
 
   it("closes the dialog when the glossary download fails", async () => {
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -375,7 +434,7 @@ describe("Table.handleTable glossary loading dialog", () => {
     } = require("../../threshold/parameters/glossaryRegistry");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
-    fetchGlossaryData.mockRejectedValue(new Error("network down"));
+    fetchGlossaryFiltered.mockRejectedValue(new Error("network down"));
     const consoleError = jest
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -398,7 +457,7 @@ describe("Table.handleTable phrases", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     const {
-      fetchGlossaryData,
+      fetchGlossaryFiltered,
       fetchGlossaryVersion,
     } = require("../components/glossaryApi");
     const {
@@ -406,7 +465,7 @@ describe("Table.handleTable phrases", () => {
     } = require("../../threshold/parameters/glossaryRegistry");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue("2.0");
-    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    fetchGlossaryFiltered.mockResolvedValue(mockGlossaryData);
   });
 
   it("fetches and initializes phrases when version differs from cached", async () => {
