@@ -21,6 +21,7 @@ jest.mock("../components/glossaryApi", () => ({
   fetchGlossaryData: jest.fn(),
   fetchGlossaryVersion: jest.fn(),
   pinGlossaryVersion: jest.fn().mockResolvedValue({ version: "1.0" }),
+  getGlossaryPrefetch: jest.fn().mockReturnValue(null),
 }));
 
 jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
@@ -631,5 +632,82 @@ describe("Table.handleTable — EasyEyesResources lookup uses searchProjectByNam
       props.user,
       "EasyEyesResources",
     );
+  });
+});
+
+describe("Table.handleTable — glossary prefetch wiring", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const {
+      fetchGlossaryVersion,
+      getGlossaryPrefetch,
+    } = require("../components/glossaryApi");
+    const {
+      getGlossaryVersion,
+    } = require("../../threshold/parameters/glossaryRegistry");
+    // Default: no in-flight prefetch, glossary already cached
+    getGlossaryPrefetch.mockReturnValue(null);
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue("2.0");
+
+    const { fetchPhrasesVersion } = require("../components/phrasesApi");
+    const {
+      getPhrasesVersion,
+    } = require("../../threshold/parameters/phrasesRegistry");
+    fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
+    getPhrasesVersion.mockReturnValue("2.0");
+  });
+
+  it("relabels the dialog to 'Loading glossary …' and awaits when prefetch is in flight", async () => {
+    const { getGlossaryPrefetch } = require("../components/glossaryApi");
+    const {
+      manuallySetSwalTitle,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    let resolvePrefetch;
+    const pendingPromise = new Promise((resolve) => {
+      resolvePrefetch = resolve;
+    });
+    getGlossaryPrefetch.mockReturnValue(pendingPromise);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    const tablePromise = ref.current.handleTable(new File(["a,b"], "exp.csv"));
+    resolvePrefetch();
+    await tablePromise;
+
+    expect(manuallySetSwalTitle).toHaveBeenCalledWith("Loading glossary …");
+  });
+
+  it("does not relabel the dialog when getGlossaryPrefetch returns null", async () => {
+    const { getGlossaryPrefetch } = require("../components/glossaryApi");
+    const {
+      manuallySetSwalTitle,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    getGlossaryPrefetch.mockReturnValue(null);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(manuallySetSwalTitle).not.toHaveBeenCalledWith("Loading glossary …");
+  });
+
+  it("swallows prefetch errors and continues to preprocessExperimentFile", async () => {
+    const { getGlossaryPrefetch } = require("../components/glossaryApi");
+    const {
+      preprocessExperimentFile,
+    } = require("../../threshold/preprocess/main");
+    const rejectingPromise = Promise.reject(new Error("prefetch failed"));
+    rejectingPromise.catch(() => {});
+    getGlossaryPrefetch.mockReturnValue(rejectingPromise);
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
   });
 });

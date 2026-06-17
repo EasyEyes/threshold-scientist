@@ -80,6 +80,10 @@ jest.mock("../components/phrasesApi", () => ({
   fetchPhrasesByVersion: jest.fn(),
 }));
 
+jest.mock("../components/glossaryApi", () => ({
+  startGlossaryPrefetch: jest.fn(),
+}));
+
 jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
   initPhrases: jest.fn(),
 }));
@@ -101,6 +105,16 @@ describe("App", () => {
     fetchPhrasesVersion.mockResolvedValue({ version: mockPhrasesData.version });
     fetchPhrasesByVersion.mockResolvedValue(mockPhrasesData);
     global.fetch.mockResolvedValue({ ok: false });
+  });
+
+  it("calls startGlossaryPrefetch unconditionally on mount", async () => {
+    const { startGlossaryPrefetch } = require("../components/glossaryApi");
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(startGlossaryPrefetch).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("checks the latest version, then fetches that specific version and calls initPhrases", async () => {
