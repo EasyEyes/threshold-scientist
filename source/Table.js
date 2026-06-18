@@ -34,6 +34,7 @@ import {
   fetchPhrasesVersion,
   pinPhrasesVersion,
 } from "./components/phrasesApi";
+import { fetchConfig } from "./components/configApi";
 import {
   initPhrases,
   getPhrasesVersion,
@@ -47,6 +48,7 @@ export default class Table extends Component {
       tableName: null,
       errors: [],
       showDropZone: true,
+      compileNewExperiment: true,
     };
 
     this.onDrop = this.onDrop.bind(this);
@@ -56,6 +58,16 @@ export default class Table extends Component {
 
     this.finalSuccessMessage =
       "Compiled successfully. Compile a new experiment, anytime, by submitting it above.";
+  }
+
+  componentDidMount() {
+    fetchConfig()
+      .then(({ compileNewExperiment }) => {
+        this.setState({ compileNewExperiment: !!compileNewExperiment });
+      })
+      .catch(() => {
+        // config fetch failed — leave default (enabled)
+      });
   }
 
   onDrop(files) {
@@ -470,13 +482,21 @@ export default class Table extends Component {
           </span>
         </div>
         <div className="file-zone">
-          <Dropzone onDrop={this.onDrop}>
+          <Dropzone
+            onDrop={this.onDrop}
+            disabled={!this.state.compileNewExperiment}
+          >
             {({ getRootProps, getInputProps }) => (
               <div
                 {...getRootProps({ className: "dropzone" })}
                 ref={this.dropZoneRef}
                 style={{
                   visibility: this.state.showDropZone ? "visible" : "hidden",
+                  ...(!this.state.compileNewExperiment && {
+                    opacity: 0.4,
+                    cursor: "not-allowed",
+                    pointerEvents: "none",
+                  }),
                 }}
               >
                 <input {...getInputProps()} />
