@@ -22,6 +22,7 @@ function onOpen() {
     .createMenu("EasyEyes")
     .addItem("Update EasyEyes to use current phrases", "updatePhrases")
     .addItem("Redo selected cyan translations", "retranslateSelectedCells")
+    .addItem("Check Translations sheet", "checkPhraseKeys")
     .addToUi();
 }
 
@@ -582,6 +583,257 @@ function retranslateSelectedCells() {
       (nonCyanWarning ? "\n\n⚠️ " + nonCyanWarning : ""),
     "success"
   );
+}
+
+function checkPhraseKeys() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
+  if (!sheet) {
+    notify('Sheet "Translations" not found.');
+    return;
+  }
+
+  var rows = sheet.getDataRange().getDisplayValues();
+  if (rows.length < 2) {
+    notify("No data found in the Translations sheet.");
+    return;
+  }
+
+  if (rows[0].indexOf("language") === -1) {
+    notify('Required column "language" not found in header row.');
+    return;
+  }
+
+  // Each check returns a report section, or "" when it finds nothing.
+  // Comment out any line below to disable that individual check.
+  var sections = [];
+  sections.push(checkExactDuplicateKeys(rows));
+  sections.push(checkCaseOnlyDuplicateKeys(rows));
+  sections.push(checkKeyLeadingTrailingSpaces(rows));
+  sections.push(checkKeyInvisibleChars(rows));
+  sections.push(checkKeyInteriorSpaces(rows));
+  sections.push(checkDuplicateLanguageColumns(rows));
+  sections.push(checkKeyNamingConvention(rows));
+  sections.push(checkMissingEnglishSource(rows));
+  sections.push(checkOrphanRows(rows));
+  sections.push(checkDuplicateEnglishText(rows));
+
+  sections = sections.filter(function (s) { return s; });
+
+  if (sections.length === 0) {
+    notify("No problems found in the Translations sheet.", "success");
+    return;
+  }
+
+  notify("Found problems in the Translations sheet:\n\n" + sections.join("\n\n"));
+}
+
+// ─── Individual phrase-key checks (each returns a report section, or "") ──────
+
+// Same trimmed key in more than one row. Only one row gets the translation;
+// the others are left blank.
+function checkExactDuplicateKeys(rows) {
+  var keyIdx = rows[0].indexOf("language");
+  if (keyIdx === -1) return "";
+  var rowsByKey = {};
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    if (!rowsByKey[key]) rowsByKey[key] = [];
+    rowsByKey[key].push(i + 1);
+  }
+  var lines = [];
+  Object.keys(rowsByKey).forEach(function (k) {
+    if (rowsByKey[k].length > 1) lines.push(k);
+  });
+  if (!lines.length) return "";
+  return "Duplicate keys (exact). Only one row receives the translation; the " +
+    "others are left blank:\n" + lines.sort().join("\n");
+}
+
+// Keys that are identical except for letter case (e.g. myKey / mykey).
+function checkCaseOnlyDuplicateKeys(rows) {
+  var keyIdx = rows[0].indexOf("language");
+  if (keyIdx === -1) return "";
+  var spellings = {};   // lowercased key -> { spelling: true }
+  var rowsByLower = {}; // lowercased key -> [rows]
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    var lw = key.toLowerCase();
+    if (!spellings[lw]) { spellings[lw] = {}; rowsByLower[lw] = []; }
+    spellings[lw][key] = true;
+    rowsByLower[lw].push(i + 1);
+  }
+  var lines = [];
+  Object.keys(spellings).forEach(function (lw) {
+    var s = Object.keys(spellings[lw]);
+    if (s.length > 1) lines.push(s.join(" / "));
+  });
+  if (!lines.length) return "";
+  return "Keys differing only by letter case (likely unintended duplicates):\n" +
+    lines.sort().join("\n");
+}
+
+// Keys with leading/trailing spaces. Trimmed before use, so they silently
+// collide with the un-spaced spelling.
+function checkKeyLeadingTrailingSpaces(rows) {
+  var keyIdx = rows[0].indexOf("language");
+  if (keyIdx === -1) return "";
+  var lines = [];
+  for (var i = 1; i < rows.length; i++) {
+    var raw = rows[i][keyIdx] || "";
+    var key = raw.trim();
+    if (!key) continue;
+    if (raw !== key) lines.push('"' + raw + '"');
+  }
+  if (!lines.length) return "";
+  return "Keys with leading/trailing spaces (trimmed before use, so they collide " +
+    "with the un-spaced spelling):\n" + lines.sort().join("\n");
+}
+
+// Keys containing invisible / look-alike characters that survive .trim() and
+// make a key look identical to another while never matching it.
+function checkKeyInvisibleChars(rows) {
+  var keyIdx = rows[0].indexOf("language");
+  if (keyIdx === -1) return "";
+  var suspects = [
+    { name: "non-breaking space", re: /\u00A0/ },
+    { name: "zero-width space", re: /[\u200B-\u200D\uFEFF]/ },
+    { name: "tab", re: /\t/ },
+  ];
+  var lines = [];
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    var found = [];
+    for (var s = 0; s < suspects.length; s++) {
+      if (suspects[s].re.test(key)) found.push(suspects[s].name);
+    }
+    if (found.length) lines.push(key + " (" + found.join(", ") + ")");
+  }
+  if (!lines.length) return "";
+  return "Keys containing invisible/look-alike characters (they never match the " +
+    "visually identical key):\n" + lines.sort().join("\n");
+}
+
+// Keys with a regular space somewhere inside the trimmed key (e.g. "my key").
+function checkKeyInteriorSpaces(rows) {
+  var keyIdx = rows[0].indexOf("language");
+  if (keyIdx === -1) return "";
+  var lines = [];
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    if (key.indexOf(" ") !== -1) lines.push(key);
+  }
+  if (!lines.length) return "";
+  return "Keys containing interior spaces (almost always a typo):\n" + lines.sort().join("\n");
+}
+
+// Two or more target columns sharing the same header. Write-back uses
+// header.indexOf(lang), so only the first such column is ever written.
+function checkDuplicateLanguageColumns(rows) {
+  var header = rows[0];
+  var firstSeen = {}; // name -> first column number
+  var dups = {};      // name -> [column numbers]
+  for (var h = 0; h < header.length; h++) {
+    var name = (header[h] || "").trim();
+    if (!name) continue;
+    if (firstSeen[name] !== undefined) {
+      if (!dups[name]) dups[name] = [firstSeen[name]];
+      dups[name].push(h + 1);
+    } else {
+      firstSeen[name] = h + 1;
+    }
+  }
+  var lines = [];
+  Object.keys(dups).forEach(function (n) {
+    lines.push(n + " — columns " + dups[n].join(", "));
+  });
+  if (!lines.length) return "";
+  return "Duplicate column headers. Only the first column is written; the rest are " +
+    "ignored on write-back:\n" + lines.sort().join("\n");
+}
+
+// Keys that do not start with one of the project's expected prefixes.
+function checkKeyNamingConvention(rows) {
+  var ALLOWED_PREFIXES = ["EE_", "RC_", "T_", "x", "_DOCUMENTATION_OF_THIS_TABLE"]; // edit to match the project's key prefixes
+  var keyIdx = rows[0].indexOf("language");
+  if (keyIdx === -1) return "";
+  var lines = [];
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    var ok = ALLOWED_PREFIXES.some(function (p) { return key.indexOf(p) === 0; });
+    if (!ok) lines.push(key);
+  }
+  if (!lines.length) return "";
+  return "Keys not starting with an expected prefix (" + ALLOWED_PREFIXES.join(", ") +
+    "):\n" + lines.sort().join("\n");
+}
+
+// Keys whose English (en) source cell is empty — nothing to translate.
+function checkMissingEnglishSource(rows) {
+  var keyIdx = rows[0].indexOf("language");
+  var enIdx = rows[0].indexOf("en");
+  if (keyIdx === -1 || enIdx === -1) return "";
+  var lines = [];
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    if (!(rows[i][enIdx] || "").trim()) lines.push(key);
+  }
+  if (!lines.length) return "";
+  return "Keys with an empty English (en) source cell (nothing to translate):\n" +
+    lines.sort().join("\n");
+}
+
+// Rows that have content in some column but no key — silently skipped on every
+// push, so their text never reaches the app.
+function checkOrphanRows(rows) {
+  var keyIdx = rows[0].indexOf("language");
+  if (keyIdx === -1) return "";
+  var lines = [];
+  for (var i = 1; i < rows.length; i++) {
+    if ((rows[i][keyIdx] || "").trim()) continue;
+    var hasContent = false;
+    for (var h = 0; h < rows[i].length; h++) {
+      if (h === keyIdx) continue;
+      if ((rows[i][h] || "").trim()) { hasContent = true; break; }
+    }
+    if (hasContent) lines.push("row " + (i + 1));
+  }
+  if (!lines.length) return "";
+  return "Rows with content but no key in the language column (silently skipped on " +
+    "every push):\n" + lines.join("\n");
+}
+
+// Identical English source text under different keys — possible redundancy.
+function checkDuplicateEnglishText(rows) {
+  var keyIdx = rows[0].indexOf("language");
+  var enIdx = rows[0].indexOf("en");
+  if (keyIdx === -1 || enIdx === -1) return "";
+  var keysByText = {}; // en text -> { key: true }
+  var rowsByText = {}; // en text -> [rows]
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    var text = (rows[i][enIdx] || "").trim();
+    if (!text) continue;
+    if (!keysByText[text]) { keysByText[text] = {}; rowsByText[text] = []; }
+    keysByText[text][key] = true;
+    rowsByText[text].push(i + 1);
+  }
+  var lines = [];
+  Object.keys(keysByText).forEach(function (t) {
+    var keys = Object.keys(keysByText[t]);
+    if (keys.length > 1) {
+      lines.push(keys.join(", "));
+    }
+  });
+  if (!lines.length) return "";
+  return "Identical English text under different keys (possible redundancy):\n" +
+    lines.sort().join("\n\n");
 }
 
 // ─── Pure helpers (duplicated here; source of truth: source/appsScript/phrasesPush.js) ──
