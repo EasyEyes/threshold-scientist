@@ -18,9 +18,17 @@ import {
   getProlificStudyId,
   downloadCommonResources,
   getAllProjects,
+  getOriginalFileNameForProject,
 } from "../threshold/preprocess/gitlabUtils";
+import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
+import { GitLabOAuthClient } from "../threshold/preprocess/auth/gitlabOAuthClient";
+import { getAuthConfig } from "../threshold/preprocess/auth/config";
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
 import { captureError } from "./sentry";
+import Papa from "papaparse";
+import { getTranslationConfig } from "./remoteConfigClient";
+import { translateAndSerialize } from "./spreadsheetTranslation";
+import { TranslateExportError } from "./translateExportApi";
 
 import "./css/Running.scss";
 import { Dropdown } from "./components/Dropdown";
@@ -477,6 +485,129 @@ export default class Running extends Component {
                 }}
               >
                 Export
+              </button>
+            )}
+
+            {isRunning && pavloviaIsReady && (
+              <button
+                className="button-large-font button-grey resource-button"
+                style={{
+                  fontSize: "1rem",
+                  color: "#fff",
+                }}
+                onClick={async () => {
+                  const { supportedLanguages, translationKeys } =
+                    await getTranslationConfig();
+
+                  if (!supportedLanguages.length) {
+                    Swal.fire({
+                      icon: "error",
+                      title: "No languages available",
+                      confirmButtonColor: "#666",
+                    });
+                    return;
+                  }
+
+                  const langButtonsHtml = supportedLanguages
+                    .map(
+                      (lang) =>
+                        `<button
+                          class="swal2-confirm swal2-styled"
+                          style="width:100%;margin:4px 0"
+                          data-lang='${JSON.stringify(lang).replace(
+                            /'/g,
+                            "&#39;",
+                          )}'
+                        >${lang.label}</button>`,
+                    )
+                    .join("");
+
+                  Swal.fire({
+                    title: "Download translated experiment",
+                    html: `<div id="translate-lang-list" style="display:flex;flex-direction:column;align-items:center;width:60%;margin:0 auto">${langButtonsHtml}</div>`,
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    didOpen: () => {
+                      document
+                        .getElementById("translate-lang-list")
+                        .addEventListener("click", async (e) => {
+                          const btn = e.target.closest("[data-lang]");
+                          if (!btn) return;
+
+                          Swal.showLoading();
+                          try {
+                            const lang = JSON.parse(btn.dataset.lang);
+                            const originalFileName =
+                              await getOriginalFileNameForProject(
+                                user,
+                                activeExperiment.name,
+                              );
+                            if (!originalFileName)
+                              throw new Error(
+                                "Experiment file not found in GitLab.",
+                              );
+
+                            const client = GitLabOAuthClient.loadFromStorage(
+                              getAuthConfig().clientId,
+                              getAuthConfig().redirectUri,
+                            );
+                            if (!client)
+                              throw new Error("Not authenticated with GitLab.");
+                            await client.ensureValidToken();
+
+                            const text = await getTextFileDataFromGitLab(
+                              parseInt(activeExperiment.id),
+                              originalFileName,
+                              client,
+                            );
+
+                            const ext = originalFileName.includes(".xlsx")
+                              ? "xlsx"
+                              : "csv";
+                            const aoa =
+                              ext === "xlsx"
+                                ? JSON.parse(text)
+                                : Papa.parse(text).data;
+
+                            const baseName = originalFileName.replace(
+                              /\.(xlsx|csv)$/i,
+                              "",
+                            );
+                            const result = await translateAndSerialize(
+                              aoa,
+                              translationKeys,
+                              lang,
+                              ext,
+                            );
+
+                            const blob =
+                              ext === "xlsx"
+                                ? result
+                                : new Blob([result], { type: "text/csv" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `${baseName}_${lang.label}.${ext}`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            Swal.hideLoading();
+                          } catch (err) {
+                            Swal.fire({
+                              icon: "error",
+                              title:
+                                err instanceof TranslateExportError
+                                  ? "Translation failed"
+                                  : "Download failed",
+                              text: err.message,
+                              confirmButtonColor: "#666",
+                            });
+                          }
+                        });
+                    },
+                  });
+                }}
+              >
+                Translate
               </button>
             )}
 
