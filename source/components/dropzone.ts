@@ -17,6 +17,7 @@ import {
 import { userRepoFiles } from "../../threshold/preprocess/constants";
 import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidToken";
 import { redirectToOauth2 } from "../../threshold/preprocess/user";
+import { translatePhraseFileApi } from "./phraseFileApi";
 
 // Helper function to identify impulse response files by their filename pattern
 const isImpulseResponseFile = (file: File): boolean => {
@@ -30,6 +31,11 @@ const isFrequencyResponseFile = (file: File): boolean => {
 
 const isTargetSoundListFile = (file: File): boolean => {
   return file.name.match(/\.targetSoundList\.(xlsx|csv)$/i) !== null;
+};
+
+const isPhraseFile = (file: File): boolean => {
+  const requested = userRepoFiles.requestedPhraseFiles;
+  return requested.length > 0 && requested[0] === file.name;
 };
 
 export const handleDrop = async (
@@ -46,6 +52,7 @@ export const handleDrop = async (
   const impulseResponseList: File[] = [];
   const frequencyResponseList: File[] = [];
   const targetSoundListList: File[] = [];
+  const phraseFileList: File[] = [];
   let experimentFile = null;
   const regex = /^(.+)\.export\.zip$/;
   let isCompiledFromArchiveBool = false;
@@ -90,6 +97,8 @@ export const handleDrop = async (
       frequencyResponseList.push(file);
     } else if (isTargetSoundListFile(file)) {
       targetSoundListList.push(file);
+    } else if (isPhraseFile(file)) {
+      phraseFileList.push(file);
     } else if (isExpTableFile(file)) {
       experimentFile = file;
     } else {
@@ -114,6 +123,8 @@ export const handleDrop = async (
                 frequencyResponseList.push(fileObject);
               } else if (isTargetSoundListFile(fileObject)) {
                 targetSoundListList.push(fileObject);
+              } else if (isPhraseFile(fileObject)) {
+                phraseFileList.push(fileObject);
               } else if (isExpTableFile(fileObject)) {
                 experimentFile = fileObject;
               } else {
@@ -141,6 +152,22 @@ export const handleDrop = async (
       handleExperimentFile(experimentFile);
     }
     return;
+  }
+
+  // Translate and store phrase files before other uploads
+  if (phraseFileList.length > 0) {
+    await Swal.fire({
+      title: "Translating cyan cells…",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: async () => {
+        // @ts-ignore
+        Swal.showLoading(null);
+        const translated = await translatePhraseFileApi(phraseFileList[0]);
+        userRepoFiles.phraseFiles = [translated];
+        Swal.close();
+      },
+    });
   }
 
   // handle valid resource files
