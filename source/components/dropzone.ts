@@ -2,6 +2,7 @@
 
 import JSZip from "jszip";
 import Swal from "sweetalert2";
+import * as XLSX from "xlsx";
 
 import {
   getFileExtension,
@@ -14,10 +15,10 @@ import {
   getCommonResourcesNames,
   User,
 } from "../../threshold/preprocess/gitlabUtils";
-import { userRepoFiles } from "../../threshold/preprocess/constants";
 import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidToken";
 import { redirectToOauth2 } from "../../threshold/preprocess/user";
 import { translatePhraseFileApi } from "./phraseFileApi";
+import { userRepoFiles } from "../../threshold/preprocess/constants";
 
 // Helper function to identify impulse response files by their filename pattern
 const isImpulseResponseFile = (file: File): boolean => {
@@ -33,9 +34,23 @@ const isTargetSoundListFile = (file: File): boolean => {
   return file.name.match(/\.targetSoundList\.(xlsx|csv)$/i) !== null;
 };
 
-const isPhraseFile = (file: File): boolean => {
-  const requested = userRepoFiles.requestedPhraseFiles;
-  return requested.length > 0 && requested[0] === file.name;
+const isPhraseFile = async (file: File): Promise<boolean> => {
+  if (!file.name.toLowerCase().endsWith(".xlsx")) return false;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, {
+      header: 1,
+    }) as string[][];
+    return (
+      rows.length > 0 &&
+      rows[0].length > 0 &&
+      String(rows[0][0]).startsWith("~")
+    );
+  } catch {
+    return false;
+  }
 };
 
 export const handleDrop = async (
@@ -97,7 +112,7 @@ export const handleDrop = async (
       frequencyResponseList.push(file);
     } else if (isTargetSoundListFile(file)) {
       targetSoundListList.push(file);
-    } else if (isPhraseFile(file)) {
+    } else if (await isPhraseFile(file)) {
       phraseFileList.push(file);
     } else if (isExpTableFile(file)) {
       experimentFile = file;
@@ -123,7 +138,7 @@ export const handleDrop = async (
                 frequencyResponseList.push(fileObject);
               } else if (isTargetSoundListFile(fileObject)) {
                 targetSoundListList.push(fileObject);
-              } else if (isPhraseFile(fileObject)) {
+              } else if (await isPhraseFile(fileObject)) {
                 phraseFileList.push(fileObject);
               } else if (isExpTableFile(fileObject)) {
                 experimentFile = fileObject;
@@ -154,7 +169,7 @@ export const handleDrop = async (
     return;
   }
 
-  // Translate and store phrase files before other uploads
+  // Translate, store, and upload phrase files before other uploads
   if (phraseFileList.length > 0) {
     await Swal.fire({
       title: "Translating cyan cells…",
@@ -165,6 +180,7 @@ export const handleDrop = async (
         Swal.showLoading(null);
         const translated = await translatePhraseFileApi(phraseFileList[0]);
         userRepoFiles.phraseFiles = [translated];
+        await createOrUpdateCommonResources(user, [translated]);
         Swal.close();
       },
     });

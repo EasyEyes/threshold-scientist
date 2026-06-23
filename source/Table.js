@@ -240,6 +240,7 @@ export default class Table extends Component {
       // Non-fatal: corpus length check will be silently skipped
     }
     resolvedResources.textContents = textContents;
+    resolvedResources.phraseFiles = userRepoFiles.phraseFiles;
 
     await preprocessExperimentFile(
       file,
@@ -260,6 +261,7 @@ export default class Table extends Component {
         requestedImpulseResponseList, // : string[]
         requestedFrequencyResponseList, // : string[]
         requestedTargetSoundListList, // : string[]
+        requestedPhraseFileName, // : string
       ) => {
         // scroll to the top of the step block
         this.props.scrollToCurrentStep();
@@ -281,6 +283,9 @@ export default class Table extends Component {
         userRepoFiles.requestedFrequencyResponses =
           requestedFrequencyResponseList;
         userRepoFiles.requestedTargetSoundLists = requestedTargetSoundListList;
+        userRepoFiles.requestedPhraseFiles = requestedPhraseFileName
+          ? [requestedPhraseFileName]
+          : [];
         userRepoFiles.blockFiles = fileList;
 
         // Warnings (kind === "warning") do not block compilation; only real
