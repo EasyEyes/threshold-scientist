@@ -43,10 +43,10 @@ const isPhraseFile = async (file: File): Promise<boolean> => {
     const rows = XLSX.utils.sheet_to_json(firstSheet, {
       header: 1,
     }) as string[][];
-    return (
-      rows.length > 0 &&
-      rows[0].length > 0 &&
-      String(rows[0][0]).startsWith("~")
+    return rows.some(
+      (row) =>
+        row[0] != null &&
+        String(row[0]).replace(/^~/, "").toLowerCase() === "languagecode",
     );
   } catch {
     return false;
