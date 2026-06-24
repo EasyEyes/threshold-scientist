@@ -172,7 +172,7 @@ export const handleDrop = async (
   // Translate, store, and upload phrase files before other uploads
   if (phraseFileList.length > 0) {
     await Swal.fire({
-      title: "Translating cyan cells…",
+      title: "Translating …",
       allowOutsideClick: false,
       allowEscapeKey: false,
       didOpen: async () => {
