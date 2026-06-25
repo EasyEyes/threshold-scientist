@@ -29,8 +29,8 @@ const processNameForSinglePlural = (name, length) => {
   if (name === "sound") {
     return "folders and sound files";
   }
-  // ! dangerous assumption: no 's' in any of the names
-  return length <= 1 ? name.replace("s", "") : name;
+  // Singularize by stripping only a trailing "s" (e.g. "phrases" -> "phrase").
+  return length <= 1 ? name.replace(/s$/, "") : name;
 };
 
 export default class ResourceButton extends Component {
