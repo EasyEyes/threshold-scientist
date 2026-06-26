@@ -182,7 +182,11 @@ export default class Table extends Component {
       });
     }
 
-    resolvedResources = this.props.resources;
+    // Shallow-copy so the compile-time augmentation below (phrases File objects,
+    // textContents, fetchPhraseFromRepo) does not mutate the shared `resources`
+    // state. Mutating it in place overwrote the phrase filenames shown by the
+    // resource buttons with raw File objects ("[object File]").
+    resolvedResources = { ...this.props.resources };
 
     // Ensure project list is resolved before proceeding if user object exists and projectList is a promise
     if (

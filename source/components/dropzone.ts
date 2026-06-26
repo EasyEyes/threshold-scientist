@@ -141,6 +141,10 @@ export const handleDrop = async (
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
+      // Show the spinner immediately. Later phases only retitle this same modal
+      // (manuallySetSwalTitle), so if we don't start the loader here it never
+      // appears when resources are already loaded and the glossary is cached.
+      didOpen: () => Swal.showLoading(),
     });
     if (experimentFile) {
       // Store impulse response files
@@ -214,17 +218,17 @@ export const handleDrop = async (
         Swal.close();
       },
     });
-
-    if (experimentFile) {
-      userRepoFiles.experiment = experimentFile;
-      handleExperimentFile(experimentFile);
-    }
-  } else if (experimentFile) {
+  }
+  if (experimentFile) {
     Swal.fire({
       title: "Compiling ...",
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
+      // Show the spinner immediately. Later phases only retitle this same modal
+      // (manuallySetSwalTitle), so if we don't start the loader here it never
+      // appears when resources are already loaded and the glossary is cached.
+      didOpen: () => Swal.showLoading(),
     });
 
     // Build an experiment
