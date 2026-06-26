@@ -2,7 +2,6 @@
 
 import JSZip from "jszip";
 import Swal from "sweetalert2";
-import * as XLSX from "xlsx";
 
 import {
   getFileExtension,
@@ -34,23 +33,11 @@ const isTargetSoundListFile = (file: File): boolean => {
   return file.name.match(/\.targetSoundList\.(xlsx|csv)$/i) !== null;
 };
 
-const isPhraseFile = async (file: File): Promise<boolean> => {
-  if (!file.name.toLowerCase().endsWith(".xlsx")) return false;
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: "array" });
-    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(firstSheet, {
-      header: 1,
-    }) as string[][];
-    return rows.some(
-      (row) =>
-        row[0] != null &&
-        String(row[0]).replace(/^~/, "").toLowerCase() === "languagecode",
-    );
-  } catch {
-    return false;
-  }
+// A phrase file is identified by its filename suffix, like the other
+// resource predicates above. The file named in _languagePhrasesSpreadsheet
+// must be a "*.phrases.xlsx".
+export const isPhraseFile = (file: File): boolean => {
+  return file.name.match(/\.phrases\.xlsx$/i) !== null;
 };
 
 export const handleDrop = async (
@@ -162,6 +149,10 @@ export const handleDrop = async (
       userRepoFiles.frequencyResponses = frequencyResponseList;
       // Store target sound list files
       userRepoFiles.targetSoundLists = targetSoundListList;
+      // Store phrase files bundled in the archive, verbatim — they are used
+      // to build this study only, never translated or uploaded to the
+      // receiving scientist's account.
+      userRepoFiles.phrases = phraseFileList;
       // Build an experiment
       userRepoFiles.experiment = experimentFile;
       handleExperimentFile(experimentFile);
@@ -179,7 +170,7 @@ export const handleDrop = async (
         // @ts-ignore
         Swal.showLoading(null);
         const translated = await translatePhraseFileApi(phraseFileList[0]);
-        userRepoFiles.phraseFiles = [translated];
+        userRepoFiles.phrases = [translated];
         await createOrUpdateCommonResources(user, [translated]);
         Swal.close();
       },
