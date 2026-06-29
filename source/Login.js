@@ -140,7 +140,10 @@ export default class Login extends Component {
             Swal.update({
               title: "Still loading ...",
               html: "Pavlovia may be slow or temporarily unreachable <br> This will resume automatically when it recovers.",
+              footer:
+                '<a href="https://status.pavlovia.org/" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:0.875rem 2rem;background:#019267;color:#fff;border-radius:0.5rem;text-decoration:none;font-size:1em;font-weight:500;">Check Pavlovia status</a>',
             });
+            Swal.getFooter().style.borderTop = "none";
             Swal.showLoading(null);
           }
         }, 12000);
