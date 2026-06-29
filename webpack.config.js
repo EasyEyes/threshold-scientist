@@ -42,7 +42,12 @@ const config = {
       },
       {
         test: /\.tsx?$/i,
-        use: "ts-loader",
+        use: {
+          loader: "ts-loader",
+          options: {
+            configFile: path.resolve(__dirname, "tsconfig.json"),
+          },
+        },
         exclude: /node_modules/,
       },
       {
