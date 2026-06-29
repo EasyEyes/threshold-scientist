@@ -135,7 +135,7 @@ export default class Login extends Component {
             },
           });
         }, 1000);
-        const outageTimer = setTimeout(() => {
+        const outageTimer = setTimeout(async () => {
           if (loadingShown) {
             Swal.update({
               title: "Still loading ...",
@@ -145,6 +145,29 @@ export default class Login extends Component {
             });
             Swal.getFooter().style.borderTop = "none";
             Swal.showLoading(null);
+            try {
+              const resp = await fetch(
+                "https://status.pavlovia.org/api/getMonitorList/lVMZxh1q7v",
+              );
+              const json = await resp.json();
+              const colorMap = {
+                success: "#019267",
+                danger: "#bb2c22",
+                warning: "#f0ad4e",
+              };
+              const rows = json.data
+                .map((m) => {
+                  const color = colorMap[m.statusClass] ?? "#666";
+                  return `<span style="color:${color};">●</span> ${m.name}`;
+                })
+                .join("<br>");
+              Swal.update({
+                html: `Pavlovia may be slow or temporarily unreachable <br> This will resume automatically when it recovers.<br><br><div style="text-align:left;"><strong>Pavlovia status</strong><br>${rows}</div>`,
+              });
+              Swal.showLoading(null);
+            } catch (_) {
+              // status fetch failed, keep original message
+            }
           }
         }, 12000);
         try {
