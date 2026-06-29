@@ -14,9 +14,10 @@ import {
   getCommonResourcesNames,
   User,
 } from "../../threshold/preprocess/gitlabUtils";
-import { userRepoFiles } from "../../threshold/preprocess/constants";
 import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidToken";
 import { redirectToOauth2 } from "../../threshold/preprocess/user";
+import { translatePhraseFileApi } from "./phraseFileApi";
+import { userRepoFiles } from "../../threshold/preprocess/constants";
 
 // Helper function to identify impulse response files by their filename pattern
 const isImpulseResponseFile = (file: File): boolean => {
@@ -30,6 +31,13 @@ const isFrequencyResponseFile = (file: File): boolean => {
 
 const isTargetSoundListFile = (file: File): boolean => {
   return file.name.match(/\.targetSoundList\.(xlsx|csv)$/i) !== null;
+};
+
+// A phrase file is identified by its filename suffix, like the other
+// resource predicates above. The file named in _languagePhrasesSpreadsheet
+// must be a "*.phrases.xlsx".
+export const isPhraseFile = (file: File): boolean => {
+  return file.name.match(/\.phrases\.xlsx$/i) !== null;
 };
 
 export const handleDrop = async (
@@ -46,6 +54,7 @@ export const handleDrop = async (
   const impulseResponseList: File[] = [];
   const frequencyResponseList: File[] = [];
   const targetSoundListList: File[] = [];
+  const phraseFileList: File[] = [];
   let experimentFile = null;
   const regex = /^(.+)\.export\.zip$/;
   let isCompiledFromArchiveBool = false;
@@ -90,6 +99,8 @@ export const handleDrop = async (
       frequencyResponseList.push(file);
     } else if (isTargetSoundListFile(file)) {
       targetSoundListList.push(file);
+    } else if (await isPhraseFile(file)) {
+      phraseFileList.push(file);
     } else if (isExpTableFile(file)) {
       experimentFile = file;
     } else {
@@ -114,6 +125,8 @@ export const handleDrop = async (
                 frequencyResponseList.push(fileObject);
               } else if (isTargetSoundListFile(fileObject)) {
                 targetSoundListList.push(fileObject);
+              } else if (await isPhraseFile(fileObject)) {
+                phraseFileList.push(fileObject);
               } else if (isExpTableFile(fileObject)) {
                 experimentFile = fileObject;
               } else {
@@ -128,6 +141,10 @@ export const handleDrop = async (
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
+      // Show the spinner immediately. Later phases only retitle this same modal
+      // (manuallySetSwalTitle), so if we don't start the loader here it never
+      // appears when resources are already loaded and the glossary is cached.
+      didOpen: () => Swal.showLoading(),
     });
     if (experimentFile) {
       // Store impulse response files
@@ -136,11 +153,32 @@ export const handleDrop = async (
       userRepoFiles.frequencyResponses = frequencyResponseList;
       // Store target sound list files
       userRepoFiles.targetSoundLists = targetSoundListList;
+      // Store phrase files bundled in the archive, verbatim — they are used
+      // to build this study only, never translated or uploaded to the
+      // receiving scientist's account.
+      userRepoFiles.phrases = phraseFileList;
       // Build an experiment
       userRepoFiles.experiment = experimentFile;
       handleExperimentFile(experimentFile);
     }
     return;
+  }
+
+  // Translate, store, and upload phrase files before other uploads
+  if (phraseFileList.length > 0) {
+    await Swal.fire({
+      title: "Translating …",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: async () => {
+        // @ts-ignore
+        Swal.showLoading(null);
+        const translated = await translatePhraseFileApi(phraseFileList[0]);
+        userRepoFiles.phrases = [translated];
+        await createOrUpdateCommonResources(user, [translated]);
+        Swal.close();
+      },
+    });
   }
 
   // handle valid resource files
@@ -180,17 +218,17 @@ export const handleDrop = async (
         Swal.close();
       },
     });
-
-    if (experimentFile) {
-      userRepoFiles.experiment = experimentFile;
-      handleExperimentFile(experimentFile);
-    }
-  } else if (experimentFile) {
+  }
+  if (experimentFile) {
     Swal.fire({
       title: "Compiling ...",
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
+      // Show the spinner immediately. Later phases only retitle this same modal
+      // (manuallySetSwalTitle), so if we don't start the loader here it never
+      // appears when resources are already loaded and the glossary is cached.
+      didOpen: () => Swal.showLoading(),
     });
 
     // Build an experiment

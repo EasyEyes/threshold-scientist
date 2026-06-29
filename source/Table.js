@@ -14,6 +14,7 @@ import {
   copyUser,
   setRepoName,
   manuallySetSwalTitle,
+  fetchPhraseFileFromResources,
 } from "../threshold/preprocess/gitlabUtils";
 import { searchProjectByName } from "../threshold/preprocess/gitlabSearch";
 import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
@@ -181,7 +182,11 @@ export default class Table extends Component {
       });
     }
 
-    resolvedResources = this.props.resources;
+    // Shallow-copy so the compile-time augmentation below (phrases File objects,
+    // textContents, fetchPhraseFromRepo) does not mutate the shared `resources`
+    // state. Mutating it in place overwrote the phrase filenames shown by the
+    // resource buttons with raw File objects ("[object File]").
+    resolvedResources = { ...this.props.resources };
 
     // Ensure project list is resolved before proceeding if user object exists and projectList is a promise
     if (
@@ -240,6 +245,11 @@ export default class Table extends Component {
       // Non-fatal: corpus length check will be silently skipped
     }
     resolvedResources.textContents = textContents;
+    resolvedResources.phrases = userRepoFiles.phrases;
+    // Let the compiler fetch a previously-uploaded phrase file from the
+    // scientist's `phrases/` folder when it was not dropped this session.
+    resolvedResources.fetchPhraseFromRepo = (name) =>
+      fetchPhraseFileFromResources(this.props.user, name);
 
     await preprocessExperimentFile(
       file,
@@ -260,6 +270,7 @@ export default class Table extends Component {
         requestedImpulseResponseList, // : string[]
         requestedFrequencyResponseList, // : string[]
         requestedTargetSoundListList, // : string[]
+        requestedPhraseFileName, // : string
       ) => {
         // scroll to the top of the step block
         this.props.scrollToCurrentStep();
@@ -281,6 +292,9 @@ export default class Table extends Component {
         userRepoFiles.requestedFrequencyResponses =
           requestedFrequencyResponseList;
         userRepoFiles.requestedTargetSoundLists = requestedTargetSoundListList;
+        userRepoFiles.requestedPhrases = requestedPhraseFileName
+          ? [requestedPhraseFileName]
+          : [];
         userRepoFiles.blockFiles = fileList;
 
         // Warnings (kind === "warning") do not block compilation; only real

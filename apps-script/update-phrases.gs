@@ -234,6 +234,19 @@ function pushPhrases(isFullResync) {
   var rows = dataRange.getDisplayValues();
   var backgrounds = dataRange.getBackgrounds();
 
+  // Pre-flight: refuse to update if any phrase key is duplicated.
+  var duplicateKeys = findDuplicateKeys(rows);
+  if (duplicateKeys.length > 0) {
+    notify(
+      "EasyEyes was NOT updated.\n\n" +
+        "The Translations sheet has duplicate phrase keys. Each key must be " +
+        "unique. Please remove or rename the following duplicate key(s) and " +
+        "try again:\n\n" +
+        duplicateKeys.join("\n")
+    );
+    return;
+  }
+
   // Phase 1: diff
   var english = extractEnglishMap(rows);
   var nonCyanValues = extractNonTranslatableValues(rows, backgrounds);
@@ -648,6 +661,25 @@ function checkExactDuplicateKeys(rows) {
   if (!lines.length) return "";
   return "Duplicate keys (exact). Only one row receives the translation; the " +
     "others are left blank:\n" + lines.sort().join("\n");
+}
+
+// Returns the sorted list of trimmed keys that appear in more than one row.
+// Used as a hard pre-flight gate before pushing phrases to EasyEyes.
+function findDuplicateKeys(rows) {
+  if (rows.length < 2) return [];
+  var keyIdx = rows[0].indexOf("language");
+  if (keyIdx === -1) return [];
+  var counts = {};
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  var dups = [];
+  Object.keys(counts).forEach(function (k) {
+    if (counts[k] > 1) dups.push(k);
+  });
+  return dups.sort();
 }
 
 // Keys that are identical except for letter case (e.g. myKey / mykey).
