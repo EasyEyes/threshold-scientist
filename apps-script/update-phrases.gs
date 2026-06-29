@@ -247,10 +247,9 @@ function pushPhrases(isFullResync) {
     return;
   }
 
-  // Phase 1: diff
+  // Phase 1: diff (English changes only)
   var english = extractEnglishMap(rows);
-  var nonCyanValues = extractNonTranslatableValues(rows, backgrounds);
-  var diffPayload = buildDiffPayload(english, nonCyanValues);
+  var diffPayload = buildDiffPayload(english);
   var diffOptions = buildFetchOptions(secret, diffPayload);
 
   console.log("[phrases] Phase 1: POSTing diff to: " + PHRASES_FUNCTION_URL);
@@ -268,8 +267,61 @@ function pushPhrases(isFullResync) {
   var changedKeys = diffResult.changed;
   var currentVersion = diffResult.currentVersion;
 
+  // Non-cyan step: send all non-cyan cell values once; the API stores any that
+  // differ from what is already in Firebase.
+  var nonCyanPhrases = extractNonTranslatableValues(rows, backgrounds);
+  var nonCyanChanged = false;
+
+  if (Object.keys(nonCyanPhrases).length > 0) {
+    var nonCyanPayload = {
+      action: "translate",
+      changedPhrases: {},
+      colorMask: {},
+      sentValues: {},
+      nonCyanPhrases: nonCyanPhrases,
+      currentVersion: currentVersion,
+    };
+    console.log("[phrases] Non-cyan step: POSTing to: " + PHRASES_FUNCTION_URL);
+    var nonCyanResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, nonCyanPayload));
+    var nonCyanCode = nonCyanResponse.getResponseCode();
+    var nonCyanText = nonCyanResponse.getContentText();
+    console.log("[phrases] Non-cyan step response code: " + nonCyanCode);
+
+    if (nonCyanCode === 409) {
+      var retryVersionResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL + "?versionOnly", {
+        method: "get",
+        muteHttpExceptions: true,
+      });
+      if (retryVersionResponse.getResponseCode() !== 200) {
+        notify("Non-cyan update had a version conflict and the version re-fetch failed. Please try again.");
+        return;
+      }
+      currentVersion = JSON.parse(retryVersionResponse.getContentText()).version;
+      nonCyanPayload.currentVersion = currentVersion;
+      nonCyanResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, nonCyanPayload));
+      nonCyanCode = nonCyanResponse.getResponseCode();
+      nonCyanText = nonCyanResponse.getContentText();
+      console.log("[phrases] Non-cyan step retry response code: " + nonCyanCode);
+    }
+
+    if (nonCyanCode !== 200) {
+      notify("Non-cyan values update failed (" + nonCyanCode + "): " + nonCyanText);
+      return;
+    }
+
+    var nonCyanResult = JSON.parse(nonCyanText);
+    if (nonCyanResult.newVersion !== currentVersion) {
+      nonCyanChanged = true;
+      currentVersion = nonCyanResult.newVersion;
+    }
+  }
+
   if (!changedKeys || changedKeys.length === 0) {
-    notify("Phrases are up to date. No changes detected.", "success");
+    if (nonCyanChanged) {
+      notify("Phrases updated. New version: " + currentVersion, "success");
+    } else {
+      notify("Phrases are up to date. No changes detected.", "success");
+    }
     return;
   }
 
@@ -884,8 +936,8 @@ function extractEnglishMap(rows) {
   return result;
 }
 
-function buildDiffPayload(english, nonCyanValues) {
-  return { action: "diff", english: english, nonCyanValues: nonCyanValues };
+function buildDiffPayload(english) {
+  return { action: "diff", english: english };
 }
 
 function extractNonTranslatableValues(rows, backgrounds) {
