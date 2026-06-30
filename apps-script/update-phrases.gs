@@ -22,7 +22,7 @@ function onOpen() {
     .createMenu("EasyEyes")
     .addItem("Update EasyEyes to use current phrases", "updatePhrases")
     .addItem("Redo selected cyan translations", "retranslateSelectedCells")
-    .addItem("Check Translations sheet", "checkPhraseKeys")
+    .addItem("Check International Phrases", "checkPhraseKeys")
     .addToUi();
 }
 
@@ -672,7 +672,6 @@ function checkPhraseKeys() {
   // Comment out any line below to disable that individual check.
   var sections = [];
   sections.push(checkExactDuplicateKeys(rows));
-  sections.push(checkCaseOnlyDuplicateKeys(rows));
   sections.push(checkKeyLeadingTrailingSpaces(rows));
   sections.push(checkKeyInvisibleChars(rows));
   sections.push(checkKeyInteriorSpaces(rows));
@@ -685,11 +684,11 @@ function checkPhraseKeys() {
   sections = sections.filter(function (s) { return s; });
 
   if (sections.length === 0) {
-    notify("No problems found in the Translations sheet.", "success");
+    notify("No potential problems found in the Translations sheet.", "success");
     return;
   }
 
-  notify("Found problems in the Translations sheet:\n\n" + sections.join("\n\n"));
+  notify("Found potential problems in the Translations sheet:\n\n" + sections.join("\n\n"));
 }
 
 // ─── Individual phrase-key checks (each returns a report section, or "") ──────
@@ -732,30 +731,6 @@ function findDuplicateKeys(rows) {
     if (counts[k] > 1) dups.push(k);
   });
   return dups.sort();
-}
-
-// Keys that are identical except for letter case (e.g. myKey / mykey).
-function checkCaseOnlyDuplicateKeys(rows) {
-  var keyIdx = rows[0].indexOf("language");
-  if (keyIdx === -1) return "";
-  var spellings = {};   // lowercased key -> { spelling: true }
-  var rowsByLower = {}; // lowercased key -> [rows]
-  for (var i = 1; i < rows.length; i++) {
-    var key = (rows[i][keyIdx] || "").trim();
-    if (!key) continue;
-    var lw = key.toLowerCase();
-    if (!spellings[lw]) { spellings[lw] = {}; rowsByLower[lw] = []; }
-    spellings[lw][key] = true;
-    rowsByLower[lw].push(i + 1);
-  }
-  var lines = [];
-  Object.keys(spellings).forEach(function (lw) {
-    var s = Object.keys(spellings[lw]);
-    if (s.length > 1) lines.push(s.join(" / "));
-  });
-  if (!lines.length) return "";
-  return "Keys differing only by letter case (likely unintended duplicates):\n" +
-    lines.sort().join("\n");
 }
 
 // Keys with leading/trailing spaces. Trimmed before use, so they silently
