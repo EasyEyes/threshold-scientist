@@ -239,7 +239,7 @@ function pushPhrases(isFullResync) {
   if (duplicateKeys.length > 0) {
     notify(
       "EasyEyes was NOT updated.\n\n" +
-        "The Translations sheet has duplicate phrase keys. Each key must be " +
+        "The International Phrases has duplicate phrase keys. Each key must be " +
         "unique. Please remove or rename the following duplicate key(s) and " +
         "try again:\n\n" +
         duplicateKeys.join("\n")
@@ -466,7 +466,7 @@ function retranslateSelectedCells() {
   var backgrounds = dataRange.getBackgrounds();
 
   if (rows.length < 2) {
-    notify("No data found in the Translations sheet.");
+    notify("No data found in the International Phrases.");
     return;
   }
 
@@ -659,7 +659,7 @@ function checkPhraseKeys() {
 
   var rows = sheet.getDataRange().getDisplayValues();
   if (rows.length < 2) {
-    notify("No data found in the Translations sheet.");
+    notify("No data found in the International Phrases.");
     return;
   }
 
@@ -684,11 +684,11 @@ function checkPhraseKeys() {
   sections = sections.filter(function (s) { return s; });
 
   if (sections.length === 0) {
-    notify("No potential problems found in the Translations sheet.", "success");
+    notify("No potential problems found in the International Phrases.", "success");
     return;
   }
 
-  notify("Found potential problems in the Translations sheet:\n\n" + sections.join("\n\n"));
+  notify("Found potential problems in the International Phrases:\n\n" + sections.join("\n\n"));
 }
 
 // ─── Individual phrase-key checks (each returns a report section, or "") ──────
