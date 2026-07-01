@@ -2,33 +2,20 @@ import * as XLSX from "xlsx";
 
 export type PhraseTable = Map<string, Map<string, string>>;
 
-export const parsePhraseFile = (
+export const parsePhraseFile = async (
   file: File,
 ): Promise<{
   phraseTable: PhraseTable;
   sourceLanguageCode: string;
   availableLanguageCodes: string[];
 }> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      try {
-        const arrayBuffer = e.target!.result as ArrayBuffer;
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(firstSheet, {
-          header: 1,
-        }) as string[][];
-        resolve(buildPhraseTable(rows));
-      } catch (err) {
-        reject(err);
-      }
-    };
-
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
+  const arrayBuffer = await file.arrayBuffer();
+  const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(firstSheet, {
+    header: 1,
+  }) as string[][];
+  return buildPhraseTable(rows);
 };
 
 function buildPhraseTable(rows: string[][]): {
