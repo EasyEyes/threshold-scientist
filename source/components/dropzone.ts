@@ -173,9 +173,11 @@ export const handleDrop = async (
       didOpen: async () => {
         // @ts-ignore
         Swal.showLoading(null);
-        const translated = await translatePhraseFileApi(phraseFileList[0]);
-        userRepoFiles.phrases = [translated];
-        await createOrUpdateCommonResources(user, [translated]);
+        const translatedFiles = await Promise.all(
+          phraseFileList.map((f) => translatePhraseFileApi(f)),
+        );
+        userRepoFiles.phrases = translatedFiles;
+        await createOrUpdateCommonResources(user, translatedFiles);
         Swal.close();
       },
     });
