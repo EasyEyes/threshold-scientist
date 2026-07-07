@@ -1,8 +1,8 @@
 import React from "react";
-import { render } from "@testing-library/react";
+import { render, act } from "@testing-library/react";
 import Table from "../Table";
 import Swal from "sweetalert2";
-import { preprocessExperimentFile } from "../../threshold/preprocess/main";
+import { compileExperimentWithEngine } from "../engine/engineCompile";
 
 jest.mock("sweetalert2", () => ({
   fire: jest.fn(),
@@ -40,8 +40,23 @@ jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
   getPhrasesVersion: jest.fn(),
 }));
 
-jest.mock("../../threshold/preprocess/main", () => ({
-  preprocessExperimentFile: jest.fn().mockResolvedValue(undefined),
+jest.mock("../engine/engineCompile", () => ({
+  compileExperimentWithEngine: jest.fn().mockResolvedValue({
+    files: [],
+    diagnostics: [],
+    requested: {
+      forms: [],
+      fonts: [],
+      texts: [],
+      folders: [],
+      images: [],
+      code: [],
+      impulseResponses: [],
+      frequencyResponses: [],
+      targetSoundLists: [],
+      phrases: [],
+    },
+  }),
 }));
 
 jest.mock("../../threshold/preprocess/constants", () => ({
@@ -120,9 +135,7 @@ describe("Table.handleTable", () => {
       initGlossary,
       getGlossaryVersion,
     } = require("../../threshold/parameters/glossaryRegistry");
-    const {
-      preprocessExperimentFile,
-    } = require("../../threshold/preprocess/main");
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
     fetchGlossaryData.mockResolvedValue(mockGlossaryData);
@@ -135,12 +148,12 @@ describe("Table.handleTable", () => {
     expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
     expect(fetchGlossaryData).toHaveBeenCalledWith("2.0");
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
-    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+    expect(compileExperimentWithEngine).toHaveBeenCalledTimes(1);
 
     const fetchOrder = fetchGlossaryData.mock.invocationCallOrder[0];
     const initOrder = initGlossary.mock.invocationCallOrder[0];
     const preprocessOrder =
-      preprocessExperimentFile.mock.invocationCallOrder[0];
+      compileExperimentWithEngine.mock.invocationCallOrder[0];
     expect(fetchOrder).toBeLessThan(initOrder);
     expect(initOrder).toBeLessThan(preprocessOrder);
   });
@@ -154,9 +167,7 @@ describe("Table.handleTable", () => {
       initGlossary,
       getGlossaryVersion,
     } = require("../../threshold/parameters/glossaryRegistry");
-    const {
-      preprocessExperimentFile,
-    } = require("../../threshold/preprocess/main");
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
     fetchGlossaryData.mockResolvedValue(mockGlossaryData);
@@ -170,7 +181,7 @@ describe("Table.handleTable", () => {
 
     expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
-    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+    expect(compileExperimentWithEngine).toHaveBeenCalledTimes(1);
   });
 
   it("aborts the compile and logs when the glossary refresh fails", async () => {
@@ -182,9 +193,7 @@ describe("Table.handleTable", () => {
       initGlossary,
       getGlossaryVersion,
     } = require("../../threshold/parameters/glossaryRegistry");
-    const {
-      preprocessExperimentFile,
-    } = require("../../threshold/preprocess/main");
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue(null);
     const fetchError = new Error("network down");
@@ -199,7 +208,7 @@ describe("Table.handleTable", () => {
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
     expect(initGlossary).not.toHaveBeenCalled();
-    expect(preprocessExperimentFile).not.toHaveBeenCalled();
+    expect(compileExperimentWithEngine).not.toHaveBeenCalled();
     expect(consoleError).toHaveBeenCalledWith(
       "Failed to refresh glossary:",
       fetchError,
@@ -217,9 +226,7 @@ describe("Table.handleTable", () => {
       initGlossary,
       getGlossaryVersion,
     } = require("../../threshold/parameters/glossaryRegistry");
-    const {
-      preprocessExperimentFile,
-    } = require("../../threshold/preprocess/main");
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
     fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
     getGlossaryVersion.mockReturnValue("2.0");
 
@@ -230,7 +237,7 @@ describe("Table.handleTable", () => {
 
     expect(fetchGlossaryData).not.toHaveBeenCalled();
     expect(initGlossary).not.toHaveBeenCalled();
-    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+    expect(compileExperimentWithEngine).toHaveBeenCalledTimes(1);
   });
 
   it("downloads the full glossary when the server version differs from the cached version", async () => {
@@ -345,7 +352,7 @@ describe("Table.handleTable glossary loading dialog", () => {
     // ...and is restored to "Compiling ..." (never closed) before preprocessing.
     expect(titles).toContain("Compiling ...");
     expect(Swal.close).not.toHaveBeenCalled();
-    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+    expect(compileExperimentWithEngine).toHaveBeenCalledTimes(1);
   });
 
   it("does not relabel to 'Loading glossary …' when the cached version is current", async () => {
@@ -389,7 +396,7 @@ describe("Table.handleTable glossary loading dialog", () => {
     expect(swalTitles()).toContain("Loading glossary …");
     // The error path closes the dialog instead of leaving it spinning forever.
     expect(Swal.close).toHaveBeenCalledTimes(1);
-    expect(preprocessExperimentFile).not.toHaveBeenCalled();
+    expect(compileExperimentWithEngine).not.toHaveBeenCalled();
 
     consoleError.mockRestore();
   });
@@ -484,9 +491,7 @@ describe("Table.handleTable phrases", () => {
       initPhrases,
       getPhrasesVersion,
     } = require("../../threshold/parameters/phrasesRegistry");
-    const {
-      preprocessExperimentFile,
-    } = require("../../threshold/preprocess/main");
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
     fetchPhrasesVersion.mockResolvedValue({ version: "3.0" });
     getPhrasesVersion.mockReturnValue("2.0");
     const fetchError = new Error("network down");
@@ -501,7 +506,7 @@ describe("Table.handleTable phrases", () => {
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
     expect(initPhrases).not.toHaveBeenCalled();
-    expect(preprocessExperimentFile).not.toHaveBeenCalled();
+    expect(compileExperimentWithEngine).not.toHaveBeenCalled();
     expect(consoleError).toHaveBeenCalledWith(
       "Failed to refresh phrases:",
       fetchError,
@@ -511,9 +516,7 @@ describe("Table.handleTable phrases", () => {
   });
 
   it("calls pinPhrasesVersion at compile time", async () => {
-    const {
-      preprocessExperimentFile,
-    } = require("../../threshold/preprocess/main");
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
     const {
       fetchPhrasesVersion,
       pinPhrasesVersion,
@@ -523,24 +526,6 @@ describe("Table.handleTable phrases", () => {
     } = require("../../threshold/parameters/phrasesRegistry");
     fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
     getPhrasesVersion.mockReturnValue("2.0");
-    preprocessExperimentFile.mockImplementationOnce(
-      async (_f, user, _e, _r, _a, callback) => {
-        await callback(
-          user,
-          { debriefForm: null, consentForm: null },
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-        );
-      },
-    );
 
     const ref = React.createRef();
     render(
@@ -558,9 +543,7 @@ describe("Table.handleTable phrases", () => {
   });
 
   it("aborts compile when pinPhrasesVersion rejects", async () => {
-    const {
-      preprocessExperimentFile,
-    } = require("../../threshold/preprocess/main");
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
     const {
       fetchPhrasesVersion,
       pinPhrasesVersion,
@@ -571,24 +554,6 @@ describe("Table.handleTable phrases", () => {
     fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
     getPhrasesVersion.mockReturnValue("2.0");
     pinPhrasesVersion.mockRejectedValue(new Error("pin failed"));
-    preprocessExperimentFile.mockImplementationOnce(
-      async (_f, user, _e, _r, _a, callback) => {
-        await callback(
-          user,
-          { debriefForm: null, consentForm: null },
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-        );
-      },
-    );
     const consoleError = jest
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -694,11 +659,9 @@ describe("Table.handleTable — glossary prefetch wiring", () => {
     expect(manuallySetSwalTitle).not.toHaveBeenCalledWith("Loading glossary …");
   });
 
-  it("swallows prefetch errors and continues to preprocessExperimentFile", async () => {
+  it("swallows prefetch errors and continues to compileExperimentWithEngine", async () => {
     const { getGlossaryPrefetch } = require("../components/glossaryApi");
-    const {
-      preprocessExperimentFile,
-    } = require("../../threshold/preprocess/main");
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
     const rejectingPromise = Promise.reject(new Error("prefetch failed"));
     rejectingPromise.catch(() => {});
     getGlossaryPrefetch.mockReturnValue(rejectingPromise);
@@ -708,6 +671,154 @@ describe("Table.handleTable — glossary prefetch wiring", () => {
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+    expect(compileExperimentWithEngine).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Table.handleTable — engine compile outcome handling (issue #174)", () => {
+  const successOutcome = (overrides = {}) => ({
+    files: [],
+    diagnostics: [],
+    requested: {
+      forms: [],
+      fonts: [],
+      texts: [],
+      folders: [],
+      images: [],
+      code: [],
+      impulseResponses: [],
+      frequencyResponses: [],
+      targetSoundLists: [],
+      phrases: [],
+    },
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const {
+      fetchGlossaryVersion,
+      getGlossaryPrefetch,
+    } = require("../components/glossaryApi");
+    const {
+      getGlossaryVersion,
+    } = require("../../threshold/parameters/glossaryRegistry");
+    getGlossaryPrefetch.mockReturnValue(null);
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue("2.0");
+    const { fetchPhrasesVersion } = require("../components/phrasesApi");
+    const {
+      getPhrasesVersion,
+    } = require("../../threshold/parameters/phrasesRegistry");
+    fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
+    getPhrasesVersion.mockReturnValue("2.0");
+  });
+
+  it("hands the dropped table, session resources, and archive flag to the engine compile path", async () => {
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
+
+    const file = new File(["a,b"], "exp.csv");
+    const ref = React.createRef();
+    render(
+      <Table ref={ref} {...makeProps({ isCompiledFromArchiveBool: true })} />,
+    );
+
+    await ref.current.handleTable(file);
+
+    expect(compileExperimentWithEngine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        file,
+        compiledFromArchive: true,
+        resources: expect.objectContaining({
+          fetchPhraseFromRepo: expect.any(Function),
+          textContents: expect.any(Object),
+        }),
+        user: expect.any(Object),
+      }),
+    );
+  });
+
+  it("stores the compiled files verbatim and the requested resource lists for upload", async () => {
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
+    const { userRepoFiles } = require("../../threshold/preprocess/constants");
+    const compiledFiles = [
+      { path: "exp.csv", content: "a,b" },
+      { path: "conditions/block_1.csv", content: "block,1" },
+    ];
+    compileExperimentWithEngine.mockResolvedValueOnce(
+      successOutcome({
+        files: compiledFiles,
+        requested: {
+          ...successOutcome().requested,
+          forms: ["consent.pdf"],
+          fonts: ["Sloan.woff2"],
+          phrases: ["myPhrases.xlsx"],
+        },
+      }),
+    );
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(userRepoFiles.compiledFiles).toBe(compiledFiles);
+    expect(userRepoFiles.requestedForms).toEqual(["consent.pdf"]);
+    expect(userRepoFiles.requestedFonts).toEqual(["Sloan.woff2"]);
+    expect(userRepoFiles.requestedPhrases).toEqual(["myPhrases.xlsx"]);
+  });
+
+  it("shows only blocking errors and reopens the dropzone when the compile fails", async () => {
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
+    const blocking = {
+      kind: "error",
+      name: "Missing font",
+      message: "Font not found",
+      parameters: ["font"],
+    };
+    const warning = { kind: "warning", name: "Caution", parameters: ["x"] };
+    compileExperimentWithEngine.mockResolvedValueOnce(
+      successOutcome({ diagnostics: [warning, blocking] }),
+    );
+
+    const props = makeProps();
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+
+    await act(async () => {
+      await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+    });
+
+    expect(ref.current.state.errors).toEqual([blocking]);
+    expect(ref.current.state.showDropZone).toBe(true);
+    expect(props.functions.handleSetFilename).not.toHaveBeenCalled();
+  });
+
+  it("surfaces warnings above the success banner when the compile succeeds", async () => {
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
+    const warning = { kind: "warning", name: "Caution", parameters: ["x"] };
+    compileExperimentWithEngine.mockResolvedValueOnce(
+      successOutcome({ diagnostics: [warning] }),
+    );
+
+    const props = makeProps({
+      functions: {
+        ...makeProps().functions,
+        handleSetCompileWarnings: jest.fn(),
+      },
+    });
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+
+    await act(async () => {
+      await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+    });
+
+    expect(props.functions.handleSetCompileWarnings).toHaveBeenCalledWith([
+      warning,
+    ]);
+    expect(ref.current.state.errors[0]).toBe(warning);
+    expect(ref.current.state.errors[1]).toMatchObject({ kind: "correct" });
+    expect(props.functions.handleSetFilename).toHaveBeenCalledWith("exp.csv");
   });
 });

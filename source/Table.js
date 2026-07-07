@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 
 import { handleDrop } from "./components/dropzone";
 import ResourceButton from "./ResourceButton";
-import { preprocessExperimentFile } from "../threshold/preprocess/main";
+import { compileExperimentWithEngine } from "./engine/engineCompile";
 import {
   userRepoFiles,
   resourcesRepoName,
@@ -206,8 +206,6 @@ export default class Table extends Component {
       showDropZone: false,
     });
 
-    const errors = [];
-
     userRepoFiles.impulseResponses = [];
 
     userRepoFiles.frequencyResponses = [];
@@ -251,144 +249,122 @@ export default class Table extends Component {
     resolvedResources.fetchPhraseFromRepo = (name) =>
       fetchPhraseFileFromResources(this.props.user, name);
 
-    await preprocessExperimentFile(
+    // Compile through the dynamically-imported engine release, driven
+    // exclusively by the frozen engine.compile() contract (issue #174).
+    const user = copyUser(this.props.user);
+    const outcome = await compileExperimentWithEngine({
       file,
-      copyUser(this.props.user),
-      errors,
-      resolvedResources,
-      this.props.isCompiledFromArchiveBool,
-      async (
-        user,
-        requestedForms, // : any,
-        requestedFontList, // : string[],
-        requestedTextList, // : string[],
-        requestedFolderList, // : string[],
-        requestedImageList,
-        requestedCodeList, // : string[],
-        fileList, // : File[],
-        errorList, // : any[]
-        requestedImpulseResponseList, // : string[]
-        requestedFrequencyResponseList, // : string[]
-        requestedTargetSoundListList, // : string[]
-        requestedPhraseFileName, // : string
-      ) => {
-        // scroll to the top of the step block
-        this.props.scrollToCurrentStep();
+      resources: resolvedResources,
+      user,
+      compiledFromArchive: this.props.isCompiledFromArchiveBool,
+    });
 
-        const formList = [];
+    const errorList = outcome.diagnostics;
+    {
+      // scroll to the top of the step block
+      this.props.scrollToCurrentStep();
 
-        if (requestedForms.debriefForm)
-          formList.push(requestedForms.debriefForm);
-        if (requestedForms.consentForm)
-          formList.push(requestedForms.consentForm);
+      userRepoFiles.requestedForms = outcome.requested.forms;
+      userRepoFiles.requestedFonts = outcome.requested.fonts;
+      userRepoFiles.requestedTexts = outcome.requested.texts;
+      userRepoFiles.requestedFolders = outcome.requested.folders;
+      userRepoFiles.requestedImages = outcome.requested.images;
+      userRepoFiles.requestedCode = outcome.requested.code;
+      userRepoFiles.requestedImpulseResponses =
+        outcome.requested.impulseResponses;
+      userRepoFiles.requestedFrequencyResponses =
+        outcome.requested.frequencyResponses;
+      userRepoFiles.requestedTargetSoundLists =
+        outcome.requested.targetSoundLists;
+      userRepoFiles.requestedPhrases = outcome.requested.phrases;
+      // The engine's compiled output, written verbatim into the repo by
+      // the referenced upload flow; supersedes the legacy blockFiles.
+      userRepoFiles.blockFiles = [];
+      userRepoFiles.compiledFiles = outcome.files;
 
-        userRepoFiles.requestedForms = formList;
-        userRepoFiles.requestedFonts = requestedFontList;
-        userRepoFiles.requestedTexts = requestedTextList;
-        userRepoFiles.requestedFolders = requestedFolderList;
-        userRepoFiles.requestedImages = requestedImageList;
-        userRepoFiles.requestedCode = requestedCodeList;
-        userRepoFiles.requestedImpulseResponses = requestedImpulseResponseList;
-        userRepoFiles.requestedFrequencyResponses =
-          requestedFrequencyResponseList;
-        userRepoFiles.requestedTargetSoundLists = requestedTargetSoundListList;
-        userRepoFiles.requestedPhrases = requestedPhraseFileName
-          ? [requestedPhraseFileName]
-          : [];
-        userRepoFiles.blockFiles = fileList;
+      // Warnings (kind === "warning") do not block compilation; only real
+      // errors do. They are shown alongside the success message below.
+      const hasBlockingError = errorList.some((err) => err.kind === "error");
+      const warningList = errorList.filter((err) => err.kind === "warning");
 
-        // Warnings (kind === "warning") do not block compilation; only real
-        // errors do. They are shown alongside the success message below.
-        const hasBlockingError = errorList.some((err) => err.kind === "error");
-        const warningList = errorList.filter((err) => err.kind === "warning");
+      if (hasBlockingError) {
+        // When compilation fails, show only the blocking errors (not the
+        // non-blocking warnings), so the experimenter focuses on what must be
+        // fixed.
+        const blockingErrors = errorList.filter((err) => err.kind === "error");
 
-        if (hasBlockingError) {
-          // When compilation fails, show only the blocking errors (not the
-          // non-blocking warnings), so the experimenter focuses on what must be
-          // fixed.
-          const blockingErrors = errorList.filter(
-            (err) => err.kind === "error",
+        // sort according to parameter name
+        blockingErrors.sort((errA, errB) => {
+          if (errA.parameters < errB.parameters) return -1;
+          else return 1;
+        });
+
+        // show errors
+        this.setState({
+          errors: [...blockingErrors],
+          showDropZone: true,
+        });
+
+        Swal.close();
+
+        return;
+      } else {
+        // only accept the filename as official when there are no errors
+        this.props.functions.handleSetFilename(file.name);
+
+        if (user.id != undefined) {
+          // user logged in
+          const resolvedProjectName = await setRepoName(
+            user,
+            file.name.split(".")[0],
           );
-
-          // sort according to parameter name
-          blockingErrors.sort((errA, errB) => {
-            if (errA.parameters < errB.parameters) return -1;
-            else return 1;
-          });
-
-          // show errors
-          this.setState({
-            errors: [...blockingErrors],
-            showDropZone: true,
-          });
-
-          Swal.close();
-
-          return;
-        } else {
-          // only accept the filename as official when there are no errors
-          this.props.functions.handleSetFilename(file.name);
-
-          if (user.id != undefined) {
-            // user logged in
-            const resolvedProjectName = await setRepoName(
-              user,
-              file.name.split(".")[0],
+          this.props.functions.handleSetProjectName(resolvedProjectName);
+          pinGlossaryVersion(user.username, resolvedProjectName)
+            .then(({ version }) =>
+              console.log("Glossary version pinned:", version),
+            )
+            .catch((error) =>
+              console.warn("Failed to pin glossary version:", error),
             );
-            this.props.functions.handleSetProjectName(resolvedProjectName);
-            pinGlossaryVersion(user.username, resolvedProjectName)
-              .then(({ version }) =>
-                console.log("Glossary version pinned:", version),
-              )
-              .catch((error) =>
-                console.warn("Failed to pin glossary version:", error),
-              );
 
-            try {
-              await pinPhrasesVersion(user.username, resolvedProjectName);
-            } catch (error) {
-              console.error("Failed to pin phrases version:", error);
-              return;
-            }
-
-            const projectsPromise = getAllProjects(user);
-            const updatedProjects = await projectsPromise;
-            this.props.functions.handleSetProjectList(updatedProjects);
-            const baseName = file.name.split(".")[0];
-            const newProj = updatedProjects.find((p) => p.name === baseName);
-            if (newProj) {
-              this.props.functions.handleSetActivateExperiment(newProj);
-            }
-            this.props.functions.handleNextStep("upload");
+          try {
+            await pinPhrasesVersion(user.username, resolvedProjectName);
+          } catch (error) {
+            console.error("Failed to pin phrases version:", error);
+            return;
           }
 
-          // Surface any non-blocking warnings (e.g. LOGGING CAUTION) so they are
-          // shown on the "Experiment ready to run" page, above the green banner.
-          if (this.props.functions.handleSetCompileWarnings) {
-            this.props.functions.handleSetCompileWarnings(warningList);
+          const projectsPromise = getAllProjects(user);
+          const updatedProjects = await projectsPromise;
+          this.props.functions.handleSetProjectList(updatedProjects);
+          const baseName = file.name.split(".")[0];
+          const newProj = updatedProjects.find((p) => p.name === baseName);
+          if (newProj) {
+            this.props.functions.handleSetActivateExperiment(newProj);
           }
-
-          // show success log, preceded by any non-blocking warnings
-          this.props.functions.handleUpdateUser(user);
-          this.setState({
-            errors: [
-              ...warningList,
-              {
-                context: "preprocessor",
-                kind: "correct",
-                name: this.finalSuccessMessage,
-              },
-            ],
-          });
+          this.props.functions.handleNextStep("upload");
         }
-      },
 
-      // this.props.functions.handleSetExperiment
-    );
+        // Surface any non-blocking warnings (e.g. LOGGING CAUTION) so they are
+        // shown on the "Experiment ready to run" page, above the green banner.
+        if (this.props.functions.handleSetCompileWarnings) {
+          this.props.functions.handleSetCompileWarnings(warningList);
+        }
 
-    // this.setState({
-    //   errors: [...errors],
-    // });
+        // show success log, preceded by any non-blocking warnings
+        this.props.functions.handleUpdateUser(user);
+        this.setState({
+          errors: [
+            ...warningList,
+            {
+              context: "preprocessor",
+              kind: "correct",
+              name: this.finalSuccessMessage,
+            },
+          ],
+        });
+      }
+    }
   }
 
   async reset() {
