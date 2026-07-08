@@ -80,3 +80,28 @@ describe("releaseManifestClient — getLatest", () => {
     await expect(client.getLatest()).resolves.toBeNull();
   });
 });
+
+describe("releaseManifestClient — listReleases", () => {
+  it("returns the releases as served (the manifest service sorts newest-first)", async () => {
+    const releases = [
+      { release: "2026-06-01", changelog: "June release" },
+      { release: "2026-03-01", changelog: "March release" },
+    ];
+    const fetchImpl = jest.fn().mockResolvedValue(jsonResponse(releases));
+    const client = createReleaseManifestClient(fetchImpl);
+
+    const result = await client.listReleases();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      expect.stringContaining("/.netlify/functions/release-manifest?list"),
+    );
+    expect(result).toEqual(releases);
+  });
+
+  it("resolves to an empty list when the service is unreachable", async () => {
+    const fetchImpl = jest.fn().mockRejectedValue(new Error("network down"));
+    const client = createReleaseManifestClient(fetchImpl);
+
+    await expect(client.listReleases()).resolves.toEqual([]);
+  });
+});

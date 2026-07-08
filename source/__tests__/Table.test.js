@@ -12,6 +12,19 @@ jest.mock("sweetalert2", () => ({
 
 jest.mock("../ResourceButton", () => () => null);
 jest.mock("../components/Dropdown", () => ({ Dropdown: () => null }));
+jest.mock("../components/VersionDropdown", () => ({
+  VersionDropdown: jest.fn(() => null),
+}));
+
+const mockListReleases = jest.fn().mockResolvedValue([
+  { release: "2026-07-08", changelog: "Latest" },
+  { release: "2026-03-01", changelog: "Older" },
+]);
+jest.mock("../engine/releaseManifestClient", () => ({
+  createReleaseManifestClient: () => ({
+    listReleases: mockListReleases,
+  }),
+}));
 
 jest.mock("../components/dropzone", () => ({
   handleDrop: jest.fn(),
@@ -738,23 +751,45 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
     );
   });
 
-  it("passes a reopened experiment's pinned release to the engine compile path (issue #177)", async () => {
+  it("passes the selected release (Use EasyEyes version dropdown) to the engine compile path (issue #178)", async () => {
     const { compileExperimentWithEngine } = require("../engine/engineCompile");
 
     const ref = React.createRef();
-    render(
-      <Table
-        ref={ref}
-        {...makeProps({
-          previousExperimentViewed: { previousReleasePin: "2026.7.8" },
-        })}
-      />,
-    );
+    render(<Table ref={ref} {...makeProps({ selectedRelease: "2026.7.8" })} />);
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
     expect(compileExperimentWithEngine).toHaveBeenCalledWith(
       expect.objectContaining({ pinnedRelease: "2026.7.8" }),
+    );
+  });
+
+  it("renders the Use EasyEyes version dropdown wired to the selected release and the selection handler (issue #178)", async () => {
+    const { VersionDropdown } = require("../components/VersionDropdown");
+    const handleSetSelectedRelease = jest.fn();
+    const defaultFunctions = makeProps().functions;
+
+    await act(async () => {
+      render(
+        <Table
+          {...makeProps({
+            selectedRelease: "2026-03-01",
+            functions: { ...defaultFunctions, handleSetSelectedRelease },
+          })}
+        />,
+      );
+    });
+
+    expect(VersionDropdown).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selected: "2026-03-01",
+        onSelect: handleSetSelectedRelease,
+        releases: [
+          { release: "2026-07-08", changelog: "Latest" },
+          { release: "2026-03-01", changelog: "Older" },
+        ],
+      }),
+      expect.anything(),
     );
   });
 

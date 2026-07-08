@@ -21,6 +21,8 @@ import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 
 import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
+import { VersionDropdown } from "./components/VersionDropdown";
+import { createReleaseManifestClient } from "./engine/releaseManifestClient";
 import {
   fetchGlossaryData,
   fetchGlossaryVersion,
@@ -49,6 +51,7 @@ export default class Table extends Component {
       tableName: null,
       errors: [],
       showDropZone: true,
+      releases: [],
     };
 
     this.onDrop = this.onDrop.bind(this);
@@ -58,6 +61,12 @@ export default class Table extends Component {
 
     this.finalSuccessMessage =
       "Compiled successfully. Compile a new experiment, anytime, by submitting it above.";
+  }
+
+  componentDidMount() {
+    createReleaseManifestClient()
+      .listReleases()
+      .then((releases) => this.setState({ releases }));
   }
 
   onDrop(files) {
@@ -257,8 +266,7 @@ export default class Table extends Component {
       resources: resolvedResources,
       user,
       compiledFromArchive: this.props.isCompiledFromArchiveBool,
-      pinnedRelease:
-        this.props.previousExperimentViewed?.previousReleasePin || undefined,
+      pinnedRelease: this.props.selectedRelease,
     });
 
     const errorList = outcome.diagnostics;
@@ -470,6 +478,11 @@ export default class Table extends Component {
               }}
               user={this.props.user}
               isFromStartTable={true}
+            />
+            <VersionDropdown
+              releases={this.state.releases}
+              selected={this.props.selectedRelease}
+              onSelect={this.props.functions.handleSetSelectedRelease}
             />
           </span>
         </div>
