@@ -292,8 +292,12 @@ export default class Table extends Component {
       userRepoFiles.blockFiles = [];
       userRepoFiles.compiledFiles = outcome.files;
       // The release actually resolved for this compile (issue #177), pinned
-      // into the repo by the upload flow so a recompile defaults to it.
-      userRepoFiles.releasePin = outcome.release;
+      // into the repo by the upload flow so a recompile defaults to it, plus
+      // the contractVersion it speaks (issue #179) for change-version decisions.
+      userRepoFiles.releasePin = {
+        release: outcome.release,
+        contractVersion: outcome.contractVersion,
+      };
 
       // Warnings (kind === "warning") do not block compilation; only real
       // errors do. They are shown alongside the success message below.

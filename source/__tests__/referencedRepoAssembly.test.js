@@ -190,14 +190,17 @@ describe("_createExperimentTask_uploadFiles — referenced flow", () => {
   it("commits the resolved release as a small pinned-metadata file (issue #177)", async () => {
     resetUserRepoFiles({
       compiledFiles: [{ path: "exp.csv", content: "a,b" }],
-      releasePin: "2026.7.8",
+      releasePin: { release: "2026.7.8", contractVersion: 1 },
     });
 
     const { pushed } = await runUpload();
     const pin = pushed.find((a) => a.file_path === "ReleasePin.txt");
 
     expect(pin).toBeDefined();
-    expect(JSON.parse(pin.content)).toEqual({ release: "2026.7.8" });
+    expect(JSON.parse(pin.content)).toEqual({
+      release: "2026.7.8",
+      contractVersion: 1,
+    });
   });
 
   it("performs no no-cache fetches in the referenced flow", async () => {

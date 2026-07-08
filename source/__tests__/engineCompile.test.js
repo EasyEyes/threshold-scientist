@@ -203,6 +203,19 @@ describe("compileExperimentWithEngine", () => {
     expect(outcome.release).toBe("2026-09-09");
   });
 
+  it("exposes the resolved contractVersion so the shell can pin it for change-version decisions (issue #179)", async () => {
+    const { engine } = makeFakeEngine({
+      files: [],
+      manifest: { contractVersion: 3 },
+    });
+
+    const outcome = await compileExperimentWithEngine(compileArgs(), {
+      engine,
+    });
+
+    expect(outcome.contractVersion).toBe(3);
+  });
+
   it("groups the manifest's resource requests into per-kind name lists", async () => {
     const { engine } = makeFakeEngine({
       files: [],

@@ -220,7 +220,10 @@ describe("App - handleSetActivateExperiment", () => {
     const {
       getReleasePinForProject,
     } = require("../../threshold/preprocess/gitlabUtils");
-    getReleasePinForProject.mockResolvedValue("2026.7.8");
+    getReleasePinForProject.mockResolvedValue({
+      release: "2026.7.8",
+      contractVersion: 1,
+    });
 
     const user = { id: "42" };
     const fakeThis = {
@@ -236,9 +239,10 @@ describe("App - handleSetActivateExperiment", () => {
     });
 
     expect(getReleasePinForProject).toHaveBeenCalledWith(user, "myExp1");
-    expect(fakeThis.state.previousExperimentViewed.previousReleasePin).toBe(
-      "2026.7.8",
-    );
+    expect(fakeThis.state.previousExperimentViewed.previousReleasePin).toEqual({
+      release: "2026.7.8",
+      contractVersion: 1,
+    });
   });
 
   it("defaults selectedRelease to the reopened experiment's pin (issue #178)", async () => {
@@ -250,7 +254,10 @@ describe("App - handleSetActivateExperiment", () => {
     const {
       getReleasePinForProject,
     } = require("../../threshold/preprocess/gitlabUtils");
-    getReleasePinForProject.mockResolvedValue("2026.7.8");
+    getReleasePinForProject.mockResolvedValue({
+      release: "2026.7.8",
+      contractVersion: 1,
+    });
 
     const user = { id: "42" };
     const fakeThis = {
@@ -277,7 +284,7 @@ describe("App - handleSetActivateExperiment", () => {
     const {
       getReleasePinForProject,
     } = require("../../threshold/preprocess/gitlabUtils");
-    getReleasePinForProject.mockResolvedValue("");
+    getReleasePinForProject.mockResolvedValue(null);
 
     const user = { id: "42" };
     const fakeThis = {

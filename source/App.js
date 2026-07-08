@@ -298,7 +298,7 @@ export default class App extends Component {
       });
       this.setState({
         activeExperiment: activeExperiment,
-        selectedRelease: previousReleasePin || "latest",
+        selectedRelease: previousReleasePin?.release || "latest",
         previousExperimentViewed: {
           originalFileName,
           previousExperimentStatus,

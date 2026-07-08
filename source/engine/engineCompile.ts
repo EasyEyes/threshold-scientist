@@ -81,6 +81,8 @@ export interface CompileExperimentOutcome {
   requested: RequestedResources;
   /** The release actually resolved for this compile (issue #177); never "latest" as-is. */
   release: string;
+  /** The engine.compile() contract version this release speaks (issue #179). */
+  contractVersion: number;
 }
 
 const groupRequests = (
@@ -240,5 +242,6 @@ export const compileExperimentWithEngine = async (
     diagnostics: result.manifest.diagnostics ?? [],
     requested: groupRequests(result.manifest.requests),
     release,
+    contractVersion: result.manifest.contractVersion,
   };
 };

@@ -827,7 +827,7 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
     const { compileExperimentWithEngine } = require("../engine/engineCompile");
     const { userRepoFiles } = require("../../threshold/preprocess/constants");
     compileExperimentWithEngine.mockResolvedValueOnce(
-      successOutcome({ release: "2026.7.8" }),
+      successOutcome({ release: "2026.7.8", contractVersion: 1 }),
     );
 
     const ref = React.createRef();
@@ -835,7 +835,10 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(userRepoFiles.releasePin).toBe("2026.7.8");
+    expect(userRepoFiles.releasePin).toEqual({
+      release: "2026.7.8",
+      contractVersion: 1,
+    });
   });
 
   it("shows only blocking errors and reopens the dropzone when the compile fails", async () => {
