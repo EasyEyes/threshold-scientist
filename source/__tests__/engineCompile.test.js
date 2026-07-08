@@ -122,18 +122,44 @@ describe("compileExperimentWithEngine", () => {
     expect(options.data.compilerUpdateDate).toBe("2026-07-07T00:00:00.000Z");
   });
 
-  it("asks the engine to emit entry files referencing the release's runtime URL", async () => {
+  it("asks the engine to emit entry files referencing the resolved release's runtime URL", async () => {
     const { engine, calls } = makeFakeEngine();
-    const { ENGINE_RUNTIME_BASE_URL } = require("../engine/loadEngine");
 
     await compileExperimentWithEngine(compileArgs(), {
       engine,
+      runtimeBaseUrl:
+        "https://cdn.jsdelivr.net/npm/@example/engine@1.2.3/runtime/",
       glossaryData: {},
       phrasesData: {},
       compilerUpdateDate: "2026-07-07T00:00:00.000Z",
     });
 
-    expect(calls[0].options.data.entryBaseUrl).toBe(ENGINE_RUNTIME_BASE_URL);
+    expect(calls[0].options.data.entryBaseUrl).toBe(
+      "https://cdn.jsdelivr.net/npm/@example/engine@1.2.3/runtime/",
+    );
+  });
+
+  it("resolves the engine and its runtime URL via resolveEngine when no engine is injected", async () => {
+    const { engine, calls } = makeFakeEngine();
+    const resolveEngine = jest.fn().mockResolvedValue({
+      engine,
+      runtimeBaseUrl:
+        "https://cdn.jsdelivr.net/npm/@example/engine@9.9.9/runtime/",
+      release: "2026-09-09",
+    });
+
+    await compileExperimentWithEngine(compileArgs(), {
+      resolveEngine,
+      glossaryData: {},
+      phrasesData: {},
+      compilerUpdateDate: "2026-07-07T00:00:00.000Z",
+    });
+
+    expect(resolveEngine).toHaveBeenCalledWith("latest", expect.anything());
+    expect(calls).toHaveLength(1);
+    expect(calls[0].options.data.entryBaseUrl).toBe(
+      "https://cdn.jsdelivr.net/npm/@example/engine@9.9.9/runtime/",
+    );
   });
 
   it("groups the manifest's resource requests into per-kind name lists", async () => {

@@ -4,8 +4,9 @@
  * the shell must refuse to drive an engine speaking a newer contract than
  * the highest version it understands.
  *
- * The release id is hardcoded for the S3 tracer (issue #174); version
- * selection arrives in a later slice.
+ * The release URL is resolved by resolveEngine.ts (issue #176) from a
+ * release id via the release manifest; this module only knows how to load
+ * and contract-guard a specific, already-resolved URL.
  */
 import type { ThresholdEngine } from "../../threshold/threshold-engine/contract/engine-compile";
 import { CONTRACT_VERSION } from "../../threshold/threshold-engine/contract/engine-compile";
@@ -13,16 +14,23 @@ import { CONTRACT_VERSION } from "../../threshold/threshold-engine/contract/engi
 /** Highest engine.compile() contract version this shell understands. */
 export const SHELL_CONTRACT_VERSION: number = CONTRACT_VERSION;
 
-/** The engine release the shell drives (immutable, exact-version URL). */
-export const ENGINE_RELEASE_URL =
-  "https://cdn.jsdelivr.net/npm/@easyeyes-stage/threshold-engine@2026.7.8/dist/index.js";
+const ENGINE_NPM_PACKAGE = "@easyeyes-stage/threshold-engine";
 
 /**
- * Where the participant runtime of that same release lives; the engine
- * writes this into the generated entry files (options.data.entryBaseUrl).
+ * The immutable per-version jsDelivr URLs for a resolved engineVersion: the
+ * compiler-facing module (`releaseUrl`) and the base URL under which that
+ * same release's participant runtime lives (`runtimeBaseUrl`, written into
+ * generated entry files as options.data.entryBaseUrl).
  */
-export const ENGINE_RUNTIME_BASE_URL =
-  "https://cdn.jsdelivr.net/npm/@easyeyes-stage/threshold-engine@2026.7.8/runtime/";
+export const engineUrlsForVersion = (
+  engineVersion: string,
+): { releaseUrl: string; runtimeBaseUrl: string } => {
+  const base = `https://cdn.jsdelivr.net/npm/${ENGINE_NPM_PACKAGE}@${engineVersion}`;
+  return {
+    releaseUrl: `${base}/dist/index.js`,
+    runtimeBaseUrl: `${base}/runtime/`,
+  };
+};
 
 type ImportModule = (url: string) => Promise<{ default?: unknown }>;
 
@@ -37,7 +45,7 @@ const nativeImport: ImportModule = new Function(
 ) as ImportModule;
 
 export const loadEngine = async (
-  url: string = ENGINE_RELEASE_URL,
+  url: string,
   importModule: ImportModule = nativeImport,
 ): Promise<ThresholdEngine> => {
   const module = await importModule(url);

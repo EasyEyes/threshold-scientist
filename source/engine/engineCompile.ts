@@ -8,7 +8,7 @@ import type {
   EngineFile,
   ThresholdEngine,
 } from "../../threshold/threshold-engine/contract/engine-compile";
-import { loadEngine, ENGINE_RUNTIME_BASE_URL } from "./loadEngine";
+import { resolveEngine } from "./resolveEngine";
 import { getGlossaryData } from "../../threshold/parameters/glossaryRegistry";
 import { getPhrasesData } from "../../threshold/parameters/phrasesRegistry";
 import { durations } from "../../threshold/preprocess/getDuration";
@@ -26,7 +26,12 @@ export interface CompileExperimentArgs {
 }
 
 export interface CompileExperimentDeps {
+  /** Bypasses resolveEngine entirely; pair with `runtimeBaseUrl` for a full bypass. */
   engine?: ThresholdEngine;
+  /** The `engine`'s runtime URL, when `engine` is injected directly. */
+  runtimeBaseUrl?: string;
+  /** Injectable resolver (issue #176), defaults to the real resolveEngine. */
+  resolveEngine?: typeof resolveEngine;
   /** Release-pinned datasets; default to what the shell already initialized. */
   glossaryData?: unknown;
   phrasesData?: unknown;
@@ -179,7 +184,9 @@ export const compileExperimentWithEngine = async (
   args: CompileExperimentArgs,
   deps: CompileExperimentDeps = {},
 ): Promise<CompileExperimentOutcome> => {
-  const engine = deps.engine ?? (await loadEngine());
+  const { engine, runtimeBaseUrl } = deps.engine
+    ? { engine: deps.engine, runtimeBaseUrl: deps.runtimeBaseUrl ?? "" }
+    : await (deps.resolveEngine ?? resolveEngine)("latest", {});
 
   const table: EngineFile = {
     path: args.file.name,
@@ -208,7 +215,7 @@ export const compileExperimentWithEngine = async (
         // Reference-by-URL flow (issue #174): the engine emits the entry
         // index.html + asset-bridge service worker pointing the participant
         // runtime at its own release's runtime URL.
-        entryBaseUrl: ENGINE_RUNTIME_BASE_URL,
+        entryBaseUrl: runtimeBaseUrl,
       },
     },
   );
