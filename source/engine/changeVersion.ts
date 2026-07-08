@@ -148,7 +148,13 @@ export const changeExperimentVersion = async (
     await applySwap({
       user: args.user,
       repo: args.repo,
-      entryFiles: filesToCommitForMode(outcome.files, "swap"),
+      // buildEntryFiles (src/entry.ts in threshold-engine) only ever emits
+      // string content for index.html/coi-serviceworker.js — the allowlist
+      // filesToCommitForMode restricts a swap to — never Uint8Array.
+      entryFiles: filesToCommitForMode(outcome.files, "swap") as {
+        path: string;
+        content: string;
+      }[],
       release: outcome.release,
       contractVersion: outcome.contractVersion,
     });
