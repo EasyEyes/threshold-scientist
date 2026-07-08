@@ -124,6 +124,7 @@ export default class App extends Component {
         this.handleSetCompatibilityRequirements.bind(this),
       handleSetActivateExperiment: this.handleSetActivateExperiment.bind(this),
       handleSetSelectedRelease: this.handleSetSelectedRelease.bind(this),
+      handleSetPreviousReleasePin: this.handleSetPreviousReleasePin.bind(this),
       handleReset: this.handleReset.bind(this),
       handleNextStep: this.handleNextStep.bind(this),
       handleReturnToStep: this.handleReturnToStep.bind(this),
@@ -339,6 +340,15 @@ export default class App extends Component {
 
   handleSetSelectedRelease(release) {
     this.setState({ selectedRelease: release });
+  }
+
+  handleSetPreviousReleasePin(previousReleasePin) {
+    this.setState((state) => ({
+      previousExperimentViewed: {
+        ...state.previousExperimentViewed,
+        previousReleasePin,
+      },
+    }));
   }
 
   /* -------------------------------------------------------------------------- */

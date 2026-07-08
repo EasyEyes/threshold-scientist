@@ -1,5 +1,5 @@
 import React from "react";
-import { render, act } from "@testing-library/react";
+import { render, act, fireEvent } from "@testing-library/react";
 import Table from "../Table";
 import Swal from "sweetalert2";
 import { compileExperimentWithEngine } from "../engine/engineCompile";
@@ -85,6 +85,10 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getProjectByNameInProjectList: jest.fn(() => null),
 }));
 
+jest.mock("../engine/changeVersion", () => ({
+  changeExperimentVersion: jest.fn(),
+}));
+
 jest.mock("../../threshold/preprocess/fileUtils", () => ({
   getTextFileDataFromGitLab: jest.fn(),
 }));
@@ -118,6 +122,9 @@ function makeProps(overrides = {}) {
     resourcesLoaded: true,
     isCompiledFromArchiveBool: false,
     scrollToCurrentStep: jest.fn(),
+    activeExperiment: "new",
+    selectedRelease: "latest",
+    previousExperimentViewed: { previousReleasePin: null },
     functions: {
       handleReturnToStep: jest.fn().mockResolvedValue(undefined),
       handleAddResources: jest.fn(),
@@ -127,6 +134,7 @@ function makeProps(overrides = {}) {
       handleSetProjectName: jest.fn(),
       handleSetProjectList: jest.fn(),
       handleSetActivateExperiment: jest.fn(),
+      handleSetPreviousReleasePin: jest.fn(),
       handleNextStep: jest.fn(),
       handleUpdateUser: jest.fn(),
     },
@@ -893,5 +901,87 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
     expect(ref.current.state.errors[0]).toBe(warning);
     expect(ref.current.state.errors[1]).toMatchObject({ kind: "correct" });
     expect(props.functions.handleSetFilename).toHaveBeenCalledWith("exp.csv");
+  });
+});
+
+describe("Table — Apply version action (issue #179)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const reopenedProps = (overrides = {}) =>
+    makeProps({
+      activeExperiment: { id: 7, name: "myExp1" },
+      previousExperimentViewed: {
+        previousReleasePin: { release: "2026.7.8", contractVersion: 1 },
+      },
+      selectedRelease: "2026.7.9",
+      ...overrides,
+    });
+
+  it("renders an Apply version button only when a reopened experiment has a pending release change", () => {
+    const { getByRole, rerender } = render(<Table {...reopenedProps()} />);
+    expect(getByRole("button", { name: /apply version/i })).toBeTruthy();
+
+    // No pending change: selectedRelease matches the current pin.
+    rerender(<Table {...reopenedProps({ selectedRelease: "2026.7.8" })} />);
+    expect(() => getByRole("button", { name: /apply version/i })).toThrow();
+
+    // A brand-new experiment never has a version to change.
+    rerender(
+      <Table
+        {...reopenedProps({
+          activeExperiment: "new",
+          previousExperimentViewed: { previousReleasePin: null },
+        })}
+      />,
+    );
+    expect(() => getByRole("button", { name: /apply version/i })).toThrow();
+  });
+
+  it("calls changeExperimentVersion with the repo, target release, and current contractVersion, then pins the result on a swap", async () => {
+    const { changeExperimentVersion } = require("../engine/changeVersion");
+    changeExperimentVersion.mockResolvedValue({
+      mode: "swap",
+      release: "2026.7.9",
+      contractVersion: 1,
+    });
+    const props = reopenedProps();
+
+    const { getByRole } = render(<Table {...props} />);
+    await act(async () => {
+      fireEvent.click(getByRole("button", { name: /apply version/i }));
+    });
+
+    expect(changeExperimentVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        repo: { id: 7 },
+        repoName: "myExp1",
+        targetRelease: "2026.7.9",
+        currentContractVersion: 1,
+        resources: props.resources,
+      }),
+    );
+    expect(props.functions.handleSetPreviousReleasePin).toHaveBeenCalledWith({
+      release: "2026.7.9",
+      contractVersion: 1,
+    });
+  });
+
+  it("does not pin anything when the target release forces a full re-compile", async () => {
+    const { changeExperimentVersion } = require("../engine/changeVersion");
+    changeExperimentVersion.mockResolvedValue({
+      mode: "recompile",
+      release: "2026.7.9",
+      contractVersion: 2,
+    });
+    const props = reopenedProps();
+
+    const { getByRole } = render(<Table {...props} />);
+    await act(async () => {
+      fireEvent.click(getByRole("button", { name: /apply version/i }));
+    });
+
+    expect(props.functions.handleSetPreviousReleasePin).not.toHaveBeenCalled();
   });
 });

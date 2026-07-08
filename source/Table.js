@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import { handleDrop } from "./components/dropzone";
 import ResourceButton from "./ResourceButton";
 import { compileExperimentWithEngine } from "./engine/engineCompile";
+import { changeExperimentVersion } from "./engine/changeVersion";
 import {
   userRepoFiles,
   resourcesRepoName,
@@ -67,6 +68,67 @@ export default class Table extends Component {
     createReleaseManifestClient()
       .listReleases()
       .then((releases) => this.setState({ releases }));
+  }
+
+  async handleApplyVersionChange() {
+    const {
+      user,
+      activeExperiment,
+      selectedRelease,
+      resources,
+      previousExperimentViewed,
+      functions,
+    } = this.props;
+    const currentPin = previousExperimentViewed?.previousReleasePin ?? null;
+
+    Swal.fire({
+      title: "Changing version ...",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => Swal.showLoading(null),
+    });
+
+    try {
+      const result = await changeExperimentVersion({
+        user,
+        repo: { id: activeExperiment.id },
+        repoName: activeExperiment.name,
+        targetRelease: selectedRelease,
+        currentContractVersion: currentPin?.contractVersion ?? null,
+        resources,
+      });
+
+      Swal.close();
+
+      if (result.mode === "recompile") {
+        Swal.fire({
+          icon: "info",
+          title: "Re-compile required",
+          text: `Release ${result.release} changed compile logic, so this experiment must be fully re-compiled. Please drop your table above again to proceed.`,
+          confirmButtonColor: "#666",
+        });
+        return;
+      }
+
+      functions.handleSetPreviousReleasePin({
+        release: result.release,
+        contractVersion: result.contractVersion,
+      });
+      Swal.fire({
+        icon: "success",
+        title: "Version changed",
+        text: `This experiment now runs release ${result.release}.`,
+        confirmButtonColor: "#666",
+      });
+    } catch (error) {
+      Swal.close();
+      Swal.fire({
+        icon: "error",
+        title: "Failed to change version",
+        text: error.message || "Please try again.",
+        confirmButtonColor: "#666",
+      });
+    }
   }
 
   onDrop(files) {
@@ -488,6 +550,18 @@ export default class Table extends Component {
               selected={this.props.selectedRelease}
               onSelect={this.props.functions.handleSetSelectedRelease}
             />
+            {this.props.activeExperiment &&
+              this.props.activeExperiment !== "new" &&
+              this.props.selectedRelease !==
+                this.props.previousExperimentViewed?.previousReleasePin
+                  ?.release && (
+                <button
+                  type="button"
+                  onClick={() => this.handleApplyVersionChange()}
+                >
+                  Apply version
+                </button>
+              )}
           </span>
         </div>
         <div className="file-zone">
