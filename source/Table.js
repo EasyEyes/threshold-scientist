@@ -16,6 +16,7 @@ import {
   setRepoName,
   manuallySetSwalTitle,
   fetchPhraseFileFromResources,
+  getDataFolderCsvLength,
 } from "../threshold/preprocess/gitlabUtils";
 import { searchProjectByName } from "../threshold/preprocess/gitlabSearch";
 import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
@@ -81,14 +82,31 @@ export default class Table extends Component {
     } = this.props;
     const currentPin = previousExperimentViewed?.previousReleasePin ?? null;
 
-    Swal.fire({
-      title: "Changing version ...",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      didOpen: () => Swal.showLoading(null),
-    });
-
     try {
+      const [dataFolderLength] = await getDataFolderCsvLength(
+        user,
+        activeExperiment,
+      );
+      if (dataFolderLength > 0) {
+        const { isConfirmed } = await Swal.fire({
+          icon: "warning",
+          title: "This experiment has collected data",
+          text: "Changing the version now will make this experiment's dataset span two versions. Proceed?",
+          showCancelButton: true,
+          confirmButtonText: "Proceed",
+          cancelButtonText: "Cancel",
+          confirmButtonColor: "#d33",
+        });
+        if (!isConfirmed) return;
+      }
+
+      Swal.fire({
+        title: "Changing version ...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading(null),
+      });
+
       const result = await changeExperimentVersion({
         user,
         repo: { id: activeExperiment.id },

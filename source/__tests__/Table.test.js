@@ -83,6 +83,7 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   setRepoName: jest.fn().mockResolvedValue("project"),
   manuallySetSwalTitle: jest.fn(),
   getProjectByNameInProjectList: jest.fn(() => null),
+  getDataFolderCsvLength: jest.fn().mockResolvedValue([0, false]),
 }));
 
 jest.mock("../engine/changeVersion", () => ({
@@ -983,5 +984,98 @@ describe("Table — Apply version action (issue #179)", () => {
     });
 
     expect(props.functions.handleSetPreviousReleasePin).not.toHaveBeenCalled();
+  });
+});
+
+describe("Table — data-mixing warning on change-version (issue #180)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const reopenedProps = (overrides = {}) =>
+    makeProps({
+      activeExperiment: { id: 7, name: "myExp1" },
+      previousExperimentViewed: {
+        previousReleasePin: { release: "2026.7.8", contractVersion: 1 },
+      },
+      selectedRelease: "2026.7.9",
+      ...overrides,
+    });
+
+  it("proceeds with no warning when the experiment has zero collected data files", async () => {
+    const { changeExperimentVersion } = require("../engine/changeVersion");
+    const {
+      getDataFolderCsvLength,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    getDataFolderCsvLength.mockResolvedValue([0, false]);
+    changeExperimentVersion.mockResolvedValue({
+      mode: "swap",
+      release: "2026.7.9",
+      contractVersion: 1,
+    });
+    const props = reopenedProps();
+
+    const { getByRole } = render(<Table {...props} />);
+    await act(async () => {
+      fireEvent.click(getByRole("button", { name: /apply version/i }));
+    });
+
+    expect(
+      Swal.fire.mock.calls.some(([config]) => config?.showCancelButton),
+    ).toBe(false);
+    expect(changeExperimentVersion).toHaveBeenCalled();
+  });
+
+  it("shows a Cancel/Proceed warning before any commit when the experiment has collected data, and aborts on Cancel", async () => {
+    const { changeExperimentVersion } = require("../engine/changeVersion");
+    const {
+      getDataFolderCsvLength,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    getDataFolderCsvLength.mockResolvedValue([3, "2026-07-08"]);
+    Swal.fire.mockResolvedValue({ isConfirmed: false });
+    const props = reopenedProps();
+
+    const { getByRole } = render(<Table {...props} />);
+    await act(async () => {
+      fireEvent.click(getByRole("button", { name: /apply version/i }));
+    });
+
+    expect(
+      Swal.fire.mock.calls.some(([config]) => config?.showCancelButton),
+    ).toBe(true);
+    expect(changeExperimentVersion).not.toHaveBeenCalled();
+    expect(props.functions.handleSetPreviousReleasePin).not.toHaveBeenCalled();
+  });
+
+  it("continues into the existing swap-vs-recompile flow when the scientist chooses Proceed", async () => {
+    const { changeExperimentVersion } = require("../engine/changeVersion");
+    const {
+      getDataFolderCsvLength,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    getDataFolderCsvLength.mockResolvedValue([3, "2026-07-08"]);
+    Swal.fire.mockResolvedValue({ isConfirmed: true });
+    changeExperimentVersion.mockResolvedValue({
+      mode: "swap",
+      release: "2026.7.9",
+      contractVersion: 1,
+    });
+    const props = reopenedProps();
+
+    const { getByRole } = render(<Table {...props} />);
+    await act(async () => {
+      fireEvent.click(getByRole("button", { name: /apply version/i }));
+    });
+
+    expect(changeExperimentVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        repo: { id: 7 },
+        repoName: "myExp1",
+        targetRelease: "2026.7.9",
+      }),
+    );
+    expect(props.functions.handleSetPreviousReleasePin).toHaveBeenCalledWith({
+      release: "2026.7.9",
+      contractVersion: 1,
+    });
   });
 });
