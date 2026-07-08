@@ -18,9 +18,15 @@ export interface ManifestEntry {
   publishedAt: string;
 }
 
+export interface ReleaseListEntry {
+  release: string;
+  changelog: string;
+}
+
 export interface ManifestClient {
   getManifest: (releaseId: string) => Promise<ManifestEntry | null>;
   getLatest: () => Promise<string | null>;
+  listReleases: () => Promise<ReleaseListEntry[]>;
 }
 
 type FetchImpl = typeof fetch;
@@ -58,5 +64,13 @@ export const createReleaseManifestClient = (
       fetchImpl,
     );
     return (data as ManifestEntry | null)?.releaseId ?? null;
+  },
+  listReleases: async () => {
+    const base = await getEasyEyesBaseUrl();
+    const data = await getJson(
+      `${base}/.netlify/functions/release-manifest?list`,
+      fetchImpl,
+    );
+    return (data as ReleaseListEntry[] | null) ?? [];
   },
 });
