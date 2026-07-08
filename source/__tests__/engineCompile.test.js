@@ -162,6 +162,47 @@ describe("compileExperimentWithEngine", () => {
     );
   });
 
+  it("resolves against a reopened experiment's pinned release instead of latest, when known (issue #177)", async () => {
+    const { engine } = makeFakeEngine();
+    const resolveEngine = jest.fn().mockResolvedValue({
+      engine,
+      runtimeBaseUrl:
+        "https://cdn.jsdelivr.net/npm/@example/engine@2026.7.8/runtime/",
+      release: "2026.7.8",
+    });
+
+    await compileExperimentWithEngine(
+      compileArgs({ pinnedRelease: "2026.7.8" }),
+      {
+        resolveEngine,
+        glossaryData: {},
+        phrasesData: {},
+        compilerUpdateDate: "2026-07-07T00:00:00.000Z",
+      },
+    );
+
+    expect(resolveEngine).toHaveBeenCalledWith("2026.7.8", expect.anything());
+  });
+
+  it("exposes the release actually resolved so the shell can pin it on this compile", async () => {
+    const { engine } = makeFakeEngine();
+    const resolveEngine = jest.fn().mockResolvedValue({
+      engine,
+      runtimeBaseUrl:
+        "https://cdn.jsdelivr.net/npm/@example/engine@9.9.9/runtime/",
+      release: "2026-09-09",
+    });
+
+    const outcome = await compileExperimentWithEngine(compileArgs(), {
+      resolveEngine,
+      glossaryData: {},
+      phrasesData: {},
+      compilerUpdateDate: "2026-07-07T00:00:00.000Z",
+    });
+
+    expect(outcome.release).toBe("2026-09-09");
+  });
+
   it("groups the manifest's resource requests into per-kind name lists", async () => {
     const { engine } = makeFakeEngine({
       files: [],

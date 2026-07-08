@@ -257,6 +257,8 @@ export default class Table extends Component {
       resources: resolvedResources,
       user,
       compiledFromArchive: this.props.isCompiledFromArchiveBool,
+      pinnedRelease:
+        this.props.previousExperimentViewed?.previousReleasePin || undefined,
     });
 
     const errorList = outcome.diagnostics;
@@ -281,6 +283,9 @@ export default class Table extends Component {
       // the referenced upload flow; supersedes the legacy blockFiles.
       userRepoFiles.blockFiles = [];
       userRepoFiles.compiledFiles = outcome.files;
+      // The release actually resolved for this compile (issue #177), pinned
+      // into the repo by the upload flow so a recompile defaults to it.
+      userRepoFiles.releasePin = outcome.release;
 
       // Warnings (kind === "warning") do not block compilation; only real
       // errors do. They are shown alongside the success message below.

@@ -23,6 +23,8 @@ export interface CompileExperimentArgs {
   user: any;
   /** True when re-compiling from a downloaded experiment archive. */
   compiledFromArchive: boolean;
+  /** The reopened experiment's pinned release id (issue #177); "latest" when none is known. */
+  pinnedRelease?: string;
 }
 
 export interface CompileExperimentDeps {
@@ -30,6 +32,8 @@ export interface CompileExperimentDeps {
   engine?: ThresholdEngine;
   /** The `engine`'s runtime URL, when `engine` is injected directly. */
   runtimeBaseUrl?: string;
+  /** The `engine`'s release id, when `engine` is injected directly. */
+  release?: string;
   /** Injectable resolver (issue #176), defaults to the real resolveEngine. */
   resolveEngine?: typeof resolveEngine;
   /** Release-pinned datasets; default to what the shell already initialized. */
@@ -75,6 +79,8 @@ export interface CompileExperimentOutcome {
   diagnostics: any[];
   /** Resources the experiment needs, grouped by kind, names only. */
   requested: RequestedResources;
+  /** The release actually resolved for this compile (issue #177); never "latest" as-is. */
+  release: string;
 }
 
 const groupRequests = (
@@ -184,9 +190,16 @@ export const compileExperimentWithEngine = async (
   args: CompileExperimentArgs,
   deps: CompileExperimentDeps = {},
 ): Promise<CompileExperimentOutcome> => {
-  const { engine, runtimeBaseUrl } = deps.engine
-    ? { engine: deps.engine, runtimeBaseUrl: deps.runtimeBaseUrl ?? "" }
-    : await (deps.resolveEngine ?? resolveEngine)("latest", {});
+  const { engine, runtimeBaseUrl, release } = deps.engine
+    ? {
+        engine: deps.engine,
+        runtimeBaseUrl: deps.runtimeBaseUrl ?? "",
+        release: deps.release ?? "latest",
+      }
+    : await (deps.resolveEngine ?? resolveEngine)(
+        args.pinnedRelease ?? "latest",
+        {},
+      );
 
   const table: EngineFile = {
     path: args.file.name,
@@ -226,5 +239,6 @@ export const compileExperimentWithEngine = async (
     files: result.files,
     diagnostics: result.manifest.diagnostics ?? [],
     requested: groupRequests(result.manifest.requests),
+    release,
   };
 };

@@ -31,6 +31,7 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getOriginalFileNameForProject: jest.fn(),
   getRecruitmentServiceConfig: jest.fn(),
   getDurationForProject: jest.fn(),
+  getReleasePinForProject: jest.fn(),
   getProlificStudyId: jest.fn(),
   User: jest.fn(() => ({})),
   copyUser: jest.fn((u) => ({ ...u })),
@@ -200,5 +201,43 @@ describe("App - handleReturnToStep", () => {
 
     // At the time initProjectList ran, this.projectList must be the original promise
     expect(projectListAtCallTime).toBe(existingProjectList);
+  });
+});
+
+describe("App - handleSetActivateExperiment", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("reads back a reopened experiment's pinned release and surfaces it to previousExperimentViewed (issue #177)", async () => {
+    const Swal = require("sweetalert2");
+    // The real modal's didOpen never fires under a bare jest.fn(); drive it
+    // here so the reads inside handleSetActivateExperiment actually run.
+    Swal.fire.mockImplementation(async ({ didOpen }) => {
+      await didOpen?.();
+    });
+
+    const {
+      getReleasePinForProject,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    getReleasePinForProject.mockResolvedValue("2026.7.8");
+
+    const user = { id: "42" };
+    const fakeThis = {
+      state: { user },
+      setState: jest.fn((update) => {
+        fakeThis.state = { ...fakeThis.state, ...update };
+      }),
+    };
+
+    await App.prototype.handleSetActivateExperiment.call(fakeThis, {
+      name: "myExp1",
+      id: 7,
+    });
+
+    expect(getReleasePinForProject).toHaveBeenCalledWith(user, "myExp1");
+    expect(fakeThis.state.previousExperimentViewed.previousReleasePin).toBe(
+      "2026.7.8",
+    );
   });
 });

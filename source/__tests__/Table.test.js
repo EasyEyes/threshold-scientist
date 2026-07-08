@@ -738,6 +738,26 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
     );
   });
 
+  it("passes a reopened experiment's pinned release to the engine compile path (issue #177)", async () => {
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
+
+    const ref = React.createRef();
+    render(
+      <Table
+        ref={ref}
+        {...makeProps({
+          previousExperimentViewed: { previousReleasePin: "2026.7.8" },
+        })}
+      />,
+    );
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(compileExperimentWithEngine).toHaveBeenCalledWith(
+      expect.objectContaining({ pinnedRelease: "2026.7.8" }),
+    );
+  });
+
   it("stores the compiled files verbatim and the requested resource lists for upload", async () => {
     const { compileExperimentWithEngine } = require("../engine/engineCompile");
     const { userRepoFiles } = require("../../threshold/preprocess/constants");
@@ -766,6 +786,21 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
     expect(userRepoFiles.requestedForms).toEqual(["consent.pdf"]);
     expect(userRepoFiles.requestedFonts).toEqual(["Sloan.woff2"]);
     expect(userRepoFiles.requestedPhrases).toEqual(["myPhrases.xlsx"]);
+  });
+
+  it("stores the release actually resolved, for the upload step to pin (issue #177)", async () => {
+    const { compileExperimentWithEngine } = require("../engine/engineCompile");
+    const { userRepoFiles } = require("../../threshold/preprocess/constants");
+    compileExperimentWithEngine.mockResolvedValueOnce(
+      successOutcome({ release: "2026.7.8" }),
+    );
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(userRepoFiles.releasePin).toBe("2026.7.8");
   });
 
   it("shows only blocking errors and reopens the dropzone when the compile fails", async () => {

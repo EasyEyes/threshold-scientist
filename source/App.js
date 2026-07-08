@@ -16,6 +16,7 @@ import {
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
   getDurationForProject,
+  getReleasePinForProject,
   getProlificStudyId,
   copyUser,
   getCommonResourcesNames,
@@ -88,6 +89,7 @@ export default class App extends Component {
         },
         previousCompatibilityRequirements: null,
         previousExperimentDuration: null,
+        previousReleasePin: null,
       },
       /* -------------------------------------------------------------------------- */
       currentStep: "login", // 'login', 'table', 'upload', 'running', 'deploy', ('download')
@@ -253,6 +255,7 @@ export default class App extends Component {
     };
     let previousCompatibilityRequirements = null;
     let previousExperimentDuration = null;
+    let previousReleasePin = null;
     if (activeExperiment !== "new") {
       // viewing a previous experiment
       const { user } = this.state;
@@ -283,6 +286,10 @@ export default class App extends Component {
             user,
             activeExperiment.name,
           );
+          previousReleasePin = await getReleasePinForProject(
+            user,
+            activeExperiment.name,
+          );
 
           Swal.close();
         },
@@ -295,6 +302,7 @@ export default class App extends Component {
           previousRecruitmentInformation,
           previousCompatibilityRequirements: previousCompatibilityRequirements,
           previousExperimentDuration,
+          previousReleasePin,
         },
         compatibilityLanguage: "en",
       });
@@ -314,6 +322,7 @@ export default class App extends Component {
               previousCompatibilityRequirements:
                 previousCompatibilityRequirements,
               previousExperimentDuration,
+              previousReleasePin,
             },
             compatibilityLanguage: "en",
           });
@@ -774,6 +783,7 @@ export default class App extends Component {
           experimentStatus={experimentStatus}
           prolificStudyStatus={prolificStudyStatus}
           activeExperiment={activeExperiment}
+          previousExperimentViewed={previousExperimentViewed}
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
