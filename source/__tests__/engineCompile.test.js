@@ -7,7 +7,6 @@
 import { compileExperimentWithEngine } from "../engine/engineCompile";
 import { initGlossary } from "../../threshold/parameters/glossaryRegistry";
 import { initPhrases } from "../../threshold/parameters/phrasesRegistry";
-
 beforeAll(() => {
   initGlossary({
     version: "test",
@@ -172,6 +171,178 @@ describe("compileExperimentWithEngine", () => {
     expect(calls[0].options.data.entryBaseUrl).toBe(
       "https://cdn.jsdelivr.net/npm/@example/engine@9.9.9/runtime/",
     );
+  });
+
+  it("resolves against a reopened experiment's pinned release instead of latest, when known (issue #177)", async () => {
+    const { engine } = makeFakeEngine();
+    const resolveEngine = jest.fn().mockResolvedValue({
+      engine,
+      runtimeBaseUrl:
+        "https://cdn.jsdelivr.net/npm/@example/engine@2026.7.8/runtime/",
+      release: "2026.7.8",
+    });
+
+    await compileExperimentWithEngine(
+      compileArgs({ pinnedRelease: "2026.7.8" }),
+      {
+        resolveEngine,
+        glossaryData: {},
+        phrasesData: {},
+        compilerUpdateDate: "2026-07-07T00:00:00.000Z",
+      },
+    );
+
+    expect(resolveEngine).toHaveBeenCalledWith("2026.7.8", expect.anything());
+  });
+
+  it("exposes the release actually resolved so the shell can pin it on this compile", async () => {
+    const { engine } = makeFakeEngine();
+    const resolveEngine = jest.fn().mockResolvedValue({
+      engine,
+      runtimeBaseUrl:
+        "https://cdn.jsdelivr.net/npm/@example/engine@9.9.9/runtime/",
+      release: "2026-09-09",
+    });
+
+    const outcome = await compileExperimentWithEngine(compileArgs(), {
+      resolveEngine,
+      glossaryData: {},
+      phrasesData: {},
+      compilerUpdateDate: "2026-07-07T00:00:00.000Z",
+    });
+
+    expect(outcome.release).toBe("2026-09-09");
+  });
+
+  it("exposes the resolved contractVersion so the shell can pin it for change-version decisions (issue #179)", async () => {
+    const { engine } = makeFakeEngine({
+      files: [],
+      manifest: { contractVersion: 3 },
+    });
+
+    const outcome = await compileExperimentWithEngine(compileArgs(), {
+      engine,
+    });
+
+    expect(outcome.contractVersion).toBe(3);
+  });
+
+  it("exposes the engine provenance and glossary/phrases versions used for this compile, for the provenance stamper (issue #181)", async () => {
+    const { engine } = makeFakeEngine({
+      files: [],
+      manifest: {
+        contractVersion: 1,
+        engine: {
+          name: "threshold-engine",
+          version: "2026-07-08",
+          commit: "abc123",
+        },
+      },
+    });
+
+    const outcome = await compileExperimentWithEngine(compileArgs(), {
+      engine,
+      glossaryData: { version: "3.2", glossary: {} },
+      phrasesData: { version: "1.0", phrases: {} },
+    });
+
+    expect(outcome.engine).toEqual({
+      name: "threshold-engine",
+      version: "2026-07-08",
+      commit: "abc123",
+    });
+    expect(outcome.glossaryVersion).toBe("3.2");
+    expect(outcome.phrasesVersion).toBe("1.0");
+  });
+
+  it("fetches glossary and phrases by the resolved release's manifest-pinned versions, not the shell's current registry (issue #182)", async () => {
+    const { engine } = makeFakeEngine();
+    const resolveEngine = jest.fn().mockResolvedValue({
+      engine,
+      runtimeBaseUrl:
+        "https://cdn.jsdelivr.net/npm/@example/engine@2026.3.1/runtime/",
+      release: "2026-03-01",
+      glossaryVersion: "4.2",
+      phrasesVersion: "2.1",
+    });
+    const fetchGlossaryData = jest.fn().mockResolvedValue({
+      version: "4.2",
+      glossary: { pinned: true },
+    });
+    const fetchPhrasesByVersion = jest.fn().mockResolvedValue({
+      version: "2.1",
+      phrases: { pinned: true },
+    });
+
+    const outcome = await compileExperimentWithEngine(compileArgs(), {
+      resolveEngine,
+      fetchGlossaryData,
+      fetchPhrasesByVersion,
+      compilerUpdateDate: "2026-07-07T00:00:00.000Z",
+    });
+
+    expect(fetchGlossaryData).toHaveBeenCalledWith("4.2");
+    expect(fetchPhrasesByVersion).toHaveBeenCalledWith("2.1");
+    expect(outcome.glossaryVersion).toBe("4.2");
+    expect(outcome.phrasesVersion).toBe("2.1");
+  });
+
+  it("pins an older release's glossary/phrases versions even when the shell's registry already holds newer current data from an earlier compile (issue #182)", async () => {
+    initGlossary({ version: "9.9", glossary: { newer: true } });
+    initPhrases({ version: "9.9", phrases: { newer: true } });
+
+    const { engine } = makeFakeEngine();
+    const resolveEngine = jest.fn().mockResolvedValue({
+      engine,
+      runtimeBaseUrl:
+        "https://cdn.jsdelivr.net/npm/@example/engine@2026.1.1/runtime/",
+      release: "2026-01-01",
+      glossaryVersion: "1.0",
+      phrasesVersion: "1.0",
+    });
+    const fetchGlossaryData = jest
+      .fn()
+      .mockResolvedValue({ version: "1.0", glossary: { older: true } });
+    const fetchPhrasesByVersion = jest
+      .fn()
+      .mockResolvedValue({ version: "1.0", phrases: { older: true } });
+
+    const outcome = await compileExperimentWithEngine(compileArgs(), {
+      resolveEngine,
+      fetchGlossaryData,
+      fetchPhrasesByVersion,
+      compilerUpdateDate: "2026-07-07T00:00:00.000Z",
+    });
+
+    expect(fetchGlossaryData).toHaveBeenCalledWith("1.0");
+    expect(fetchPhrasesByVersion).toHaveBeenCalledWith("1.0");
+    expect(outcome.glossaryVersion).toBe("1.0");
+    expect(outcome.phrasesVersion).toBe("1.0");
+  });
+
+  it("fails the compile, instead of silently falling back, when the manifest-pinned glossary version can't be fetched (issue #182)", async () => {
+    const { engine } = makeFakeEngine();
+    const resolveEngine = jest.fn().mockResolvedValue({
+      engine,
+      runtimeBaseUrl:
+        "https://cdn.jsdelivr.net/npm/@example/engine@2026.1.1/runtime/",
+      release: "2026-01-01",
+      glossaryVersion: "1.0",
+      phrasesVersion: "1.0",
+    });
+    const fetchGlossaryData = jest
+      .fn()
+      .mockRejectedValue(new Error("HTTP 404"));
+    const fetchPhrasesByVersion = jest.fn();
+
+    await expect(
+      compileExperimentWithEngine(compileArgs(), {
+        resolveEngine,
+        fetchGlossaryData,
+        fetchPhrasesByVersion,
+        compilerUpdateDate: "2026-07-07T00:00:00.000Z",
+      }),
+    ).rejects.toThrow(/404/);
   });
 
   it("groups the manifest's resource requests into per-kind name lists", async () => {
