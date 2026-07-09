@@ -49,6 +49,30 @@ describe("resolveEngine — resolving an explicit release id", () => {
     );
     expect(handle.engine).toBe(engine);
   });
+
+  it("exposes the release's manifest-pinned glossary and phrases versions, for the compile flow to fetch by (issue #182)", async () => {
+    const engine = fakeEngine();
+    const importModule = jest.fn().mockResolvedValue({ default: engine });
+    const manifestClient = fakeManifestClient({
+      entries: {
+        "2026-03-01": {
+          engineVersion: "2026.3.1",
+          glossaryVersion: "4.2",
+          phrasesVersion: "2.1",
+          gitSha: "abc123",
+          changelog: "",
+        },
+      },
+    });
+
+    const handle = await resolveEngine("2026-03-01", {
+      manifestClient,
+      importModule,
+    });
+
+    expect(handle.glossaryVersion).toBe("4.2");
+    expect(handle.phrasesVersion).toBe("2.1");
+  });
 });
 
 describe('resolveEngine — resolving "latest"', () => {

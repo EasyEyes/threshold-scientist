@@ -11,6 +11,8 @@ import type {
 import { resolveEngine } from "./resolveEngine";
 import { getGlossaryData } from "../../threshold/parameters/glossaryRegistry";
 import { getPhrasesData } from "../../threshold/parameters/phrasesRegistry";
+import { fetchGlossaryData } from "../components/glossaryApi";
+import { fetchPhrasesByVersion } from "../components/phrasesApi";
 import { durations } from "../../threshold/preprocess/getDuration";
 import { compatibilityRequirements } from "../../threshold/preprocess/global";
 
@@ -36,9 +38,12 @@ export interface CompileExperimentDeps {
   release?: string;
   /** Injectable resolver (issue #176), defaults to the real resolveEngine. */
   resolveEngine?: typeof resolveEngine;
-  /** Release-pinned datasets; default to what the shell already initialized. */
+  /** Release-pinned datasets; default to fetching by the resolved release's manifest-pinned versions. */
   glossaryData?: unknown;
   phrasesData?: unknown;
+  /** Injectable versioned fetchers (issue #182), default to the real glossaryApi/phrasesApi fetchers. */
+  fetchGlossaryData?: typeof fetchGlossaryData;
+  fetchPhrasesByVersion?: typeof fetchPhrasesByVersion;
   /** Compiler deploy date stamped into CompatibilityRequirements.txt. */
   compilerUpdateDate?: string;
 }
@@ -198,16 +203,38 @@ export const compileExperimentWithEngine = async (
   args: CompileExperimentArgs,
   deps: CompileExperimentDeps = {},
 ): Promise<CompileExperimentOutcome> => {
-  const { engine, runtimeBaseUrl, release } = deps.engine
-    ? {
-        engine: deps.engine,
-        runtimeBaseUrl: deps.runtimeBaseUrl ?? "",
-        release: deps.release ?? "latest",
-      }
-    : await (deps.resolveEngine ?? resolveEngine)(
-        args.pinnedRelease ?? "latest",
-        {},
-      );
+  const { engine, runtimeBaseUrl, release, glossaryVersion, phrasesVersion } =
+    deps.engine
+      ? {
+          engine: deps.engine,
+          runtimeBaseUrl: deps.runtimeBaseUrl ?? "",
+          release: deps.release ?? "latest",
+          glossaryVersion: undefined,
+          phrasesVersion: undefined,
+        }
+      : await (deps.resolveEngine ?? resolveEngine)(
+          args.pinnedRelease ?? "latest",
+          {},
+        );
+
+  // Release-pinned datasets (issue #182): fetched by the resolved release's
+  // manifest versions when one was resolved, so an older release's compile
+  // can't pick up whatever glossary/phrases happen to be cached in the
+  // shell's registries from a prior compile this session. The direct-engine
+  // bypass (tests only; Table.js always resolves a release) has no manifest
+  // version to pin to, so it falls back to the registry's current data.
+  const glossaryData =
+    deps.glossaryData ??
+    (glossaryVersion !== undefined
+      ? await (deps.fetchGlossaryData ?? fetchGlossaryData)(glossaryVersion)
+      : getGlossaryData());
+  const phrasesData =
+    deps.phrasesData ??
+    (phrasesVersion !== undefined
+      ? await (deps.fetchPhrasesByVersion ?? fetchPhrasesByVersion)(
+          phrasesVersion,
+        )
+      : getPhrasesData());
 
   const table: EngineFile = {
     path: args.file.name,
@@ -229,8 +256,8 @@ export const compileExperimentWithEngine = async (
       mode: "web",
       compiledFromArchive: args.compiledFromArchive,
       data: {
-        glossary: deps.glossaryData ?? getGlossaryData(),
-        phrases: deps.phrasesData ?? getPhrasesData(),
+        glossary: glossaryData,
+        phrases: phrasesData,
         compilerUpdateDate:
           deps.compilerUpdateDate ?? (await fetchCompilerUpdateDate()),
         // Reference-by-URL flow (issue #174): the engine emits the entry
@@ -242,9 +269,6 @@ export const compileExperimentWithEngine = async (
   );
 
   applyManifestExperiment(args.user, result.manifest.experiment);
-
-  const glossaryData = deps.glossaryData ?? getGlossaryData();
-  const phrasesData = deps.phrasesData ?? getPhrasesData();
 
   return {
     files: result.files,

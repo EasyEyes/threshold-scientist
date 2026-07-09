@@ -30,6 +30,10 @@ export interface EngineHandle {
   runtimeBaseUrl: string;
   /** The concrete release id actually resolved ("latest" is never returned as-is). */
   release: string;
+  /** This release's manifest-pinned glossary dataset version. */
+  glossaryVersion: string;
+  /** This release's manifest-pinned phrases dataset version. */
+  phrasesVersion: string;
 }
 
 export const resolveEngine = async (
@@ -59,5 +63,11 @@ export const resolveEngine = async (
   );
   const engine = await loadEngine(releaseUrl, deps.importModule);
 
-  return { engine, runtimeBaseUrl, release: resolvedRelease };
+  return {
+    engine,
+    runtimeBaseUrl,
+    release: resolvedRelease,
+    glossaryVersion: entry.glossaryVersion,
+    phrasesVersion: entry.phrasesVersion,
+  };
 };
