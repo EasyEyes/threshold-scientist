@@ -53,6 +53,18 @@
         ".read": true,
         ".write": "newData.isNumber()"
       }
+    },
+    "releaseManifest": {
+      "latest": {
+        ".read": true,
+        ".write": false
+      },
+      "entries": {
+        "$release": {
+          ".read": true,
+          ".write": false
+        }
+      }
     }
   }
 }
