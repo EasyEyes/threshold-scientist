@@ -373,10 +373,15 @@ export default class Table extends Component {
       userRepoFiles.compiledFiles = outcome.files;
       // The release actually resolved for this compile (issue #177), pinned
       // into the repo by the upload flow so a recompile defaults to it, plus
-      // the contractVersion it speaks (issue #179) for change-version decisions.
+      // the contractVersion it speaks (issue #179) for change-version decisions,
+      // and the engine/glossary/phrases versions in effect for this compile
+      // (issue #181), for the provenance stamper.
       userRepoFiles.releasePin = {
         release: outcome.release,
         contractVersion: outcome.contractVersion,
+        engine: outcome.engine,
+        glossaryVersion: outcome.glossaryVersion,
+        phrasesVersion: outcome.phrasesVersion,
       };
 
       // Warnings (kind === "warning") do not block compilation; only real

@@ -83,6 +83,12 @@ export interface CompileExperimentOutcome {
   release: string;
   /** The engine.compile() contract version this release speaks (issue #179). */
   contractVersion: number;
+  /** Provenance of the engine that produced this compile (issue #181). */
+  engine?: { name?: string; version?: string; commit?: string };
+  /** The glossary dataset version pinned for this compile (issue #181). */
+  glossaryVersion?: string | null;
+  /** The phrases dataset version pinned for this compile (issue #181). */
+  phrasesVersion?: string | null;
 }
 
 const groupRequests = (
@@ -237,11 +243,19 @@ export const compileExperimentWithEngine = async (
 
   applyManifestExperiment(args.user, result.manifest.experiment);
 
+  const glossaryData = deps.glossaryData ?? getGlossaryData();
+  const phrasesData = deps.phrasesData ?? getPhrasesData();
+
   return {
     files: result.files,
     diagnostics: result.manifest.diagnostics ?? [],
     requested: groupRequests(result.manifest.requests),
     release,
     contractVersion: result.manifest.contractVersion,
+    engine: result.manifest.engine,
+    glossaryVersion:
+      (glossaryData as { version?: string } | null)?.version ?? null,
+    phrasesVersion:
+      (phrasesData as { version?: string } | null)?.version ?? null,
   };
 };

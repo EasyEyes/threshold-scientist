@@ -216,6 +216,34 @@ describe("compileExperimentWithEngine", () => {
     expect(outcome.contractVersion).toBe(3);
   });
 
+  it("exposes the engine provenance and glossary/phrases versions used for this compile, for the provenance stamper (issue #181)", async () => {
+    const { engine } = makeFakeEngine({
+      files: [],
+      manifest: {
+        contractVersion: 1,
+        engine: {
+          name: "threshold-engine",
+          version: "2026-07-08",
+          commit: "abc123",
+        },
+      },
+    });
+
+    const outcome = await compileExperimentWithEngine(compileArgs(), {
+      engine,
+      glossaryData: { version: "3.2", glossary: {} },
+      phrasesData: { version: "1.0", phrases: {} },
+    });
+
+    expect(outcome.engine).toEqual({
+      name: "threshold-engine",
+      version: "2026-07-08",
+      commit: "abc123",
+    });
+    expect(outcome.glossaryVersion).toBe("3.2");
+    expect(outcome.phrasesVersion).toBe("1.0");
+  });
+
   it("groups the manifest's resource requests into per-kind name lists", async () => {
     const { engine } = makeFakeEngine({
       files: [],

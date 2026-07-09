@@ -203,6 +203,39 @@ describe("_createExperimentTask_uploadFiles — referenced flow", () => {
     });
   });
 
+  it("commits engine provenance and glossary/phrases versions alongside the release pin (issue #181)", async () => {
+    resetUserRepoFiles({
+      compiledFiles: [{ path: "exp.csv", content: "a,b" }],
+      releasePin: {
+        release: "2026.7.8",
+        contractVersion: 1,
+        engine: {
+          name: "threshold-engine",
+          version: "2026-07-08",
+          commit: "abc123",
+        },
+        glossaryVersion: "3.2",
+        phrasesVersion: "1.0",
+      },
+    });
+
+    const { pushed } = await runUpload();
+    const pin = pushed.find((a) => a.file_path === "ReleasePin.txt");
+
+    expect(pin).toBeDefined();
+    expect(JSON.parse(pin.content)).toEqual({
+      release: "2026.7.8",
+      contractVersion: 1,
+      engine: {
+        name: "threshold-engine",
+        version: "2026-07-08",
+        commit: "abc123",
+      },
+      glossaryVersion: "3.2",
+      phrasesVersion: "1.0",
+    });
+  });
+
   it("performs no no-cache fetches in the referenced flow", async () => {
     const {
       getAssetFileContent,
