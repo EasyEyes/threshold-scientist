@@ -64,6 +64,15 @@ const config = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
+    // harfbuzzjs and wawoff2 (used by the preprocessor's font shaping check)
+    // ship emscripten glue that references node builtins behind runtime
+    // environment guards; stub them out for the browser bundle.
+    fallback: {
+      fs: false,
+      path: false,
+      url: false,
+      module: false,
+    },
   },
   output: {
     filename: "main.js",
