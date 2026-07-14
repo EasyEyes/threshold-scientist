@@ -3,7 +3,58 @@
 require("dotenv").config();
 const webpack = require("webpack");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const fs = require("fs");
 const path = require("path");
+
+class CompilerDeploymentAssetsPlugin {
+  constructor(deploymentId) {
+    this.deploymentId = deploymentId;
+  }
+
+  apply(compiler) {
+    compiler.hooks.thisCompilation.tap(
+      "CompilerDeploymentAssetsPlugin",
+      (compilation) => {
+        compilation.hooks.processAssets.tap(
+          {
+            name: "CompilerDeploymentAssetsPlugin",
+            stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
+          },
+          () => {
+            const bundle = compilation.entrypoints
+              .get("main")
+              .getFiles()
+              .find((file) => file.endsWith(".js"));
+            const template = fs.readFileSync(
+              path.resolve(__dirname, "index.html"),
+              "utf8",
+            );
+            const html = template
+              .replace(
+                "</head>",
+                `    <meta name="easyeyes-deployment-id" content="${this.deploymentId}">\n  </head>`,
+              )
+              .replace(
+                '<script src="/compiler/dist/main.js"></script>',
+                `<script src="/compiler/dist/${bundle}"></script>`,
+              );
+
+            compilation.emitAsset(
+              "index.html",
+              new webpack.sources.RawSource(html),
+            );
+            compilation.emitAsset(
+              "deployment.json",
+              new webpack.sources.RawSource(
+                JSON.stringify({ deploymentId: this.deploymentId }),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
 
 const config = {
   entry: path.resolve(__dirname, "source/index.js"),
@@ -170,6 +221,11 @@ module.exports = (env) => {
       },
     });
   } else if (env.production) {
+    const deploymentId = process.env.DEPLOY_ID;
+    if (!deploymentId) {
+      throw new Error("DEPLOY_ID is required for production compiler builds");
+    }
+
     return Object.assign({}, config, {
       mode: "production",
       optimization: {
@@ -177,6 +233,7 @@ module.exports = (env) => {
       },
       plugins: [
         ...plugins,
+        new CompilerDeploymentAssetsPlugin(deploymentId),
         new webpack.DefinePlugin({
           "process.env.debug": false,
           "process.env.REDIRECT_URL": JSON.stringify(
@@ -195,8 +252,14 @@ module.exports = (env) => {
           "process.env.SENTRY_ENVIRONMENT": JSON.stringify(
             process.env.SENTRY_ENVIRONMENT || "production",
           ),
+          "process.env.DEPLOY_ID": JSON.stringify(deploymentId),
         }),
       ],
+      output: {
+        filename: "main.[contenthash].js",
+        path: path.resolve(__dirname, "dist/"),
+        publicPath: "/compiler/dist/",
+      },
     });
   }
 };
