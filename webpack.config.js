@@ -6,6 +6,18 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const fs = require("fs");
 const path = require("path");
 
+const DEPLOYMENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+
+const validateDeploymentId = (value) => {
+  if (typeof value !== "string" || !DEPLOYMENT_ID_PATTERN.test(value)) {
+    throw new Error(
+      "DEPLOY_ID must be 1-128 characters containing only letters, numbers, underscores, or hyphens",
+    );
+  }
+
+  return value;
+};
+
 class CompilerDeploymentAssetsPlugin {
   constructor(deploymentId) {
     this.deploymentId = deploymentId;
@@ -221,10 +233,11 @@ module.exports = (env) => {
       },
     });
   } else if (env.production) {
-    const deploymentId = process.env.DEPLOY_ID;
-    if (!deploymentId) {
+    const deploymentIdInput = process.env.DEPLOY_ID;
+    if (!deploymentIdInput) {
       throw new Error("DEPLOY_ID is required for production compiler builds");
     }
+    const deploymentId = validateDeploymentId(deploymentIdInput);
 
     return Object.assign({}, config, {
       mode: "production",

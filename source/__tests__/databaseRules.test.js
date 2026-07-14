@@ -62,6 +62,19 @@ describe("compiler deployment notification database rules", () => {
     );
   });
 
+  it("denies authenticated browser writes to the production notification", async () => {
+    const database = testEnvironment
+      .authenticatedContext("attacker")
+      .database();
+
+    await assertFails(
+      set(ref(database, notificationPath), {
+        deploymentId: "deploy-456",
+        publishedAt: "2026-07-14T11:00:00.000Z",
+      }),
+    );
+  });
+
   it.each(["deployments", "deployments/compiler"])(
     "denies reads above the selected notification node at /%s",
     async (path) => {

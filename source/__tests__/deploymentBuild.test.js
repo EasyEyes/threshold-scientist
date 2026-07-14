@@ -48,6 +48,20 @@ describe("compiler deployment build", () => {
     );
   });
 
+  it.each([
+    " deploy-123",
+    "deploy-123 ",
+    '<script>alert("deployment input")</script>',
+    "deploy/../../production",
+    "x".repeat(129),
+  ])("rejects unsafe deployment input %#", (deploymentId) => {
+    process.env.DEPLOY_ID = deploymentId;
+
+    expect(() => createWebpackConfig({ production: true })).toThrow(
+      "DEPLOY_ID must be 1-128 characters",
+    );
+  });
+
   it("emits matching deployment identity and a content-hashed bundle", async () => {
     process.env.DEPLOY_ID = "deploy-test-123";
     const outputPath = fs.mkdtempSync(
