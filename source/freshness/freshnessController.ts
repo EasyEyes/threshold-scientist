@@ -1,7 +1,7 @@
 export type FreshnessState =
   | { status: "checking"; message: "Checking compiler freshness..." }
   | { status: "fresh"; message: string }
-  | { status: "stale"; message: string; publishedAtUtc: string };
+  | { status: "stale"; publishedAtUtc: string };
 
 type DeploymentNotification = {
   deploymentId: string;
@@ -115,7 +115,7 @@ export const createFreshnessController = ({
     scheduledRetry = undefined;
   };
 
-  const replace = (manual = false) => {
+  const attemptDeploymentReplacement = (manual = false) => {
     if (disposed || staleTarget === null) return;
     const attempts = retry.getAttempts(staleTarget);
     if (!manual && attempts >= automaticRetryDelays.length) return;
@@ -130,7 +130,7 @@ export const createFreshnessController = ({
     const attempts = retry.getAttempts(targetDeploymentId);
     const delay = automaticRetryDelays[attempts];
     if (delay === undefined) return;
-    scheduledRetry = retry.schedule(replace, delay);
+    scheduledRetry = retry.schedule(attemptDeploymentReplacement, delay);
   };
 
   const check = async () => {
@@ -165,7 +165,6 @@ export const createFreshnessController = ({
         const publishedAtUtc = formatUtc(notification.publishedAt);
         publish({
           status: "stale",
-          message: `Stale. Refresh ↻ to update this page to ${publishedAtUtc}.`,
           publishedAtUtc,
         });
         scheduleReplacement(manifest.deploymentId);
@@ -184,7 +183,7 @@ export const createFreshnessController = ({
       return () => listeners.delete(listener);
     },
     start: check,
-    actions: { check, refresh: () => replace(true) },
+    actions: { check, refresh: () => attemptDeploymentReplacement(true) },
     dispose: () => {
       disposed = true;
       cancelRetry();

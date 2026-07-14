@@ -27,6 +27,11 @@ describe("browser freshness retry adapters", () => {
   it("builds a replacement URL preserving query parameters", () => {
     const replace = jest.fn();
     const reload = jest.fn();
+    const deleteCachedResponse = jest.fn();
+    Object.defineProperty(window, "caches", {
+      configurable: true,
+      value: { delete: deleteCachedResponse },
+    });
     const { createBrowserRetry } = loadModule();
     const retry = createBrowserRetry(
       { href: window.location.href, replace, reload },
@@ -46,5 +51,6 @@ describe("browser freshness retry adapters", () => {
       "deploy-456",
     );
     expect(reload).not.toHaveBeenCalled();
+    expect(deleteCachedResponse).not.toHaveBeenCalled();
   });
 });

@@ -140,8 +140,6 @@ describe("freshness controller", () => {
 
       expect(controller.getState()).toEqual({
         status: "stale",
-        message:
-          "Stale. Refresh ↻ to update this page to Jul 14, 2026, 11:15:30 AM UTC.",
         publishedAtUtc: "Jul 14, 2026, 11:15:30 AM UTC",
       });
       expect(retry.replaceWithDeployment).not.toHaveBeenCalled();
