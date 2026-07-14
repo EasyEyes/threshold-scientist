@@ -1,4 +1,4 @@
-import { get, ref } from "firebase/database";
+import { get, onValue, ref } from "firebase/database";
 
 import {
   createFreshnessController,
@@ -61,6 +61,56 @@ export const browserRetry = createBrowserRetry(
   window.sessionStorage,
 );
 
+type VisibilityDocument = Pick<
+  Document,
+  "visibilityState" | "addEventListener" | "removeEventListener"
+>;
+
+export const subscribeToVisibility = (
+  documentBoundary: VisibilityDocument,
+  listener: () => void,
+): (() => void) => {
+  let wasHidden = documentBoundary.visibilityState === "hidden";
+  const handleVisibilityChange = () => {
+    if (documentBoundary.visibilityState === "hidden") {
+      wasHidden = true;
+    } else if (wasHidden) {
+      wasHidden = false;
+      listener();
+    }
+  };
+
+  documentBoundary.addEventListener("visibilitychange", handleVisibilityChange);
+  return () =>
+    documentBoundary.removeEventListener(
+      "visibilitychange",
+      handleVisibilityChange,
+    );
+};
+
+const subscribeToDeploymentNotifications = (
+  listener: (notification: unknown) => void,
+): (() => void) => {
+  let disposed = false;
+  let unsubscribe: (() => void) | undefined;
+
+  void import("../components/firebase")
+    .then(({ db }) => {
+      if (disposed) return;
+      unsubscribe = onValue(ref(db, notificationPath), (snapshot) => {
+        listener(snapshot.val());
+      });
+    })
+    .catch(() => {
+      // Freshness notifications are advisory; manifest checks remain usable.
+    });
+
+  return () => {
+    disposed = true;
+    unsubscribe?.();
+  };
+};
+
 export const createBrowserFreshnessController = (): FreshnessController => {
   const production = process.env.NODE_ENV === "production";
   return createFreshnessController({
@@ -68,6 +118,9 @@ export const createBrowserFreshnessController = (): FreshnessController => {
     runningDeploymentId: production ? process.env.DEPLOY_ID || null : null,
     loadDeploymentNotification,
     loadManifest,
+    subscribeToDeploymentNotifications,
+    subscribeToVisibility: (listener) =>
+      subscribeToVisibility(document, listener),
     retry: browserRetry,
   });
 };

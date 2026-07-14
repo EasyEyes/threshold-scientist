@@ -53,4 +53,36 @@ describe("browser freshness retry adapters", () => {
     expect(reload).not.toHaveBeenCalled();
     expect(deleteCachedResponse).not.toHaveBeenCalled();
   });
+
+  it("notifies once per hidden-to-visible transition and removes its listener", () => {
+    const { subscribeToVisibility } = loadModule();
+    let visibilityListener;
+    const documentBoundary = {
+      visibilityState: "visible",
+      addEventListener: jest.fn((_event, listener) => {
+        visibilityListener = listener;
+      }),
+      removeEventListener: jest.fn(),
+    };
+    const onReturnToVisible = jest.fn();
+
+    const unsubscribe = subscribeToVisibility(
+      documentBoundary,
+      onReturnToVisible,
+    );
+    visibilityListener();
+    documentBoundary.visibilityState = "hidden";
+    visibilityListener();
+    documentBoundary.visibilityState = "visible";
+    visibilityListener();
+    visibilityListener();
+
+    expect(onReturnToVisible).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    expect(documentBoundary.removeEventListener).toHaveBeenCalledWith(
+      "visibilitychange",
+      visibilityListener,
+    );
+  });
 });

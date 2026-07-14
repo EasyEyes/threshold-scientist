@@ -23,6 +23,8 @@ const makeRetryBoundaries = (overrides = {}) => ({
   ...overrides,
 });
 
+const flushAsyncChecks = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 describe("freshness controller", () => {
   it("starts production in Checking and publishes Fresh after a verified match", async () => {
     const controller = makeProductionController();
@@ -88,6 +90,7 @@ describe("freshness controller", () => {
       message: "Fresh. This compiler is running in development mode.",
     });
     await controller.start();
+    await controller.actions.check();
 
     expect(loadDeploymentNotification).not.toHaveBeenCalled();
     expect(loadManifest).not.toHaveBeenCalled();
@@ -111,6 +114,270 @@ describe("freshness controller", () => {
     await check;
 
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("rechecks the manifest for deployment notifications and unsubscribes on disposal", async () => {
+    let notify;
+    const unsubscribeNotifications = jest.fn();
+    const subscribeToDeploymentNotifications = jest.fn((listener) => {
+      notify = listener;
+      return unsubscribeNotifications;
+    });
+    const loadManifest = jest
+      .fn()
+      .mockResolvedValue({ deploymentId: "deploy-123" });
+    const controller = makeProductionController({
+      loadManifest,
+      subscribeToDeploymentNotifications,
+    });
+
+    await controller.start();
+    notify({
+      deploymentId: "deploy-123",
+      publishedAt: "2026-07-14T12:15:30.000Z",
+    });
+    await flushAsyncChecks();
+
+    expect(loadManifest).toHaveBeenCalledTimes(2);
+    expect(controller.getState()).toEqual({
+      status: "fresh",
+      message: "Fresh. This page is up to date: Jul 14, 2026, 12:15:30 PM UTC.",
+    });
+
+    controller.dispose();
+    expect(unsubscribeNotifications).toHaveBeenCalledTimes(1);
+  });
+
+  it("rechecks after returning to visible and removes the visibility listener", async () => {
+    let returnToVisible;
+    const unsubscribeVisibility = jest.fn();
+    const subscribeToVisibility = jest.fn((listener) => {
+      returnToVisible = listener;
+      return unsubscribeVisibility;
+    });
+    const loadManifest = jest
+      .fn()
+      .mockResolvedValue({ deploymentId: "deploy-123" });
+    const controller = makeProductionController({
+      loadManifest,
+      subscribeToVisibility,
+    });
+
+    await controller.start();
+    returnToVisible();
+    await flushAsyncChecks();
+
+    expect(loadManifest).toHaveBeenCalledTimes(2);
+
+    controller.dispose();
+    expect(unsubscribeVisibility).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores an older check that completes after a newer notification check", async () => {
+    let notify;
+    let resolveInitialManifest;
+    const loadManifest = jest
+      .fn()
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveInitialManifest = resolve;
+        }),
+      )
+      .mockResolvedValueOnce({ deploymentId: "deploy-456" });
+    const controller = makeProductionController({
+      loadManifest,
+      subscribeToDeploymentNotifications: (listener) => {
+        notify = listener;
+        return jest.fn();
+      },
+    });
+
+    const initialCheck = controller.start();
+    notify({
+      deploymentId: "deploy-456",
+      publishedAt: "2026-07-14T12:15:30.000Z",
+    });
+    await flushAsyncChecks();
+
+    expect(controller.getState()).toEqual({
+      status: "stale",
+      publishedAtUtc: "Jul 14, 2026, 12:15:30 PM UTC",
+    });
+
+    resolveInitialManifest({ deploymentId: "deploy-123" });
+    await initialCheck;
+
+    expect(controller.getState()).toEqual({
+      status: "stale",
+      publishedAtUtc: "Jul 14, 2026, 12:15:30 PM UTC",
+    });
+  });
+
+  it("uses the manifest deployment when a notification disagrees", async () => {
+    let notify;
+    const retry = makeRetryBoundaries({
+      schedule: jest.fn((callback) => {
+        callback();
+        return 1;
+      }),
+    });
+    const controller = makeProductionController({
+      loadManifest: jest
+        .fn()
+        .mockResolvedValueOnce({ deploymentId: "deploy-123" })
+        .mockResolvedValueOnce({ deploymentId: "deploy-456" }),
+      subscribeToDeploymentNotifications: (listener) => {
+        notify = listener;
+        return jest.fn();
+      },
+      retry,
+    });
+
+    await controller.start();
+    notify({
+      deploymentId: "deploy-789",
+      publishedAt: "2026-07-14T12:15:30.000Z",
+    });
+    await flushAsyncChecks();
+
+    expect(retry.replaceWithDeployment).toHaveBeenCalledWith("deploy-456");
+    expect(retry.replaceWithDeployment).not.toHaveBeenCalledWith("deploy-789");
+  });
+
+  it("does not react to notification data before manifest verification", async () => {
+    let notify;
+    let resolveManifest;
+    const retry = makeRetryBoundaries({
+      schedule: jest.fn().mockReturnValue(1),
+      cancelScheduled: jest.fn(),
+    });
+    const controller = makeProductionController({
+      loadManifest: jest
+        .fn()
+        .mockResolvedValueOnce({ deploymentId: "deploy-123" })
+        .mockReturnValueOnce(
+          new Promise((resolve) => {
+            resolveManifest = resolve;
+          }),
+        ),
+      subscribeToDeploymentNotifications: (listener) => {
+        notify = listener;
+        return jest.fn();
+      },
+      retry,
+    });
+
+    await controller.start();
+    const verifiedState = controller.getState();
+    notify({
+      deploymentId: "deploy-456",
+      publishedAt: "2026-07-14T12:15:30.000Z",
+    });
+    await Promise.resolve();
+
+    expect(controller.getState()).toBe(verifiedState);
+    expect(retry.schedule).not.toHaveBeenCalled();
+    expect(retry.replaceWithDeployment).not.toHaveBeenCalled();
+
+    resolveManifest({ deploymentId: "deploy-456" });
+    await flushAsyncChecks();
+    expect(controller.getState().status).toBe("stale");
+  });
+
+  it("cancels stale recovery when the manifest returns to the running deployment", async () => {
+    let notify;
+    const retry = makeRetryBoundaries({
+      schedule: jest.fn().mockReturnValue(1),
+      cancelScheduled: jest.fn(),
+    });
+    const controller = makeProductionController({
+      loadManifest: jest
+        .fn()
+        .mockResolvedValueOnce({ deploymentId: "deploy-456" })
+        .mockResolvedValueOnce({ deploymentId: "deploy-123" }),
+      loadDeploymentNotification: jest.fn().mockResolvedValue({
+        deploymentId: "deploy-456",
+        publishedAt: "2026-07-14T12:15:30.000Z",
+      }),
+      subscribeToDeploymentNotifications: (listener) => {
+        notify = listener;
+        return jest.fn();
+      },
+      retry,
+    });
+
+    await controller.start();
+    notify({
+      deploymentId: "deploy-456",
+      publishedAt: "2026-07-14T12:15:30.000Z",
+    });
+    await flushAsyncChecks();
+
+    expect(retry.cancelScheduled).toHaveBeenCalledWith(1);
+    controller.actions.refresh();
+    expect(retry.replaceWithDeployment).not.toHaveBeenCalled();
+    expect(controller.getState()).toEqual({
+      status: "checking",
+      message: "Checking compiler freshness...",
+    });
+  });
+
+  it("installs lifecycle subscriptions only once", async () => {
+    const subscribeToDeploymentNotifications = jest.fn(() => jest.fn());
+    const subscribeToVisibility = jest.fn(() => jest.fn());
+    const controller = makeProductionController({
+      subscribeToDeploymentNotifications,
+      subscribeToVisibility,
+    });
+
+    await controller.start();
+    await controller.start();
+
+    expect(subscribeToDeploymentNotifications).toHaveBeenCalledTimes(1);
+    expect(subscribeToVisibility).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps duplicate and delayed notifications scoped to the manifest target", async () => {
+    let notify;
+    let nextTimer = 0;
+    const scheduled = new Map();
+    const retry = makeRetryBoundaries({
+      schedule: jest.fn((callback) => {
+        nextTimer += 1;
+        scheduled.set(nextTimer, callback);
+        return nextTimer;
+      }),
+      cancelScheduled: jest.fn((timer) => scheduled.delete(timer)),
+    });
+    const controller = makeProductionController({
+      loadManifest: jest
+        .fn()
+        .mockResolvedValueOnce({ deploymentId: "deploy-123" })
+        .mockResolvedValue({ deploymentId: "deploy-456" }),
+      subscribeToDeploymentNotifications: (listener) => {
+        notify = listener;
+        return jest.fn();
+      },
+      retry,
+    });
+
+    await controller.start();
+    const currentNotification = {
+      deploymentId: "deploy-456",
+      publishedAt: "2026-07-14T12:15:30.000Z",
+    };
+    notify(currentNotification);
+    await flushAsyncChecks();
+    notify(currentNotification);
+    notify({
+      deploymentId: "deploy-delayed",
+      publishedAt: "2026-07-14T11:15:30.000Z",
+    });
+    await flushAsyncChecks();
+
+    scheduled.forEach((callback) => callback());
+    expect(retry.replaceWithDeployment).toHaveBeenCalledTimes(1);
+    expect(retry.replaceWithDeployment).toHaveBeenCalledWith("deploy-456");
   });
 
   describe("confirmed stale recovery", () => {

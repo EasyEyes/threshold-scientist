@@ -17,6 +17,10 @@ type FreshnessControllerOptions = {
   runningDeploymentId: string | null;
   loadDeploymentNotification: () => Promise<unknown>;
   loadManifest: () => Promise<unknown>;
+  subscribeToDeploymentNotifications?: (
+    listener: (notification: unknown) => void,
+  ) => () => void;
+  subscribeToVisibility?: (listener: () => void) => () => void;
   retry?: FreshnessRetry;
 };
 
@@ -94,6 +98,8 @@ export const createFreshnessController = ({
   runningDeploymentId,
   loadDeploymentNotification,
   loadManifest,
+  subscribeToDeploymentNotifications,
+  subscribeToVisibility,
   retry = inactiveRetry,
 }: FreshnessControllerOptions): FreshnessController => {
   let state: FreshnessState =
@@ -101,6 +107,10 @@ export const createFreshnessController = ({
   let disposed = false;
   let staleTarget: string | null = null;
   let scheduledRetry: unknown;
+  let unsubscribeNotifications: (() => void) | undefined;
+  let unsubscribeVisibility: (() => void) | undefined;
+  let started = false;
+  let latestCheck = 0;
   const listeners = new Set<(nextState: FreshnessState) => void>();
 
   const publish = (nextState: FreshnessState) => {
@@ -133,46 +143,71 @@ export const createFreshnessController = ({
     scheduledRetry = retry.schedule(attemptDeploymentReplacement, delay);
   };
 
-  const check = async () => {
+  const verify = async (notificationRequest: Promise<unknown>) => {
     if (mode === "development" || disposed) return;
+    const checkId = ++latestCheck;
 
     try {
       const [notification, manifest] = await Promise.all([
-        loadDeploymentNotification(),
+        notificationRequest.catch(() => undefined),
         loadManifest(),
       ]);
 
-      if (
+      if (disposed || checkId !== latestCheck) return;
+
+      if (!isDeploymentManifest(manifest)) return;
+
+      const notificationMatchesManifest =
         isDeploymentNotification(notification) &&
-        isDeploymentManifest(manifest) &&
-        manifest.deploymentId === runningDeploymentId &&
-        notification.deploymentId === manifest.deploymentId
-      ) {
+        notification.deploymentId === manifest.deploymentId;
+
+      if (manifest.deploymentId === runningDeploymentId) {
         staleTarget = null;
         cancelRetry();
-        publish({
-          status: "fresh",
-          message: `Fresh. This page is up to date: ${formatUtc(
-            notification.publishedAt,
-          )}.`,
-        });
-      } else if (
-        isDeploymentNotification(notification) &&
-        isDeploymentManifest(manifest) &&
-        notification.deploymentId === manifest.deploymentId &&
-        manifest.deploymentId !== runningDeploymentId
-      ) {
-        const publishedAtUtc = formatUtc(notification.publishedAt);
-        publish({
-          status: "stale",
-          publishedAtUtc,
-        });
+        if (notificationMatchesManifest) {
+          publish({
+            status: "fresh",
+            message: `Fresh. This page is up to date: ${formatUtc(
+              notification.publishedAt,
+            )}.`,
+          });
+        } else {
+          publish(checkingState);
+        }
+      } else {
+        if (notificationMatchesManifest) {
+          publish({
+            status: "stale",
+            publishedAtUtc: formatUtc(notification.publishedAt),
+          });
+        }
         scheduleReplacement(manifest.deploymentId);
       }
     } catch {
       // Freshness is informational. An unavailable service leaves the UI in
       // Checking without interfering with spreadsheet selection or compilation.
     }
+  };
+
+  const check = () => {
+    if (mode === "development" || disposed) return Promise.resolve();
+    return verify(loadDeploymentNotification());
+  };
+
+  const start = () => {
+    if (mode === "development" || disposed) return Promise.resolve();
+    if (!started) {
+      started = true;
+      unsubscribeNotifications = subscribeToDeploymentNotifications?.(
+        (notification) => {
+          void verify(Promise.resolve(notification));
+        },
+      );
+      unsubscribeVisibility = subscribeToVisibility?.(() => {
+        void check();
+      });
+    }
+    return check();
   };
 
   return {
@@ -182,11 +217,13 @@ export const createFreshnessController = ({
       listener(state);
       return () => listeners.delete(listener);
     },
-    start: check,
+    start,
     actions: { check, refresh: () => attemptDeploymentReplacement(true) },
     dispose: () => {
       disposed = true;
       cancelRetry();
+      unsubscribeNotifications?.();
+      unsubscribeVisibility?.();
       listeners.clear();
     },
   };
