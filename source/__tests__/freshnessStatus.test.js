@@ -1,5 +1,5 @@
 import React from "react";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import FreshnessStatus from "../components/FreshnessStatus";
 import { createFreshnessController } from "../freshness/freshnessController";
 
@@ -50,5 +50,33 @@ describe("FreshnessStatus", () => {
     expect(
       screen.getByText("Fresh. This compiler is running in development mode."),
     ).toBeInTheDocument();
+  });
+
+  it("renders the stale warning and invokes the Refresh action", async () => {
+    const refresh = jest.fn();
+    const controller = makeController("production", {
+      loadDeploymentNotification: jest.fn().mockResolvedValue({
+        deploymentId: "deploy-456",
+        publishedAt: "2026-07-14T11:15:30.000Z",
+      }),
+      loadManifest: jest.fn().mockResolvedValue({ deploymentId: "deploy-456" }),
+      retry: {
+        getAttempts: jest.fn().mockReturnValue(0),
+        setAttempts: jest.fn(),
+        replaceWithDeployment: refresh,
+        schedule: jest.fn().mockReturnValue(1),
+        cancelScheduled: jest.fn(),
+      },
+    });
+
+    render(<FreshnessStatus controller={controller} />);
+    const status = await screen.findByText("Stale.", { exact: false });
+    expect(status.closest(".freshness-status")).toHaveTextContent(
+      "Stale. Refresh ↻ to update this page to Jul 14, 2026, 11:15:30 AM UTC.",
+    );
+    expect(screen.getByText("⚠️", { exact: true })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Refresh ↻" }));
+    expect(refresh).toHaveBeenCalledWith("deploy-456");
   });
 });

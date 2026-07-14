@@ -1,6 +1,7 @@
 export type FreshnessState =
   | { status: "checking"; message: "Checking compiler freshness..." }
-  | { status: "fresh"; message: string };
+  | { status: "fresh"; message: string }
+  | { status: "stale"; message: string; publishedAtUtc: string };
 
 type DeploymentNotification = {
   deploymentId: string;
@@ -16,13 +17,22 @@ type FreshnessControllerOptions = {
   runningDeploymentId: string | null;
   loadDeploymentNotification: () => Promise<unknown>;
   loadManifest: () => Promise<unknown>;
+  retry?: FreshnessRetry;
+};
+
+export type FreshnessRetry = {
+  getAttempts: (targetDeploymentId: string) => number;
+  setAttempts: (targetDeploymentId: string, attempts: number) => void;
+  replaceWithDeployment: (targetDeploymentId: string) => void;
+  schedule: (callback: () => void, delayMs: number) => unknown;
+  cancelScheduled: (scheduled: unknown) => void;
 };
 
 export type FreshnessController = {
   getState: () => FreshnessState;
   subscribe: (listener: (state: FreshnessState) => void) => () => void;
   start: () => Promise<void>;
-  actions: { check: () => Promise<void> };
+  actions: { check: () => Promise<void>; refresh: () => void };
   dispose: () => void;
 };
 
@@ -34,6 +44,16 @@ const checkingState: FreshnessState = {
 const developmentState: FreshnessState = {
   status: "fresh",
   message: "Fresh. This compiler is running in development mode.",
+};
+
+const automaticRetryDelays = [1000, 2000, 4000];
+
+const inactiveRetry: FreshnessRetry = {
+  getAttempts: () => automaticRetryDelays.length,
+  setAttempts: () => undefined,
+  replaceWithDeployment: () => undefined,
+  schedule: () => undefined,
+  cancelScheduled: () => undefined,
 };
 
 const isNonEmptyString = (value: unknown): value is string =>
@@ -74,15 +94,43 @@ export const createFreshnessController = ({
   runningDeploymentId,
   loadDeploymentNotification,
   loadManifest,
+  retry = inactiveRetry,
 }: FreshnessControllerOptions): FreshnessController => {
-  let state = mode === "development" ? developmentState : checkingState;
+  let state: FreshnessState =
+    mode === "development" ? developmentState : checkingState;
   let disposed = false;
+  let staleTarget: string | null = null;
+  let scheduledRetry: unknown;
   const listeners = new Set<(nextState: FreshnessState) => void>();
 
   const publish = (nextState: FreshnessState) => {
     if (disposed) return;
     state = nextState;
     listeners.forEach((listener) => listener(state));
+  };
+
+  const cancelRetry = () => {
+    if (scheduledRetry === undefined) return;
+    retry.cancelScheduled(scheduledRetry);
+    scheduledRetry = undefined;
+  };
+
+  const replace = (manual = false) => {
+    if (disposed || staleTarget === null) return;
+    const attempts = retry.getAttempts(staleTarget);
+    if (!manual && attempts >= automaticRetryDelays.length) return;
+    cancelRetry();
+    retry.setAttempts(staleTarget, attempts + 1);
+    retry.replaceWithDeployment(staleTarget);
+  };
+
+  const scheduleReplacement = (targetDeploymentId: string) => {
+    cancelRetry();
+    staleTarget = targetDeploymentId;
+    const attempts = retry.getAttempts(targetDeploymentId);
+    const delay = automaticRetryDelays[attempts];
+    if (delay === undefined) return;
+    scheduledRetry = retry.schedule(replace, delay);
   };
 
   const check = async () => {
@@ -100,12 +148,27 @@ export const createFreshnessController = ({
         manifest.deploymentId === runningDeploymentId &&
         notification.deploymentId === manifest.deploymentId
       ) {
+        staleTarget = null;
+        cancelRetry();
         publish({
           status: "fresh",
           message: `Fresh. This page is up to date: ${formatUtc(
             notification.publishedAt,
           )}.`,
         });
+      } else if (
+        isDeploymentNotification(notification) &&
+        isDeploymentManifest(manifest) &&
+        notification.deploymentId === manifest.deploymentId &&
+        manifest.deploymentId !== runningDeploymentId
+      ) {
+        const publishedAtUtc = formatUtc(notification.publishedAt);
+        publish({
+          status: "stale",
+          message: `Stale. Refresh ↻ to update this page to ${publishedAtUtc}.`,
+          publishedAtUtc,
+        });
+        scheduleReplacement(manifest.deploymentId);
       }
     } catch {
       // Freshness is informational. An unavailable service leaves the UI in
@@ -121,9 +184,10 @@ export const createFreshnessController = ({
       return () => listeners.delete(listener);
     },
     start: check,
-    actions: { check },
+    actions: { check, refresh: () => replace(true) },
     dispose: () => {
       disposed = true;
+      cancelRetry();
       listeners.clear();
     },
   };

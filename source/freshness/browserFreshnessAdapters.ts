@@ -3,6 +3,7 @@ import { get, ref } from "firebase/database";
 import {
   createFreshnessController,
   FreshnessController,
+  FreshnessRetry,
 } from "./freshnessController";
 
 const notificationPath = "deployments/compiler/production";
@@ -24,6 +25,42 @@ const loadManifest = async (): Promise<unknown> => {
   return response.json();
 };
 
+const retryStoragePrefix = "easyeyes:compiler-freshness:attempts:";
+const deploymentQueryParameter = "compilerDeploymentId";
+
+type BrowserLocation = Pick<Location, "href" | "replace">;
+
+export const createBrowserRetry = (
+  location: BrowserLocation,
+  storage: Pick<Storage, "getItem" | "setItem">,
+): FreshnessRetry => ({
+  getAttempts: (targetDeploymentId) => {
+    const stored = storage.getItem(
+      `${retryStoragePrefix}${targetDeploymentId}`,
+    );
+    const attempts = stored === null ? 0 : Number.parseInt(stored, 10);
+    return Number.isInteger(attempts) && attempts >= 0 ? attempts : 0;
+  },
+  setAttempts: (targetDeploymentId, attempts) => {
+    storage.setItem(
+      `${retryStoragePrefix}${targetDeploymentId}`,
+      String(attempts),
+    );
+  },
+  replaceWithDeployment: (targetDeploymentId) => {
+    const target = new URL(location.href);
+    target.searchParams.set(deploymentQueryParameter, targetDeploymentId);
+    location.replace(target.toString());
+  },
+  schedule: (callback, delayMs) => window.setTimeout(callback, delayMs),
+  cancelScheduled: (scheduled) => window.clearTimeout(scheduled as number),
+});
+
+export const browserRetry = createBrowserRetry(
+  window.location,
+  window.sessionStorage,
+);
+
 export const createBrowserFreshnessController = (): FreshnessController => {
   const production = process.env.NODE_ENV === "production";
   return createFreshnessController({
@@ -31,5 +68,6 @@ export const createBrowserFreshnessController = (): FreshnessController => {
     runningDeploymentId: production ? process.env.DEPLOY_ID || null : null,
     loadDeploymentNotification,
     loadManifest,
+    retry: browserRetry,
   });
 };

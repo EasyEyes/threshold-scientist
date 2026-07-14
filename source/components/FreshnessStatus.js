@@ -20,7 +20,20 @@ const FreshnessStatus = ({ controller: suppliedController }) => {
   return (
     <div className="freshness-status" data-status={freshness.status}>
       {freshness.status === "fresh" && <span aria-hidden="true">✅</span>}
-      <span>{freshness.message}</span>
+      {freshness.status === "stale" ? (
+        <>
+          <span aria-hidden="true">⚠️</span>
+          <span>
+            Stale.{" "}
+            <button type="button" onClick={controller.actions.refresh}>
+              Refresh ↻
+            </button>{" "}
+            to update this page to {freshness.publishedAtUtc}.
+          </span>
+        </>
+      ) : (
+        <span>{freshness.message}</span>
+      )}
     </div>
   );
 };
