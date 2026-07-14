@@ -28,6 +28,14 @@
         }
       }
     },
+    "deployments": {
+      "compiler": {
+        "production": {
+          ".read": true,
+          ".write": false
+        }
+      }
+    },
     "users": {
       "$username": {
         "$experimentName": {
