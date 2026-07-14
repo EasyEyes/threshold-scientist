@@ -40,6 +40,7 @@ import {
   initPhrases,
   getPhrasesVersion,
 } from "../threshold/parameters/phrasesRegistry";
+import FreshnessStatus from "./components/FreshnessStatus";
 
 export default class Table extends Component {
   constructor(props) {
@@ -465,6 +466,7 @@ export default class Table extends Component {
           </ul>
           Resources uploaded individually are stored in your Pavlovia account
           for future use. Resources in an export.zip are not.
+          <FreshnessStatus />
         </div>
         <div style={{ marginTop: "8px", marginBottom: "10px" }}>
           <span
