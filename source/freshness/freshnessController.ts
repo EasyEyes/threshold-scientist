@@ -1,7 +1,14 @@
 export type FreshnessState =
   | { status: "checking"; message: "Checking compiler freshness..." }
   | { status: "fresh"; message: string }
-  | { status: "stale"; publishedAtUtc: string };
+  | { status: "stale"; publishedAtUtc: string }
+  | {
+      status: "error";
+      runningDeploymentId: string;
+      liveDeploymentId: string;
+      publishedAtUtc: string;
+      retryCount: number;
+    };
 
 type DeploymentNotification = {
   deploymentId: string;
@@ -22,6 +29,21 @@ type FreshnessControllerOptions = {
   ) => () => void;
   subscribeToVisibility?: (listener: () => void) => () => void;
   retry?: FreshnessRetry;
+  reporting?: FreshnessReporting;
+};
+
+export type FreshnessDiagnostics = {
+  runningDeploymentId: string;
+  liveDeploymentId: string;
+  publishedAt: string;
+  retryCount: number;
+};
+
+export type FreshnessReporting = {
+  hasReported: (targetDeploymentId: string) => boolean;
+  markReported: (targetDeploymentId: string) => void;
+  addFailedAttemptBreadcrumb: (diagnostics: FreshnessDiagnostics) => void;
+  reportExhaustedRefreshes: (diagnostics: FreshnessDiagnostics) => void;
 };
 
 export type FreshnessRetry = {
@@ -53,11 +75,18 @@ const developmentState: FreshnessState = {
 const automaticRetryDelays = [1000, 2000, 4000];
 
 const inactiveRetry: FreshnessRetry = {
-  getAttempts: () => automaticRetryDelays.length,
+  getAttempts: () => 0,
   setAttempts: () => undefined,
   replaceWithDeployment: () => undefined,
   schedule: () => undefined,
   cancelScheduled: () => undefined,
+};
+
+const inactiveReporting: FreshnessReporting = {
+  hasReported: () => true,
+  markReported: () => undefined,
+  addFailedAttemptBreadcrumb: () => undefined,
+  reportExhaustedRefreshes: () => undefined,
 };
 
 const isNonEmptyString = (value: unknown): value is string =>
@@ -101,6 +130,7 @@ export const createFreshnessController = ({
   subscribeToDeploymentNotifications,
   subscribeToVisibility,
   retry = inactiveRetry,
+  reporting = inactiveReporting,
 }: FreshnessControllerOptions): FreshnessController => {
   let state: FreshnessState =
     mode === "development" ? developmentState : checkingState;
@@ -130,7 +160,16 @@ export const createFreshnessController = ({
     const attempts = retry.getAttempts(staleTarget);
     if (!manual && attempts >= automaticRetryDelays.length) return;
     cancelRetry();
-    retry.setAttempts(staleTarget, attempts + 1);
+    const retryCount = attempts + 1;
+    retry.setAttempts(staleTarget, retryCount);
+    if (runningDeploymentId !== null) {
+      reporting.addFailedAttemptBreadcrumb({
+        runningDeploymentId,
+        liveDeploymentId: staleTarget,
+        publishedAt: "unknown",
+        retryCount,
+      });
+    }
     retry.replaceWithDeployment(staleTarget);
   };
 
@@ -141,6 +180,36 @@ export const createFreshnessController = ({
     const delay = automaticRetryDelays[attempts];
     if (delay === undefined) return;
     scheduledRetry = retry.schedule(attemptDeploymentReplacement, delay);
+  };
+
+  const publishExhausted = (
+    targetDeploymentId: string,
+    publishedAt: string,
+    retryCount: number,
+  ) => {
+    if (runningDeploymentId === null) return;
+    const diagnostics: FreshnessDiagnostics = {
+      runningDeploymentId,
+      liveDeploymentId: targetDeploymentId,
+      publishedAt,
+      retryCount,
+    };
+    publish({
+      status: "error",
+      runningDeploymentId,
+      liveDeploymentId: targetDeploymentId,
+      publishedAtUtc: formatUtc(publishedAt),
+      retryCount,
+    });
+    if (reporting.hasReported(targetDeploymentId)) return;
+    for (let attempt = 1; attempt <= retryCount; attempt += 1) {
+      reporting.addFailedAttemptBreadcrumb({
+        ...diagnostics,
+        retryCount: attempt,
+      });
+    }
+    reporting.reportExhaustedRefreshes(diagnostics);
+    reporting.markReported(targetDeploymentId);
   };
 
   const verify = async (notificationRequest: Promise<unknown>) => {
@@ -179,10 +248,19 @@ export const createFreshnessController = ({
         }
       } else {
         if (notificationMatchesManifest) {
-          publish({
-            status: "stale",
-            publishedAtUtc: formatUtc(notification.publishedAt),
-          });
+          const attempts = retry.getAttempts(manifest.deploymentId);
+          if (attempts >= automaticRetryDelays.length) {
+            publishExhausted(
+              manifest.deploymentId,
+              notification.publishedAt,
+              attempts,
+            );
+          } else {
+            publish({
+              status: "stale",
+              publishedAtUtc: formatUtc(notification.publishedAt),
+            });
+          }
         }
         scheduleReplacement(manifest.deploymentId);
       }

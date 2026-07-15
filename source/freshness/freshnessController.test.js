@@ -23,6 +23,17 @@ const makeRetryBoundaries = (overrides = {}) => ({
   ...overrides,
 });
 
+const makeReportingBoundaries = (overrides = {}) => {
+  const reportedTargets = new Set();
+  return {
+    hasReported: jest.fn((target) => reportedTargets.has(target)),
+    markReported: jest.fn((target) => reportedTargets.add(target)),
+    addFailedAttemptBreadcrumb: jest.fn(),
+    reportExhaustedRefreshes: jest.fn(),
+    ...overrides,
+  };
+};
+
 const flushAsyncChecks = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("freshness controller", () => {
@@ -532,6 +543,91 @@ describe("freshness controller", () => {
 
       expect(retry.setAttempts).toHaveBeenCalledWith("deploy-456", 4);
       expect(retry.replaceWithDeployment).toHaveBeenCalledWith("deploy-456");
+    });
+
+    it("publishes terminal diagnostics and reports the three failed attempts once per target", async () => {
+      const retry = makeRetryBoundaries({
+        getAttempts: jest
+          .fn()
+          .mockImplementation((target) => (target === "deploy-456" ? 3 : 0)),
+      });
+      const reporting = makeReportingBoundaries();
+      const controller = makeProductionController({
+        loadDeploymentNotification: jest.fn().mockResolvedValue({
+          deploymentId: "deploy-456",
+          publishedAt: "2026-07-14T11:15:30.000Z",
+        }),
+        loadManifest: jest
+          .fn()
+          .mockResolvedValue({ deploymentId: "deploy-456" }),
+        retry,
+        reporting,
+      });
+
+      await controller.start();
+      await controller.actions.check();
+
+      expect(controller.getState()).toEqual({
+        status: "error",
+        runningDeploymentId: "deploy-123",
+        liveDeploymentId: "deploy-456",
+        publishedAtUtc: "Jul 14, 2026, 11:15:30 AM UTC",
+        retryCount: 3,
+      });
+      expect(reporting.addFailedAttemptBreadcrumb.mock.calls).toEqual([
+        [
+          expect.objectContaining({
+            retryCount: 1,
+            liveDeploymentId: "deploy-456",
+          }),
+        ],
+        [
+          expect.objectContaining({
+            retryCount: 2,
+            liveDeploymentId: "deploy-456",
+          }),
+        ],
+        [
+          expect.objectContaining({
+            retryCount: 3,
+            liveDeploymentId: "deploy-456",
+          }),
+        ],
+      ]);
+      expect(reporting.reportExhaustedRefreshes).toHaveBeenCalledTimes(1);
+      expect(reporting.reportExhaustedRefreshes).toHaveBeenCalledWith({
+        runningDeploymentId: "deploy-123",
+        liveDeploymentId: "deploy-456",
+        publishedAt: "2026-07-14T11:15:30.000Z",
+        retryCount: 3,
+      });
+      expect(reporting.markReported).toHaveBeenCalledWith("deploy-456");
+    });
+
+    it("deduplicates the terminal report but still enters the recoverable error state", async () => {
+      const reporting = makeReportingBoundaries({
+        hasReported: jest.fn().mockReturnValue(true),
+      });
+      const controller = makeProductionController({
+        loadDeploymentNotification: jest.fn().mockResolvedValue({
+          deploymentId: "deploy-456",
+          publishedAt: "2026-07-14T11:15:30.000Z",
+        }),
+        loadManifest: jest
+          .fn()
+          .mockResolvedValue({ deploymentId: "deploy-456" }),
+        retry: makeRetryBoundaries({
+          getAttempts: jest.fn().mockReturnValue(3),
+        }),
+        reporting,
+      });
+
+      await controller.start();
+
+      expect(controller.getState().status).toBe("error");
+      expect(reporting.addFailedAttemptBreadcrumb).not.toHaveBeenCalled();
+      expect(reporting.reportExhaustedRefreshes).not.toHaveBeenCalled();
+      expect(reporting.markReported).not.toHaveBeenCalled();
     });
   });
 });

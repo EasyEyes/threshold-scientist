@@ -125,4 +125,49 @@ describe("FreshnessStatus", () => {
     expect(retry.schedule).not.toHaveBeenCalled();
     expect(retry.replaceWithDeployment).not.toHaveBeenCalled();
   });
+
+  it("explains exhausted refreshes and offers another manual attempt", async () => {
+    const refresh = jest.fn();
+    const controller = makeController("production", {
+      loadDeploymentNotification: jest.fn().mockResolvedValue({
+        deploymentId: "deploy-456",
+        publishedAt: "2026-07-14T11:15:30.000Z",
+      }),
+      loadManifest: jest.fn().mockResolvedValue({ deploymentId: "deploy-456" }),
+      retry: {
+        getAttempts: jest.fn().mockReturnValue(3),
+        setAttempts: jest.fn(),
+        replaceWithDeployment: refresh,
+        schedule: jest.fn(),
+        cancelScheduled: jest.fn(),
+      },
+    });
+
+    render(<FreshnessStatus controller={controller} />);
+
+    expect(
+      await screen.findByText("This page is stale and shouldn't be."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("❌", { exact: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More information" }));
+
+    const dialog = screen.getByRole("dialog", {
+      name: "Compiler freshness problem",
+    });
+    expect(dialog).toHaveTextContent("deploy-123");
+    expect(dialog).toHaveTextContent("deploy-456");
+    expect(dialog).toHaveTextContent("Jul 14, 2026, 11:15:30 AM UTC");
+    expect(dialog).toHaveTextContent("Close all compiler tabs");
+    expect(dialog).toHaveTextContent("clear site data and cached files");
+    expect(dialog).toHaveTextContent("reopen the compiler");
+    expect(dialog).toHaveTextContent("sign you out of Pavlovia");
+    expect(dialog).toHaveTextContent("remove locally stored compiler settings");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Try refreshing again" }),
+    );
+    expect(refresh).toHaveBeenCalledWith("deploy-456");
+    expect(controller.getState().status).toBe("error");
+    expect(controller.getState().retryCount).toBe(3);
+  });
 });

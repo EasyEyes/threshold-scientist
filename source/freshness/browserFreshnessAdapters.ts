@@ -1,8 +1,11 @@
 import { get, onValue, ref } from "firebase/database";
+import { Sentry } from "../sentry";
 
 import {
   createFreshnessController,
   FreshnessController,
+  FreshnessDiagnostics,
+  FreshnessReporting,
   FreshnessRetry,
 } from "./freshnessController";
 
@@ -58,6 +61,64 @@ export const createBrowserRetry = (
 
 export const browserRetry = createBrowserRetry(
   window.location,
+  window.sessionStorage,
+);
+
+const reportStoragePrefix = "easyeyes:compiler-freshness:reported:";
+
+type SentryBoundary = Pick<typeof Sentry, "addBreadcrumb" | "captureException">;
+type BrowserNavigator = Pick<Navigator, "userAgent">;
+
+export const createBrowserFreshnessReporting = (
+  sentry: SentryBoundary,
+  location: Pick<Location, "href">,
+  navigator: BrowserNavigator,
+  storage: Pick<Storage, "getItem" | "setItem">,
+): FreshnessReporting => {
+  const allowlistedAttemptData = (diagnostics: FreshnessDiagnostics) => ({
+    runningDeploymentId: diagnostics.runningDeploymentId,
+    liveDeploymentId: diagnostics.liveDeploymentId,
+    retryCount: diagnostics.retryCount,
+  });
+
+  return {
+    hasReported: (targetDeploymentId) =>
+      storage.getItem(`${reportStoragePrefix}${targetDeploymentId}`) === "1",
+    markReported: (targetDeploymentId) =>
+      storage.setItem(`${reportStoragePrefix}${targetDeploymentId}`, "1"),
+    addFailedAttemptBreadcrumb: (diagnostics) => {
+      sentry.addBreadcrumb({
+        category: "compiler-freshness",
+        level: "warning",
+        message: `Compiler remained stale after refresh attempt ${diagnostics.retryCount}`,
+        data: allowlistedAttemptData(diagnostics),
+      });
+    },
+    reportExhaustedRefreshes: (diagnostics) => {
+      const currentUrl = new URL(location.href);
+      sentry.captureException(
+        new Error("Compiler remained stale after refresh attempts"),
+        {
+          fingerprint: ["compiler-stale-after-refresh"],
+          tags: { context: "compiler-stale-after-refresh" },
+          extra: {
+            runningDeploymentId: diagnostics.runningDeploymentId,
+            liveDeploymentId: diagnostics.liveDeploymentId,
+            publishedAt: diagnostics.publishedAt,
+            retryCount: diagnostics.retryCount,
+            url: `${currentUrl.origin}${currentUrl.pathname}`,
+            browser: navigator.userAgent,
+          },
+        },
+      );
+    },
+  };
+};
+
+export const browserFreshnessReporting = createBrowserFreshnessReporting(
+  Sentry,
+  window.location,
+  window.navigator,
   window.sessionStorage,
 );
 
@@ -122,5 +183,6 @@ export const createBrowserFreshnessController = (): FreshnessController => {
     subscribeToVisibility: (listener) =>
       subscribeToVisibility(document, listener),
     retry: browserRetry,
+    reporting: browserFreshnessReporting,
   });
 };
