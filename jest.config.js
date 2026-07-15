@@ -2,6 +2,7 @@ module.exports = {
   testEnvironment: "jsdom",
   roots: ["<rootDir>/source"],
   testMatch: ["**/__tests__/**/*.test.js", "**/?(*.)+(spec|test).js"],
+  testPathIgnorePatterns: ["/node_modules/", "/databaseRules\\.test\\.js$"],
   moduleFileExtensions: ["js", "jsx", "ts", "tsx", "json", "node"],
   collectCoverageFrom: [
     "source/**/*.{js,jsx,ts,tsx}",

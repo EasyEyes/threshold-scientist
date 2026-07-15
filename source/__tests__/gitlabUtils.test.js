@@ -85,9 +85,10 @@ describe("getAllProjects — page-1 only", () => {
     const {
       User,
       copyUser,
+      EMPTY_USER_EXPERIMENT_DEFAULTS,
     } = require("../../threshold/preprocess/gitlabUtils");
 
-    const user = new User("test-token");
+    const user = new User("test-token", EMPTY_USER_EXPERIMENT_DEFAULTS);
     user.totalProjectPages = 5;
 
     const copy = copyUser(user);

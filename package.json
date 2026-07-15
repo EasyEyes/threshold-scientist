@@ -17,7 +17,7 @@
     "netlify:install": "npm ci",
     "netlify": "npm run netlify:install && npm run build && npm run build:threshold",
     "test": "jest",
-    "test:database-rules": "npx --yes firebase-tools@13.29.2 emulators:exec --project demo-easyeyes-compiler --only database \"jest --runInBand source/__tests__/databaseRules.test.js\"",
+    "test:database-rules": "npx --yes firebase-tools@13.29.2 emulators:exec --project demo-easyeyes-compiler --only database \"jest --config jest.database-rules.config.js --runInBand --runTestsByPath source/__tests__/databaseRules.test.js\"",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
