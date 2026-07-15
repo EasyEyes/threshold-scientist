@@ -31,12 +31,18 @@ const compile = (config) =>
 
 describe("compiler deployment build", () => {
   const originalDeployId = process.env.DEPLOY_ID;
+  const originalContext = process.env.CONTEXT;
 
   afterEach(() => {
     if (originalDeployId === undefined) {
       delete process.env.DEPLOY_ID;
     } else {
       process.env.DEPLOY_ID = originalDeployId;
+    }
+    if (originalContext === undefined) {
+      delete process.env.CONTEXT;
+    } else {
+      process.env.CONTEXT = originalContext;
     }
   });
 
@@ -94,6 +100,47 @@ describe("compiler deployment build", () => {
       '<meta name="easyeyes-deployment-id" content="deploy-test-123">',
     );
   });
+
+  it.each([
+    [
+      "production",
+      "production",
+      "https://easyeyes-compiler-default-rtdb.firebaseio.com",
+    ],
+    [
+      "deploy preview",
+      "deploy-preview",
+      "https://easyeyes-compiler-ode01.firebaseio.com",
+    ],
+  ])(
+    "embeds the %s Firebase database in the production bundle",
+    async (_description, context, expectedDatabaseUrl) => {
+      process.env.DEPLOY_ID = `deploy-${context}`;
+      process.env.CONTEXT = context;
+      const outputPath = fs.mkdtempSync(
+        path.join(os.tmpdir(), "compiler-firebase-build-"),
+      );
+      const entryPath = path.join(outputPath, "entry.js");
+      fs.writeFileSync(
+        entryPath,
+        "console.log(process.env.FIREBASE_DATABASE_URL);",
+      );
+      const config = createWebpackConfig({ production: true });
+      config.entry = entryPath;
+      config.module = { rules: [] };
+      config.optimization = { minimize: false };
+      config.output = { ...config.output, path: outputPath };
+
+      await compile(config);
+
+      const bundleName = fs
+        .readdirSync(outputPath)
+        .find((file) => /^main\.[a-f0-9]+\.js$/.test(file));
+      const bundle = fs.readFileSync(path.join(outputPath, bundleName), "utf8");
+
+      expect(bundle).toContain(expectedDatabaseUrl);
+    },
+  );
 
   it("keeps development independent from DEPLOY_ID with a fixed bundle name", () => {
     delete process.env.DEPLOY_ID;
