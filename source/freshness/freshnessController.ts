@@ -172,7 +172,10 @@ export const createFreshnessController = ({
             )}.`,
           });
         } else {
-          publish(checkingState);
+          publish({
+            status: "fresh",
+            message: "Fresh. This page is up to date.",
+          });
         }
       } else {
         if (notificationMatchesManifest) {

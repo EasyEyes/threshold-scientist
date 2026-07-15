@@ -55,6 +55,32 @@ describe("freshness controller", () => {
   });
 
   it.each([
+    ["missing", jest.fn().mockResolvedValue(null)],
+    ["unavailable", jest.fn().mockRejectedValue(new Error("offline"))],
+    [
+      "for another deployment",
+      jest.fn().mockResolvedValue({
+        deploymentId: "production-deploy",
+        publishedAt: "2026-07-14T10:15:30.000Z",
+      }),
+    ],
+  ])(
+    "publishes Fresh without a timestamp when the notification is %s",
+    async (_label, loadDeploymentNotification) => {
+      const controller = makeProductionController({
+        loadDeploymentNotification,
+      });
+
+      await controller.start();
+
+      expect(controller.getState()).toEqual({
+        status: "fresh",
+        message: "Fresh. This page is up to date.",
+      });
+    },
+  );
+
+  it.each([
     [
       "an unavailable manifest",
       jest.fn().mockRejectedValue(new Error("offline")),
@@ -284,7 +310,7 @@ describe("freshness controller", () => {
     expect(controller.getState().status).toBe("stale");
   });
 
-  it("cancels stale recovery when the manifest returns to the running deployment", async () => {
+  it("publishes Fresh and cancels recovery when the manifest returns to the running deployment", async () => {
     let notify;
     const retry = makeRetryBoundaries({
       schedule: jest.fn().mockReturnValue(1),
@@ -317,8 +343,8 @@ describe("freshness controller", () => {
     controller.actions.refresh();
     expect(retry.replaceWithDeployment).not.toHaveBeenCalled();
     expect(controller.getState()).toEqual({
-      status: "checking",
-      message: "Checking compiler freshness...",
+      status: "fresh",
+      message: "Fresh. This page is up to date.",
     });
   });
 
