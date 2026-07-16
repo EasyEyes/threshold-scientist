@@ -124,7 +124,7 @@ describe("freshness controller", () => {
 
     expect(controller.getState()).toEqual({
       status: "fresh",
-      message: "Fresh. This compiler is running in development mode.",
+      message: "Fresh. The compiler is running in development mode.",
     });
     await controller.start();
     await controller.actions.check();

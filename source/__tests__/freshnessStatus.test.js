@@ -1,7 +1,12 @@
 import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import Swal from "sweetalert2";
 import FreshnessStatus from "../components/FreshnessStatus";
 import { createFreshnessController } from "../freshness/freshnessController";
+
+jest.mock("sweetalert2", () => ({
+  fire: jest.fn(),
+}));
 
 const makeController = (mode = "production", overrides = {}) =>
   createFreshnessController({
@@ -48,12 +53,11 @@ describe("FreshnessStatus", () => {
 
     expect(screen.getByText("✅", { exact: true })).toBeInTheDocument();
     expect(
-      screen.getByText("Fresh. This compiler is running in development mode."),
+      screen.getByText("Fresh. The compiler is running in development mode."),
     ).toBeInTheDocument();
   });
 
-  it("renders the stale warning and invokes the Refresh action", async () => {
-    const refresh = jest.fn();
+  it("renders Refresh as part of the stale text rather than a button", async () => {
     const controller = makeController("production", {
       loadDeploymentNotification: jest.fn().mockResolvedValue({
         deploymentId: "deploy-456",
@@ -63,7 +67,7 @@ describe("FreshnessStatus", () => {
       retry: {
         getAttempts: jest.fn().mockReturnValue(0),
         setAttempts: jest.fn(),
-        replaceWithDeployment: refresh,
+        replaceWithDeployment: jest.fn(),
         schedule: jest.fn().mockReturnValue(1),
         cancelScheduled: jest.fn(),
       },
@@ -75,9 +79,9 @@ describe("FreshnessStatus", () => {
       "Stale. Refresh ↻ to update this page to Jul 14, 2026, 11:15:30 AM UTC.",
     );
     expect(screen.getByText("⚠️", { exact: true })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Refresh ↻" }));
-    expect(refresh).toHaveBeenCalledWith("deploy-456");
+    expect(
+      screen.queryByRole("button", { name: "Refresh ↻" }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not update state or navigate after unmount", async () => {
@@ -126,8 +130,7 @@ describe("FreshnessStatus", () => {
     expect(retry.replaceWithDeployment).not.toHaveBeenCalled();
   });
 
-  it("explains exhausted refreshes and offers another manual attempt", async () => {
-    const refresh = jest.fn();
+  it("opens the exhausted-refresh information through Question", async () => {
     const controller = makeController("production", {
       loadDeploymentNotification: jest.fn().mockResolvedValue({
         deploymentId: "deploy-456",
@@ -137,7 +140,7 @@ describe("FreshnessStatus", () => {
       retry: {
         getAttempts: jest.fn().mockReturnValue(3),
         setAttempts: jest.fn(),
-        replaceWithDeployment: refresh,
+        replaceWithDeployment: jest.fn(),
         schedule: jest.fn(),
         cancelScheduled: jest.fn(),
       },
@@ -149,25 +152,21 @@ describe("FreshnessStatus", () => {
       await screen.findByText("This page is stale and shouldn't be."),
     ).toBeInTheDocument();
     expect(screen.getByText("❌", { exact: true })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "More information" }));
+    fireEvent.click(document.querySelector(".freshness-status .icon-holder"));
 
-    const dialog = screen.getByRole("dialog", {
-      name: "Compiler freshness problem",
-    });
-    expect(dialog).toHaveTextContent("deploy-123");
-    expect(dialog).toHaveTextContent("deploy-456");
-    expect(dialog).toHaveTextContent("Jul 14, 2026, 11:15:30 AM UTC");
-    expect(dialog).toHaveTextContent("Close all compiler tabs");
-    expect(dialog).toHaveTextContent("clear site data and cached files");
-    expect(dialog).toHaveTextContent("reopen the compiler");
-    expect(dialog).toHaveTextContent("sign you out of Pavlovia");
-    expect(dialog).toHaveTextContent("remove locally stored compiler settings");
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Try refreshing again" }),
+    expect(Swal.fire).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Compiler freshness problem",
+        html: expect.stringContaining("deploy-123"),
+      }),
     );
-    expect(refresh).toHaveBeenCalledWith("deploy-456");
-    expect(controller.getState().status).toBe("error");
-    expect(controller.getState().retryCount).toBe(3);
+    const { html } = Swal.fire.mock.calls[0][0];
+    expect(html).toContain("deploy-456");
+    expect(html).toContain("Jul 14, 2026, 11:15:30 AM UTC");
+    expect(html).toContain("Close all compiler tabs");
+    expect(html).toContain("clear site data and cached files");
+    expect(html).toContain("reopen the compiler");
+    expect(html).toContain("sign you out of Pavlovia");
+    expect(html).toContain("remove locally stored compiler settings");
   });
 });

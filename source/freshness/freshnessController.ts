@@ -69,7 +69,7 @@ const checkingState: FreshnessState = {
 
 const developmentState: FreshnessState = {
   status: "fresh",
-  message: "Fresh. This compiler is running in development mode.",
+  message: "Fresh. The compiler is running in development mode.",
 };
 
 const automaticRetryDelays = [1000, 2000, 4000];
