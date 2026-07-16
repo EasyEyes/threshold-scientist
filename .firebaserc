@@ -1,5 +1,21 @@
 {
   "projects": {
     "default": "easyeyes-compiler"
-  }
+  },
+  "targets": {
+    "easyeyes-compiler": {
+      "database": {
+        "compiler": [
+          "easyeyes-compiler-default-rtdb",
+          "easyeyes-compiler-ode01"
+        ]
+      }
+    },
+    "demo-easyeyes-compiler": {
+      "database": {
+        "compiler": ["demo-easyeyes-compiler"]
+      }
+    }
+  },
+  "etags": {}
 }

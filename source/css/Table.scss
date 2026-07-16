@@ -2,6 +2,22 @@
 
 $table-step-padding: 0.4rem;
 
+.freshness-status {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  color: inherit;
+
+  * {
+    color: inherit;
+  }
+
+  .icon-holder:hover {
+    background: transparent;
+  }
+}
+
 .step-table {
   // padding-left: $table-step-padding !important;
   // padding-right: $table-step-padding !important;

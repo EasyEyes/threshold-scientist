@@ -19,7 +19,7 @@ const firebaseConfig = {
   appId: "1:930762152800:web:5c8228f0e264df736d9c05",
   measurementId: "G-J3MKPYWSCR",
   //
-  databaseURL: "https://easyeyes-compiler-default-rtdb.firebaseio.com",
+  databaseURL: process.env.FIREBASE_DATABASE_URL,
 };
 
 // Initialize Firebase

@@ -106,6 +106,22 @@ function makeProps(overrides = {}) {
   };
 }
 
+describe("Table freshness status", () => {
+  it("places development freshness below the instructions without disabling file selection", () => {
+    const { container } = render(<Table {...makeProps()} />);
+    const banner = container.querySelector(".green-status-banner");
+    const status = container.querySelector(".freshness-status");
+    const fileInput = container.querySelector('.dropzone input[type="file"]');
+
+    expect(banner).toContainElement(status);
+    expect(banner.lastElementChild).toBe(status);
+    expect(status.textContent).toBe(
+      "✅Fresh. The compiler is running in development mode.",
+    );
+    expect(fileInput).toBeEnabled();
+  });
+});
+
 describe("Table.handleTable", () => {
   beforeEach(() => {
     jest.clearAllMocks();

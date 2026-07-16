@@ -3,7 +3,79 @@
 require("dotenv").config();
 const webpack = require("webpack");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const fs = require("fs");
 const path = require("path");
+
+const DEPLOYMENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+const PRODUCTION_FIREBASE_DATABASE_URL =
+  "https://easyeyes-compiler-default-rtdb.firebaseio.com";
+const DEPLOY_PREVIEW_FIREBASE_DATABASE_URL =
+  "https://easyeyes-compiler-ode01.firebaseio.com";
+
+const firebaseDatabaseUrlForContext = (context) =>
+  context === "deploy-preview"
+    ? DEPLOY_PREVIEW_FIREBASE_DATABASE_URL
+    : PRODUCTION_FIREBASE_DATABASE_URL;
+
+const validateDeploymentId = (value) => {
+  if (typeof value !== "string" || !DEPLOYMENT_ID_PATTERN.test(value)) {
+    throw new Error(
+      "DEPLOY_ID must be 1-128 characters containing only letters, numbers, underscores, or hyphens",
+    );
+  }
+
+  return value;
+};
+
+class CompilerDeploymentAssetsPlugin {
+  constructor(deploymentId) {
+    this.deploymentId = deploymentId;
+  }
+
+  apply(compiler) {
+    compiler.hooks.thisCompilation.tap(
+      "CompilerDeploymentAssetsPlugin",
+      (compilation) => {
+        compilation.hooks.processAssets.tap(
+          {
+            name: "CompilerDeploymentAssetsPlugin",
+            stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
+          },
+          () => {
+            const bundle = compilation.entrypoints
+              .get("main")
+              .getFiles()
+              .find((file) => file.endsWith(".js"));
+            const template = fs.readFileSync(
+              path.resolve(__dirname, "index.html"),
+              "utf8",
+            );
+            const html = template
+              .replace(
+                "</head>",
+                `    <meta name="easyeyes-deployment-id" content="${this.deploymentId}">\n  </head>`,
+              )
+              .replace(
+                '<script src="/compiler/dist/main.js"></script>',
+                `<script src="/compiler/dist/${bundle}"></script>`,
+              );
+
+            compilation.emitAsset(
+              "index.html",
+              new webpack.sources.RawSource(html),
+            );
+            compilation.emitAsset(
+              "deployment.json",
+              new webpack.sources.RawSource(
+                JSON.stringify({ deploymentId: this.deploymentId }),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
 
 const config = {
   entry: path.resolve(__dirname, "source/index.js"),
@@ -113,6 +185,9 @@ module.exports = (env) => {
           "process.env.FIREBASE_API_KEY_SOUND": JSON.stringify(
             process.env.FIREBASE_API_KEY_SOUND || "",
           ),
+          "process.env.FIREBASE_DATABASE_URL": JSON.stringify(
+            PRODUCTION_FIREBASE_DATABASE_URL,
+          ),
           "process.env.SENTRY_DSN": JSON.stringify(
             process.env.SENTRY_DSN || "",
           ),
@@ -170,6 +245,12 @@ module.exports = (env) => {
       },
     });
   } else if (env.production) {
+    const deploymentIdInput = process.env.DEPLOY_ID;
+    if (!deploymentIdInput) {
+      throw new Error("DEPLOY_ID is required for production compiler builds");
+    }
+    const deploymentId = validateDeploymentId(deploymentIdInput);
+
     return Object.assign({}, config, {
       mode: "production",
       optimization: {
@@ -177,6 +258,7 @@ module.exports = (env) => {
       },
       plugins: [
         ...plugins,
+        new CompilerDeploymentAssetsPlugin(deploymentId),
         new webpack.DefinePlugin({
           "process.env.debug": false,
           "process.env.REDIRECT_URL": JSON.stringify(
@@ -189,14 +271,23 @@ module.exports = (env) => {
           "process.env.FIREBASE_API_KEY_SOUND": JSON.stringify(
             process.env.FIREBASE_API_KEY_SOUND || "",
           ),
+          "process.env.FIREBASE_DATABASE_URL": JSON.stringify(
+            firebaseDatabaseUrlForContext(process.env.CONTEXT),
+          ),
           "process.env.SENTRY_DSN": JSON.stringify(
             process.env.SENTRY_DSN || "",
           ),
           "process.env.SENTRY_ENVIRONMENT": JSON.stringify(
             process.env.SENTRY_ENVIRONMENT || "production",
           ),
+          "process.env.DEPLOY_ID": JSON.stringify(deploymentId),
         }),
       ],
+      output: {
+        filename: "main.[contenthash].js",
+        path: path.resolve(__dirname, "dist/"),
+        publicPath: "/compiler/dist/",
+      },
     });
   }
 };

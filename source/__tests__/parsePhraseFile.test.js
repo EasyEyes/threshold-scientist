@@ -6,24 +6,16 @@ jest.mock("xlsx", () => ({
   utils: { sheet_to_json: jest.fn() },
 }));
 
-function makeFileReaderStub(buffer) {
-  return class {
-    readAsArrayBuffer(_file) {
-      this.result = buffer;
-      Promise.resolve().then(() => {
-        this.onload && this.onload({ target: { result: buffer } });
-      });
-    }
-  };
-}
-
 const DUMMY_BUFFER = new ArrayBuffer(8);
 const DUMMY_WORKBOOK = { SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } };
+const makePhraseFile = () => ({
+  name: "phrases.xlsx",
+  arrayBuffer: jest.fn().mockResolvedValue(DUMMY_BUFFER),
+});
 
 beforeEach(() => {
   jest.clearAllMocks();
   XLSX.read.mockReturnValue(DUMMY_WORKBOOK);
-  global.FileReader = makeFileReaderStub(DUMMY_BUFFER);
 });
 
 // ── Cycle 1: valid xlsx ───────────────────────────────────────────────────────
@@ -36,7 +28,7 @@ describe("parsePhraseFile — valid xlsx", () => {
       ["~WelcomeMessage", "Welcome", "مرحبا"],
     ]);
 
-    const file = new File([""], "phrases.xlsx");
+    const file = makePhraseFile();
     const result = await parsePhraseFile(file);
 
     expect(result.sourceLanguageCode).toBe("en");
@@ -68,7 +60,7 @@ describe("parsePhraseFile — valid xlsx", () => {
       ["~MixedCaseKey", "Bonjour"],
     ]);
 
-    const file = new File([""], "phrases.xlsx");
+    const file = makePhraseFile();
     const result = await parsePhraseFile(file);
 
     expect(result.phraseTable.has("mixedcasekey")).toBe(true);
@@ -84,7 +76,7 @@ describe("parsePhraseFile — missing ~LanguageCode row", () => {
       ["~WelcomeMessage", "Hello", "Hola"],
     ]);
 
-    const file = new File([""], "phrases.xlsx");
+    const file = makePhraseFile();
     await expect(parsePhraseFile(file)).rejects.toThrow("~LanguageCode");
   });
 });
@@ -95,7 +87,7 @@ describe("parsePhraseFile — single-column xlsx", () => {
   it("rejects with a descriptive error when no language columns exist", async () => {
     XLSX.utils.sheet_to_json.mockReturnValue([["~LanguageCode"], ["~Hello"]]);
 
-    const file = new File([""], "phrases.xlsx");
+    const file = makePhraseFile();
     await expect(parsePhraseFile(file)).rejects.toThrow(/no language columns/i);
   });
 });
