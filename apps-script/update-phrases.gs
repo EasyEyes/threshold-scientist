@@ -21,8 +21,8 @@ var TRANSLATABLE_BACKGROUND = "#ffffff";
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("EasyEyes")
-    .addItem("Retranslate all cyan cells derived from changed English cells. Then update EasyEyes.", "updatePhrases")
-    .addItem("Retranslate the selected cyan cells. Then update EasyEyes.", "retranslateSelectedCells")
+    .addItem("Retranslate all white cells derived from changed English cells. Then update EasyEyes.", "updatePhrases")
+    .addItem("Retranslate the selected white cells. Then update EasyEyes.", "retranslateSelectedCells")
     .addItem("Check all cells. No update.", "checkPhraseKeys")
     .addToUi();
 }
