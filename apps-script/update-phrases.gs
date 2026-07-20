@@ -471,10 +471,10 @@ function retranslateSelectedCells() {
   }
 
   var header = rows[0];
-  var keyIdx = header.indexOf("language");
+  var keyIdx = header.indexOf("EE_LanguageCode");
   var enIdx = header.indexOf("en");
   if (keyIdx === -1 || enIdx === -1) {
-    notify('Required columns "language" and "en" not found in header row.');
+    notify('Required columns "EE_LanguageCode" and "en" not found in header row.');
     return;
   }
 
@@ -663,8 +663,8 @@ function checkPhraseKeys() {
     return;
   }
 
-  if (rows[0].indexOf("language") === -1) {
-    notify('Required column "language" not found in header row.');
+  if (rows[0].indexOf("EE_LanguageCode") === -1) {
+    notify('Required column "EE_LanguageCode" not found in header row.');
     return;
   }
 
@@ -696,7 +696,7 @@ function checkPhraseKeys() {
 // Same trimmed key in more than one row. Only one row gets the translation;
 // the others are left blank.
 function checkExactDuplicateKeys(rows) {
-  var keyIdx = rows[0].indexOf("language");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
   if (keyIdx === -1) return "";
   var rowsByKey = {};
   for (var i = 1; i < rows.length; i++) {
@@ -718,7 +718,7 @@ function checkExactDuplicateKeys(rows) {
 // Used as a hard pre-flight gate before pushing phrases to EasyEyes.
 function findDuplicateKeys(rows) {
   if (rows.length < 2) return [];
-  var keyIdx = rows[0].indexOf("language");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
   if (keyIdx === -1) return [];
   var counts = {};
   for (var i = 1; i < rows.length; i++) {
@@ -736,7 +736,7 @@ function findDuplicateKeys(rows) {
 // Keys with leading/trailing spaces. Trimmed before use, so they silently
 // collide with the un-spaced spelling.
 function checkKeyLeadingTrailingSpaces(rows) {
-  var keyIdx = rows[0].indexOf("language");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
   if (keyIdx === -1) return "";
   var lines = [];
   for (var i = 1; i < rows.length; i++) {
@@ -753,7 +753,7 @@ function checkKeyLeadingTrailingSpaces(rows) {
 // Keys containing invisible / look-alike characters that survive .trim() and
 // make a key look identical to another while never matching it.
 function checkKeyInvisibleChars(rows) {
-  var keyIdx = rows[0].indexOf("language");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
   if (keyIdx === -1) return "";
   var suspects = [
     { name: "non-breaking space", re: /\u00A0/ },
@@ -777,7 +777,7 @@ function checkKeyInvisibleChars(rows) {
 
 // Keys with a regular space somewhere inside the trimmed key (e.g. "my key").
 function checkKeyInteriorSpaces(rows) {
-  var keyIdx = rows[0].indexOf("language");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
   if (keyIdx === -1) return "";
   var lines = [];
   for (var i = 1; i < rows.length; i++) {
@@ -817,7 +817,7 @@ function checkDuplicateLanguageColumns(rows) {
 // Keys that do not start with one of the project's expected prefixes.
 function checkKeyNamingConvention(rows) {
   var ALLOWED_PREFIXES = ["EE_", "RC_", "T_", "x", "_DOCUMENTATION_OF_THIS_TABLE"]; // edit to match the project's key prefixes
-  var keyIdx = rows[0].indexOf("language");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
   if (keyIdx === -1) return "";
   var lines = [];
   for (var i = 1; i < rows.length; i++) {
@@ -833,7 +833,7 @@ function checkKeyNamingConvention(rows) {
 
 // Keys whose English (en) source cell is empty — nothing to translate.
 function checkMissingEnglishSource(rows) {
-  var keyIdx = rows[0].indexOf("language");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
   var enIdx = rows[0].indexOf("en");
   if (keyIdx === -1 || enIdx === -1) return "";
   var lines = [];
@@ -850,7 +850,7 @@ function checkMissingEnglishSource(rows) {
 // Rows that have content in some column but no key — silently skipped on every
 // push, so their text never reaches the app.
 function checkOrphanRows(rows) {
-  var keyIdx = rows[0].indexOf("language");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
   if (keyIdx === -1) return "";
   var lines = [];
   for (var i = 1; i < rows.length; i++) {
@@ -863,13 +863,13 @@ function checkOrphanRows(rows) {
     if (hasContent) lines.push("row " + (i + 1));
   }
   if (!lines.length) return "";
-  return "Rows with content but no key in the language column (silently skipped on " +
+  return "Rows with content but no key in the EE_LanguageCode column (silently skipped on " +
     "every push):\n" + lines.join("\n");
 }
 
 // Identical English source text under different keys — possible redundancy.
 function checkDuplicateEnglishText(rows) {
-  var keyIdx = rows[0].indexOf("language");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
   var enIdx = rows[0].indexOf("en");
   if (keyIdx === -1 || enIdx === -1) return "";
   var keysByText = {}; // en text -> { key: true }
@@ -900,7 +900,7 @@ function checkDuplicateEnglishText(rows) {
 function extractEnglishMap(rows) {
   if (rows.length < 2) return {};
   var header = rows[0];
-  var keyIdx = header.indexOf("language");
+  var keyIdx = header.indexOf("EE_LanguageCode");
   var enIdx = header.indexOf("en");
   if (keyIdx === -1 || enIdx === -1) return {};
   var result = {};
@@ -918,7 +918,7 @@ function buildDiffPayload(english) {
 function extractNonTranslatableValues(rows, backgrounds) {
   if (rows.length < 2) return {};
   var header = rows[0];
-  var keyIdx = header.indexOf("language");
+  var keyIdx = header.indexOf("EE_LanguageCode");
   var enIdx = header.indexOf("en");
   if (keyIdx === -1 || enIdx === -1) return {};
   var result = {};
@@ -945,7 +945,7 @@ function isTranslatableBackground(hex) {
 
 function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, isFullResync) {
   var header = rows[0];
-  var keyIdx = header.indexOf("language");
+  var keyIdx = header.indexOf("EE_LanguageCode");
   var enIdx = header.indexOf("en");
   var targetLangs = [];
   var targetIdxs = [];
@@ -1006,7 +1006,7 @@ function findMissingTranslatableKeys(colorMask, changedKeys) {
 
 function planWriteBack(translatedRows, rows) {
   var header = rows[0];
-  var keyIdx = header.indexOf("language");
+  var keyIdx = header.indexOf("EE_LanguageCode");
   var enIdx = header.indexOf("en");
 
   var keyToRowIdx = {};
