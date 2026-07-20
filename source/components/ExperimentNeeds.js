@@ -73,7 +73,7 @@ const getHtml = (
 
   const langCodes = Object.keys(readi18nPhrases("EE_languageNameNative"));
   const nativeName = (code) => readi18nPhrases("EE_languageNameNative", code);
-  const englishName = (code) => readi18nPhrases("EE_languageNameEnglish", code);
+  const englishName = (code) => readi18nPhrases("EE_LanguageEnglishName", code);
 
   langCodes.forEach((code) => {
     const option = document.createElement("option");
