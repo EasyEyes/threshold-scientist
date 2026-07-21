@@ -32,7 +32,10 @@ export const displayExperimentNeedsPopup = (
     confirmButtonAriaLabel: "Ok",
     cancelButtonText: "Cancel",
     cancelButtonAriaLabel: "Cancel",
-    customClass: "swalWide",
+    customClass: {
+      popup: "swalWide",
+      confirmButton: "needsPopupConfirm",
+    },
   });
 };
 
@@ -68,6 +71,7 @@ const getHtml = (
   Language.innerHTML = "Language: ";
   Language.style.display = "flex";
   Language.style.alignItems = "center";
+  Language.style.justifyContent = "flex-end";
   Language.style.width = "100%";
   Language.style.paddingLeft = "3px";
 
