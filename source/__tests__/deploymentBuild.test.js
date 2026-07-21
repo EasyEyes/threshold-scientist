@@ -33,6 +33,18 @@ describe("compiler deployment build", () => {
   const originalDeployId = process.env.DEPLOY_ID;
   const originalContext = process.env.CONTEXT;
 
+  it("declares dependencies imported from threshold compiler sources", () => {
+    const compilerPackage = require("../../package.json");
+    const declaredDependencies = {
+      ...compilerPackage.dependencies,
+      ...compilerPackage.devDependencies,
+    };
+
+    // webpack compiles ../threshold/preprocess/xlsxExport.ts as part of the
+    // parent compiler bundle, so clean CI installs must provide this package.
+    expect(declaredDependencies).toHaveProperty("exceljs");
+  });
+
   afterEach(() => {
     if (originalDeployId === undefined) {
       delete process.env.DEPLOY_ID;

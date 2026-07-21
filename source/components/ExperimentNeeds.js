@@ -71,8 +71,8 @@ const getHtml = (
 
   const LanguageDropdownContainer = document.createElement("select");
 
-  const langCodes = Object.keys(readi18nPhrases("EE_languageNameNative"));
-  const nativeName = (code) => readi18nPhrases("EE_languageNameNative", code);
+  const langCodes = Object.keys(readi18nPhrases("EE_LanguageNativeName"));
+  const nativeName = (code) => readi18nPhrases("EE_LanguageNativeName", code);
   const englishName = (code) => readi18nPhrases("EE_LanguageEnglishName", code);
 
   langCodes.forEach((code) => {
