@@ -266,6 +266,7 @@ function pushPhrases(isFullResync) {
 
   var diffResult = JSON.parse(diffText);
   var changedKeys = diffResult.changed;
+  var removedKeys = diffResult.removed || [];
   var currentVersion = diffResult.currentVersion;
 
   // Non-white step: send all non-white cell values once; the API stores any that
@@ -273,10 +274,11 @@ function pushPhrases(isFullResync) {
   var nonWhitePhrases = extractNonTranslatableValues(rows, backgrounds);
   var nonWhiteChanged = false;
 
-  if (Object.keys(nonWhitePhrases).length > 0) {
+  if (Object.keys(nonWhitePhrases).length > 0 || removedKeys.length > 0) {
     var nonWhitePayload = {
       action: "translate",
       changedPhrases: {},
+      removedKeys: removedKeys,
       colorMask: {},
       sentValues: {},
       // Keep the legacy field name for compatibility with the phrases API.
