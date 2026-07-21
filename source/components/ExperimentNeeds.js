@@ -18,6 +18,7 @@ export const displayExperimentNeedsPopup = (
     : compatibilityRequirements.t;
   Swal.fire({
     title: "Device Compatibility",
+    width: "38.4em",
     html: getHtml(
       text,
       selected,
@@ -44,6 +45,7 @@ const getHtml = (
   const textArea = document.createElement("textarea");
   textArea.value = text;
   textArea.className = "textArea";
+  textArea.rows = 4;
   textArea.setAttribute("readonly", "");
 
   const copyButton = document.createElement("button");
@@ -75,9 +77,15 @@ const getHtml = (
   const nativeName = (code) => readi18nPhrases("EE_LanguageNativeName", code);
   const englishName = (code) => readi18nPhrases("EE_LanguageEnglishName", code);
 
-  langCodes.forEach((code) => {
+  // Order the menu with English first, then alphabetically by English name.
+  const sortedLangCodes = [...langCodes].sort((a, b) => {
+    if (a === "en") return -1;
+    if (b === "en") return 1;
+    return englishName(a).localeCompare(englishName(b));
+  });
+
+  sortedLangCodes.forEach((code) => {
     const option = document.createElement("option");
-    option.key = nativeName(code);
     option.value = code;
     option.innerHTML = englishName(code) + " (" + nativeName(code) + ")";
     LanguageDropdownContainer.appendChild(option);
@@ -100,7 +108,7 @@ const getHtml = (
   buttonsContainer.appendChild(Language);
 
   const explanation = document.createElement("div");
-  explanation.innerHTML = `1. Specify your study's needs in your spreadsheet using the _needXXX and needXXX parameters.\n2. Choose a language from the menu above.\n3. Copy the translated, participant-friendly needs statement provided in the box above.\n4. Include that in your spreadsheet's _online2Description. This becomes your study's Prolific Description, which participants see before deciding whether to join.\n\n✅ This ensures that only compatible devices participate (e.g., Chrome browser, ≥4 CPU cores) and keeps you compliant with Prolific's policy that all study requirements must be included in the Description.`;
+  explanation.innerHTML = `1. Specify your study's needs in your spreadsheet using the <strong>_needXXX</strong> and <strong>needXXX</strong> parameters.\n2. Choose a language from the menu above.\n3. Copy the translated, participant-friendly needs statement provided in the box above.\n4. Include that in your spreadsheet's <strong>_online2Description</strong>. This becomes your study's Prolific Description, which participants see before deciding whether to join.\n\n✅ This ensures that only compatible devices participate (e.g., Chrome browser, ≥4 CPU cores) and keeps you compliant with Prolific's policy that all study requirements must be included in the Description.`;
 
   explanation.style.marginTop = "10px";
   explanation.style.textAlign = "left";
