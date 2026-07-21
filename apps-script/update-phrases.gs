@@ -16,13 +16,14 @@
 
 var PHRASES_FUNCTION_URL =
   "https://easyeyes.app/.netlify/functions/phrases";
+var TRANSLATABLE_BACKGROUND = "#ffffff";
 
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("EasyEyes")
-    .addItem("Update EasyEyes to use current phrases", "updatePhrases")
-    .addItem("Redo selected cyan translations", "retranslateSelectedCells")
-    .addItem("Check International Phrases", "checkPhraseKeys")
+    .addItem("Retranslate all white cells derived from changed English cells. Then update EasyEyes.", "updatePhrases")
+    .addItem("Retranslate the selected white cells. Then update EasyEyes.", "retranslateSelectedCells")
+    .addItem("Check all cells. No update.", "checkPhraseKeys")
     .addToUi();
 }
 
@@ -267,57 +268,58 @@ function pushPhrases(isFullResync) {
   var changedKeys = diffResult.changed;
   var currentVersion = diffResult.currentVersion;
 
-  // Non-cyan step: send all non-cyan cell values once; the API stores any that
+  // Non-white step: send all non-white cell values once; the API stores any that
   // differ from what is already in Firebase.
-  var nonCyanPhrases = extractNonTranslatableValues(rows, backgrounds);
-  var nonCyanChanged = false;
+  var nonWhitePhrases = extractNonTranslatableValues(rows, backgrounds);
+  var nonWhiteChanged = false;
 
-  if (Object.keys(nonCyanPhrases).length > 0) {
-    var nonCyanPayload = {
+  if (Object.keys(nonWhitePhrases).length > 0) {
+    var nonWhitePayload = {
       action: "translate",
       changedPhrases: {},
       colorMask: {},
       sentValues: {},
-      nonCyanPhrases: nonCyanPhrases,
+      // Keep the legacy field name for compatibility with the phrases API.
+      nonCyanPhrases: nonWhitePhrases,
       currentVersion: currentVersion,
     };
-    console.log("[phrases] Non-cyan step: POSTing to: " + PHRASES_FUNCTION_URL);
-    var nonCyanResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, nonCyanPayload));
-    var nonCyanCode = nonCyanResponse.getResponseCode();
-    var nonCyanText = nonCyanResponse.getContentText();
-    console.log("[phrases] Non-cyan step response code: " + nonCyanCode);
+    console.log("[phrases] Non-white step: POSTing to: " + PHRASES_FUNCTION_URL);
+    var nonWhiteResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, nonWhitePayload));
+    var nonWhiteCode = nonWhiteResponse.getResponseCode();
+    var nonWhiteText = nonWhiteResponse.getContentText();
+    console.log("[phrases] Non-white step response code: " + nonWhiteCode);
 
-    if (nonCyanCode === 409) {
+    if (nonWhiteCode === 409) {
       var retryVersionResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL + "?versionOnly", {
         method: "get",
         muteHttpExceptions: true,
       });
       if (retryVersionResponse.getResponseCode() !== 200) {
-        notify("Non-cyan update had a version conflict and the version re-fetch failed. Please try again.");
+        notify("Non-white update had a version conflict and the version re-fetch failed. Please try again.");
         return;
       }
       currentVersion = JSON.parse(retryVersionResponse.getContentText()).version;
-      nonCyanPayload.currentVersion = currentVersion;
-      nonCyanResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, nonCyanPayload));
-      nonCyanCode = nonCyanResponse.getResponseCode();
-      nonCyanText = nonCyanResponse.getContentText();
-      console.log("[phrases] Non-cyan step retry response code: " + nonCyanCode);
+      nonWhitePayload.currentVersion = currentVersion;
+      nonWhiteResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, nonWhitePayload));
+      nonWhiteCode = nonWhiteResponse.getResponseCode();
+      nonWhiteText = nonWhiteResponse.getContentText();
+      console.log("[phrases] Non-white step retry response code: " + nonWhiteCode);
     }
 
-    if (nonCyanCode !== 200) {
-      notify("Non-cyan values update failed (" + nonCyanCode + "): " + nonCyanText);
+    if (nonWhiteCode !== 200) {
+      notify("Non-white values update failed (" + nonWhiteCode + "): " + nonWhiteText);
       return;
     }
 
-    var nonCyanResult = JSON.parse(nonCyanText);
-    if (nonCyanResult.newVersion !== currentVersion) {
-      nonCyanChanged = true;
-      currentVersion = nonCyanResult.newVersion;
+    var nonWhiteResult = JSON.parse(nonWhiteText);
+    if (nonWhiteResult.newVersion !== currentVersion) {
+      nonWhiteChanged = true;
+      currentVersion = nonWhiteResult.newVersion;
     }
   }
 
   if (!changedKeys || changedKeys.length === 0) {
-    if (nonCyanChanged) {
+    if (nonWhiteChanged) {
       notify("Phrases updated. New version: " + currentVersion, "success");
     } else {
       notify("Phrases are up to date. No changes detected.", "success");
@@ -433,7 +435,7 @@ function pushPhrases(isFullResync) {
   var missingKeys = findMissingTranslatableKeys(colorMask, changedKeys);
   if (missingKeys.length > 0) {
     notify(
-      "Warning: the following phrase keys have no translatable (cyan) " +
+      "Warning: the following phrase keys have no translatable (white) " +
         "target-language cells and were not translated:\n" +
         missingKeys.join(", ")
     );
@@ -485,8 +487,8 @@ function retranslateSelectedCells() {
   }
   var ranges = rangeList.getRanges();
 
-  var nonCyanCells = [];
-  var cyanCells = [];
+  var nonWhiteCells = [];
+  var whiteCells = [];
 
   for (var r = 0; r < ranges.length; r++) {
     var range = ranges[r];
@@ -511,7 +513,7 @@ function retranslateSelectedCells() {
 
         var bg = backgrounds[rowIdx][colIdx];
         if (isTranslatableBackground(bg)) {
-          cyanCells.push({
+          whiteCells.push({
             rowIdx: rowIdx,
             colIdx: colIdx,
             key: key,
@@ -520,22 +522,22 @@ function retranslateSelectedCells() {
             currentValue: rows[rowIdx][colIdx] || "",
           });
         } else {
-          nonCyanCells.push({ sheetRow: startRow + dr, lang: lang });
+          nonWhiteCells.push({ sheetRow: startRow + dr, lang: lang });
         }
       }
     }
   }
 
-  var nonCyanWarning =
-    nonCyanCells.length > 0
-      ? "Skipped " + nonCyanCells.length +
-        " non-cyan-colored cells. Change their background to cyan to include them."
+  var nonWhiteWarning =
+    nonWhiteCells.length > 0
+      ? "Skipped " + nonWhiteCells.length +
+        " non-white cells. Change their background to white to include them."
       : "";
 
-  if (cyanCells.length === 0) {
+  if (whiteCells.length === 0) {
     notify(
       "No translatable cells found in selection." +
-        (nonCyanWarning ? "\n\n" + nonCyanWarning : "")
+        (nonWhiteWarning ? "\n\n" + nonWhiteWarning : "")
     );
     return;
   }
@@ -554,14 +556,14 @@ function retranslateSelectedCells() {
   var colorMask = {};
   var sentValues = {};
 
-  for (var i = 0; i < cyanCells.length; i++) {
-    var cell = cyanCells[i];
+  for (var i = 0; i < whiteCells.length; i++) {
+    var cell = whiteCells[i];
     if (!changedPhrases[cell.key]) {
       changedPhrases[cell.key] = cell.engText;
       colorMask[cell.key] = {};
       sentValues[cell.key] = {};
     }
-    colorMask[cell.key][cell.lang] = "#00ffff";
+    colorMask[cell.key][cell.lang] = TRANSLATABLE_BACKGROUND;
     sentValues[cell.key][cell.lang] = cell.currentValue;
   }
 
@@ -608,7 +610,7 @@ function retranslateSelectedCells() {
       });
       if (retryVersion.getResponseCode() !== 200) {
         notify("Batch " + (b + 1) + " of " + totalBatches + " had a version conflict and the version re-fetch failed.\n\n" +
-               "Completed " + totalCellCount + " of " + cyanCells.length + " cells. Please retry the remaining selection.");
+               "Completed " + totalCellCount + " of " + whiteCells.length + " cells. Please retry the remaining selection.");
         return;
       }
       currentVersion = JSON.parse(retryVersion.getContentText()).version;
@@ -621,7 +623,7 @@ function retranslateSelectedCells() {
 
     if (responseCode !== 200) {
       notify("Batch " + (b + 1) + " of " + totalBatches + " failed (" + responseCode + "): " + responseText +
-             "\n\nCompleted " + totalCellCount + " of " + cyanCells.length + " cells before failure.");
+             "\n\nCompleted " + totalCellCount + " of " + whiteCells.length + " cells before failure.");
       return;
     }
 
@@ -645,7 +647,7 @@ function retranslateSelectedCells() {
       totalCellCount +
       " cell(s). New version: " +
       currentVersion +
-      (nonCyanWarning ? "\n\n⚠️ " + nonCyanWarning : ""),
+      (nonWhiteWarning ? "\n\n⚠️ " + nonWhiteWarning : ""),
     "success"
   );
 }
@@ -940,7 +942,7 @@ function extractNonTranslatableValues(rows, backgrounds) {
 
 function isTranslatableBackground(hex) {
   if (!hex) return false;
-  return hex.toLowerCase().trim() === "#00ffff"; //cyan color on google sheet
+  return hex.toLowerCase().trim() === TRANSLATABLE_BACKGROUND;
 }
 
 function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, isFullResync) {
@@ -999,7 +1001,7 @@ function findMissingTranslatableKeys(colorMask, changedKeys) {
     var mask = colorMask[key];
     if (!mask) { result.push(key); continue; }
     var values = Object.values(mask);
-    if (values.every(function(v) { return v.toLowerCase().trim() !== "#00ffff"; })) result.push(key);
+    if (values.every(function(v) { return !isTranslatableBackground(v); })) result.push(key);
   }
   return result;
 }
