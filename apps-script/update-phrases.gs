@@ -234,6 +234,7 @@ function pushPhrases(isFullResync) {
   var dataRange = sheet.getDataRange();
   var rows = dataRange.getDisplayValues();
   var backgrounds = dataRange.getBackgrounds();
+  var activeLanguages = extractActiveLanguages(rows);
 
   // Pre-flight: refuse to update if any phrase key is duplicated.
   var duplicateKeys = findDuplicateKeys(rows);
@@ -274,7 +275,11 @@ function pushPhrases(isFullResync) {
   var nonWhitePhrases = extractNonTranslatableValues(rows, backgrounds);
   var nonWhiteChanged = false;
 
-  if (Object.keys(nonWhitePhrases).length > 0 || removedKeys.length > 0) {
+  if (
+    Object.keys(nonWhitePhrases).length > 0 ||
+    removedKeys.length > 0 ||
+    activeLanguages.length > 0
+  ) {
     var nonWhitePayload = {
       action: "translate",
       changedPhrases: {},
@@ -283,6 +288,7 @@ function pushPhrases(isFullResync) {
       sentValues: {},
       // Keep the legacy field name for compatibility with the phrases API.
       nonCyanPhrases: nonWhitePhrases,
+      activeLanguages: activeLanguages,
       currentVersion: currentVersion,
     };
     console.log("[phrases] Non-white step: POSTing to: " + PHRASES_FUNCTION_URL);
@@ -342,6 +348,7 @@ function pushPhrases(isFullResync) {
   var changedPhrases = translatePayload.changedPhrases;
   var colorMask = translatePayload.colorMask;
   var sentValues = translatePayload.sentValues;
+  var activeLanguages = translatePayload.activeLanguages;
 
   var BATCH_SIZE = 50;
   var allKeys = Object.keys(changedPhrases);
@@ -371,6 +378,7 @@ function pushPhrases(isFullResync) {
       changedPhrases: batchChangedPhrases,
       colorMask: batchColorMask,
       sentValues: batchSentValues,
+      activeLanguages: activeLanguages,
       currentVersion: newVersion,
     };
 
@@ -468,6 +476,7 @@ function retranslateSelectedCells() {
   var dataRange = sheet.getDataRange();
   var rows = dataRange.getDisplayValues();
   var backgrounds = dataRange.getBackgrounds();
+  var activeLanguages = extractActiveLanguages(rows);
 
   if (rows.length < 2) {
     notify("No data found in the International Phrases.");
@@ -596,6 +605,7 @@ function retranslateSelectedCells() {
       changedPhrases: batchChangedPhrases,
       colorMask: batchColorMask,
       sentValues: batchSentValues,
+      activeLanguages: activeLanguages,
       currentVersion: currentVersion,
     };
 
@@ -919,6 +929,18 @@ function buildDiffPayload(english) {
   return { action: "diff", english: english };
 }
 
+function extractActiveLanguages(rows) {
+  if (rows.length === 0) return [];
+  var header = rows[0];
+  var keyIdx = header.indexOf("EE_LanguageCode");
+  var result = [];
+  for (var h = 0; h < header.length; h++) {
+    var language = (header[h] || "").trim();
+    if (language && h !== keyIdx) result.push(language);
+  }
+  return result;
+}
+
 function extractNonTranslatableValues(rows, backgrounds) {
   if (rows.length < 2) return {};
   var header = rows[0];
@@ -992,6 +1014,7 @@ function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, i
     changedPhrases: changedPhrases,
     colorMask: colorMask,
     sentValues: sentValues,
+    activeLanguages: extractActiveLanguages(rows),
     currentVersion: currentVersion,
   };
 }
