@@ -73,6 +73,12 @@ jest.mock("../components/firebase_soundProfile", () => ({
 
 jest.mock("../sentry", () => ({
   captureError: jest.fn(),
+  captureCompilerFailure: jest.fn(),
+  recordCompilerPhase: jest.fn(),
+  startCompilerOperation: jest.fn(() => ({
+    operation: "experiment-retrieval",
+    operationId: "test-operation",
+  })),
 }));
 
 jest.mock("../components/phrasesApi", () => ({

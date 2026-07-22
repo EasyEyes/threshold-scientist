@@ -1,6 +1,12 @@
 import React, { Component, createRef } from "react";
 
 import { createPavloviaExperiment } from "../threshold/preprocess/gitlabUtils";
+import {
+  finishCompilerOperation,
+  getCurrentCompilerOperation,
+  recordCompilerPhase,
+  startCompilerOperation,
+} from "./sentry";
 
 import "./css/Upload.scss";
 
@@ -22,24 +28,46 @@ export default class Upload extends Component {
   }
 
   async upload(e = null) {
+    const operation =
+      getCurrentCompilerOperation()?.operation === "experiment-compilation"
+        ? getCurrentCompilerOperation()
+        : startCompilerOperation("pavlovia-upload", {
+            source: this.props.isCompiledFromArchiveBool
+              ? "archive"
+              : "spreadsheet",
+          });
+    recordCompilerPhase(operation, "upload-started", {
+      projectName: this.props.projectName,
+    });
     if (e !== null) e.target.setAttribute("disabled", true);
-    if (
-      await createPavloviaExperiment(
-        this.props.user,
-        this.props.projectName,
-        this.props.functions.handleGetNewRepo,
-        this.props.isCompiledFromArchiveBool,
-        this.props.archivedZip,
-      )
-    ) {
-      // update firebase compile count
-      this.props.functions.handleUpdateCompileCount();
+    let uploadSucceeded = false;
+    try {
+      uploadSucceeded = Boolean(
+        await createPavloviaExperiment(
+          this.props.user,
+          this.props.projectName,
+          this.props.functions.handleGetNewRepo,
+          this.props.isCompiledFromArchiveBool,
+          this.props.archivedZip,
+          operation,
+        ),
+      );
+      if (uploadSucceeded) {
+        // update firebase compile count
+        this.props.functions.handleUpdateCompileCount();
 
-      if (e !== null) {
-        e.target.removeAttribute("disabled");
-        e.target.classList.add("button-disabled");
-        this.inputRef.current.setAttribute("disabled", true);
+        if (e !== null) {
+          e.target.removeAttribute("disabled");
+          e.target.classList.add("button-disabled");
+          this.inputRef.current.setAttribute("disabled", true);
+        }
       }
+    } finally {
+      finishCompilerOperation(
+        operation,
+        uploadSucceeded ? "completed" : "failed",
+        { failedPhase: uploadSucceeded ? undefined : "pavlovia-upload" },
+      );
     }
   }
 
