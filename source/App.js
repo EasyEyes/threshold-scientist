@@ -34,7 +34,12 @@ import { compatibilityRequirements } from "../threshold/preprocess/global";
 import "./css/App.scss";
 import { signInAnonymously } from "firebase/auth";
 import { getSoundProfileStatement } from "./components/firebase_soundProfile";
-import { captureError } from "./sentry";
+import {
+  captureCompilerFailure,
+  captureError,
+  recordCompilerPhase,
+  startCompilerOperation,
+} from "./sentry";
 import { getGlossaryFull } from "../threshold/parameters/glossaryRegistry";
 import {
   fetchPhrasesVersion,
@@ -256,6 +261,10 @@ export default class App extends Component {
     if (activeExperiment !== "new") {
       // viewing a previous experiment
       const { user } = this.state;
+      const retrieval = startCompilerOperation("experiment-retrieval", {
+        projectId: activeExperiment.id,
+        projectPath: activeExperiment.path_with_namespace,
+      });
 
       await Swal.fire({
         title: "Retrieving study ...",
@@ -263,26 +272,58 @@ export default class App extends Component {
         allowEscapeKey: false,
         didOpen: async () => {
           Swal.showLoading(null);
-          previousExperimentDuration = await getDurationForProject(
-            user,
-            activeExperiment.name,
+          const retrieveMetadata = async (phase, task) => {
+            recordCompilerPhase(retrieval, phase);
+            try {
+              return await task();
+            } catch (error) {
+              captureCompilerFailure(
+                error,
+                retrieval,
+                phase,
+                {
+                  projectId: activeExperiment.id,
+                  responseStatus: error?.status,
+                  responseStatusText: error?.statusText,
+                  endpoint: error?.endpoint,
+                  method: error?.method,
+                },
+                "external-service",
+              );
+              throw error;
+            }
+          };
+          previousExperimentDuration = await retrieveMetadata(
+            "duration-requested",
+            () => getDurationForProject(user, activeExperiment.name),
           );
-          previousCompatibilityRequirements =
-            await getCompatibilityRequirementsForProject(
-              user,
-              activeExperiment.name,
-            );
+          previousCompatibilityRequirements = await retrieveMetadata(
+            "compatibility-requested",
+            () =>
+              getCompatibilityRequirementsForProject(
+                user,
+                activeExperiment.name,
+              ),
+          );
           originalFileName = await getOriginalFileNameForProject(
             user,
             activeExperiment.name,
+            retrieval,
           );
-          previousExperimentStatus = await getExperimentStatus(user, {
-            id: activeExperiment.id,
+          previousExperimentStatus = await retrieveMetadata(
+            "status-requested",
+            () =>
+              getExperimentStatus(user, {
+                id: activeExperiment.id,
+              }),
+          );
+          previousRecruitmentInformation = await retrieveMetadata(
+            "recruitment-requested",
+            () => getRecruitmentServiceConfig(user, activeExperiment.name),
+          );
+          recordCompilerPhase(retrieval, "completed", {
+            originalFilePresent: Boolean(originalFileName),
           });
-          previousRecruitmentInformation = await getRecruitmentServiceConfig(
-            user,
-            activeExperiment.name,
-          );
 
           Swal.close();
         },
