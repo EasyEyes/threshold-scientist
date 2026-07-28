@@ -16,6 +16,7 @@
 
 var PHRASES_FUNCTION_URL =
   "https://easyeyes.app/.netlify/functions/phrases";
+var DEEPL_DASHBOARD_URL = "https://www.deepl.com/your-account/api-usage";
 var TRANSLATABLE_BACKGROUND = "#ffffff";
 
 function onOpen() {
@@ -24,7 +25,133 @@ function onOpen() {
     .addItem("Retranslate all white cells derived from changed English cells. Then update EasyEyes.", "updatePhrases")
     .addItem("Retranslate the selected white cells. Then update EasyEyes.", "retranslateSelectedCells")
     .addItem("Check all cells. No update.", "checkPhraseKeys")
+    .addSeparator()
+    .addItem("Report DeepL API usage", "reportDeepLUsage")
     .addToUi();
+}
+
+function reportDeepLUsage() {
+  var secret = PropertiesService.getScriptProperties().getProperty(
+    "PHRASES_SECRET"
+  );
+  if (!secret) {
+    notify(
+      "PHRASES_SECRET is not set in Script Properties. " +
+        "Add it under File > Project settings > Script properties."
+    );
+    return;
+  }
+
+  var response = UrlFetchApp.fetch(
+    PHRASES_FUNCTION_URL,
+    buildFetchOptions(secret, { action: "usage" })
+  );
+  var responseCode = response.getResponseCode();
+  var responseText = response.getContentText();
+  if (responseCode !== 200) {
+    notify(
+      "Could not retrieve DeepL API usage (" +
+        responseCode +
+        "): " +
+        extractPhrasesApiError(responseText)
+    );
+    return;
+  }
+
+  var usage;
+  try {
+    usage = JSON.parse(responseText);
+  } catch (e) {
+    notify("DeepL API usage returned an invalid response.");
+    return;
+  }
+
+  var characterCount = Number(usage.character_count);
+  var characterLimit = Number(usage.character_limit);
+  if (
+    !Number.isFinite(characterCount) ||
+    !Number.isFinite(characterLimit) ||
+    characterLimit <= 0
+  ) {
+    notify("DeepL API usage returned invalid character counts.");
+    return;
+  }
+
+  var percentage = (characterCount / characterLimit) * 100;
+  var progressWidth = Math.min(100, percentage);
+  var html = `
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 20px;
+        color: #1f2937;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      .usage {
+        margin-bottom: 8px;
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .summary {
+        margin-bottom: 16px;
+        color: #4b5563;
+        font-size: 13px;
+      }
+      .track {
+        height: 10px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        border-radius: 999px;
+        background: #e5e7eb;
+      }
+      .fill {
+        width: ` + progressWidth + `%;
+        height: 100%;
+        background: #0f766e;
+      }
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      .button {
+        display: inline-block;
+        padding: 9px 14px;
+        border: 0;
+        border-radius: 7px;
+        background: #e5e7eb;
+        color: #1f2937;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .button.primary {
+        background: #0f766e;
+        color: #ffffff;
+      }
+    </style>
+    <div class="usage">` + percentage.toFixed(1) + `% used</div>
+    <div class="summary">
+      ` + characterCount.toLocaleString() + ` of ` +
+        characterLimit.toLocaleString() + ` characters
+    </div>
+    <div class="track" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+      aria-valuenow="` + percentage.toFixed(1) + `">
+      <div class="fill"></div>
+    </div>
+    <div class="actions">
+      <button class="button" onclick="google.script.host.close()">Close</button>
+      <a class="button primary" href="` + DEEPL_DASHBOARD_URL + `"
+        target="_blank" rel="noopener noreferrer">Open DeepL dashboard</a>
+    </div>
+  `;
+
+  SpreadsheetApp.getUi().showModelessDialog(
+    HtmlService.createHtmlOutput(html).setWidth(390).setHeight(205),
+    "DeepL API usage"
+  );
 }
 
 function notify(message, type) {
