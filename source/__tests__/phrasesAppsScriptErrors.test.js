@@ -80,7 +80,9 @@ describe("International Phrases Apps Script fatal DeepL errors", () => {
 
     expect(renderedTitle).toBe("Fatal error");
     expect(renderedHtml).toContain("Check DeepL billing");
-    expect(renderedHtml).toContain("https://www.deepl.com/account");
+    expect(renderedHtml).toContain(
+      "https://www.deepl.com/en/your-account/billing",
+    );
     expect(renderedHtml).toContain("denis.pelli@gmail.com");
   });
 });

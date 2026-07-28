@@ -66,7 +66,7 @@ function notify(message, type, options) {
         </div>
         <a
           class="button billing-button"
-          href="https://www.deepl.com/account"
+          href="https://www.deepl.com/en/your-account/billing"
           target="_blank"
           rel="noopener noreferrer"
         >Check DeepL billing</a>
