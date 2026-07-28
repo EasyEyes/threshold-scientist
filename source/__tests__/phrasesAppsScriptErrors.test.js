@@ -13,6 +13,24 @@ function loadAppsScript(overrides = {}) {
 }
 
 describe("International Phrases Apps Script fatal DeepL errors", () => {
+  test("adds the manually selected DeepL failure scenario to a request", () => {
+    const context = loadAppsScript();
+    context.DEEPL_FAILURE_SCENARIO = "403";
+
+    expect(context.addDeepLFailureScenario({ action: "translate" })).toEqual({
+      action: "translate",
+      testDeeplFailureScenario: "403",
+    });
+  });
+
+  test("leaves normal requests unchanged when no failure scenario is selected", () => {
+    const context = loadAppsScript();
+
+    expect(context.addDeepLFailureScenario({ action: "translate" })).toEqual({
+      action: "translate",
+    });
+  });
+
   test("classifies DeepL 403 as fatal with billing guidance", () => {
     const { classifyPhrasesApiFailure } = loadAppsScript();
 

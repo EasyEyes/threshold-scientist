@@ -17,6 +17,10 @@
 var PHRASES_FUNCTION_URL =
   "https://easyeyes.app/.netlify/functions/phrases";
 var TRANSLATABLE_BACKGROUND = "#ffffff";
+// TEST BRANCH ONLY. Leave empty for real DeepL calls. To exercise the final
+// error dialog, set one of: "403", "500", "network", "malformed",
+// "count-mismatch".
+var DEEPL_FAILURE_SCENARIO = "";
 
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -413,6 +417,7 @@ function pushPhrases(isFullResync) {
       activeLanguages: activeLanguages,
       currentVersion: newVersion,
     };
+    batchPayload = addDeepLFailureScenario(batchPayload);
 
     console.log("[phrases] Phase 2 batch " + (b + 1) + "/" + totalBatches + ": POSTing to: " + PHRASES_FUNCTION_URL);
     var translateResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, batchPayload));
@@ -644,6 +649,7 @@ function retranslateSelectedCells() {
       activeLanguages: activeLanguages,
       currentVersion: currentVersion,
     };
+    payload = addDeepLFailureScenario(payload);
 
     console.log("[phrases] Re-translate batch " + (b + 1) + "/" + totalBatches + ": POSTing to: " + PHRASES_FUNCTION_URL);
     var response = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, payload));
@@ -1141,4 +1147,11 @@ function buildFetchOptions(secret, payload) {
     payload: JSON.stringify(payload),
     muteHttpExceptions: true,
   };
+}
+
+function addDeepLFailureScenario(payload) {
+  if (DEEPL_FAILURE_SCENARIO) {
+    payload.testDeeplFailureScenario = DEEPL_FAILURE_SCENARIO;
+  }
+  return payload;
 }
