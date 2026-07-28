@@ -419,7 +419,8 @@ function pushPhrases(isFullResync) {
     }
 
     if (translateCode !== 200) {
-      notify("Batch " + (b + 1) + " of " + totalBatches + " failed (" + translateCode + "): " + translateText +
+      notify("EasyEyes was NOT updated. No new phrases version was created.\n\n" +
+             "Batch " + (b + 1) + " of " + totalBatches + " failed (" + translateCode + "): " + extractPhrasesApiError(translateText) +
              "\n\nCompleted " + totalCellCount + " cell(s) before failure.");
       return;
     }
@@ -634,7 +635,8 @@ function retranslateSelectedCells() {
     }
 
     if (responseCode !== 200) {
-      notify("Batch " + (b + 1) + " of " + totalBatches + " failed (" + responseCode + "): " + responseText +
+      notify("EasyEyes was NOT updated. No new phrases version was created.\n\n" +
+             "Batch " + (b + 1) + " of " + totalBatches + " failed (" + responseCode + "): " + extractPhrasesApiError(responseText) +
              "\n\nCompleted " + totalCellCount + " of " + whiteCells.length + " cells before failure.");
       return;
     }
@@ -662,6 +664,14 @@ function retranslateSelectedCells() {
       (nonWhiteWarning ? "\n\n⚠️ " + nonWhiteWarning : ""),
     "success"
   );
+}
+
+function extractPhrasesApiError(responseText) {
+  try {
+    return JSON.parse(responseText).error || responseText;
+  } catch (e) {
+    return responseText;
+  }
 }
 
 function checkPhraseKeys() {
