@@ -18,7 +18,6 @@ describe("International Phrases Apps Script fatal DeepL errors", () => {
 
     expect(
       classifyPhrasesApiFailure(
-        502,
         JSON.stringify({
           error:
             "DeepL rejected the translation request (status 403). No new phrases version was created.",
@@ -40,18 +39,18 @@ describe("International Phrases Apps Script fatal DeepL errors", () => {
 
     expect(
       classifyPhrasesApiFailure(
-        502,
         JSON.stringify({
           error:
             "DeepL rejected the translation request (status 500). No new phrases version was created.",
           code: "DEEPL_TRANSLATION_FAILED",
           deeplStatus: 500,
+          technicalDetail: "Internal error",
           fatal: true,
         }),
       ),
     ).toEqual({
       message:
-        "DeepL rejected the translation request (status 500). No new phrases version was created.",
+        "DeepL rejected the translation request (status 500). No new phrases version was created.\n\nTechnical detail: Internal error",
       isFatal: true,
       showDeepLBillingAction: false,
     });

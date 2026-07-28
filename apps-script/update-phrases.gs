@@ -451,7 +451,7 @@ function pushPhrases(isFullResync) {
     }
 
     if (translateCode !== 200) {
-      var translateFailure = classifyPhrasesApiFailure(translateCode, translateText);
+      var translateFailure = classifyPhrasesApiFailure(translateText);
       notify("EasyEyes was NOT updated. No new phrases version was created.\n\n" +
              "Batch " + (b + 1) + " of " + totalBatches + " failed (" + translateCode + "): " + translateFailure.message +
              "\n\nCompleted " + totalCellCount + " cell(s) before failure.",
@@ -670,7 +670,7 @@ function retranslateSelectedCells() {
     }
 
     if (responseCode !== 200) {
-      var responseFailure = classifyPhrasesApiFailure(responseCode, responseText);
+      var responseFailure = classifyPhrasesApiFailure(responseText);
       notify("EasyEyes was NOT updated. No new phrases version was created.\n\n" +
              "Batch " + (b + 1) + " of " + totalBatches + " failed (" + responseCode + "): " + responseFailure.message +
              "\n\nCompleted " + totalCellCount + " of " + whiteCells.length + " cells before failure.",
@@ -712,7 +712,7 @@ function extractPhrasesApiError(responseText) {
   }
 }
 
-function classifyPhrasesApiFailure(responseCode, responseText) {
+function classifyPhrasesApiFailure(responseText) {
   var parsed;
   try {
     parsed = JSON.parse(responseText);
@@ -726,7 +726,11 @@ function classifyPhrasesApiFailure(responseCode, responseText) {
     parsed.fatal === true;
 
   return {
-    message: parsed && parsed.error ? parsed.error : responseText,
+    message:
+      (parsed && parsed.error ? parsed.error : responseText) +
+      (parsed && parsed.technicalDetail
+        ? "\n\nTechnical detail: " + parsed.technicalDetail
+        : ""),
     isFatal: Boolean(isDeepLFailure),
     showDeepLBillingAction:
       Boolean(isDeepLFailure) && parsed.deeplStatus === 403,
