@@ -27,9 +27,11 @@ function onOpen() {
     .addToUi();
 }
 
-function notify(message, type) {
+function notify(message, type, options) {
   type = type || "warning";
+  options = options || {};
   var isSuccess = type === "success";
+  var isError = type === "error";
 
   // Modern color palette
   var colors = isSuccess ? {
@@ -38,6 +40,12 @@ function notify(message, type) {
     text: "#166534",
     border: "#dcfce7",
     hoverDark: "#15803d"
+  } : isError ? {
+    bg: "#fef2f2",
+    accent: "#dc2626",
+    text: "#991b1b",
+    border: "#fecaca",
+    hoverDark: "#b91c1c"
   } : {
     bg: "#fffbeb",
     accent: "#d97706",
@@ -46,11 +54,23 @@ function notify(message, type) {
     hoverDark: "#b45309"
   };
 
-  var title = isSuccess ? "Success" : "Warning";
+  var title = isSuccess ? "Success" : isError ? "Fatal error" : "Warning";
   var safeMsg = message
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+  var billingAction = options.showDeepLBillingAction ? `
+        <div class="billing-guidance">
+          DeepL rejected the API key. An inactive subscription or billing issue
+          is a possible cause. Sign in as <strong>denis.pelli@gmail.com</strong>.
+        </div>
+        <a
+          class="button billing-button"
+          href="https://www.deepl.com/account"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Check DeepL billing</a>
+  ` : "";
 
   var html = `
     <style>
@@ -127,11 +147,23 @@ function notify(message, type) {
         transform: translateY(0);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
+      .billing-guidance {
+        color: ` + colors.text + `;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0 0 16px;
+      }
+      .billing-button {
+        display: inline-block;
+        margin: 0 8px 12px;
+        text-decoration: none;
+      }
     </style>
     <div class="container">
       <div class="card">
-        <div class="icon-wrapper">` + (isSuccess ? "✅" : "⚠️") + `</div>
+        <div class="icon-wrapper">` + (isSuccess ? "✅" : isError ? "⛔" : "⚠️") + `</div>
         <div class="message">` + safeMsg + `</div>
+        ` + billingAction + `
         <button class="button" onclick="google.script.host.close()">OK</button>
       </div>
     </div>
@@ -419,9 +451,12 @@ function pushPhrases(isFullResync) {
     }
 
     if (translateCode !== 200) {
+      var translateFailure = classifyPhrasesApiFailure(translateCode, translateText);
       notify("EasyEyes was NOT updated. No new phrases version was created.\n\n" +
-             "Batch " + (b + 1) + " of " + totalBatches + " failed (" + translateCode + "): " + extractPhrasesApiError(translateText) +
-             "\n\nCompleted " + totalCellCount + " cell(s) before failure.");
+             "Batch " + (b + 1) + " of " + totalBatches + " failed (" + translateCode + "): " + translateFailure.message +
+             "\n\nCompleted " + totalCellCount + " cell(s) before failure.",
+             translateFailure.isFatal ? "error" : "warning",
+             { showDeepLBillingAction: translateFailure.showDeepLBillingAction });
       return;
     }
 
@@ -635,9 +670,12 @@ function retranslateSelectedCells() {
     }
 
     if (responseCode !== 200) {
+      var responseFailure = classifyPhrasesApiFailure(responseCode, responseText);
       notify("EasyEyes was NOT updated. No new phrases version was created.\n\n" +
-             "Batch " + (b + 1) + " of " + totalBatches + " failed (" + responseCode + "): " + extractPhrasesApiError(responseText) +
-             "\n\nCompleted " + totalCellCount + " of " + whiteCells.length + " cells before failure.");
+             "Batch " + (b + 1) + " of " + totalBatches + " failed (" + responseCode + "): " + responseFailure.message +
+             "\n\nCompleted " + totalCellCount + " of " + whiteCells.length + " cells before failure.",
+             responseFailure.isFatal ? "error" : "warning",
+             { showDeepLBillingAction: responseFailure.showDeepLBillingAction });
       return;
     }
 
@@ -672,6 +710,27 @@ function extractPhrasesApiError(responseText) {
   } catch (e) {
     return responseText;
   }
+}
+
+function classifyPhrasesApiFailure(responseCode, responseText) {
+  var parsed;
+  try {
+    parsed = JSON.parse(responseText);
+  } catch (e) {
+    parsed = null;
+  }
+
+  var isDeepLFailure =
+    parsed &&
+    parsed.code === "DEEPL_TRANSLATION_FAILED" &&
+    parsed.fatal === true;
+
+  return {
+    message: parsed && parsed.error ? parsed.error : responseText,
+    isFatal: Boolean(isDeepLFailure),
+    showDeepLBillingAction:
+      Boolean(isDeepLFailure) && parsed.deeplStatus === 403,
+  };
 }
 
 function checkPhraseKeys() {
