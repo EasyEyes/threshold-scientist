@@ -65,6 +65,19 @@ jest.mock("../../threshold/preprocess/gitlabSearch", () => ({
   searchProjectByName: jest.fn(),
 }));
 
+jest.mock("../../threshold/preprocess/auth/gitlabOAuthClient", () => ({
+  GitLabOAuthClient: {
+    loadFromStorage: jest.fn(),
+  },
+}));
+
+jest.mock("../../threshold/preprocess/auth/config", () => ({
+  getAuthConfig: jest.fn(() => ({
+    clientId: "client-id",
+    redirectUri: "https://example.test/redirect",
+  })),
+}));
+
 const mockGlossaryData = {
   version: "2.0",
   glossary: { paramX: { name: "paramX" } },
@@ -647,6 +660,34 @@ describe("Table.handleTable — EasyEyesResources lookup uses searchProjectByNam
     expect(searchProjectByName).toHaveBeenCalledWith(
       props.user,
       "EasyEyesResources",
+    );
+  });
+
+  it("reads text resources through the authenticated GitLab client", async () => {
+    const {
+      searchProjectByName,
+    } = require("../../threshold/preprocess/gitlabSearch");
+    const {
+      getTextFileDataFromGitLab,
+    } = require("../../threshold/preprocess/fileUtils");
+    const {
+      GitLabOAuthClient,
+    } = require("../../threshold/preprocess/auth/gitlabOAuthClient");
+    const client = { apiRequest: jest.fn() };
+    GitLabOAuthClient.loadFromStorage.mockReturnValue(client);
+    searchProjectByName.mockResolvedValue({ id: "42" });
+    getTextFileDataFromGitLab.mockResolvedValue("corpus contents");
+
+    const props = makeProps({ resources: { texts: ["corpus.txt"] } });
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(getTextFileDataFromGitLab).toHaveBeenCalledWith(
+      42,
+      "texts/corpus.txt",
+      client,
     );
   });
 });
