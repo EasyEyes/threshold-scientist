@@ -958,3 +958,7 @@ export default class App extends Component {
     );
   }
 }
+
+function getTimezoneName() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}

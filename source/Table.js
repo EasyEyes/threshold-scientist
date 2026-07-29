@@ -18,6 +18,8 @@ import {
 } from "../threshold/preprocess/gitlabUtils";
 import { searchProjectByName } from "../threshold/preprocess/gitlabSearch";
 import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
+import { GitLabOAuthClient } from "../threshold/preprocess/auth/gitlabOAuthClient";
+import { getAuthConfig } from "../threshold/preprocess/auth/config";
 
 import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
@@ -278,14 +280,19 @@ export default class Table extends Component {
       );
       if (resourcesRepo && resolvedResources.texts?.length > 0) {
         const repoID = parseInt(resourcesRepo.id);
-        const accessToken = this.props.user.accessToken;
+        const { clientId, redirectUri } = getAuthConfig();
+        const gitlabOAuthClient = GitLabOAuthClient.loadFromStorage(
+          clientId,
+          redirectUri,
+        );
+        if (!gitlabOAuthClient) throw new Error("AUTH_TOKEN_INVALID");
         const entries = await Promise.all(
           resolvedResources.texts.map(async (filename) => {
             try {
               const content = await getTextFileDataFromGitLab(
                 repoID,
                 `texts/${filename}`,
-                accessToken,
+                gitlabOAuthClient,
               );
               return [filename, content];
             } catch (e) {

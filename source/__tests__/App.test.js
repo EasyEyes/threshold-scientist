@@ -208,3 +208,28 @@ describe("App - handleReturnToStep", () => {
     expect(projectListAtCallTime).toBe(existingProjectList);
   });
 });
+
+describe("App - handleUpdateCompileCount", () => {
+  it("records the compile with the browser timezone", () => {
+    const { set, ref, get } = require("firebase/database");
+    ref.mockImplementation((_database, path) => path);
+    get.mockResolvedValue({
+      exists: () => true,
+      val: () => 4,
+    });
+
+    const fakeThis = {
+      state: { user: { username: "testuser" } },
+    };
+
+    expect(() =>
+      App.prototype.handleUpdateCompileCount.call(fakeThis),
+    ).not.toThrow();
+    expect(set).toHaveBeenCalledWith("compiles/test-uuid", {
+      id: "test-uuid",
+      user: "testuser",
+      timestamp: expect.any(String),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+  });
+});
