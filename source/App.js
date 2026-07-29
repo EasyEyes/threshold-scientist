@@ -705,22 +705,23 @@ export default class App extends Component {
 
   handleUpdateCompileCount() {
     const compileId = uuidv4();
-    const user = this.state.user.username;
+    const { username } = this.state.user;
+    const compileCountKey = username.replaceAll(".", "_");
 
     set(ref(db, "compiles/" + compileId), {
       id: compileId,
-      user: user,
+      user: username,
       timestamp: Date.now().toString(),
       timeZone: getTimezoneName(),
     });
 
     // update compileCounts by 1
-    get(ref(db, "compileCounts/" + user)).then((snapshot) => {
+    get(ref(db, "compileCounts/" + compileCountKey)).then((snapshot) => {
       if (snapshot.exists()) {
         const count = snapshot.val();
-        set(ref(db, "compileCounts/" + user), count + 1);
+        set(ref(db, "compileCounts/" + compileCountKey), count + 1);
       } else {
-        set(ref(db, "compileCounts/" + user), 1);
+        set(ref(db, "compileCounts/" + compileCountKey), 1);
       }
     });
   }
