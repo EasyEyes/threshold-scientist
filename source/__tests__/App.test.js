@@ -210,6 +210,10 @@ describe("App - handleReturnToStep", () => {
 });
 
 describe("App - handleUpdateCompileCount", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("records the compile with the browser timezone", () => {
     const { set, ref, get } = require("firebase/database");
     ref.mockImplementation((_database, path) => path);
@@ -231,5 +235,30 @@ describe("App - handleUpdateCompileCount", () => {
       timestamp: expect.any(String),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
+  });
+
+  it("replaces periods in the compile count username key", async () => {
+    const { set, ref, get } = require("firebase/database");
+    ref.mockImplementation((_database, path) => {
+      if (path.split("/").some((segment) => /[.#$[\]]/.test(segment))) {
+        throw new Error(`invalid Firebase path: ${path}`);
+      }
+      return path;
+    });
+    get.mockResolvedValue({
+      exists: () => false,
+    });
+
+    const fakeThis = {
+      state: { user: { username: "sajjad.1156" } },
+    };
+
+    expect(() =>
+      App.prototype.handleUpdateCompileCount.call(fakeThis),
+    ).not.toThrow();
+    await Promise.resolve();
+
+    expect(get).toHaveBeenCalledWith("compileCounts/sajjad_1156");
+    expect(set).toHaveBeenCalledWith("compileCounts/sajjad_1156", 1);
   });
 });
