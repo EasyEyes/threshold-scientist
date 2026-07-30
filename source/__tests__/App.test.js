@@ -1,6 +1,6 @@
 import React from "react";
 import { render, waitFor } from "@testing-library/react";
-import App from "../App";
+import App, { normalizeRecruitmentInformation } from "../App";
 
 jest.mock("firebase/database", () => ({
   set: jest.fn(),
@@ -100,6 +100,91 @@ const mockPhrasesData = {
   version: "1.0",
   phrases: { greeting: { en: "Hello", fr: "Bonjour" } },
 };
+
+describe("normalizeRecruitmentInformation", () => {
+  it("uses empty recruitment metadata when an experiment repository has no files", () => {
+    expect(normalizeRecruitmentInformation(null)).toEqual({
+      recruitmentServiceName: null,
+      recruitmentServiceCompletionCode: null,
+      recruitmentServiceURL: null,
+      recruitmentProlificWorkspace: null,
+    });
+  });
+
+  it("preserves recruitment metadata returned for a compiled experiment", () => {
+    expect(
+      normalizeRecruitmentInformation({
+        recruitmentServiceName: "Prolific",
+        recruitmentServiceCompletionCode: "COMPLETE",
+      }),
+    ).toEqual({
+      recruitmentServiceName: "Prolific",
+      recruitmentServiceCompletionCode: "COMPLETE",
+      recruitmentServiceURL: null,
+      recruitmentProlificWorkspace: null,
+    });
+  });
+});
+
+describe("App - handleSetActivateExperiment", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("does not request repository files when a failed compilation left an empty repository", async () => {
+    const Swal = require("sweetalert2");
+    const {
+      getCompatibilityRequirementsForProject,
+      getDurationForProject,
+      getExperimentStatus,
+      getOriginalFileNameForProject,
+      getRecruitmentServiceConfig,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    getExperimentStatus.mockResolvedValue("INACTIVE");
+    Swal.fire.mockImplementation(async ({ didOpen }) => {
+      await didOpen();
+    });
+
+    const fakeThis = {
+      state: { user: { username: "testuser" } },
+      setState: jest.fn((update) => {
+        fakeThis.state = { ...fakeThis.state, ...update };
+      }),
+    };
+    const emptyExperiment = {
+      id: 533761,
+      name: "failed-compilation",
+      path_with_namespace: "testuser/failed-compilation",
+      empty_repo: true,
+      default_branch: null,
+    };
+
+    await App.prototype.handleSetActivateExperiment.call(
+      fakeThis,
+      emptyExperiment,
+    );
+
+    expect(getDurationForProject).not.toHaveBeenCalled();
+    expect(getCompatibilityRequirementsForProject).not.toHaveBeenCalled();
+    expect(getOriginalFileNameForProject).not.toHaveBeenCalled();
+    expect(getRecruitmentServiceConfig).not.toHaveBeenCalled();
+    expect(getExperimentStatus).toHaveBeenCalledWith(fakeThis.state.user, {
+      id: emptyExperiment.id,
+    });
+    expect(fakeThis.state.previousExperimentViewed).toEqual({
+      originalFileName: null,
+      previousExperimentStatus: "INACTIVE",
+      previousRecruitmentInformation: {
+        recruitmentServiceName: null,
+        recruitmentServiceCompletionCode: null,
+        recruitmentServiceURL: null,
+        recruitmentProlificWorkspace: null,
+      },
+      previousCompatibilityRequirements: null,
+      previousExperimentDuration: null,
+    });
+  });
+});
 
 describe("App", () => {
   beforeEach(() => {
