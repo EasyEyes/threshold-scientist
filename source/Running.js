@@ -440,7 +440,7 @@ export default class Running extends Component {
         </div>
         <div className="link-set">
           <div className="link-set-buttons">
-            {isRunning && pavloviaIsReady && (
+            {(repositoryIsEmpty || (isRunning && pavloviaIsReady)) && (
               <button
                 id="new-button"
                 className="button-large-font button-grey resource-button"

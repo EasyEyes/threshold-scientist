@@ -1,5 +1,5 @@
 import React from "react";
-import { render, waitFor } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import App, { normalizeRecruitmentInformation } from "../App";
 import Running from "../Running";
 
@@ -236,6 +236,40 @@ describe("empty repository view lifecycle", () => {
 
     expect(Swal.fire).not.toHaveBeenCalled();
     expect(runExperiment).not.toHaveBeenCalled();
+  });
+
+  it("offers New and returns to the compiler for an empty repository", () => {
+    const handleSetActivateExperiment = jest.fn();
+    const { getByRole } = render(
+      <Running
+        activeExperiment={emptyExperiment}
+        compileWarnings={[]}
+        experimentStatus="INACTIVE"
+        functions={{
+          handleSetActivateExperiment,
+          handleSetCompileCount: jest.fn(),
+        }}
+        previousExperimentViewed={{
+          previousExperimentStatus: "RUNNING",
+          previousRecruitmentInformation: null,
+        }}
+        projectName={emptyExperiment.name}
+        scrollToCurrentStep={jest.fn()}
+        user={{
+          username: "testuser",
+          projectList: Promise.resolve([]),
+          currentExperiment: {
+            participantRecruitmentServiceName: "",
+            pavloviaPreferRunningModeBool: true,
+          },
+        }}
+        viewingPreviousExperiment={true}
+      />,
+    );
+
+    fireEvent.click(getByRole("button", { name: "New" }));
+
+    expect(handleSetActivateExperiment).toHaveBeenCalledWith("REFRESH");
   });
 });
 
