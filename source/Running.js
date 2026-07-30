@@ -294,10 +294,10 @@ export default class Running extends Component {
       : experimentStatus === "RUNNING";
 
     const hasRecruitmentService = viewingPreviousExperiment
-      ? previousRecruitmentInformation.recruitmentServiceName !== null
+      ? previousRecruitmentInformation?.recruitmentServiceName != null
       : !!user.currentExperiment.participantRecruitmentServiceName;
     const recruitName = viewingPreviousExperiment
-      ? previousRecruitmentInformation.recruitmentServiceName
+      ? previousRecruitmentInformation?.recruitmentServiceName ?? null
       : user.currentExperiment.participantRecruitmentServiceName;
 
     // const offerPilotingOption =

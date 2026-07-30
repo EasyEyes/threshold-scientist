@@ -218,12 +218,12 @@ export default class StatusLines extends Component {
       ? activeExperiment.name
       : projectName;
     const hasRecruitmentService = viewingPreviousExperiment
-      ? previousRecruitmentInformation.recruitmentServiceName !== null
+      ? previousRecruitmentInformation?.recruitmentServiceName != null
       : !!user?.currentExperiment?.participantRecruitmentServiceName;
 
     const effectiveUsingProlificWorkspace =
       viewingPreviousExperiment && hasRecruitmentService
-        ? previousRecruitmentInformation.recruitmentProlificWorkspace
+        ? previousRecruitmentInformation?.recruitmentProlificWorkspace
         : user?.currentExperiment?.prolificWorkspaceModeBool;
 
     return (
