@@ -268,7 +268,12 @@ describe("empty repository view lifecycle", () => {
     );
 
     expect(getByRole("button", { name: "Go to Pavlovia" })).toBeInTheDocument();
-    expect(container.querySelector(".icon-holder")).toBeInTheDocument();
+    expect(getByRole("button", { name: "Run" })).toBeEnabled();
+    expect(getByRole("button", { name: "Export" })).toBeEnabled();
+    expect(getByRole("button", { name: "Download results" })).toBeEnabled();
+    expect(getByRole("button", { name: "Analyze" })).toBeEnabled();
+    expect(getByRole("button", { name: "Refresh" })).toBeEnabled();
+    expect(container.querySelectorAll(".icon-holder")).toHaveLength(2);
 
     fireEvent.click(getByRole("button", { name: "New" }));
     expect(handleSetActivateExperiment).toHaveBeenCalledWith("REFRESH");

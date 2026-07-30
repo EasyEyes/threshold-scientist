@@ -302,6 +302,8 @@ export default class Running extends Component {
       (viewingPreviousExperiment
         ? previousExperimentStatus === "RUNNING"
         : experimentStatus === "RUNNING");
+    const showExperimentActions =
+      repositoryIsEmpty || (isRunning && pavloviaIsReady);
 
     const hasRecruitmentService = viewingPreviousExperiment
       ? previousRecruitmentInformation?.recruitmentServiceName != null
@@ -440,7 +442,7 @@ export default class Running extends Component {
         </div>
         <div className="link-set">
           <div className="link-set-buttons">
-            {(repositoryIsEmpty || (isRunning && pavloviaIsReady)) && (
+            {showExperimentActions && (
               <button
                 id="new-button"
                 className="button-large-font button-grey resource-button"
@@ -460,7 +462,7 @@ export default class Running extends Component {
               </button>
             )}
 
-            {isRunning && pavloviaIsReady && (
+            {showExperimentActions && (
               <>
                 <button
                   className="button-green button-large-font"
@@ -473,7 +475,7 @@ export default class Running extends Component {
               </>
             )}
 
-            {isRunning && pavloviaIsReady && (
+            {showExperimentActions && (
               <button
                 className="button-large-font button-grey resource-button"
                 style={{
@@ -735,7 +737,7 @@ export default class Running extends Component {
           </>
         )}
 
-        {isRunning && pavloviaIsReady && (
+        {showExperimentActions && (
           <>
             <div className="link-set">
               <div className="link-set-buttons">
