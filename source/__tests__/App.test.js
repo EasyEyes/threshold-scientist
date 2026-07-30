@@ -238,7 +238,7 @@ describe("empty repository view lifecycle", () => {
     expect(runExperiment).not.toHaveBeenCalled();
   });
 
-  it("offers New and returns to the compiler for an empty repository", () => {
+  it("offers recovery actions for an empty repository", () => {
     const handleSetActivateExperiment = jest.fn();
     const { container, getByRole } = render(
       <Running
@@ -267,10 +267,11 @@ describe("empty repository view lifecycle", () => {
       />,
     );
 
-    fireEvent.click(getByRole("button", { name: "New" }));
+    expect(getByRole("button", { name: "Go to Pavlovia" })).toBeInTheDocument();
+    expect(container.querySelector(".icon-holder")).toBeInTheDocument();
 
+    fireEvent.click(getByRole("button", { name: "New" }));
     expect(handleSetActivateExperiment).toHaveBeenCalledWith("REFRESH");
-    expect(container.querySelector(".icon-holder")).not.toBeInTheDocument();
   });
 });
 
