@@ -48,6 +48,7 @@ import {
 import { initPhrases } from "../threshold/parameters/phrasesRegistry";
 import { startGlossaryPrefetch } from "./components/glossaryApi";
 import { fetchGitHubStats } from "./components/githubStatsApi";
+import { isEmptyRepository } from "./repositoryState";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -67,6 +68,18 @@ const createResourcesObjectFromData = (loadedResources) => {
   return resources;
 };
 
+const createEmptyRecruitmentInformation = () => ({
+  recruitmentServiceName: null,
+  recruitmentServiceCompletionCode: null,
+  recruitmentServiceURL: null,
+  recruitmentProlificWorkspace: null,
+});
+
+export const normalizeRecruitmentInformation = (recruitmentInformation) => ({
+  ...createEmptyRecruitmentInformation(),
+  ...(recruitmentInformation ?? {}),
+});
+
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -85,12 +98,7 @@ export default class App extends Component {
       previousExperimentViewed: {
         originalFileName: null,
         previousExperimentStatus: null,
-        previousRecruitmentInformation: {
-          recruitmentServiceName: null,
-          recruitmentServiceCompletionCode: null,
-          recruitmentServiceURL: null,
-          recruitmentProlificWorkspace: null,
-        },
+        previousRecruitmentInformation: createEmptyRecruitmentInformation(),
         previousCompatibilityRequirements: null,
         previousExperimentDuration: null,
       },
@@ -250,17 +258,13 @@ export default class App extends Component {
 
     let originalFileName = null;
     let previousExperimentStatus = null;
-    let previousRecruitmentInformation = {
-      recruitmentServiceName: null,
-      recruitmentServiceCompletionCode: null,
-      recruitmentServiceURL: null,
-      recruitmentProlificWorkspace: null,
-    };
+    let previousRecruitmentInformation = createEmptyRecruitmentInformation();
     let previousCompatibilityRequirements = null;
     let previousExperimentDuration = null;
     if (activeExperiment !== "new") {
       // viewing a previous experiment
       const { user } = this.state;
+      const repositoryIsEmpty = isEmptyRepository(activeExperiment);
       const retrieval = startCompilerOperation("experiment-retrieval", {
         projectId: activeExperiment.id,
         projectPath: activeExperiment.path_with_namespace,
@@ -293,23 +297,27 @@ export default class App extends Component {
               throw error;
             }
           };
-          previousExperimentDuration = await retrieveMetadata(
-            "duration-requested",
-            () => getDurationForProject(user, activeExperiment.name),
-          );
-          previousCompatibilityRequirements = await retrieveMetadata(
-            "compatibility-requested",
-            () =>
-              getCompatibilityRequirementsForProject(
-                user,
-                activeExperiment.name,
-              ),
-          );
-          originalFileName = await getOriginalFileNameForProject(
-            user,
-            activeExperiment.name,
-            retrieval,
-          );
+          if (repositoryIsEmpty) {
+            recordCompilerPhase(retrieval, "empty-repository-detected");
+          } else {
+            previousExperimentDuration = await retrieveMetadata(
+              "duration-requested",
+              () => getDurationForProject(user, activeExperiment.name),
+            );
+            previousCompatibilityRequirements = await retrieveMetadata(
+              "compatibility-requested",
+              () =>
+                getCompatibilityRequirementsForProject(
+                  user,
+                  activeExperiment.name,
+                ),
+            );
+            originalFileName = await getOriginalFileNameForProject(
+              user,
+              activeExperiment.name,
+              retrieval,
+            );
+          }
           previousExperimentStatus = await retrieveMetadata(
             "status-requested",
             () =>
@@ -317,12 +325,16 @@ export default class App extends Component {
                 id: activeExperiment.id,
               }),
           );
-          previousRecruitmentInformation = await retrieveMetadata(
-            "recruitment-requested",
-            () => getRecruitmentServiceConfig(user, activeExperiment.name),
-          );
+          if (!repositoryIsEmpty) {
+            previousRecruitmentInformation = normalizeRecruitmentInformation(
+              await retrieveMetadata("recruitment-requested", () =>
+                getRecruitmentServiceConfig(user, activeExperiment.name),
+              ),
+            );
+          }
           recordCompilerPhase(retrieval, "completed", {
             originalFilePresent: Boolean(originalFileName),
+            repositoryEmpty: repositoryIsEmpty,
           });
 
           Swal.close();

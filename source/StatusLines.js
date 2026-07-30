@@ -6,6 +6,7 @@ import { compatibilityRequirements as globalCompatibilityReq } from "../threshol
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 import { durations } from "../threshold/preprocess/getDuration";
 import { Question } from "./components";
+import { isEmptyRepository } from "./repositoryState";
 
 import "./css/StatusLines.scss";
 
@@ -97,7 +98,10 @@ export default class StatusLines extends Component {
   };
 
   async componentDidUpdate(prevProps) {
-    if (this.props.activeExperiment !== prevProps.activeExperiment) {
+    if (
+      this.props.activeExperiment !== prevProps.activeExperiment &&
+      !isEmptyRepository(this.props.activeExperiment)
+    ) {
       await this.getProlificStudyStatus();
     }
     // await this.props.functions.getprofileStatement();
@@ -210,20 +214,23 @@ export default class StatusLines extends Component {
     } = this.props;
     const viewingPreviousExperiment =
       activeExperiment !== "new" && activeExperiment !== newRepo;
+    const repositoryIsEmpty =
+      viewingPreviousExperiment && isEmptyRepository(activeExperiment);
 
     const showExperimentURL =
-      !!(user && projectName && experimentStatus === "RUNNING") ||
-      (viewingPreviousExperiment && previousExperimentStatus === "RUNNING");
+      !repositoryIsEmpty &&
+      (!!(user && projectName && experimentStatus === "RUNNING") ||
+        (viewingPreviousExperiment && previousExperimentStatus === "RUNNING"));
     const effectiveProjectNameLowerCase = viewingPreviousExperiment
       ? activeExperiment.name
       : projectName;
     const hasRecruitmentService = viewingPreviousExperiment
-      ? previousRecruitmentInformation.recruitmentServiceName !== null
+      ? previousRecruitmentInformation?.recruitmentServiceName != null
       : !!user?.currentExperiment?.participantRecruitmentServiceName;
 
     const effectiveUsingProlificWorkspace =
       viewingPreviousExperiment && hasRecruitmentService
-        ? previousRecruitmentInformation.recruitmentProlificWorkspace
+        ? previousRecruitmentInformation?.recruitmentProlificWorkspace
         : user?.currentExperiment?.prolificWorkspaceModeBool;
 
     return (

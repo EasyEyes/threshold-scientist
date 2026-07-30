@@ -1,6 +1,7 @@
 import React from "react";
-import { render, waitFor } from "@testing-library/react";
-import App from "../App";
+import { fireEvent, render, waitFor } from "@testing-library/react";
+import App, { normalizeRecruitmentInformation } from "../App";
+import Running from "../Running";
 
 jest.mock("firebase/database", () => ({
   set: jest.fn(),
@@ -32,6 +33,9 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getRecruitmentServiceConfig: jest.fn(),
   getDurationForProject: jest.fn(),
   getProlificStudyId: jest.fn(),
+  getDataFolderCsvLength: jest.fn(),
+  runExperiment: jest.fn(),
+  getAllProjects: jest.fn(),
   User: jest.fn(() => ({})),
   copyUser: jest.fn((u) => ({ ...u })),
   getCommonResourcesNames: jest.fn(),
@@ -100,6 +104,181 @@ const mockPhrasesData = {
   version: "1.0",
   phrases: { greeting: { en: "Hello", fr: "Bonjour" } },
 };
+
+describe("normalizeRecruitmentInformation", () => {
+  it("uses empty recruitment metadata when an experiment repository has no files", () => {
+    expect(normalizeRecruitmentInformation(null)).toEqual({
+      recruitmentServiceName: null,
+      recruitmentServiceCompletionCode: null,
+      recruitmentServiceURL: null,
+      recruitmentProlificWorkspace: null,
+    });
+  });
+
+  it("preserves recruitment metadata returned for a compiled experiment", () => {
+    expect(
+      normalizeRecruitmentInformation({
+        recruitmentServiceName: "Prolific",
+        recruitmentServiceCompletionCode: "COMPLETE",
+      }),
+    ).toEqual({
+      recruitmentServiceName: "Prolific",
+      recruitmentServiceCompletionCode: "COMPLETE",
+      recruitmentServiceURL: null,
+      recruitmentProlificWorkspace: null,
+    });
+  });
+});
+
+describe("App - handleSetActivateExperiment", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("does not request repository files when a failed compilation left an empty repository", async () => {
+    const Swal = require("sweetalert2");
+    const {
+      getCompatibilityRequirementsForProject,
+      getDurationForProject,
+      getExperimentStatus,
+      getOriginalFileNameForProject,
+      getRecruitmentServiceConfig,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    getExperimentStatus.mockResolvedValue("INACTIVE");
+    Swal.fire.mockImplementation(async ({ didOpen }) => {
+      await didOpen();
+    });
+
+    const fakeThis = {
+      state: { user: { username: "testuser" } },
+      setState: jest.fn((update) => {
+        fakeThis.state = { ...fakeThis.state, ...update };
+      }),
+    };
+    const emptyExperiment = {
+      id: 533761,
+      name: "failed-compilation",
+      path_with_namespace: "testuser/failed-compilation",
+      empty_repo: true,
+      default_branch: null,
+    };
+
+    await App.prototype.handleSetActivateExperiment.call(
+      fakeThis,
+      emptyExperiment,
+    );
+
+    expect(getDurationForProject).not.toHaveBeenCalled();
+    expect(getCompatibilityRequirementsForProject).not.toHaveBeenCalled();
+    expect(getOriginalFileNameForProject).not.toHaveBeenCalled();
+    expect(getRecruitmentServiceConfig).not.toHaveBeenCalled();
+    expect(getExperimentStatus).toHaveBeenCalledWith(fakeThis.state.user, {
+      id: emptyExperiment.id,
+    });
+    expect(fakeThis.state.previousExperimentViewed).toEqual({
+      originalFileName: null,
+      previousExperimentStatus: "INACTIVE",
+      previousRecruitmentInformation: {
+        recruitmentServiceName: null,
+        recruitmentServiceCompletionCode: null,
+        recruitmentServiceURL: null,
+        recruitmentProlificWorkspace: null,
+      },
+      previousCompatibilityRequirements: null,
+      previousExperimentDuration: null,
+    });
+  });
+});
+
+describe("empty repository view lifecycle", () => {
+  const emptyExperiment = {
+    id: 533761,
+    name: "failed-compilation",
+    empty_repo: true,
+    default_branch: null,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("does not query results or activate an empty repository when Running mounts", async () => {
+    const {
+      getDataFolderCsvLength,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    const fakeThis = {
+      props: {
+        activeExperiment: emptyExperiment,
+        scrollToCurrentStep: jest.fn(),
+        functions: {
+          handleSetCompileCount: jest.fn(),
+        },
+      },
+      setState: jest.fn(),
+      setModeToRun: jest.fn(),
+    };
+
+    await Running.prototype.componentDidMount.call(fakeThis);
+
+    expect(getDataFolderCsvLength).not.toHaveBeenCalled();
+    expect(fakeThis.setModeToRun).not.toHaveBeenCalled();
+  });
+
+  it("does not allow direct activation of an empty repository", async () => {
+    const Swal = require("sweetalert2");
+    const { runExperiment } = require("../../threshold/preprocess/gitlabUtils");
+    const fakeThis = {
+      props: { activeExperiment: emptyExperiment },
+      _isActivating: false,
+    };
+
+    await Running.prototype.setModeToRun.call(fakeThis);
+
+    expect(Swal.fire).not.toHaveBeenCalled();
+    expect(runExperiment).not.toHaveBeenCalled();
+  });
+
+  it("offers recovery actions for an empty repository", () => {
+    const handleSetActivateExperiment = jest.fn();
+    const { container, getByRole } = render(
+      <Running
+        activeExperiment={emptyExperiment}
+        compileWarnings={[]}
+        experimentStatus="INACTIVE"
+        functions={{
+          handleSetActivateExperiment,
+          handleSetCompileCount: jest.fn(),
+        }}
+        previousExperimentViewed={{
+          previousExperimentStatus: "RUNNING",
+          previousRecruitmentInformation: null,
+        }}
+        projectName={emptyExperiment.name}
+        scrollToCurrentStep={jest.fn()}
+        user={{
+          username: "testuser",
+          projectList: Promise.resolve([]),
+          currentExperiment: {
+            participantRecruitmentServiceName: "",
+            pavloviaPreferRunningModeBool: true,
+          },
+        }}
+        viewingPreviousExperiment={true}
+      />,
+    );
+
+    expect(getByRole("button", { name: "Go to Pavlovia" })).toBeInTheDocument();
+    expect(getByRole("button", { name: "Run" })).toBeEnabled();
+    expect(getByRole("button", { name: "Export" })).toBeEnabled();
+    expect(getByRole("button", { name: "Download results" })).toBeEnabled();
+    expect(getByRole("button", { name: "Analyze" })).toBeEnabled();
+    expect(getByRole("button", { name: "Refresh" })).toBeEnabled();
+    expect(container.querySelectorAll(".icon-holder")).toHaveLength(2);
+
+    fireEvent.click(getByRole("button", { name: "New" }));
+    expect(handleSetActivateExperiment).toHaveBeenCalledWith("REFRESH");
+  });
+});
 
 describe("App", () => {
   beforeEach(() => {
