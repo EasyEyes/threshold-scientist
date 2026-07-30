@@ -551,9 +551,10 @@ export default class Running extends Component {
                 ? buttonGoToPavlovia("Go to Pavlovia", smallButtonExtraStyle)
                 : buttonSetToRunning(smallButtonExtraStyle))}
 
-            <Question
-              title={"Why go to Pavlovia?"}
-              text={`
+            {!repositoryIsEmpty && (
+              <Question
+                title={"Why go to Pavlovia?"}
+                text={`
                 <p>The "Go to Pavlovia" button takes you to the Pavlovia dashboard for the current repository. If the EasyEyes compiler seems stuck, you might learn something helpful by looking at the Pavlovia dashboard.</p>
 
                 <p>There are four ways to run your Pavlovia experiment:</p>
@@ -571,7 +572,8 @@ export default class Running extends Component {
                 <code>_pavloviaNewExperimentBool = FALSE</code><br/>
                 In that case, the EasyEyes compiler will reuse the most recent repository for this experiment spreadsheet. Thus any assigned tokens will remain assigned to the current experiment, saving you a trip to Pavlovia. However, all your data from multiple versions of the experiment will all share one repository. Every download of results will download all the data. And you won't be able to go back to an old version.</p>
               `}
-            />
+              />
+            )}
           </div>
         </div>
 

@@ -240,7 +240,7 @@ describe("empty repository view lifecycle", () => {
 
   it("offers New and returns to the compiler for an empty repository", () => {
     const handleSetActivateExperiment = jest.fn();
-    const { getByRole } = render(
+    const { container, getByRole } = render(
       <Running
         activeExperiment={emptyExperiment}
         compileWarnings={[]}
@@ -270,6 +270,7 @@ describe("empty repository view lifecycle", () => {
     fireEvent.click(getByRole("button", { name: "New" }));
 
     expect(handleSetActivateExperiment).toHaveBeenCalledWith("REFRESH");
+    expect(container.querySelector(".icon-holder")).not.toBeInTheDocument();
   });
 });
 
