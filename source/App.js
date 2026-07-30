@@ -48,6 +48,7 @@ import {
 import { initPhrases } from "../threshold/parameters/phrasesRegistry";
 import { startGlossaryPrefetch } from "./components/glossaryApi";
 import { fetchGitHubStats } from "./components/githubStatsApi";
+import { isEmptyRepository } from "./repositoryState";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -263,9 +264,7 @@ export default class App extends Component {
     if (activeExperiment !== "new") {
       // viewing a previous experiment
       const { user } = this.state;
-      const repositoryIsEmpty =
-        activeExperiment.empty_repo === true ||
-        activeExperiment.default_branch === null;
+      const repositoryIsEmpty = isEmptyRepository(activeExperiment);
       const retrieval = startCompilerOperation("experiment-retrieval", {
         projectId: activeExperiment.id,
         projectPath: activeExperiment.path_with_namespace,

@@ -21,6 +21,7 @@ import {
 } from "../threshold/preprocess/gitlabUtils";
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
 import { captureError } from "./sentry";
+import { isEmptyRepository } from "./repositoryState";
 
 import "./css/Running.scss";
 import { Dropdown } from "./components/Dropdown";
@@ -50,12 +51,14 @@ export default class Running extends Component {
   async componentDidMount() {
     this.props.scrollToCurrentStep();
 
-    const [dataFolderLength, latestDateForDataCollection] =
-      await getDataFolderCsvLength(
-        this.props.user,
-        this.props.activeExperiment,
-      );
-    this.setState({ dataFolderLength, latestDateForDataCollection });
+    if (!isEmptyRepository(this.props.activeExperiment)) {
+      const [dataFolderLength, latestDateForDataCollection] =
+        await getDataFolderCsvLength(
+          this.props.user,
+          this.props.activeExperiment,
+        );
+      this.setState({ dataFolderLength, latestDateForDataCollection });
+    }
 
     // get total compile counts
     get(ref(db, "compileCounts/")).then((snapshot) => {
@@ -65,17 +68,23 @@ export default class Running extends Component {
         Object.values(compileCounts).reduce((a, b) => a + b, 0) + 1;
       this.props.functions.handleSetCompileCount(totalCompileCounts);
     });
-    console.log(this.props);
-    await this.setModeToRun();
+    if (!isEmptyRepository(this.props.activeExperiment)) {
+      await this.setModeToRun();
+    }
   }
 
   async componentDidUpdate(prevProps) {
+    const repositoryIsEmpty = isEmptyRepository(this.props.activeExperiment);
     if (this.props.activeExperiment !== prevProps.activeExperiment) {
-      const [dataFolderLength, latestDateForDataCollection] =
-        await getDataFolderCsvLength(
-          this.props.user,
-          this.props.activeExperiment,
-        );
+      let dataFolderLength = 0;
+      let latestDateForDataCollection = false;
+      if (!repositoryIsEmpty) {
+        [dataFolderLength, latestDateForDataCollection] =
+          await getDataFolderCsvLength(
+            this.props.user,
+            this.props.activeExperiment,
+          );
+      }
       this.setState({
         dataFolderLength,
         latestDateForDataCollection,
@@ -85,21 +94,19 @@ export default class Running extends Component {
     }
 
     const needSetModeToRun =
-      // this.props.name === "running" &&
-      (this.props.viewingPreviousExperiment &&
+      !repositoryIsEmpty &&
+      ((this.props.viewingPreviousExperiment &&
         this.props.previousExperimentViewed.previousExperimentStatus ===
           "INACTIVE") ||
-      (!this.props.viewingPreviousExperiment &&
-        this.props.experimentStatus === "INACTIVE");
-    // &&
-    // this.props.newRepo !== null;
+        (!this.props.viewingPreviousExperiment &&
+          this.props.experimentStatus === "INACTIVE"));
     if (needSetModeToRun) {
       await this.setModeToRun();
     }
   }
 
   async setModeToRun(e = null) {
-    if (this._isActivating) {
+    if (isEmptyRepository(this.props.activeExperiment) || this._isActivating) {
       return;
     }
     this._isActivating = true;
@@ -289,9 +296,12 @@ export default class Running extends Component {
       prolificStudyState,
       preparedProlificStudyId,
     } = this.state;
-    const isRunning = viewingPreviousExperiment
-      ? previousExperimentStatus === "RUNNING"
-      : experimentStatus === "RUNNING";
+    const repositoryIsEmpty = isEmptyRepository(activeExperiment);
+    const isRunning =
+      !repositoryIsEmpty &&
+      (viewingPreviousExperiment
+        ? previousExperimentStatus === "RUNNING"
+        : experimentStatus === "RUNNING");
 
     const hasRecruitmentService = viewingPreviousExperiment
       ? previousRecruitmentInformation?.recruitmentServiceName != null
@@ -387,7 +397,9 @@ export default class Running extends Component {
             </div>
           )}
         <div className="green-status-banner">
-          {isRunning
+          {repositoryIsEmpty
+            ? "Compilation did not produce any experiment files. Select New to compile the experiment again."
+            : isRunning
             ? pavloviaIsReady
               ? "Study ready to run."
               : "Local. Study compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new study, you need to assign tokens to it in Pavlovia."
@@ -495,7 +507,7 @@ export default class Running extends Component {
               </button>
             )}
 
-            {!isRunning && (
+            {!repositoryIsEmpty && !isRunning && (
               <>
                 {buttonGoToPavlovia(
                   "Go to Pavlovia to run in PILOTING mode",
@@ -534,9 +546,10 @@ export default class Running extends Component {
               gap: "0.3rem",
             }}
           >
-            {isRunning
-              ? buttonGoToPavlovia("Go to Pavlovia", smallButtonExtraStyle)
-              : buttonSetToRunning(smallButtonExtraStyle)}
+            {!repositoryIsEmpty &&
+              (isRunning
+                ? buttonGoToPavlovia("Go to Pavlovia", smallButtonExtraStyle)
+                : buttonSetToRunning(smallButtonExtraStyle))}
 
             <Question
               title={"Why go to Pavlovia?"}

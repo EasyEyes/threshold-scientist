@@ -1,6 +1,7 @@
 import React from "react";
 import { render, waitFor } from "@testing-library/react";
 import App, { normalizeRecruitmentInformation } from "../App";
+import Running from "../Running";
 
 jest.mock("firebase/database", () => ({
   set: jest.fn(),
@@ -32,6 +33,9 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getRecruitmentServiceConfig: jest.fn(),
   getDurationForProject: jest.fn(),
   getProlificStudyId: jest.fn(),
+  getDataFolderCsvLength: jest.fn(),
+  runExperiment: jest.fn(),
+  getAllProjects: jest.fn(),
   User: jest.fn(() => ({})),
   copyUser: jest.fn((u) => ({ ...u })),
   getCommonResourcesNames: jest.fn(),
@@ -183,6 +187,55 @@ describe("App - handleSetActivateExperiment", () => {
       previousCompatibilityRequirements: null,
       previousExperimentDuration: null,
     });
+  });
+});
+
+describe("empty repository view lifecycle", () => {
+  const emptyExperiment = {
+    id: 533761,
+    name: "failed-compilation",
+    empty_repo: true,
+    default_branch: null,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("does not query results or activate an empty repository when Running mounts", async () => {
+    const {
+      getDataFolderCsvLength,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    const fakeThis = {
+      props: {
+        activeExperiment: emptyExperiment,
+        scrollToCurrentStep: jest.fn(),
+        functions: {
+          handleSetCompileCount: jest.fn(),
+        },
+      },
+      setState: jest.fn(),
+      setModeToRun: jest.fn(),
+    };
+
+    await Running.prototype.componentDidMount.call(fakeThis);
+
+    expect(getDataFolderCsvLength).not.toHaveBeenCalled();
+    expect(fakeThis.setModeToRun).not.toHaveBeenCalled();
+  });
+
+  it("does not allow direct activation of an empty repository", async () => {
+    const Swal = require("sweetalert2");
+    const { runExperiment } = require("../../threshold/preprocess/gitlabUtils");
+    const fakeThis = {
+      props: { activeExperiment: emptyExperiment },
+      _isActivating: false,
+    };
+
+    await Running.prototype.setModeToRun.call(fakeThis);
+
+    expect(Swal.fire).not.toHaveBeenCalled();
+    expect(runExperiment).not.toHaveBeenCalled();
   });
 });
 
