@@ -2,6 +2,7 @@ import React, { Component, Suspense } from "react";
 import { set, ref, get } from "firebase/database";
 import { uuidv4 } from "@firebase/util";
 import Swal from "sweetalert2";
+import { formatLocalDeploymentTime } from "./freshness/formatLocalDeploymentTime";
 
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
@@ -907,21 +908,7 @@ export default class App extends Component {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {new Date(websiteRepoLastCommitDeploy).toLocaleDateString(
-                        undefined,
-                        {
-                          dateStyle: "medium",
-                          timeZone: "UTC",
-                        },
-                      )}{" "}
-                      {new Date(websiteRepoLastCommitDeploy).toLocaleString(
-                        undefined,
-                        {
-                          timeStyle: "short",
-                          timeZone: "UTC",
-                        },
-                      )}{" "}
-                      UTC
+                      {formatLocalDeploymentTime(websiteRepoLastCommitDeploy)}
                     </a>
                     .{" "}
                   </div>

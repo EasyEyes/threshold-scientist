@@ -1,5 +1,13 @@
 import { createFreshnessController } from "./freshnessController";
 
+jest.mock("./formatLocalDeploymentTime", () => {
+  const actual = jest.requireActual("./formatLocalDeploymentTime");
+  return {
+    formatLocalDeploymentTime: (value) =>
+      actual.formatLocalDeploymentTime(value, "UTC"),
+  };
+});
+
 const notification = {
   deploymentId: "deploy-123",
   publishedAt: "2026-07-14T10:15:30.000Z",
@@ -54,11 +62,11 @@ describe("freshness controller", () => {
 
     expect(states).toEqual([
       "Checking compiler freshness...",
-      "Fresh. This page is up to date: Jul 14, 2026, 10:15:30 AM UTC.",
+      "Fresh. This page is up to date: Jul 14, 2026, 10:15 AM UTC+0.",
     ]);
     expect(controller.getState()).toEqual({
       status: "fresh",
-      message: "Fresh. This page is up to date: Jul 14, 2026, 10:15:30 AM UTC.",
+      message: "Fresh. This page is up to date: Jul 14, 2026, 10:15 AM UTC+0.",
     });
 
     unsubscribe();
@@ -178,7 +186,7 @@ describe("freshness controller", () => {
     expect(loadManifest).toHaveBeenCalledTimes(2);
     expect(controller.getState()).toEqual({
       status: "fresh",
-      message: "Fresh. This page is up to date: Jul 14, 2026, 12:15:30 PM UTC.",
+      message: "Fresh. This page is up to date: Jul 14, 2026, 12:15 PM UTC+0.",
     });
 
     controller.dispose();
@@ -238,7 +246,7 @@ describe("freshness controller", () => {
 
     expect(controller.getState()).toEqual({
       status: "stale",
-      publishedAtUtc: "Jul 14, 2026, 12:15:30 PM UTC",
+      publishedAtUtc: "Jul 14, 2026, 12:15 PM UTC+0",
     });
 
     resolveInitialManifest({ deploymentId: "deploy-123" });
@@ -246,7 +254,7 @@ describe("freshness controller", () => {
 
     expect(controller.getState()).toEqual({
       status: "stale",
-      publishedAtUtc: "Jul 14, 2026, 12:15:30 PM UTC",
+      publishedAtUtc: "Jul 14, 2026, 12:15 PM UTC+0",
     });
   });
 
@@ -444,7 +452,7 @@ describe("freshness controller", () => {
 
       expect(controller.getState()).toEqual({
         status: "stale",
-        publishedAtUtc: "Jul 14, 2026, 11:15:30 AM UTC",
+        publishedAtUtc: "Jul 14, 2026, 11:15 AM UTC+0",
       });
       expect(retry.replaceWithDeployment).not.toHaveBeenCalled();
       jest.advanceTimersByTime(delay - 1);
@@ -571,7 +579,7 @@ describe("freshness controller", () => {
         status: "error",
         runningDeploymentId: "deploy-123",
         liveDeploymentId: "deploy-456",
-        publishedAtUtc: "Jul 14, 2026, 11:15:30 AM UTC",
+        publishedAtUtc: "Jul 14, 2026, 11:15 AM UTC+0",
         retryCount: 3,
       });
       expect(reporting.addFailedAttemptBreadcrumb.mock.calls).toEqual([
