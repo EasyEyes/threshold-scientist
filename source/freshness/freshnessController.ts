@@ -1,3 +1,5 @@
+import { formatLocalDeploymentTime } from "./formatLocalDeploymentTime";
+
 export type FreshnessState =
   | { status: "checking"; message: "Checking compiler freshness..." }
   | { status: "fresh"; message: string }
@@ -109,19 +111,6 @@ const isDeploymentManifest = (value: unknown): value is DeploymentManifest => {
   return isNonEmptyString((value as Partial<DeploymentManifest>).deploymentId);
 };
 
-const formatUtc = (publishedAt: string): string =>
-  new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-    timeZone: "UTC",
-    timeZoneName: "short",
-  }).format(new Date(publishedAt));
-
 export const createFreshnessController = ({
   mode,
   runningDeploymentId,
@@ -198,7 +187,7 @@ export const createFreshnessController = ({
       status: "error",
       runningDeploymentId,
       liveDeploymentId: targetDeploymentId,
-      publishedAtUtc: formatUtc(publishedAt),
+      publishedAtUtc: formatLocalDeploymentTime(publishedAt),
       retryCount,
     });
     if (reporting.hasReported(targetDeploymentId)) return;
@@ -236,7 +225,7 @@ export const createFreshnessController = ({
         if (notificationMatchesManifest) {
           publish({
             status: "fresh",
-            message: `Fresh. This page is up to date: ${formatUtc(
+            message: `Fresh. This page is up to date: ${formatLocalDeploymentTime(
               notification.publishedAt,
             )}.`,
           });
@@ -258,7 +247,9 @@ export const createFreshnessController = ({
           } else {
             publish({
               status: "stale",
-              publishedAtUtc: formatUtc(notification.publishedAt),
+              publishedAtUtc: formatLocalDeploymentTime(
+                notification.publishedAt,
+              ),
             });
           }
         }
