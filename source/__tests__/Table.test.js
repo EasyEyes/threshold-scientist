@@ -768,3 +768,72 @@ describe("Table.handleTable — glossary prefetch wiring", () => {
     expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("Table compile-error visibility reporting", () => {
+  const renderTableWithReporter = () => {
+    const handleSetCompileErrorsVisible = jest.fn();
+    const ref = React.createRef();
+    const props = makeProps();
+    props.functions = {
+      ...props.functions,
+      handleSetCompileErrorsVisible,
+    };
+    const rendered = render(<Table ref={ref} {...props} />);
+    return { ref, handleSetCompileErrorsVisible, ...rendered };
+  };
+
+  it("reports true when a blocking error appears, false when cleared", () => {
+    const { act } = require("@testing-library/react");
+    const { ref, handleSetCompileErrorsVisible } = renderTableWithReporter();
+
+    act(() => {
+      ref.current.setState({
+        errors: [{ context: "preprocessor", kind: "error", name: "E" }],
+      });
+    });
+    expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(true);
+
+    act(() => {
+      ref.current.setState({ errors: [] });
+    });
+    expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(false);
+  });
+
+  it("does not report true for warnings or the success entry alone", () => {
+    const { act } = require("@testing-library/react");
+    const { ref, handleSetCompileErrorsVisible } = renderTableWithReporter();
+
+    act(() => {
+      ref.current.setState({
+        errors: [{ context: "preprocessor", kind: "warning", name: "W" }],
+      });
+    });
+    expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(false);
+
+    act(() => {
+      ref.current.setState({
+        errors: [
+          { context: "preprocessor", kind: "warning", name: "W" },
+          { context: "preprocessor", kind: "correct", name: "OK" },
+        ],
+      });
+    });
+    expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(false);
+  });
+
+  it("reports false when unmounted with errors still showing", () => {
+    const { act } = require("@testing-library/react");
+    const { ref, handleSetCompileErrorsVisible, unmount } =
+      renderTableWithReporter();
+
+    act(() => {
+      ref.current.setState({
+        errors: [{ context: "preprocessor", kind: "error", name: "E" }],
+      });
+    });
+    expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(true);
+
+    unmount();
+    expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(false);
+  });
+});

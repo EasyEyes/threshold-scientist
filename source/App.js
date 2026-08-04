@@ -126,6 +126,7 @@ export default class App extends Component {
       isCompiledFromArchiveBool: false,
       archivedZip: null,
       compileWarnings: [],
+      compileErrorsVisible: false,
     };
 
     this.functions = {
@@ -160,6 +161,8 @@ export default class App extends Component {
       handleUpdateCompileCount: this.handleUpdateCompileCount.bind(this),
       handleSetCompileCount: this.handleSetCompileCount.bind(this),
       handleSetCompileWarnings: this.handleSetCompileWarnings.bind(this),
+      handleSetCompileErrorsVisible:
+        this.handleSetCompileErrorsVisible.bind(this),
       getprofileStatement: this.getprofileStatement.bind(this),
     };
 
@@ -641,6 +644,10 @@ export default class App extends Component {
     });
   }
 
+  handleSetCompileErrorsVisible(visible) {
+    this.setState({ compileErrorsVisible: !!visible });
+  }
+
   handleSetExperiment(experiment) {
     // Mutate directly to preserve User class prototype (spread operator loses it)
     const updatedUser = this.state.user;
@@ -776,6 +783,7 @@ export default class App extends Component {
       archivedZip,
       resourcesLoaded,
       compileWarnings,
+      compileErrorsVisible,
     } = this.state;
 
     if (phrasesError)
@@ -887,72 +895,74 @@ export default class App extends Component {
             {steps}
           </div>
 
-          {websiteRepoLastCommitDeploy && websiteRepoLastCommitURL && (
-            <>
-              <div className="copyright-info">
-                <div className="info-paragraph">
-                  <div className="item">
-                    {totalCompileCounts} studies compiled since 1 February,
-                    2023.
-                    <br />
-                    Compiler updated{" "}
-                    <a
-                      href={websiteRepoLastCommitURL}
-                      style={{
-                        color: "inherit",
-                        textDecoration: "none",
-                        fontWeight: "500",
-                        borderBottom: "1px solid #ddd",
-                        marginLeft: "0",
-                      }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {formatLocalDeploymentTime(websiteRepoLastCommitDeploy)}
-                    </a>
-                    .{" "}
-                  </div>
+          {!compileErrorsVisible &&
+            websiteRepoLastCommitDeploy &&
+            websiteRepoLastCommitURL && (
+              <>
+                <div className="copyright-info">
+                  <div className="info-paragraph">
+                    <div className="item">
+                      {totalCompileCounts} studies compiled since 1 February,
+                      2023.
+                      <br />
+                      Compiler updated{" "}
+                      <a
+                        href={websiteRepoLastCommitURL}
+                        style={{
+                          color: "inherit",
+                          textDecoration: "none",
+                          fontWeight: "500",
+                          borderBottom: "1px solid #ddd",
+                          marginLeft: "0",
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {formatLocalDeploymentTime(websiteRepoLastCommitDeploy)}
+                      </a>
+                      .{" "}
+                    </div>
 
-                  <div className="item">
-                    <div style={{ marginTop: "5px" }}></div>
-                    {githubStars != null && (
-                      <a href="https://github.com/EasyEyes/threshold/stargazers">
+                    <div className="item">
+                      <div style={{ marginTop: "5px" }}></div>
+                      {githubStars != null && (
+                        <a href="https://github.com/EasyEyes/threshold/stargazers">
+                          <img
+                            alt="GitHub stars"
+                            src={`https://img.shields.io/badge/stars-${encodeURIComponent(
+                              githubStars,
+                            )}-blue?style=flat-square&logo=github&logoColor=white`}
+                          />
+                        </a>
+                      )}{" "}
+                      {githubLicense && (
+                        <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
+                          <img
+                            alt="GitHub license"
+                            src={`https://img.shields.io/badge/license-${encodeURIComponent(
+                              githubLicense,
+                            )}-green?style=flat-square`}
+                          />
+                        </a>
+                      )}{" "}
+                      <a href="https://app.netlify.com/sites/easyeyes/deploys">
                         <img
-                          alt="GitHub stars"
-                          src={`https://img.shields.io/badge/stars-${encodeURIComponent(
-                            githubStars,
-                          )}-blue?style=flat-square&logo=github&logoColor=white`}
+                          alt="Netlify Status"
+                          src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
                         />
                       </a>
-                    )}{" "}
-                    {githubLicense && (
-                      <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
-                        <img
-                          alt="GitHub license"
-                          src={`https://img.shields.io/badge/license-${encodeURIComponent(
-                            githubLicense,
-                          )}-green?style=flat-square`}
-                        />
-                      </a>
-                    )}{" "}
-                    <a href="https://app.netlify.com/sites/easyeyes/deploys">
-                      <img
-                        alt="Netlify Status"
-                        src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
-                      />
-                    </a>
-                  </div>
+                    </div>
 
-                  <div className="item">
-                    Copyright © 2020 - {new Date().getFullYear()} New York
-                    University.
-                    <br />
-                    Created by Denis Pelli and the EasyEyes team.
+                    <div className="item">
+                      Copyright © 2020 - {new Date().getFullYear()} New York
+                      University.
+                      <br />
+                      Created by Denis Pelli and the EasyEyes team.
+                    </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            )}
         </Suspense>
       </>
     );
