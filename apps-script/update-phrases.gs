@@ -954,14 +954,7 @@ function checkEmptyTranslationCells(rows, backgrounds) {
       if (!isTranslatableBackground(backgrounds[i] && backgrounds[i][h])) continue;
       if ((rows[i][h] || "").trim()) continue;
 
-      var columnNumber = h + 1;
-      var columnName = "";
-      while (columnNumber > 0) {
-        columnNumber--;
-        columnName = String.fromCharCode(65 + (columnNumber % 26)) + columnName;
-        columnNumber = Math.floor(columnNumber / 26);
-      }
-      lines.push(key + " — " + language + " (" + columnName + (i + 1) + ")");
+      lines.push(key + " — " + language);
     }
   }
   if (!lines.length) return "";

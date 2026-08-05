@@ -32,8 +32,8 @@ describe("International Phrases Apps Script checker", () => {
 
     expect(checkEmptyTranslationCells(rows, backgrounds)).toBe(
       "Empty translatable cells (possible failed translations):\n" +
-        "EE_cancel — de (D3)\n" +
-        "EE_save — fr (C2)",
+        "EE_cancel — de\n" +
+        "EE_save — fr",
     );
   });
 
