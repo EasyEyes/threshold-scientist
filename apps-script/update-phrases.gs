@@ -744,7 +744,9 @@ function checkPhraseKeys() {
     return;
   }
 
-  var rows = sheet.getDataRange().getDisplayValues();
+  var dataRange = sheet.getDataRange();
+  var rows = dataRange.getDisplayValues();
+  var backgrounds = dataRange.getBackgrounds();
   if (rows.length < 2) {
     notify("No data found in the International Phrases.");
     return;
@@ -765,6 +767,7 @@ function checkPhraseKeys() {
   sections.push(checkDuplicateLanguageColumns(rows));
   sections.push(checkKeyNamingConvention(rows));
   sections.push(checkMissingEnglishSource(rows));
+  sections.push(checkEmptyTranslationCells(rows, backgrounds));
   sections.push(checkOrphanRows(rows));
   sections.push(checkDuplicateEnglishText(rows));
 
@@ -931,6 +934,38 @@ function checkMissingEnglishSource(rows) {
   }
   if (!lines.length) return "";
   return "Keys with an empty English (en) source cell (nothing to translate):\n" +
+    lines.sort().join("\n");
+}
+
+// Empty white target-language cells may indicate that translation failed.
+// Non-white cells are excluded because they are intentionally not translated.
+function checkEmptyTranslationCells(rows, backgrounds) {
+  var header = rows[0];
+  var keyIdx = header.indexOf("EE_LanguageCode");
+  var enIdx = header.indexOf("en");
+  if (keyIdx === -1 || enIdx === -1) return "";
+  var lines = [];
+  for (var i = 1; i < rows.length; i++) {
+    var key = (rows[i][keyIdx] || "").trim();
+    if (!key) continue;
+    for (var h = 0; h < header.length; h++) {
+      var language = (header[h] || "").trim();
+      if (!language || h === keyIdx || h === enIdx) continue;
+      if (!isTranslatableBackground(backgrounds[i] && backgrounds[i][h])) continue;
+      if ((rows[i][h] || "").trim()) continue;
+
+      var columnNumber = h + 1;
+      var columnName = "";
+      while (columnNumber > 0) {
+        columnNumber--;
+        columnName = String.fromCharCode(65 + (columnNumber % 26)) + columnName;
+        columnNumber = Math.floor(columnNumber / 26);
+      }
+      lines.push(key + " — " + language + " (" + columnName + (i + 1) + ")");
+    }
+  }
+  if (!lines.length) return "";
+  return "Empty translatable cells (possible failed translations):\n" +
     lines.sort().join("\n");
 }
 
