@@ -1,0 +1,291 @@
+@import "./root.scss";
+
+.test-font-popup {
+  // The tool shows a wide numbers table and a full-width illustration, so it
+  // needs more room than the app's other popups and has to scroll on its own.
+  max-height: 92vh;
+
+  .swal2-html-container {
+    max-height: 74vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+.test-font-html-container {
+  text-align: left !important;
+}
+
+.test-font {
+  font-size: 0.95rem;
+  color: #1a1a1a;
+
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 0.4rem;
+  }
+
+  code {
+    background: #f2f4f7;
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.3rem;
+    color: #1a1a1a;
+  }
+
+  a {
+    color: $dark-green;
+  }
+}
+
+.test-font-section {
+  border: 1px solid #e3e3e3;
+  border-radius: $icon-radius;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.test-font-hidden {
+  display: none;
+}
+
+.test-font-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.test-font-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1 1 16rem;
+  margin: 0 0 0.6rem;
+}
+
+.test-font-field-narrow {
+  flex: 0 0 9rem;
+}
+
+.test-font-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.test-font-select,
+.test-font-input,
+.test-font-textarea,
+.test-font-file {
+  font-size: 0.95rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #bbb;
+  border-radius: $icon-radius;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// The character set and metrics string are shown in the font under test, so
+// the scientist can see what they are actually typing. Scripts that stack far
+// above the baseline (Nastaliq especially) need the extra leading, or the
+// sample is clipped by the very field meant to display it.
+.test-font-textarea {
+  resize: vertical;
+  line-height: 2.4;
+  font-size: 1.2rem;
+}
+
+.test-font-sample {
+  font-size: 1.2rem;
+  line-height: 2.4;
+  height: auto;
+}
+
+.test-font-note {
+  color: #555;
+  font-size: 0.85rem;
+  margin: 0.3rem 0;
+}
+
+.test-font-status {
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+
+  &.test-font-status-ok {
+    color: $dark-green;
+  }
+  &.test-font-status-bad {
+    color: $error;
+    font-weight: 600;
+  }
+  &.test-font-status-busy {
+    color: #555;
+  }
+}
+
+.test-font-button {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid #bbb;
+  border-radius: $icon-radius;
+  background: #fafafa;
+  cursor: pointer;
+  margin-left: 0.5rem;
+
+  &:hover:not(:disabled) {
+    background: #eee;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.test-font-button-primary {
+  margin-left: 0;
+  background: $green;
+  border-color: $green;
+  color: #fff;
+  font-size: 0.95rem;
+  padding: 0.4rem 1.2rem;
+
+  &:hover:not(:disabled) {
+    background: $dark-green;
+  }
+}
+
+.test-font-progress {
+  margin-top: 0.6rem;
+  height: 0.4rem;
+  background: #eee;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.test-font-progress-bar {
+  height: 100%;
+  width: 0;
+  background: $light-green;
+  transition: width 0.15s linear;
+}
+
+.test-font-badge {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  vertical-align: middle;
+  margin-left: 0.6rem;
+  white-space: nowrap;
+
+  &.fail {
+    background: #fde8e8;
+    color: #b91c1c;
+    border: 1px solid #f5b5b5;
+  }
+  &.warn {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+  }
+  &.pass {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+  }
+  &.unknown {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+  }
+}
+
+.test-font-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.test-font-check {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+
+  .test-font-badge {
+    margin-left: 0;
+    margin-top: 0.15rem;
+    flex: 0 0 auto;
+  }
+}
+
+.test-font-problem {
+  font-size: 0.85rem;
+  color: #92400e;
+  margin-top: 0.15rem;
+}
+
+.test-font-numbers {
+  font-size: 0.85rem;
+  border-collapse: collapse;
+  margin: 0.6rem 0;
+  width: auto;
+
+  td,
+  th {
+    border: 1px solid #e3e3e3;
+    padding: 0.25rem 0.6rem;
+    text-align: right;
+    width: auto;
+    font-size: 0.85rem;
+  }
+
+  th {
+    background: #fafafa;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  td.bad {
+    color: #b91c1c;
+    font-weight: 700;
+  }
+
+  td.ok {
+    color: #166534;
+  }
+}
+
+.test-font-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #eee;
+  border-radius: $icon-radius;
+  margin-top: 0.6rem;
+  background: #fff;
+}
+
+.test-font-fix {
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: $icon-radius;
+  padding: 0.5rem 0.7rem;
+
+  &.test-font-fix-partial {
+    background: #fffbeb;
+    border-color: #fcd34d;
+  }
+}
+
+.test-font-caveats {
+  font-size: 0.85rem;
+  color: #92400e;
+  margin: 0.6rem 0 0;
+  padding-left: 1.2rem;
+}

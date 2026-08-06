@@ -50,6 +50,8 @@ import { initPhrases } from "../threshold/parameters/phrasesRegistry";
 import { startGlossaryPrefetch } from "./components/glossaryApi";
 import { fetchGitHubStats } from "./components/githubStatsApi";
 import { isEmptyRepository } from "./repositoryState";
+import { registerTestFontOpener } from "./components/testFont/openTestFont";
+import { setTestFontContext } from "./components/testFont/testFontContext";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -167,6 +169,11 @@ export default class App extends Component {
   }
 
   async componentDidMount() {
+    // The Test Font item in the navbar is plain HTML in the page shell, so it
+    // reaches the tool through a global rather than through props.
+    registerTestFontOpener();
+    this.publishTestFontContext();
+
     startGlossaryPrefetch();
     // Check the latest version first (uncached), then download that specific
     // version (cached immutably in the browser), so an unchanged version is
@@ -469,6 +476,19 @@ export default class App extends Component {
         compatibilityRequirements: "",
       });
     }
+  }
+
+  componentDidUpdate() {
+    this.publishTestFontContext();
+  }
+
+  publishTestFontContext() {
+    const { accessToken, resources, resourcesLoaded } = this.state;
+    setTestFontContext({
+      fonts: resources?.fonts ?? [],
+      resourcesLoaded: Boolean(resourcesLoaded),
+      signedIn: Boolean(accessToken),
+    });
   }
 
   handleUpdateUser(newUser) {

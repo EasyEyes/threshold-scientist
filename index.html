@@ -120,6 +120,19 @@
         });
       }
 
+      function onTestFontClick(event) {
+        event.preventDefault();
+        if (window.easyeyesOpenTestFont) {
+          window.easyeyesOpenTestFont();
+          return;
+        }
+        Swal.fire({
+          title: "Test Font",
+          text: "The compiler is still loading. Try again in a moment.",
+          confirmButtonColor: "#019267",
+        });
+      }
+
       function onIntroClick() {
         Swal.fire({
           title: "Welcome to EasyEyes!",
@@ -350,6 +363,11 @@
               <a class="nav-link" href="../hdr/">HDR</a>
               <a class="nav-link" href="../hd/">HDR</a>
             </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="onTestFontClick(event)"
+              >Test Font</a
+            >
           </li>
           <li class="nav-item">
             <a
