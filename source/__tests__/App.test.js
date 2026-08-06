@@ -441,3 +441,40 @@ describe("App - handleUpdateCompileCount", () => {
     expect(set).toHaveBeenCalledWith("compileCounts/sajjad_1156", 1);
   });
 });
+
+describe("App - footnote suppression while compiler errors show", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const {
+      fetchPhrasesVersion,
+      fetchPhrasesByVersion,
+    } = require("../components/phrasesApi");
+    fetchPhrasesVersion.mockResolvedValue({ version: mockPhrasesData.version });
+    fetchPhrasesByVersion.mockResolvedValue(mockPhrasesData);
+    global.fetch.mockResolvedValue({ ok: false });
+  });
+
+  it("hides the copyright footnote only while compiler errors are visible", async () => {
+    const { act } = require("@testing-library/react");
+    const ref = React.createRef();
+    const { container } = render(<App ref={ref} />);
+
+    act(() => {
+      ref.current.setState({
+        websiteRepoLastCommitDeploy: "2024-01-01T00:00:00Z",
+        websiteRepoLastCommitURL: "https://example.com/commit",
+      });
+    });
+    expect(container.querySelector(".copyright-info")).toBeTruthy();
+
+    act(() => {
+      ref.current.setState({ compileErrorsVisible: true });
+    });
+    expect(container.querySelector(".copyright-info")).toBeFalsy();
+
+    act(() => {
+      ref.current.setState({ compileErrorsVisible: false });
+    });
+    expect(container.querySelector(".copyright-info")).toBeTruthy();
+  });
+});
