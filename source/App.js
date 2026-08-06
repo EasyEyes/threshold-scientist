@@ -6,6 +6,7 @@ import { formatLocalDeploymentTime } from "./freshness/formatLocalDeploymentTime
 
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
+const Media = React.lazy(() => import("./Media"));
 
 // import StatusBar from "./StatusBar";
 import StatusLines from "./StatusLines";
@@ -93,6 +94,7 @@ export default class App extends Component {
       githubStars: null,
       githubLicense: null,
       readingGlossary: false,
+      managingMedia: false,
       phrasesError: false,
       /* -------------------------------------------------------------------------- */
       activeExperiment: "new",
@@ -164,9 +166,11 @@ export default class App extends Component {
     };
 
     this.closeGlossary = this.closeGlossary.bind(this);
+    this.closeMedia = this.closeMedia.bind(this);
   }
 
   async componentDidMount() {
+    this.initMediaMenu();
     startGlossaryPrefetch();
     // Check the latest version first (uncached), then download that specific
     // version (cached immutably in the browser), so an unchanged version is
@@ -747,6 +751,59 @@ export default class App extends Component {
     });
   }
 
+  // The Media menu item is a plain link in the navbar, so it still works before
+  // the bundle loads. Once React is running we take the click over, to open the
+  // panel without paying for a full reload of the compiler.
+  initMediaMenu() {
+    const mediaLink = document.getElementById("nav-media-link");
+    if (mediaLink)
+      mediaLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        this.openMedia();
+      });
+
+    const compilerLink = document.querySelector(
+      '.navbar-nav a[href="../compiler/"]',
+    );
+    if (compilerLink)
+      compilerLink.addEventListener("click", (event) => {
+        if (!this.state.managingMedia) return;
+        event.preventDefault();
+        this.closeMedia();
+      });
+
+    if (new URLSearchParams(window.location.search).get("media") === "1")
+      this.openMedia();
+  }
+
+  syncMediaMenu(isOpen) {
+    const url = new URL(window.location.href);
+    if (isOpen) url.searchParams.set("media", "1");
+    else url.searchParams.delete("media");
+    window.history.replaceState({}, "", url);
+
+    document
+      .getElementById("nav-media-link")
+      ?.classList.toggle("active", isOpen);
+    document
+      .querySelector('.navbar-nav a[href="../compiler/"]')
+      ?.classList.toggle("active", !isOpen);
+  }
+
+  openMedia() {
+    this.setState({
+      managingMedia: true,
+    });
+    this.syncMediaMenu(true);
+  }
+
+  closeMedia() {
+    this.setState({
+      managingMedia: false,
+    });
+    this.syncMediaMenu(false);
+  }
+
   render() {
     const {
       websiteRepoLastCommitDeploy,
@@ -754,6 +811,7 @@ export default class App extends Component {
       githubStars,
       githubLicense,
       readingGlossary,
+      managingMedia,
       phrasesError,
       activeExperiment,
       previousExperimentViewed,
@@ -847,113 +905,122 @@ export default class App extends Component {
           </Suspense>
         )}
 
-        <div id="header">
-          <div id="header-title">
-            <h1>EasyEyes Compiler</h1>
-          </div>
-        </div>
-
-        {!accessToken && (
-          <div className="description">
-            Welcome to EasyEyes, an experiment compiler that helps you
-            accurately test vision and hearing online, including crowding,
-            acuity, sensitivity, and reading.
-          </div>
+        {managingMedia && (
+          <Suspense fallback={<></>}>
+            <Media closeMedia={this.closeMedia} user={user} />
+          </Suspense>
         )}
 
-        <Suspense>
-          <div className="threshold-app">
-            <StatusLines
-              key={currentStep}
-              activeExperiment={activeExperiment}
-              previousExperimentViewed={previousExperimentViewed}
-              /* -------------------------------------------------------------------------- */
-              futureSteps={futureSteps}
-              completedSteps={completedSteps}
-              functions={this.functions}
-              user={user}
-              prolificToken={prolificToken}
-              prolificAccount={prolificAccount}
-              resources={resources}
-              filename={filename}
-              projectName={projectName}
-              newRepo={newRepo}
-              currentStep={currentStep}
-              experimentStatus={experimentStatus}
-              prolificStudyStatus={prolificStudyStatus}
-              profileStatement={profileStatement}
-            />
-            {/* <StatusBar currentStep={currentStep} /> */}
-            {steps}
+        {/* Kept mounted while the media panel is open, so returning to the
+            compiler does not discard an experiment in progress. */}
+        <div hidden={managingMedia}>
+          <div id="header">
+            <div id="header-title">
+              <h1>EasyEyes Compiler</h1>
+            </div>
           </div>
 
-          {websiteRepoLastCommitDeploy && websiteRepoLastCommitURL && (
-            <>
-              <div className="copyright-info">
-                <div className="info-paragraph">
-                  <div className="item">
-                    {totalCompileCounts} studies compiled since 1 February,
-                    2023.
-                    <br />
-                    Compiler updated{" "}
-                    <a
-                      href={websiteRepoLastCommitURL}
-                      style={{
-                        color: "inherit",
-                        textDecoration: "none",
-                        fontWeight: "500",
-                        borderBottom: "1px solid #ddd",
-                        marginLeft: "0",
-                      }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {formatLocalDeploymentTime(websiteRepoLastCommitDeploy)}
-                    </a>
-                    .{" "}
-                  </div>
+          {!accessToken && (
+            <div className="description">
+              Welcome to EasyEyes, an experiment compiler that helps you
+              accurately test vision and hearing online, including crowding,
+              acuity, sensitivity, and reading.
+            </div>
+          )}
 
-                  <div className="item">
-                    <div style={{ marginTop: "5px" }}></div>
-                    {githubStars != null && (
-                      <a href="https://github.com/EasyEyes/threshold/stargazers">
-                        <img
-                          alt="GitHub stars"
-                          src={`https://img.shields.io/badge/stars-${encodeURIComponent(
-                            githubStars,
-                          )}-blue?style=flat-square&logo=github&logoColor=white`}
-                        />
-                      </a>
-                    )}{" "}
-                    {githubLicense && (
-                      <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
-                        <img
-                          alt="GitHub license"
-                          src={`https://img.shields.io/badge/license-${encodeURIComponent(
-                            githubLicense,
-                          )}-green?style=flat-square`}
-                        />
-                      </a>
-                    )}{" "}
-                    <a href="https://app.netlify.com/sites/easyeyes/deploys">
+          <Suspense>
+            <div className="threshold-app">
+              <StatusLines
+                key={currentStep}
+                activeExperiment={activeExperiment}
+                previousExperimentViewed={previousExperimentViewed}
+                /* -------------------------------------------------------------------------- */
+                futureSteps={futureSteps}
+                completedSteps={completedSteps}
+                functions={this.functions}
+                user={user}
+                prolificToken={prolificToken}
+                prolificAccount={prolificAccount}
+                resources={resources}
+                filename={filename}
+                projectName={projectName}
+                newRepo={newRepo}
+                currentStep={currentStep}
+                experimentStatus={experimentStatus}
+                prolificStudyStatus={prolificStudyStatus}
+                profileStatement={profileStatement}
+              />
+              {/* <StatusBar currentStep={currentStep} /> */}
+              {steps}
+            </div>
+          </Suspense>
+        </div>
+
+        {websiteRepoLastCommitDeploy && websiteRepoLastCommitURL && (
+          <>
+            <div className="copyright-info">
+              <div className="info-paragraph">
+                <div className="item">
+                  {totalCompileCounts} studies compiled since 1 February, 2023.
+                  <br />
+                  Compiler updated{" "}
+                  <a
+                    href={websiteRepoLastCommitURL}
+                    style={{
+                      color: "inherit",
+                      textDecoration: "none",
+                      fontWeight: "500",
+                      borderBottom: "1px solid #ddd",
+                      marginLeft: "0",
+                    }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {formatLocalDeploymentTime(websiteRepoLastCommitDeploy)}
+                  </a>
+                  .{" "}
+                </div>
+
+                <div className="item">
+                  <div style={{ marginTop: "5px" }}></div>
+                  {githubStars != null && (
+                    <a href="https://github.com/EasyEyes/threshold/stargazers">
                       <img
-                        alt="Netlify Status"
-                        src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
+                        alt="GitHub stars"
+                        src={`https://img.shields.io/badge/stars-${encodeURIComponent(
+                          githubStars,
+                        )}-blue?style=flat-square&logo=github&logoColor=white`}
                       />
                     </a>
-                  </div>
+                  )}{" "}
+                  {githubLicense && (
+                    <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
+                      <img
+                        alt="GitHub license"
+                        src={`https://img.shields.io/badge/license-${encodeURIComponent(
+                          githubLicense,
+                        )}-green?style=flat-square`}
+                      />
+                    </a>
+                  )}{" "}
+                  <a href="https://app.netlify.com/sites/easyeyes/deploys">
+                    <img
+                      alt="Netlify Status"
+                      src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
+                    />
+                  </a>
+                </div>
 
-                  <div className="item">
-                    Copyright © 2020 - {new Date().getFullYear()} New York
-                    University.
-                    <br />
-                    Created by Denis Pelli and the EasyEyes team.
-                  </div>
+                <div className="item">
+                  Copyright © 2020 - {new Date().getFullYear()} New York
+                  University.
+                  <br />
+                  Created by Denis Pelli and the EasyEyes team.
                 </div>
               </div>
-            </>
-          )}
-        </Suspense>
+            </div>
+          </>
+        )}
       </>
     );
   }

@@ -1,0 +1,213 @@
+@import "root.scss";
+
+@keyframes mediaFadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 15%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.media-fadeInUp {
+  animation-timing-function: ease;
+  animation-name: mediaFadeInUp;
+  animation-duration: 300ms;
+}
+
+.media-manager {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+
+  #header {
+    margin: 2rem;
+    text-align: center;
+  }
+
+  .media-body {
+    width: 95%;
+    max-width: 1440px;
+    margin: 0 auto 5rem auto;
+  }
+
+  p {
+    margin: 0;
+    font-size: $font-reg;
+    line-height: 150%;
+  }
+
+  /* Mirrors the button styling that Step.scss scopes to the compiler steps. */
+  button {
+    border-radius: $icon-radius;
+    color: white;
+    font-size: $font-reg;
+    font-weight: 600;
+    text-align: center;
+    line-height: 100%;
+    cursor: pointer;
+    outline: none !important;
+    border: none !important;
+    padding: 0.7rem 1.1rem;
+
+    &.button-small {
+      font-weight: 400;
+      font-size: $font-small;
+      padding: 0.7rem 1rem;
+      min-width: 7rem;
+
+      @media screen and (max-width: 560px) {
+        min-width: auto;
+      }
+    }
+
+    &.button-grey {
+      background: #999;
+
+      &:hover {
+        background: #aaa;
+      }
+
+      &:active {
+        background: #666;
+      }
+    }
+
+    &.button-green {
+      background: $green;
+
+      &:hover {
+        background: $dark-green;
+      }
+
+      &:active {
+        background: $green;
+      }
+
+      &:disabled {
+        background: $light-green;
+        cursor: wait;
+      }
+    }
+  }
+
+  button.intro-button {
+    color: #333;
+    font-weight: 400;
+  }
+
+  .media-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 0.7rem;
+  }
+
+  .media-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.7rem;
+    font-size: $font-small;
+    color: #666;
+    cursor: pointer;
+  }
+
+  .media-empty {
+    margin-top: 1.5rem !important;
+    color: #666;
+  }
+
+  .errors {
+    margin-top: 0.7rem;
+
+    .error-item {
+      border-radius: $icon-radius;
+      padding: 0.4rem 1rem;
+      margin: 0.7rem 0;
+
+      * {
+        font-size: 1rem;
+      }
+    }
+
+    .error-error {
+      background-color: #fff3f3;
+      border: 2px solid $error;
+    }
+  }
+
+  .media-table {
+    width: 100%;
+    border: none;
+    border-collapse: collapse;
+    margin: 1.5rem 0 0 0;
+
+    * {
+      font-size: 0.9rem;
+      border: none;
+    }
+
+    .table-header {
+      border-bottom: 1px solid #999;
+
+      th {
+        padding: 1rem;
+        text-align: left;
+      }
+    }
+
+    tr:not(.table-header) {
+      border-bottom: 1px solid #efefef;
+    }
+
+    .cell {
+      padding: 0.675rem;
+      vertical-align: top;
+
+      p {
+        margin: 0;
+        font-size: 0.9rem;
+        line-height: 150%;
+      }
+
+      &.name {
+        font-family:
+          Roboto Mono,
+          monospace;
+        font-weight: 500;
+        width: 30%;
+      }
+
+      &.link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: space-between;
+      }
+    }
+
+    .media-url {
+      font-family:
+        Roboto Mono,
+        monospace;
+      font-weight: 300;
+      color: #666;
+      word-break: break-all;
+    }
+
+    .media-sub-value {
+      display: block;
+      font-size: 0.8rem;
+      color: #666;
+      font-family:
+        Roboto Mono,
+        monospace;
+      font-weight: 300;
+      line-height: 150%;
+    }
+  }
+}
