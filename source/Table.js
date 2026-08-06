@@ -69,6 +69,18 @@ export default class Table extends Component {
       "Compiled successfully. Compile a new experiment, anytime, by submitting it above.";
   }
 
+  componentDidUpdate(_prevProps, prevState) {
+    if (prevState.errors !== this.state.errors) {
+      this.props.functions.handleSetCompileErrorsVisible?.(
+        this.state.errors.some((err) => err.kind === "error"),
+      );
+    }
+  }
+
+  componentWillUnmount() {
+    this.props.functions.handleSetCompileErrorsVisible?.(false);
+  }
+
   onDrop(files) {
     const { user, functions } = this.props;
     if (!user || !user.initProjectList)
