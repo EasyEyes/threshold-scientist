@@ -60,6 +60,7 @@ export type FreshnessRetry = {
 
 export type FreshnessController = {
   getState: () => FreshnessState;
+  getPublishedAt: () => string | null;
   subscribe: (listener: (state: FreshnessState) => void) => () => void;
   start: () => Promise<void>;
   actions: { check: () => Promise<void>; refresh: () => void };
@@ -133,6 +134,7 @@ export const createFreshnessController = ({
   let unsubscribeVisibility: (() => void) | undefined;
   let started = false;
   let latestCheck = 0;
+  let latestPublishedAt: string | null = null;
   const listeners = new Set<(nextState: FreshnessState) => void>();
 
   const publish = (nextState: FreshnessState) => {
@@ -227,6 +229,7 @@ export const createFreshnessController = ({
         notificationMatchesManifest ? notification.publishedAt : null,
         ...contentPublicationDates,
       );
+      latestPublishedAt = publishedAt;
 
       if (manifest.deploymentId === runningDeploymentId) {
         staleTarget = null;
@@ -254,11 +257,11 @@ export const createFreshnessController = ({
               attempts,
             );
           } else {
+            const stalePublishedAt = publishedAt ?? notification.publishedAt;
+            latestPublishedAt = stalePublishedAt;
             publish({
               status: "stale",
-              publishedAtUtc: formatLocalDeploymentTime(
-                publishedAt ?? notification.publishedAt,
-              ),
+              publishedAtUtc: formatLocalDeploymentTime(stalePublishedAt),
             });
           }
         }
@@ -293,6 +296,7 @@ export const createFreshnessController = ({
 
   return {
     getState: () => state,
+    getPublishedAt: () => latestPublishedAt,
     subscribe: (listener) => {
       listeners.add(listener);
       listener(state);

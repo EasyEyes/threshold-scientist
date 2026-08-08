@@ -170,6 +170,7 @@ export default class App extends Component {
       handleSetCompileWarnings: this.handleSetCompileWarnings.bind(this),
       handleSetCompileErrorsVisible:
         this.handleSetCompileErrorsVisible.bind(this),
+      updateLatestPublicationDate: this.updateLatestPublicationDate.bind(this),
       getprofileStatement: this.getprofileStatement.bind(this),
     };
 

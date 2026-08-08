@@ -58,19 +58,61 @@ describe("FreshnessStatus", () => {
   });
 
   it("renders a newer content release date than the deployment date", async () => {
+    const onPublicationDate = jest.fn();
     const controller = makeController("production", {
       loadContentPublicationDates: jest
         .fn()
         .mockResolvedValue(["2026-07-18T09:00:00.000Z", null]),
     });
 
-    render(<FreshnessStatus controller={controller} />);
+    render(
+      <FreshnessStatus
+        controller={controller}
+        onPublicationDate={onPublicationDate}
+      />,
+    );
 
     expect(
       await screen.findByText(
         "Fresh. This page is up to date: Jul 18, 2026, 9:00 AM UTC+0.",
       ),
     ).toBeInTheDocument();
+    expect(onPublicationDate).toHaveBeenCalledWith("2026-07-18T09:00:00.000Z");
+  });
+
+  it("publishes a newer content date after a live notification", async () => {
+    let notify;
+    const onPublicationDate = jest.fn();
+    const loadContentPublicationDates = jest
+      .fn()
+      .mockResolvedValueOnce(["2026-07-18T09:00:00.000Z"])
+      .mockResolvedValueOnce(["2026-07-19T10:00:00.000Z"]);
+    const controller = makeController("production", {
+      loadContentPublicationDates,
+      subscribeToDeploymentNotifications: (listener) => {
+        notify = listener;
+        return jest.fn();
+      },
+    });
+
+    render(
+      <FreshnessStatus
+        controller={controller}
+        onPublicationDate={onPublicationDate}
+      />,
+    );
+    await screen.findByText(
+      "Fresh. This page is up to date: Jul 18, 2026, 9:00 AM UTC+0.",
+    );
+
+    await act(async () => {
+      notify(undefined);
+      await Promise.resolve();
+    });
+
+    expect(onPublicationDate).toHaveBeenLastCalledWith(
+      "2026-07-19T10:00:00.000Z",
+    );
   });
 
   it("renders Refresh as part of the stale text rather than a button", async () => {
