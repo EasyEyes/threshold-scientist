@@ -14,6 +14,7 @@ const escapeHtml = (value) =>
 const FreshnessStatus = ({
   controller: suppliedController,
   onPublicationDate,
+  reload = () => window.location.reload(),
 }) => {
   const [controller] = useState(
     () => suppliedController || createBrowserFreshnessController(),
@@ -58,7 +59,10 @@ const FreshnessStatus = ({
         <>
           <span aria-hidden="true">⚠️</span>
           <span>
-            Stale. Refresh ↻ to update this page to {freshness.publishedAtUtc}.
+            <button type="button" onClick={reload}>
+              Relaunch to update EasyEyes
+            </button>{" "}
+            to {freshness.publishedAtUtc}.
           </span>
         </>
       ) : (

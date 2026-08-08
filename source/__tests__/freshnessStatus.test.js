@@ -115,7 +115,7 @@ describe("FreshnessStatus", () => {
     );
   });
 
-  it("renders Refresh as part of the stale text rather than a button", async () => {
+  it("relaunches the stale compiler from a button", async () => {
     const controller = makeController("production", {
       loadDeploymentNotification: jest.fn().mockResolvedValue({
         deploymentId: "deploy-456",
@@ -131,15 +131,20 @@ describe("FreshnessStatus", () => {
       },
     });
 
-    render(<FreshnessStatus controller={controller} />);
-    const status = await screen.findByText("Stale.", { exact: false });
+    const reload = jest.fn();
+
+    render(<FreshnessStatus controller={controller} reload={reload} />);
+    const status = await screen.findByText("Relaunch to update EasyEyes", {
+      exact: true,
+    });
     expect(status.closest(".freshness-status")).toHaveTextContent(
-      "Stale. Refresh ↻ to update this page to Jul 14, 2026, 11:15 AM UTC+0.",
+      `Relaunch to update EasyEyes to ${controller.getState().publishedAtUtc}.`,
     );
     expect(screen.getByText("⚠️", { exact: true })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Refresh ↻" }),
-    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Relaunch to update EasyEyes" }),
+    );
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("does not update state or navigate after unmount", async () => {
