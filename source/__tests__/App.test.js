@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import App, { normalizeRecruitmentInformation } from "../App";
 import Running from "../Running";
+import { formatLocalDeploymentTime } from "../freshness/formatLocalDeploymentTime";
 
 jest.mock("firebase/database", () => ({
   set: jest.fn(),
@@ -485,6 +486,23 @@ describe("App - footnote suppression while compiler errors show", () => {
     expect(container.querySelector(".copyright-info")).toBeTruthy();
   });
 
+  it("renders the compiler update date with the non-interactive production styling", () => {
+    const { act } = require("@testing-library/react");
+    const ref = React.createRef();
+    const { container } = render(<App ref={ref} />);
+
+    act(() => {
+      ref.current.setState({
+        websiteRepoLastCommitDeploy: "2026-08-07T06:42:00.000Z",
+      });
+    });
+
+    const date = container.querySelector(".compiler-update-date");
+    expect(date).toBeInstanceOf(HTMLSpanElement);
+    expect(date.closest(".item")).toBeTruthy();
+    expect(date.closest("a")).toBeNull();
+  });
+
   it("shows the latest date across deploy, phrases, and glossary releases", async () => {
     const { get } = require("firebase/database");
     const { fetchPhrasesVersion } = require("../components/phrasesApi");
@@ -511,7 +529,7 @@ describe("App - footnote suppression while compiler errors show", () => {
     const { act } = require("@testing-library/react");
     await waitFor(() =>
       expect(container.querySelector(".copyright-info")).toHaveTextContent(
-        "Aug 8, 2026, 9:00 AM UTC+0",
+        formatLocalDeploymentTime("2026-08-08T09:00:00.000Z"),
       ),
     );
   });

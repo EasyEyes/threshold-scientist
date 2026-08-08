@@ -1009,7 +1009,7 @@ export default class App extends Component {
                   {totalCompileCounts} studies compiled since 1 February, 2023.
                   <br />
                   Compiler updated{" "}
-                  <span style={{ fontWeight: "500" }}>
+                  <span className="compiler-update-date">
                     {formatLocalDeploymentTime(websiteRepoLastCommitDeploy)}
                   </span>
                   .{" "}
