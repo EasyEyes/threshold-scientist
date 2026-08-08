@@ -1,12 +1,7 @@
 import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import Swal from "sweetalert2";
 import FreshnessStatus from "../components/FreshnessStatus";
 import { createFreshnessController } from "../freshness/freshnessController";
-
-jest.mock("sweetalert2", () => ({
-  fire: jest.fn(),
-}));
 
 const makeController = (mode = "production", overrides = {}) =>
   createFreshnessController({
@@ -193,7 +188,7 @@ describe("FreshnessStatus", () => {
     expect(retry.replaceWithDeployment).not.toHaveBeenCalled();
   });
 
-  it("opens the exhausted-refresh information through Question", async () => {
+  it("offers a relaunch without a version date after refreshes are exhausted", async () => {
     const controller = makeController("production", {
       loadDeploymentNotification: jest.fn().mockResolvedValue({
         deploymentId: "deploy-456",
@@ -209,27 +204,21 @@ describe("FreshnessStatus", () => {
       },
     });
 
-    render(<FreshnessStatus controller={controller} />);
+    const reload = jest.fn();
 
-    expect(
-      await screen.findByText("This page is stale and shouldn't be."),
-    ).toBeInTheDocument();
-    expect(screen.getByText("❌", { exact: true })).toBeInTheDocument();
-    fireEvent.click(document.querySelector(".freshness-status .icon-holder"));
+    render(<FreshnessStatus controller={controller} reload={reload} />);
 
-    expect(Swal.fire).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "Compiler freshness problem",
-        html: expect.stringContaining("deploy-123"),
-      }),
+    const button = await screen.findByRole("button", {
+      name: "Relaunch to update EasyEyes",
+    });
+    expect(button.closest(".freshness-status")).toHaveTextContent(
+      "⚠️Relaunch to update EasyEyes",
     );
-    const { html } = Swal.fire.mock.calls[0][0];
-    expect(html).toContain("deploy-456");
-    expect(html).toContain("Jul 14, 2026, 11:15 AM UTC+0");
-    expect(html).toContain("Close all compiler tabs");
-    expect(html).toContain("clear site data and cached files");
-    expect(html).toContain("reopen the compiler");
-    expect(html).toContain("sign you out of Pavlovia");
-    expect(html).toContain("remove locally stored compiler settings");
+    expect(screen.getByText("⚠️", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText(/This page is stale/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Jul 14, 2026/)).not.toBeInTheDocument();
+
+    fireEvent.click(button);
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });
