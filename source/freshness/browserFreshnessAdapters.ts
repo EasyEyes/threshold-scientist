@@ -1,5 +1,7 @@
 import { get, onValue, ref } from "firebase/database";
 import { Sentry } from "../sentry";
+import { fetchGlossaryVersion } from "../components/glossaryApi";
+import { fetchPhrasesVersion } from "../components/phrasesApi";
 
 import {
   createFreshnessController,
@@ -26,6 +28,16 @@ const loadManifest = async (): Promise<unknown> => {
     throw new Error(`Deployment manifest request failed (${response.status})`);
   }
   return response.json();
+};
+
+const loadContentPublicationDates = async (): Promise<unknown[]> => {
+  const results = await Promise.allSettled([
+    fetchGlossaryVersion(),
+    fetchPhrasesVersion(),
+  ]);
+  return results.map((result) =>
+    result.status === "fulfilled" ? result.value?.publishedAt : null,
+  );
 };
 
 const retryStoragePrefix = "easyeyes:compiler-freshness:attempts:";
@@ -179,6 +191,7 @@ export const createBrowserFreshnessController = (): FreshnessController => {
     runningDeploymentId: production ? process.env.DEPLOY_ID || null : null,
     loadDeploymentNotification,
     loadManifest,
+    loadContentPublicationDates,
     subscribeToDeploymentNotifications,
     subscribeToVisibility: (listener) =>
       subscribeToVisibility(document, listener),

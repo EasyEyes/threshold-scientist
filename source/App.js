@@ -3,6 +3,7 @@ import { set, ref, get } from "firebase/database";
 import { uuidv4 } from "@firebase/util";
 import Swal from "sweetalert2";
 import { formatLocalDeploymentTime } from "./freshness/formatLocalDeploymentTime";
+import { latestPublicationDate } from "./freshness/latestPublicationDate";
 
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
@@ -48,7 +49,10 @@ import {
   fetchPhrasesByVersion,
 } from "./components/phrasesApi";
 import { initPhrases } from "../threshold/parameters/phrasesRegistry";
-import { startGlossaryPrefetch } from "./components/glossaryApi";
+import {
+  fetchGlossaryVersion,
+  startGlossaryPrefetch,
+} from "./components/glossaryApi";
 import { fetchGitHubStats } from "./components/githubStatsApi";
 import { isEmptyRepository } from "./repositoryState";
 import { registerTestFontOpener } from "./components/testFont/openTestFont";
@@ -92,7 +96,6 @@ export default class App extends Component {
 
     this.state = {
       websiteRepoLastCommitDeploy: null,
-      websiteRepoLastCommitURL: null,
       githubStars: null,
       githubLicense: null,
       readingGlossary: false,
@@ -186,8 +189,9 @@ export default class App extends Component {
     // version (cached immutably in the browser), so an unchanged version is
     // not re-downloaded on subsequent visits.
     fetchPhrasesVersion()
-      .then(({ version }) => {
+      .then(({ version, publishedAt }) => {
         if (!version) throw new Error("No current phrases version");
+        this.updateLatestPublicationDate(publishedAt);
         return fetchPhrasesByVersion(version);
       })
       .then((data) => {
@@ -198,6 +202,14 @@ export default class App extends Component {
         this.setState({ phrasesError: true });
       });
 
+    fetchGlossaryVersion()
+      .then(({ publishedAt }) => {
+        this.updateLatestPublicationDate(publishedAt);
+      })
+      .catch((error) => {
+        console.warn("Failed to load glossary publication date:", error);
+      });
+
     // get the GitHub footer values (latest commit URL, stars, license) via our
     // cached Netlify proxy instead of calling GitHub directly. Not critical, so
     // it degrades silently.
@@ -205,7 +217,6 @@ export default class App extends Component {
       .then((stats) => {
         if (!stats || stats.available === false) return;
         this.setState({
-          websiteRepoLastCommitURL: stats.lastCommitUrl,
           githubStars: stats.stars,
           githubLicense: stats.license,
         });
@@ -222,9 +233,7 @@ export default class App extends Component {
       .then((websiteNetlifySite) => {
         if (!websiteNetlifySite.ok) return;
         return websiteNetlifySite.json().then((data) => {
-          this.setState({
-            websiteRepoLastCommitDeploy: data.published_deploy.published_at,
-          });
+          this.updateLatestPublicationDate(data.published_deploy.published_at);
         });
       })
       .catch((error) => {
@@ -720,6 +729,15 @@ export default class App extends Component {
     });
   }
 
+  updateLatestPublicationDate(publishedAt) {
+    this.setState((state) => ({
+      websiteRepoLastCommitDeploy: latestPublicationDate(
+        state.websiteRepoLastCommitDeploy,
+        publishedAt,
+      ),
+    }));
+  }
+
   handleArchivedExperimentBool(isCompiledFromArchiveBool) {
     this.setState({
       isCompiledFromArchiveBool: isCompiledFromArchiveBool,
@@ -834,7 +852,6 @@ export default class App extends Component {
   render() {
     const {
       websiteRepoLastCommitDeploy,
-      websiteRepoLastCommitURL,
       githubStars,
       githubLicense,
       readingGlossary,
@@ -984,79 +1001,64 @@ export default class App extends Component {
           </Suspense>
         </div>
 
-        {!compileErrorsVisible &&
-          websiteRepoLastCommitDeploy &&
-          websiteRepoLastCommitURL && (
-            <>
-              <div className="copyright-info">
-                <div className="info-paragraph">
-                  <div className="item">
-                    {totalCompileCounts} studies compiled since 1 February,
-                    2023.
-                    <br />
-                    Compiler updated{" "}
-                    <a
-                      href={websiteRepoLastCommitURL}
-                      style={{
-                        color: "inherit",
-                        textDecoration: "none",
-                        fontWeight: "500",
-                        borderBottom: "1px solid #ddd",
-                        marginLeft: "0",
-                      }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {formatLocalDeploymentTime(websiteRepoLastCommitDeploy)}
-                    </a>
-                    .{" "}
-                  </div>
+        {!compileErrorsVisible && websiteRepoLastCommitDeploy && (
+          <>
+            <div className="copyright-info">
+              <div className="info-paragraph">
+                <div className="item">
+                  {totalCompileCounts} studies compiled since 1 February, 2023.
+                  <br />
+                  Compiler updated{" "}
+                  <span style={{ fontWeight: "500" }}>
+                    {formatLocalDeploymentTime(websiteRepoLastCommitDeploy)}
+                  </span>
+                  .{" "}
+                </div>
 
-                  <div className="item">
-                    <div style={{ marginTop: "5px" }}></div>
-                    {githubStars != null && (
-                      <a href="https://github.com/EasyEyes/threshold/stargazers">
-                        <img
-                          alt="GitHub stars"
-                          src={`https://img.shields.io/badge/stars-${encodeURIComponent(
-                            githubStars,
-                          )}-blue?style=flat-square&logo=github&logoColor=white`}
-                        />
-                      </a>
-                    )}{" "}
-                    {githubLicense && (
-                      <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
-                        <img
-                          alt="GitHub license"
-                          src={`https://img.shields.io/badge/license-${encodeURIComponent(
-                            githubLicense,
-                          )}-green?style=flat-square`}
-                        />
-                      </a>
-                    )}{" "}
-                    <a href="https://app.netlify.com/sites/easyeyes/deploys">
+                <div className="item">
+                  <div style={{ marginTop: "5px" }}></div>
+                  {githubStars != null && (
+                    <a href="https://github.com/EasyEyes/threshold/stargazers">
                       <img
-                        alt="Netlify Status"
-                        src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
+                        alt="GitHub stars"
+                        src={`https://img.shields.io/badge/stars-${encodeURIComponent(
+                          githubStars,
+                        )}-blue?style=flat-square&logo=github&logoColor=white`}
                       />
                     </a>
-                  </div>
+                  )}{" "}
+                  {githubLicense && (
+                    <a href="https://github.com/EasyEyes/threshold/blob/main/LICENSE">
+                      <img
+                        alt="GitHub license"
+                        src={`https://img.shields.io/badge/license-${encodeURIComponent(
+                          githubLicense,
+                        )}-green?style=flat-square`}
+                      />
+                    </a>
+                  )}{" "}
+                  <a href="https://app.netlify.com/sites/easyeyes/deploys">
+                    <img
+                      alt="Netlify Status"
+                      src="https://api.netlify.com/api/v1/badges/7ef5bb5a-2b97-4af2-9868-d3e9c7ca2287/deploy-status"
+                    />
+                  </a>
+                </div>
 
-                  <div className="item">
-                    Copyright © 2020 - {new Date().getFullYear()} New York
-                    University.
-                    <br />
-                    Created by Denis Pelli and the EasyEyes team.
-                  </div>
+                <div className="item">
+                  Copyright © 2020 - {new Date().getFullYear()} New York
+                  University.
+                  <br />
+                  Created by Denis Pelli and the EasyEyes team.
                 </div>
               </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
       </>
     );
   }
 }
-
 function getTimezoneName() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }

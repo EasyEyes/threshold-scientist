@@ -1,4 +1,5 @@
 import { formatLocalDeploymentTime } from "./formatLocalDeploymentTime";
+import { latestPublicationDate } from "./latestPublicationDate";
 
 export type FreshnessState =
   | { status: "checking"; message: "Checking compiler freshness..." }
@@ -26,6 +27,7 @@ type FreshnessControllerOptions = {
   runningDeploymentId: string | null;
   loadDeploymentNotification: () => Promise<unknown>;
   loadManifest: () => Promise<unknown>;
+  loadContentPublicationDates?: () => Promise<unknown[]>;
   subscribeToDeploymentNotifications?: (
     listener: (notification: unknown) => void,
   ) => () => void;
@@ -116,6 +118,7 @@ export const createFreshnessController = ({
   runningDeploymentId,
   loadDeploymentNotification,
   loadManifest,
+  loadContentPublicationDates = async () => [],
   subscribeToDeploymentNotifications,
   subscribeToVisibility,
   retry = inactiveRetry,
@@ -206,10 +209,12 @@ export const createFreshnessController = ({
     const checkId = ++latestCheck;
 
     try {
-      const [notification, manifest] = await Promise.all([
-        notificationRequest.catch(() => undefined),
-        loadManifest(),
-      ]);
+      const [notification, manifest, contentPublicationDates] =
+        await Promise.all([
+          notificationRequest.catch(() => undefined),
+          loadManifest(),
+          loadContentPublicationDates().catch(() => []),
+        ]);
 
       if (disposed || checkId !== latestCheck) return;
 
@@ -218,15 +223,19 @@ export const createFreshnessController = ({
       const notificationMatchesManifest =
         isDeploymentNotification(notification) &&
         notification.deploymentId === manifest.deploymentId;
+      const publishedAt = latestPublicationDate(
+        notificationMatchesManifest ? notification.publishedAt : null,
+        ...contentPublicationDates,
+      );
 
       if (manifest.deploymentId === runningDeploymentId) {
         staleTarget = null;
         cancelRetry();
-        if (notificationMatchesManifest) {
+        if (publishedAt) {
           publish({
             status: "fresh",
             message: `Fresh. This page is up to date: ${formatLocalDeploymentTime(
-              notification.publishedAt,
+              publishedAt,
             )}.`,
           });
         } else {
@@ -241,14 +250,14 @@ export const createFreshnessController = ({
           if (attempts >= automaticRetryDelays.length) {
             publishExhausted(
               manifest.deploymentId,
-              notification.publishedAt,
+              publishedAt ?? notification.publishedAt,
               attempts,
             );
           } else {
             publish({
               status: "stale",
               publishedAtUtc: formatLocalDeploymentTime(
-                notification.publishedAt,
+                publishedAt ?? notification.publishedAt,
               ),
             });
           }

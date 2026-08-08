@@ -43,7 +43,7 @@ describe("FreshnessStatus", () => {
     expect(screen.getByText("✅", { exact: true })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Fresh. This page is up to date: Jul 14, 2026, 10:15:30 AM UTC.",
+        "Fresh. This page is up to date: Jul 14, 2026, 10:15 AM UTC+0.",
       ),
     ).toBeInTheDocument();
   });
@@ -54,6 +54,22 @@ describe("FreshnessStatus", () => {
     expect(screen.getByText("✅", { exact: true })).toBeInTheDocument();
     expect(
       screen.getByText("Fresh. The compiler is running in development mode."),
+    ).toBeInTheDocument();
+  });
+
+  it("renders a newer content release date than the deployment date", async () => {
+    const controller = makeController("production", {
+      loadContentPublicationDates: jest
+        .fn()
+        .mockResolvedValue(["2026-07-18T09:00:00.000Z", null]),
+    });
+
+    render(<FreshnessStatus controller={controller} />);
+
+    expect(
+      await screen.findByText(
+        "Fresh. This page is up to date: Jul 18, 2026, 9:00 AM UTC+0.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -76,7 +92,7 @@ describe("FreshnessStatus", () => {
     render(<FreshnessStatus controller={controller} />);
     const status = await screen.findByText("Stale.", { exact: false });
     expect(status.closest(".freshness-status")).toHaveTextContent(
-      "Stale. Refresh ↻ to update this page to Jul 14, 2026, 11:15:30 AM UTC.",
+      "Stale. Refresh ↻ to update this page to Jul 14, 2026, 11:15 AM UTC+0.",
     );
     expect(screen.getByText("⚠️", { exact: true })).toBeInTheDocument();
     expect(
@@ -111,7 +127,7 @@ describe("FreshnessStatus", () => {
     });
     const view = render(<FreshnessStatus controller={controller} />);
     await screen.findByText(
-      "Fresh. This page is up to date: Jul 14, 2026, 10:15:30 AM UTC.",
+      "Fresh. This page is up to date: Jul 14, 2026, 10:15 AM UTC+0.",
     );
 
     notify({
@@ -162,7 +178,7 @@ describe("FreshnessStatus", () => {
     );
     const { html } = Swal.fire.mock.calls[0][0];
     expect(html).toContain("deploy-456");
-    expect(html).toContain("Jul 14, 2026, 11:15:30 AM UTC");
+    expect(html).toContain("Jul 14, 2026, 11:15 AM UTC+0");
     expect(html).toContain("Close all compiler tabs");
     expect(html).toContain("clear site data and cached files");
     expect(html).toContain("reopen the compiler");
