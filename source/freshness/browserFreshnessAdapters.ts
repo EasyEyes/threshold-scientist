@@ -1,5 +1,7 @@
 import { get, onValue, ref } from "firebase/database";
 import { Sentry } from "../sentry";
+import { fetchGlossaryVersion } from "../components/glossaryApi";
+import { fetchPhrasesVersion } from "../components/phrasesApi";
 
 import {
   createFreshnessController,
@@ -10,6 +12,10 @@ import {
 } from "./freshnessController";
 
 const notificationPath = "deployments/compiler/production";
+export const contentNotificationPaths = [
+  "currentVersion",
+  "phrases/currentVersion",
+] as const;
 
 const loadDeploymentNotification = async (): Promise<unknown> => {
   const { db } = await import("../components/firebase");
@@ -26,6 +32,16 @@ const loadManifest = async (): Promise<unknown> => {
     throw new Error(`Deployment manifest request failed (${response.status})`);
   }
   return response.json();
+};
+
+const loadContentPublicationDates = async (): Promise<unknown[]> => {
+  const results = await Promise.allSettled([
+    fetchGlossaryVersion(),
+    fetchPhrasesVersion(),
+  ]);
+  return results.map((result) =>
+    result.status === "fulfilled" ? result.value?.publishedAt : null,
+  );
 };
 
 const retryStoragePrefix = "easyeyes:compiler-freshness:attempts:";
@@ -149,7 +165,25 @@ export const subscribeToVisibility = (
     );
 };
 
-const subscribeToDeploymentNotifications = (
+type PathSubscriber = (
+  path: string,
+  listener: (value: unknown) => void,
+) => () => void;
+
+export const subscribeToFreshnessNotifications = (
+  subscribe: PathSubscriber,
+  listener: (notification: unknown) => void,
+): (() => void) => {
+  const unsubscribes = [
+    subscribe(notificationPath, listener),
+    ...contentNotificationPaths.map((path) =>
+      subscribe(path, () => listener(undefined)),
+    ),
+  ];
+  return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+};
+
+const subscribeToFirebaseFreshnessNotifications = (
   listener: (notification: unknown) => void,
 ): (() => void) => {
   let disposed = false;
@@ -158,9 +192,11 @@ const subscribeToDeploymentNotifications = (
   void import("../components/firebase")
     .then(({ db }) => {
       if (disposed) return;
-      unsubscribe = onValue(ref(db, notificationPath), (snapshot) => {
-        listener(snapshot.val());
-      });
+      unsubscribe = subscribeToFreshnessNotifications(
+        (path, notify) =>
+          onValue(ref(db, path), (snapshot) => notify(snapshot.val())),
+        listener,
+      );
     })
     .catch(() => {
       // Freshness notifications are advisory; manifest checks remain usable.
@@ -179,7 +215,9 @@ export const createBrowserFreshnessController = (): FreshnessController => {
     runningDeploymentId: production ? process.env.DEPLOY_ID || null : null,
     loadDeploymentNotification,
     loadManifest,
-    subscribeToDeploymentNotifications,
+    loadContentPublicationDates,
+    subscribeToDeploymentNotifications:
+      subscribeToFirebaseFreshnessNotifications,
     subscribeToVisibility: (listener) =>
       subscribeToVisibility(document, listener),
     retry: browserRetry,

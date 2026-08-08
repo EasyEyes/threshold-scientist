@@ -11,7 +11,10 @@ const escapeHtml = (value) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 
-const FreshnessStatus = ({ controller: suppliedController }) => {
+const FreshnessStatus = ({
+  controller: suppliedController,
+  onPublicationDate,
+}) => {
   const [controller] = useState(
     () => suppliedController || createBrowserFreshnessController(),
   );
@@ -25,6 +28,11 @@ const FreshnessStatus = ({ controller: suppliedController }) => {
       controller.dispose();
     };
   }, [controller]);
+
+  useEffect(() => {
+    const publishedAt = controller.getPublishedAt();
+    if (publishedAt) onPublicationDate?.(publishedAt);
+  }, [controller, freshness, onPublicationDate]);
 
   return (
     <div className="freshness-status" data-status={freshness.status}>

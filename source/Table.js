@@ -605,7 +605,9 @@ export default class Table extends Component {
           </ul>
           Resources uploaded individually are stored in your Pavlovia account
           for future use. Resources in an export.zip are not.
-          <FreshnessStatus />
+          <FreshnessStatus
+            onPublicationDate={this.props.functions.updateLatestPublicationDate}
+          />
         </div>
         <div style={{ marginTop: "8px", marginBottom: "10px" }}>
           <span

@@ -11,6 +11,10 @@
         "glossary": {
           ".read": true,
           ".write": false
+        },
+        "publishedAt": {
+          ".read": true,
+          ".write": false
         }
       }
     },
@@ -23,6 +27,10 @@
     "phrasesVersions": {
       "$version": {
         "phrases": {
+          ".read": true,
+          ".write": false
+        },
+        "publishedAt": {
           ".read": true,
           ".write": false
         }

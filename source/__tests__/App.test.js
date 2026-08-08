@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import App, { normalizeRecruitmentInformation } from "../App";
 import Running from "../Running";
+import { formatLocalDeploymentTime } from "../freshness/formatLocalDeploymentTime";
 
 jest.mock("firebase/database", () => ({
   set: jest.fn(),
@@ -92,6 +93,10 @@ jest.mock("../components/phrasesApi", () => ({
 
 jest.mock("../components/glossaryApi", () => ({
   startGlossaryPrefetch: jest.fn(),
+  fetchGlossaryVersion: jest.fn().mockResolvedValue({
+    version: null,
+    publishedAt: null,
+  }),
 }));
 
 jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
@@ -283,12 +288,14 @@ describe("empty repository view lifecycle", () => {
 describe("App", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const { get } = require("firebase/database");
     const {
       fetchPhrasesVersion,
       fetchPhrasesByVersion,
     } = require("../components/phrasesApi");
     fetchPhrasesVersion.mockResolvedValue({ version: mockPhrasesData.version });
     fetchPhrasesByVersion.mockResolvedValue(mockPhrasesData);
+    get.mockResolvedValue({ val: () => ({ count: 0 }) });
     global.fetch.mockResolvedValue({ ok: false });
   });
 
@@ -445,12 +452,14 @@ describe("App - handleUpdateCompileCount", () => {
 describe("App - footnote suppression while compiler errors show", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const { get } = require("firebase/database");
     const {
       fetchPhrasesVersion,
       fetchPhrasesByVersion,
     } = require("../components/phrasesApi");
     fetchPhrasesVersion.mockResolvedValue({ version: mockPhrasesData.version });
     fetchPhrasesByVersion.mockResolvedValue(mockPhrasesData);
+    get.mockResolvedValue({ val: () => ({ count: 0 }) });
     global.fetch.mockResolvedValue({ ok: false });
   });
 
@@ -462,7 +471,6 @@ describe("App - footnote suppression while compiler errors show", () => {
     act(() => {
       ref.current.setState({
         websiteRepoLastCommitDeploy: "2024-01-01T00:00:00Z",
-        websiteRepoLastCommitURL: "https://example.com/commit",
       });
     });
     expect(container.querySelector(".copyright-info")).toBeTruthy();
@@ -476,5 +484,53 @@ describe("App - footnote suppression while compiler errors show", () => {
       ref.current.setState({ compileErrorsVisible: false });
     });
     expect(container.querySelector(".copyright-info")).toBeTruthy();
+  });
+
+  it("renders the compiler update date with the non-interactive production styling", () => {
+    const { act } = require("@testing-library/react");
+    const ref = React.createRef();
+    const { container } = render(<App ref={ref} />);
+
+    act(() => {
+      ref.current.setState({
+        websiteRepoLastCommitDeploy: "2026-08-07T06:42:00.000Z",
+      });
+    });
+
+    const date = container.querySelector(".compiler-update-date");
+    expect(date).toBeInstanceOf(HTMLSpanElement);
+    expect(date.closest(".item")).toBeTruthy();
+    expect(date.closest("a")).toBeNull();
+  });
+
+  it("shows the latest date across deploy, phrases, and glossary releases", async () => {
+    const { get } = require("firebase/database");
+    const { fetchPhrasesVersion } = require("../components/phrasesApi");
+    const { fetchGlossaryVersion } = require("../components/glossaryApi");
+    fetchPhrasesVersion.mockResolvedValue({
+      version: "2.0",
+      publishedAt: "2026-08-07T08:00:00.000Z",
+    });
+    fetchGlossaryVersion.mockResolvedValue({
+      version: "3.0",
+      publishedAt: "2026-08-08T09:00:00.000Z",
+    });
+    get.mockResolvedValue({ val: () => ({ count: 0 }) });
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        published_deploy: { published_at: "2026-08-06T07:00:00.000Z" },
+        lastCommitUrl: "https://example.com/commit",
+      }),
+    });
+
+    const ref = React.createRef();
+    const { container } = render(<App ref={ref} />);
+    const { act } = require("@testing-library/react");
+    await waitFor(() =>
+      expect(container.querySelector(".copyright-info")).toHaveTextContent(
+        formatLocalDeploymentTime("2026-08-08T09:00:00.000Z"),
+      ),
+    );
   });
 });

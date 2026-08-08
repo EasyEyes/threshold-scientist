@@ -86,6 +86,44 @@ describe("browser freshness retry adapters", () => {
     );
   });
 
+  it("rechecks freshness when compiler, glossary, or phrases versions change", () => {
+    const { subscribeToFreshnessNotifications } = loadModule();
+    const subscriptions = new Map();
+    const unsubscribes = [];
+    const subscribe = jest.fn((path, listener) => {
+      subscriptions.set(path, listener);
+      const unsubscribe = jest.fn();
+      unsubscribes.push(unsubscribe);
+      return unsubscribe;
+    });
+    const listener = jest.fn();
+
+    const unsubscribe = subscribeToFreshnessNotifications(subscribe, listener);
+
+    expect([...subscriptions.keys()]).toEqual([
+      "deployments/compiler/production",
+      "currentVersion",
+      "phrases/currentVersion",
+    ]);
+
+    const deployment = {
+      deploymentId: "deploy-456",
+      publishedAt: "2026-08-08T12:00:00.000Z",
+    };
+    subscriptions.get("deployments/compiler/production")(deployment);
+    subscriptions.get("currentVersion")("2.0");
+    subscriptions.get("phrases/currentVersion")("3.0");
+
+    expect(listener.mock.calls).toEqual([
+      [deployment],
+      [undefined],
+      [undefined],
+    ]);
+
+    unsubscribe();
+    unsubscribes.forEach((stop) => expect(stop).toHaveBeenCalledTimes(1));
+  });
+
   it("reports only allowlisted diagnostics with sanitized URL and stable grouping", () => {
     const Sentry = {
       addBreadcrumb: jest.fn(),

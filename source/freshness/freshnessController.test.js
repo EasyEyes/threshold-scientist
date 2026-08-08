@@ -73,6 +73,21 @@ describe("freshness controller", () => {
     controller.dispose();
   });
 
+  it("shows the latest valid publication date and ignores missing dates", async () => {
+    const controller = makeProductionController({
+      loadContentPublicationDates: jest
+        .fn()
+        .mockResolvedValue([null, "2026-07-16T12:30:00.000Z"]),
+    });
+
+    await controller.start();
+
+    expect(controller.getState()).toEqual({
+      status: "fresh",
+      message: "Fresh. This page is up to date: Jul 16, 2026, 12:30 PM UTC+0.",
+    });
+  });
+
   it.each([
     ["missing", jest.fn().mockResolvedValue(null)],
     ["unavailable", jest.fn().mockRejectedValue(new Error("offline"))],
