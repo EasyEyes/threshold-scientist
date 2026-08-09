@@ -61,6 +61,10 @@ jest.mock("../../threshold/preprocess/fileUtils", () => ({
   getTextFileDataFromGitLab: jest.fn(),
 }));
 
+jest.mock("../../threshold/preprocess/archiveResources", () => ({
+  buildArchiveResources: jest.fn(),
+}));
+
 jest.mock("../../threshold/preprocess/gitlabSearch", () => ({
   searchProjectByName: jest.fn(),
 }));
@@ -326,6 +330,84 @@ describe("Table.handleTable", () => {
 
     expect(fetchGlossaryData).toHaveBeenCalledTimes(1);
     expect(initGlossary).toHaveBeenCalledWith(mockGlossaryData);
+  });
+});
+
+describe("Table.handleTable archive resource sourcing", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  function primeGlossary() {
+    const { fetchGlossaryVersion } = require("../components/glossaryApi");
+    const {
+      getGlossaryVersion,
+    } = require("../../threshold/parameters/glossaryRegistry");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue("2.0");
+  }
+
+  it("builds the resource pool from the archive zip and skips the repo listing", async () => {
+    primeGlossary();
+    const {
+      buildArchiveResources,
+    } = require("../../threshold/preprocess/archiveResources");
+    const {
+      preprocessExperimentFile,
+    } = require("../../threshold/preprocess/main");
+    const {
+      searchProjectByName,
+    } = require("../../threshold/preprocess/gitlabSearch");
+    const {
+      getTextFileDataFromGitLab,
+    } = require("../../threshold/preprocess/fileUtils");
+
+    const archiveResources = {
+      fonts: ["Sloan.woff2"],
+      texts: ["corpus.txt"],
+      textContents: { "corpus.txt": "text" },
+      phrases: [],
+      localFetchers: {},
+    };
+    buildArchiveResources.mockResolvedValue(archiveResources);
+    const archivedZip = new File(["zip"], "study.export.zip");
+
+    const ref = React.createRef();
+    render(
+      <Table
+        ref={ref}
+        {...makeProps({ isCompiledFromArchiveBool: true, archivedZip })}
+      />,
+    );
+
+    await ref.current.handleTable(new File(["a,b"], "study.xlsx"));
+
+    expect(buildArchiveResources).toHaveBeenCalledWith(archivedZip);
+    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+    // The archive-derived resources are what the compiler validates against
+    expect(preprocessExperimentFile.mock.calls[0][3]).toBe(archiveResources);
+    expect(preprocessExperimentFile.mock.calls[0][4]).toBe(true);
+    // The archive is the resource pool: no repo listing, no repo text reads
+    expect(searchProjectByName).not.toHaveBeenCalled();
+    expect(getTextFileDataFromGitLab).not.toHaveBeenCalled();
+  });
+
+  it("does not touch the archive builder for a plain spreadsheet compile", async () => {
+    primeGlossary();
+    const {
+      buildArchiveResources,
+    } = require("../../threshold/preprocess/archiveResources");
+    const {
+      preprocessExperimentFile,
+    } = require("../../threshold/preprocess/main");
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(buildArchiveResources).not.toHaveBeenCalled();
+    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
   });
 });
 

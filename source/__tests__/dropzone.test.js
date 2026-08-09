@@ -182,6 +182,47 @@ describe("handleDrop — phrase file inside an export archive", () => {
   });
 });
 
+// ── Archive nesting: manually re-zipped exports wrap files in a folder ────────
+
+describe("handleDrop — export archive re-zipped inside a wrapping folder", () => {
+  it("flattens entry paths so bundled files keep their bare names", async () => {
+    const { handleDrop } = require("../components/dropzone");
+    const { userRepoFiles } = require("../../threshold/preprocess/constants");
+    const { isExpTableFile } = require("../../threshold/preprocess/utils");
+    const { translatePhraseFileApi } = require("../components/phraseFileApi");
+
+    isExpTableFile.mockImplementation((f) => f.name === "study.xlsx");
+    // Layout produced by unzipping an export, editing, and re-zipping the
+    // enclosing folder (plus typical OS junk entries).
+    mockZipFiles = {
+      "study.export/": "",
+      "study.export/study.xlsx": "exp",
+      "study.export/DenisLanguage.phrases.xlsx": "phrases",
+      "__MACOSX/study.export/._DenisLanguage.phrases.xlsx": "junk",
+      "study.export/.DS_Store": "junk",
+    };
+
+    const archive = new File(["zip"], "study.export.zip");
+    const handleExperimentFile = jest.fn();
+
+    await handleDrop(
+      MOCK_USER,
+      [archive],
+      jest.fn(),
+      handleExperimentFile,
+      jest.fn(),
+      jest.fn(),
+    );
+
+    expect(userRepoFiles.experiment.name).toBe("study.xlsx");
+    expect(handleExperimentFile).toHaveBeenCalledWith(userRepoFiles.experiment);
+    // The phrase file keeps its bare name, and the __MACOSX copy is ignored
+    expect(userRepoFiles.phrases).toHaveLength(1);
+    expect(userRepoFiles.phrases[0].name).toBe("DenisLanguage.phrases.xlsx");
+    expect(translatePhraseFileApi).not.toHaveBeenCalled();
+  });
+});
+
 // ── Cycle 3: non-phrase xlsx falls through to generic resources ───────────────
 
 describe("handleDrop — non-phrase xlsx unaffected", () => {

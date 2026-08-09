@@ -9,6 +9,7 @@ import {
   isValidateFileName,
 } from "../../threshold/preprocess/fileUtils";
 import { isExpTableFile } from "../../threshold/preprocess/utils";
+import { flattenZipEntries } from "../../threshold/preprocess/zipUtils";
 import {
   createOrUpdateCommonResources,
   getCommonResourcesNames,
@@ -112,27 +113,25 @@ export const handleDrop = async (
     const Zip = new JSZip();
     await Zip.loadAsync(archivedZip as unknown as File).then((zip) => {
       return Promise.all(
-        Object.keys(zip.files).map(async (filename) => {
-          return zip.files[filename]
-            .async("arraybuffer")
-            .then(async (arrayBuffer) => {
-              const blob = new Blob([arrayBuffer]);
-              const fileObject = new File([blob], filename);
+        flattenZipEntries(zip).map(async ({ name, entry }) => {
+          return entry.async("arraybuffer").then(async (arrayBuffer) => {
+            const blob = new Blob([arrayBuffer]);
+            const fileObject = new File([blob], name);
 
-              if (isImpulseResponseFile(fileObject)) {
-                impulseResponseList.push(fileObject);
-              } else if (isFrequencyResponseFile(fileObject)) {
-                frequencyResponseList.push(fileObject);
-              } else if (isTargetSoundListFile(fileObject)) {
-                targetSoundListList.push(fileObject);
-              } else if (await isPhraseFile(fileObject)) {
-                phraseFileList.push(fileObject);
-              } else if (isExpTableFile(fileObject)) {
-                experimentFile = fileObject;
-              } else {
-                resourcesList.push(fileObject);
-              }
-            });
+            if (isImpulseResponseFile(fileObject)) {
+              impulseResponseList.push(fileObject);
+            } else if (isFrequencyResponseFile(fileObject)) {
+              frequencyResponseList.push(fileObject);
+            } else if (isTargetSoundListFile(fileObject)) {
+              targetSoundListList.push(fileObject);
+            } else if (await isPhraseFile(fileObject)) {
+              phraseFileList.push(fileObject);
+            } else if (isExpTableFile(fileObject)) {
+              experimentFile = fileObject;
+            } else {
+              resourcesList.push(fileObject);
+            }
+          });
         }),
       );
     });

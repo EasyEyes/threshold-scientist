@@ -16,6 +16,7 @@ import {
   manuallySetSwalTitle,
   fetchPhraseFileFromResources,
 } from "../threshold/preprocess/gitlabUtils";
+import { buildArchiveResources } from "../threshold/preprocess/archiveResources";
 import { searchProjectByName } from "../threshold/preprocess/gitlabSearch";
 import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 import { GitLabOAuthClient } from "../threshold/preprocess/auth/gitlabOAuthClient";
@@ -251,12 +252,6 @@ export default class Table extends Component {
       });
     }
 
-    // Shallow-copy so the compile-time augmentation below (phrases File objects,
-    // textContents, fetchPhraseFromRepo) does not mutate the shared `resources`
-    // state. Mutating it in place overwrote the phrase filenames shown by the
-    // resource buttons with raw File objects ("[object File]").
-    resolvedResources = { ...this.props.resources };
-
     // Ensure project list is resolved before proceeding if user object exists and projectList is a promise
     if (
       this.props.user &&
@@ -283,59 +278,85 @@ export default class Table extends Component {
 
     userRepoFiles.targetSoundLists = [];
 
-    // Fetch corpus text file content for compile-time length validation
-    let textContents = {};
-    try {
-      const resourcesRepo = await searchProjectByName(
-        this.props.user,
-        resourcesRepoName,
-      );
-      if (resourcesRepo && resolvedResources.texts?.length > 0) {
-        const repoID = parseInt(resourcesRepo.id);
-        const { clientId, redirectUri } = getAuthConfig();
-        const gitlabOAuthClient = GitLabOAuthClient.loadFromStorage(
-          clientId,
-          redirectUri,
+    if (this.props.isCompiledFromArchiveBool && this.props.archivedZip) {
+      // An export archive is self-contained: the zip's files are the resource
+      // pool. Build the same easyeyesResources shape (name lists, textContents,
+      // localFetchers) from the archive, so the compiler runs the same
+      // resource validations, sourcing from the zip instead of the
+      // scientist's EasyEyesResources repo.
+      try {
+        resolvedResources = await buildArchiveResources(this.props.archivedZip);
+      } catch (e) {
+        captureCompilerFailure(
+          e,
+          operation,
+          "archive-resources-read",
+          {},
+          "user-correctable",
         );
-        if (!gitlabOAuthClient) throw new Error("AUTH_TOKEN_INVALID");
-        const entries = await Promise.all(
-          resolvedResources.texts.map(async (filename) => {
-            try {
-              const content = await getTextFileDataFromGitLab(
-                repoID,
-                `texts/${filename}`,
-                gitlabOAuthClient,
-              );
-              return [filename, content];
-            } catch (e) {
-              captureCompilerFailure(
-                e,
-                operation,
-                "optional-text-resource-read",
-                { resourceType: "texts" },
-                "user-correctable",
-              );
-              return null;
-            }
-          }),
-        );
-        textContents = Object.fromEntries(entries.filter(Boolean));
+        resolvedResources = {};
       }
-    } catch (e) {
-      captureCompilerFailure(
-        e,
-        operation,
-        "text-resources-list",
-        {},
-        "dependency",
-      );
+    } else {
+      // Shallow-copy so the compile-time augmentation below (phrases File
+      // objects, textContents, fetchPhraseFromRepo) does not mutate the shared
+      // `resources` state. Mutating it in place overwrote the phrase filenames
+      // shown by the resource buttons with raw File objects ("[object File]").
+      resolvedResources = { ...this.props.resources };
+
+      // Fetch corpus text file content for compile-time length validation
+      let textContents = {};
+      try {
+        const resourcesRepo = await searchProjectByName(
+          this.props.user,
+          resourcesRepoName,
+        );
+        if (resourcesRepo && resolvedResources.texts?.length > 0) {
+          const repoID = parseInt(resourcesRepo.id);
+          const { clientId, redirectUri } = getAuthConfig();
+          const gitlabOAuthClient = GitLabOAuthClient.loadFromStorage(
+            clientId,
+            redirectUri,
+          );
+          if (!gitlabOAuthClient) throw new Error("AUTH_TOKEN_INVALID");
+          const entries = await Promise.all(
+            resolvedResources.texts.map(async (filename) => {
+              try {
+                const content = await getTextFileDataFromGitLab(
+                  repoID,
+                  `texts/${filename}`,
+                  gitlabOAuthClient,
+                );
+                return [filename, content];
+              } catch (e) {
+                captureCompilerFailure(
+                  e,
+                  operation,
+                  "optional-text-resource-read",
+                  { resourceType: "texts" },
+                  "user-correctable",
+                );
+                return null;
+              }
+            }),
+          );
+          textContents = Object.fromEntries(entries.filter(Boolean));
+        }
+      } catch (e) {
+        captureCompilerFailure(
+          e,
+          operation,
+          "text-resources-list",
+          {},
+          "dependency",
+        );
+      }
+      resolvedResources.textContents = textContents;
+      resolvedResources.phrases = userRepoFiles.phrases;
+      // Let the compiler fetch a previously-uploaded phrase file from the
+      // scientist's `phrases/` folder when it was not dropped this session.
+      resolvedResources.fetchPhraseFromRepo = (name) =>
+        fetchPhraseFileFromResources(this.props.user, name);
     }
-    resolvedResources.textContents = textContents;
-    resolvedResources.phrases = userRepoFiles.phrases;
-    // Let the compiler fetch a previously-uploaded phrase file from the
-    // scientist's `phrases/` folder when it was not dropped this session.
-    resolvedResources.fetchPhraseFromRepo = (name) =>
-      fetchPhraseFileFromResources(this.props.user, name);
 
     recordCompilerPhase(operation, "preprocessing-started");
     try {
