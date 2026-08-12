@@ -24,6 +24,7 @@ function onOpen() {
     .addItem("Retranslate all white cells derived from changed English cells. Then update EasyEyes.", "updatePhrases")
     .addItem("Retranslate the selected white cells. Then update EasyEyes.", "retranslateSelectedCells")
     .addItem("Check all cells. No update.", "checkPhraseKeys")
+    .addItem("Compare latest EasyEyes copy with this spreadsheet", "compareLatestEasyEyesCopy")
     .addToUi();
 }
 
@@ -177,6 +178,283 @@ function notify(message, type, options) {
   } catch (e) {
     Logger.log("[phrases] " + message);
   }
+}
+
+function fetchPhraseAuditJson(url, description) {
+  var response = UrlFetchApp.fetch(url, {
+    method: "get",
+    muteHttpExceptions: true,
+  });
+  var responseCode = response.getResponseCode();
+  if (responseCode !== 200) {
+    throw new Error(
+      "Failed to fetch " + description + " (" + responseCode + ")."
+    );
+  }
+  return JSON.parse(response.getContentText());
+}
+
+function compareLatestEasyEyesCopy() {
+  try {
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = spreadsheet.getSheetByName("Translations");
+    if (!sheet) {
+      notify('Sheet "Translations" not found.');
+      return;
+    }
+
+    var rows = sheet.getDataRange().getDisplayValues();
+    if (rows.length < 2 || rows[0].indexOf("EE_LanguageCode") === -1) {
+      notify('No phrase data or required column "EE_LanguageCode" was found.');
+      return;
+    }
+
+    // Resolve the latest version first, then request that immutable version so
+    // the data and publication date always describe the same Firebase copy.
+    var metadata = fetchPhraseAuditJson(
+      PHRASES_FUNCTION_URL + "?versionOnly=1&audit=" + Date.now(),
+      "the latest Firebase phrases version"
+    );
+    if (!metadata.version) throw new Error("Firebase has no current phrases version.");
+
+    var firebaseCopy = fetchPhraseAuditJson(
+      PHRASES_FUNCTION_URL + "?v=" + encodeURIComponent(metadata.version),
+      "Firebase phrases version " + metadata.version
+    );
+    if (!firebaseCopy.phrases) {
+      throw new Error("The Firebase phrases response did not contain phrases.");
+    }
+
+    var differences = comparePhraseCells(rows, firebaseCopy.phrases);
+    var sheetModifiedAt = DriveApp.getFileById(spreadsheet.getId())
+      .getLastUpdated()
+      .toISOString();
+    var html = buildPhraseAuditHtml({
+      firebasePublishedAt: metadata.publishedAt || null,
+      sheetModifiedAt: sheetModifiedAt,
+      sheetUrl: spreadsheet.getUrl(),
+      sheetId: sheet.getSheetId(),
+      differences: differences,
+    });
+
+    SpreadsheetApp.getUi().showModalDialog(
+      HtmlService.createHtmlOutput(html).setWidth(1000).setHeight(700),
+      "International Phrases audit"
+    );
+  } catch (error) {
+    notify(
+      "Could not compare International Phrases with Firebase.\n\n" +
+        (error && error.message ? error.message : String(error)),
+      "error"
+    );
+  }
+}
+
+function buildPhraseAuditHtml(audit) {
+  var safeAuditJson = JSON.stringify(audit)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+  var differenceCount = audit.differences.length;
+
+  return `
+    <!doctype html>
+    <html>
+      <head>
+        <base target="_blank">
+        <style>
+          * { box-sizing: border-box; }
+          html, body { height: 100%; }
+          body {
+            margin: 0;
+            color: #202124;
+            background: #fff;
+            font: 14px/1.45 Arial, sans-serif;
+          }
+          button, a { font: inherit; }
+          .audit {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: 16px;
+            height: 100%;
+            padding: 20px;
+          }
+          .dates {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+          }
+          .date {
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            padding: 12px;
+          }
+          .date strong { display: block; margin-bottom: 4px; }
+          .date time { color: #3c4043; }
+          .view {
+            min-height: 0;
+            border-top: 1px solid #dadce0;
+            padding-top: 16px;
+          }
+          .summary, .detail { height: 100%; }
+          .summary { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+          h1 { margin: 0 0 12px; font-size: 18px; }
+          .cell-list {
+            align-content: start;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            overflow: auto;
+            padding: 2px 4px 16px 2px;
+          }
+          .cell-button, .back-button {
+            border: 1px solid #1a73e8;
+            border-radius: 4px;
+            color: #1967d2;
+            background: #fff;
+            cursor: pointer;
+            padding: 6px 10px;
+          }
+          .cell-button:hover, .back-button:hover { background: #e8f0fe; }
+          .cell-button:focus-visible, .back-button:focus-visible,
+          .sheet-value:focus-visible { outline: 3px solid #8ab4f8; outline-offset: 2px; }
+          .empty { color: #5f6368; font-size: 16px; }
+          .detail { display: none; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+          .detail-header { display: flex; align-items: center; gap: 12px; }
+          .detail-header h1 { margin: 0; }
+          .values {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            min-height: 0;
+          }
+          .value-panel {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            min-width: 0;
+            min-height: 0;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+          .value-panel h2 {
+            margin: 0;
+            padding: 12px;
+            border-bottom: 1px solid #dadce0;
+            font-size: 15px;
+          }
+          .value {
+            margin: 0;
+            overflow: auto;
+            padding: 12px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font: 14px/1.5 Arial, sans-serif;
+          }
+          .sheet-value { color: inherit; text-decoration-color: #1a73e8; }
+          @media (max-width: 700px) {
+            .dates, .values { grid-template-columns: 1fr; }
+          }
+        </style>
+      </head>
+      <body>
+        <main class="audit">
+          <section class="dates" aria-label="Source dates">
+            <div class="date">
+              <strong>Firebase copy</strong>
+              <time id="firebase-date"></time>
+            </div>
+            <div class="date">
+              <strong>International Phrases spreadsheet</strong>
+              <time id="sheet-date"></time>
+            </div>
+          </section>
+          <section class="view">
+            <div class="summary" id="summary">
+              <h1>Differing cells: ` + differenceCount + `</h1>
+              <div class="cell-list" id="cell-list"></div>
+            </div>
+            <div class="detail" id="detail">
+              <div class="detail-header">
+                <button class="back-button" id="back" type="button">Back to list</button>
+                <h1 id="detail-title"></h1>
+              </div>
+              <div class="values">
+                <section class="value-panel">
+                  <h2>Firebase copy</h2>
+                  <pre class="value" id="firebase-value"></pre>
+                </section>
+                <section class="value-panel">
+                  <h2>International Phrases spreadsheet — click to edit</h2>
+                  <a class="value sheet-value" id="sheet-value" target="_blank" rel="noopener noreferrer"></a>
+                </section>
+              </div>
+            </div>
+          </section>
+        </main>
+        <script>
+          var audit = ` + safeAuditJson + `;
+
+          function formatLocalDate(iso) {
+            if (!iso) return "Unavailable";
+            var date = new Date(iso);
+            if (isNaN(date.getTime())) return "Unavailable";
+            var offsetMinutes = -date.getTimezoneOffset();
+            var sign = offsetMinutes >= 0 ? "+" : "-";
+            var absolute = Math.abs(offsetMinutes);
+            var offset = sign + String(Math.floor(absolute / 60)).padStart(2, "0") +
+              ":" + String(absolute % 60).padStart(2, "0");
+            return date.toLocaleString() + " (UTC" + offset + ")";
+          }
+
+          document.getElementById("firebase-date").textContent =
+            formatLocalDate(audit.firebasePublishedAt);
+          document.getElementById("sheet-date").textContent =
+            formatLocalDate(audit.sheetModifiedAt);
+
+          var list = document.getElementById("cell-list");
+          if (audit.differences.length === 0) {
+            var empty = document.createElement("p");
+            empty.className = "empty";
+            empty.textContent = "The Firebase copy and spreadsheet have no differing cells.";
+            list.appendChild(empty);
+          } else {
+            var fragment = document.createDocumentFragment();
+            audit.differences.forEach(function (difference, index) {
+              var button = document.createElement("button");
+              button.className = "cell-button";
+              button.type = "button";
+              button.textContent = difference.coordinate;
+              button.setAttribute("aria-label", "Inspect differing cell " + difference.coordinate);
+              button.addEventListener("click", function () { showDetail(index); });
+              fragment.appendChild(button);
+            });
+            list.appendChild(fragment);
+          }
+
+          function showDetail(index) {
+            var difference = audit.differences[index];
+            document.getElementById("detail-title").textContent =
+              "Differing cell: " + difference.coordinate;
+            document.getElementById("firebase-value").textContent = difference.firebaseValue;
+            var sheetValue = document.getElementById("sheet-value");
+            sheetValue.textContent = difference.sheetValue;
+            sheetValue.href = audit.sheetUrl.split("#")[0] + "#gid=" + audit.sheetId +
+              "&range=" + encodeURIComponent(difference.coordinate);
+            document.getElementById("summary").style.display = "none";
+            document.getElementById("detail").style.display = "grid";
+            document.getElementById("back").focus();
+          }
+
+          document.getElementById("back").addEventListener("click", function () {
+            document.getElementById("detail").style.display = "none";
+            document.getElementById("summary").style.display = "grid";
+          });
+        </script>
+      </body>
+    </html>`;
 }
 
 function showSpinner() {
@@ -1028,6 +1306,53 @@ function extractEnglishMap(rows) {
 
 function buildDiffPayload(english) {
   return { action: "diff", english: english };
+}
+
+function toA1Coordinate(column, row) {
+  var letters = "";
+  var current = column;
+  while (current > 0) {
+    var remainder = (current - 1) % 26;
+    letters = String.fromCharCode(65 + remainder) + letters;
+    current = Math.floor((current - 1) / 26);
+  }
+  return letters + row;
+}
+
+function comparePhraseCells(rows, firebasePhrases) {
+  if (rows.length < 2) return [];
+  var header = rows[0];
+  var keyIdx = header.indexOf("EE_LanguageCode");
+  if (keyIdx === -1) return [];
+  var phrases = firebasePhrases || {};
+  var differences = [];
+
+  for (var rowIdx = 1; rowIdx < rows.length; rowIdx++) {
+    var rawKey = rows[rowIdx][keyIdx] || "";
+    var key = rawKey.trim();
+    if (!key) continue;
+    var firebaseRow = phrases[key];
+
+    for (var colIdx = 0; colIdx < header.length; colIdx++) {
+      var sheetValue = rows[rowIdx][colIdx] || "";
+      var firebaseValue = "";
+
+      if (firebaseRow) {
+        if (colIdx === keyIdx) firebaseValue = key;
+        else if (header[colIdx]) firebaseValue = firebaseRow[header[colIdx]] || "";
+      }
+
+      if (sheetValue !== firebaseValue) {
+        differences.push({
+          coordinate: toA1Coordinate(colIdx + 1, rowIdx + 1),
+          firebaseValue: firebaseValue,
+          sheetValue: sheetValue,
+        });
+      }
+    }
+  }
+
+  return differences;
 }
 
 function extractActiveLanguages(rows) {
