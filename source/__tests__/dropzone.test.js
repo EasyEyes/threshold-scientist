@@ -182,6 +182,43 @@ describe("handleDrop — phrase file inside an export archive", () => {
   });
 });
 
+// ── Lax exports: *.lax.export.zip round-trips like any export archive ─────────
+
+describe("handleDrop — lax export archive (from Select file for export)", () => {
+  it("treats *.lax.export.zip as a compilable export archive, unchanged handling", async () => {
+    const { handleDrop } = require("../components/dropzone");
+    const { userRepoFiles } = require("../../threshold/preprocess/constants");
+    const { isExpTableFile } = require("../../threshold/preprocess/utils");
+
+    isExpTableFile.mockImplementation((f) => f.name === "myStudy.csv");
+    mockZipFiles = {
+      "myStudy.csv": "exp",
+      "Sloan.woff2": "font",
+    };
+
+    const laxArchive = new File(["zip"], "myStudy.lax.export.zip");
+    const handleExperimentFile = jest.fn();
+    const handleArchiveBool = jest.fn();
+    const handleArchiveZip = jest.fn();
+
+    await handleDrop(
+      MOCK_USER,
+      [laxArchive],
+      jest.fn(),
+      handleExperimentFile,
+      handleArchiveBool,
+      handleArchiveZip,
+    );
+
+    // Detected as an export archive by its *.export.zip suffix.
+    expect(handleArchiveBool).toHaveBeenCalledWith(true);
+    expect(handleArchiveZip).toHaveBeenCalledWith(laxArchive);
+    // The bundled spreadsheet is handed to the compile flow.
+    expect(userRepoFiles.experiment.name).toBe("myStudy.csv");
+    expect(handleExperimentFile).toHaveBeenCalledWith(userRepoFiles.experiment);
+  });
+});
+
 // ── Archive nesting: manually re-zipped exports wrap files in a folder ────────
 
 describe("handleDrop — export archive re-zipped inside a wrapping folder", () => {

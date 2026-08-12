@@ -25,6 +25,11 @@ module.exports = {
   moduleNameMapper: {
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
     "\\.(gif|ttf|eot|svg|png)$": "<rootDir>/__mocks__/fileMock.js",
+    // threshold/ has its own node_modules with duplicate copies of these
+    // packages. Map them to a single copy so a jest.mock() in a test applies
+    // to imports from source/ and threshold/ files alike.
+    "^file-saver$": "<rootDir>/node_modules/file-saver",
+    "^sweetalert2$": "<rootDir>/node_modules/sweetalert2",
   },
   transformIgnorePatterns: ["node_modules/(?!(sweetalert2)/)"],
 };

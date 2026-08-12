@@ -17,6 +17,7 @@ import {
   fetchPhraseFileFromResources,
 } from "../threshold/preprocess/gitlabUtils";
 import { buildArchiveResources } from "../threshold/preprocess/archiveResources";
+import { exportStudyBeforeCompiling } from "../threshold/preprocess/exportBeforeCompile";
 import { searchProjectByName } from "../threshold/preprocess/gitlabSearch";
 import { getTextFileDataFromGitLab } from "../threshold/preprocess/fileUtils";
 import { GitLabOAuthClient } from "../threshold/preprocess/auth/gitlabOAuthClient";
@@ -62,6 +63,7 @@ export default class Table extends Component {
     };
 
     this.onDrop = this.onDrop.bind(this);
+    this.onDropForExport = this.onDropForExport.bind(this);
 
     this.ref = createRef();
     this.dropZoneRef = createRef();
@@ -99,6 +101,28 @@ export default class Table extends Component {
       functions.handleArchivedExperimentBool,
       functions.handleZipArchive,
     );
+  }
+
+  async onDropForExport(files) {
+    // Exporting is deliberately tolerant and does not compile: whatever is
+    // wrong with the study will be caught when the export is eventually
+    // compiled. Any export failure is shown in the same list as compiler
+    // errors, disambiguated by the "Export error:" prefix (see render).
+    const exportErrors = await exportStudyBeforeCompiling(
+      this.props.user,
+      files,
+    );
+    if (exportErrors.length > 0) {
+      this.setState((prevState) => ({
+        // Keep any compiler errors on display (they are why the scientist is
+        // exporting), but replace stale export errors from earlier attempts.
+        errors: [
+          ...prevState.errors.filter((err) => err.context !== "export"),
+          ...exportErrors,
+        ],
+      }));
+      this.props.scrollToCurrentStep();
+    }
   }
 
   async handleTable(file) {
@@ -624,6 +648,11 @@ export default class Table extends Component {
           <ul>
             <li>Click SELECT FILE.</li>
           </ul>
+          To export your study as a lax.export.zip archive, without compiling
+          it, e.g. to share it or report a bug:
+          <ul>
+            <li>Click SELECT FILE FOR EXPORT to select your spreadsheet.</li>
+          </ul>
           Resources uploaded individually are stored in your Pavlovia account
           for future use. Resources in an export.zip are not.
           <FreshnessStatus
@@ -672,6 +701,20 @@ export default class Table extends Component {
             )}
           </Dropzone>
 
+          <Dropzone onDrop={this.onDropForExport}>
+            {({ getRootProps, getInputProps }) => (
+              <div
+                {...getRootProps({ className: "dropzone dropzone-export" })}
+                style={{
+                  visibility: this.state.showDropZone ? "visible" : "hidden",
+                }}
+              >
+                <input {...getInputProps()} />
+                <p className="dropzone-sub-text">Select file for export</p>
+              </div>
+            )}
+          </Dropzone>
+
           <div className="resource-buttons">{resourceButtons}</div>
         </div>
 
@@ -707,7 +750,13 @@ export default class Table extends Component {
                       </>
                     ) : null}
                     <span className={`error-name error-name-${error.kind}`}>
-                      {error.name}
+                      {/* Compiler and export errors share this display, so the
+                          red sentence states which one it is. */}
+                      {error.kind === "error"
+                        ? `${
+                            error.context === "export" ? "Export" : "Compiler"
+                          } error: ${error.name}`
+                        : error.name}
                     </span>
                   </p>
                   <i

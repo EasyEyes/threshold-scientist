@@ -17,6 +17,10 @@ jest.mock("../components/dropzone", () => ({
   handleDrop: jest.fn(),
 }));
 
+jest.mock("../../threshold/preprocess/exportBeforeCompile", () => ({
+  exportStudyBeforeCompiling: jest.fn().mockResolvedValue([]),
+}));
+
 jest.mock("../components/glossaryApi", () => ({
   fetchGlossaryData: jest.fn(),
   fetchGlossaryVersion: jest.fn(),
@@ -848,6 +852,145 @@ describe("Table.handleTable — glossary prefetch wiring", () => {
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
     expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Select file for export button", () => {
+  it("renders gray, immediately to the right of the green Select file button", () => {
+    const { container } = render(<Table {...makeProps()} />);
+    const dropzones = container.querySelectorAll(".file-zone .dropzone");
+
+    expect(dropzones).toHaveLength(2);
+    expect(dropzones[0].textContent).toBe("Select file");
+    expect(dropzones[0]).not.toHaveClass("dropzone-export");
+    expect(dropzones[1].textContent).toBe("Select file for export");
+    expect(dropzones[1]).toHaveClass("dropzone-export");
+  });
+});
+
+describe("Table.onDropForExport", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("hands the user and the selected files to the exporter", async () => {
+    const {
+      exportStudyBeforeCompiling,
+    } = require("../../threshold/preprocess/exportBeforeCompile");
+    exportStudyBeforeCompiling.mockResolvedValue([]);
+    const { act } = require("@testing-library/react");
+
+    const props = makeProps();
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+
+    const files = [new File(["a,b"], "exp.csv")];
+    await act(async () => {
+      await ref.current.onDropForExport(files);
+    });
+
+    expect(exportStudyBeforeCompiling).toHaveBeenCalledWith(props.user, files);
+  });
+
+  it("shows export errors after compiler errors, replacing stale export errors", async () => {
+    const {
+      exportStudyBeforeCompiling,
+    } = require("../../threshold/preprocess/exportBeforeCompile");
+    const { act } = require("@testing-library/react");
+    const compilerError = {
+      context: "preprocessor",
+      kind: "error",
+      name: "Unbalanced commas",
+    };
+    const staleExportError = {
+      context: "export",
+      kind: "error",
+      name: "Old export failure",
+    };
+    const newExportError = {
+      context: "export",
+      kind: "error",
+      name: "Export failed",
+    };
+    exportStudyBeforeCompiling.mockResolvedValue([newExportError]);
+
+    const props = makeProps();
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    act(() => {
+      ref.current.setState({ errors: [compilerError, staleExportError] });
+    });
+
+    await act(async () => {
+      await ref.current.onDropForExport([new File(["a,b"], "exp.csv")]);
+    });
+
+    expect(ref.current.state.errors).toEqual([compilerError, newExportError]);
+    expect(props.scrollToCurrentStep).toHaveBeenCalled();
+  });
+
+  it("leaves the displayed errors untouched when the export succeeds", async () => {
+    const {
+      exportStudyBeforeCompiling,
+    } = require("../../threshold/preprocess/exportBeforeCompile");
+    const { act } = require("@testing-library/react");
+    const compilerError = {
+      context: "preprocessor",
+      kind: "error",
+      name: "Unbalanced commas",
+    };
+    exportStudyBeforeCompiling.mockResolvedValue([]);
+
+    const props = makeProps();
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    act(() => {
+      ref.current.setState({ errors: [compilerError] });
+    });
+
+    await act(async () => {
+      await ref.current.onDropForExport([new File(["a,b"], "exp.csv")]);
+    });
+
+    expect(ref.current.state.errors).toEqual([compilerError]);
+    expect(props.scrollToCurrentStep).not.toHaveBeenCalled();
+  });
+});
+
+describe("Error label prefixes", () => {
+  it("labels red errors as Compiler or Export errors; warnings and success stay unlabeled", () => {
+    const { act } = require("@testing-library/react");
+    const ref = React.createRef();
+    const { container } = render(<Table ref={ref} {...makeProps()} />);
+
+    act(() => {
+      ref.current.setState({
+        errors: [
+          {
+            context: "preprocessor",
+            kind: "error",
+            name: "Unbalanced commas",
+          },
+          { context: "export", kind: "error", name: "Export failed" },
+          { context: "preprocessor", kind: "warning", name: "LOGGING CAUTION" },
+          {
+            context: "preprocessor",
+            kind: "correct",
+            name: "Compiled successfully.",
+          },
+        ],
+      });
+    });
+
+    const names = [...container.querySelectorAll(".error-name")].map(
+      (element) => element.textContent,
+    );
+    expect(names).toEqual([
+      "Compiler error: Unbalanced commas",
+      "Export error: Export failed",
+      "LOGGING CAUTION",
+      "Compiled successfully.",
+    ]);
   });
 });
 
