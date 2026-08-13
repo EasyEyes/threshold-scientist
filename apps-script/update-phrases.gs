@@ -14,17 +14,25 @@
  *   (Share button in the Apps Script IDE). Viewers must not be able to run it.
  */
 
-var PHRASES_FUNCTION_URL =
-  "https://easyeyes.app/.netlify/functions/phrases";
+var PHRASES_FUNCTION_URL = "https://easyeyes.app/.netlify/functions/phrases";
 var TRANSLATABLE_BACKGROUND = "#ffffff";
 
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("EasyEyes")
-    .addItem("Retranslate all white cells derived from changed English cells. Then update EasyEyes.", "updatePhrases")
-    .addItem("Retranslate the selected white cells. Then update EasyEyes.", "retranslateSelectedCells")
+    .addItem(
+      "Retranslate all white cells derived from changed English cells. Then update EasyEyes.",
+      "updatePhrases",
+    )
+    .addItem(
+      "Retranslate the selected white cells. Then update EasyEyes.",
+      "retranslateSelectedCells",
+    )
     .addItem("Check all cells. No update.", "checkPhraseKeys")
-    .addItem("Compare latest EasyEyes copy with this spreadsheet", "compareLatestEasyEyesCopy")
+    .addItem(
+      "Compare latest EasyEyes copy with this spreadsheet",
+      "compareLatestEasyEyesCopy",
+    )
     .addToUi();
 }
 
@@ -35,32 +43,37 @@ function notify(message, type, options) {
   var isError = type === "error";
 
   // Modern color palette
-  var colors = isSuccess ? {
-    bg: "#f0fdf4",
-    accent: "#16a34a",
-    text: "#166534",
-    border: "#dcfce7",
-    hoverDark: "#15803d"
-  } : isError ? {
-    bg: "#fef2f2",
-    accent: "#dc2626",
-    text: "#991b1b",
-    border: "#fecaca",
-    hoverDark: "#b91c1c"
-  } : {
-    bg: "#fffbeb",
-    accent: "#d97706",
-    text: "#92400e",
-    border: "#fef3c7",
-    hoverDark: "#b45309"
-  };
+  var colors = isSuccess
+    ? {
+        bg: "#f0fdf4",
+        accent: "#16a34a",
+        text: "#166534",
+        border: "#dcfce7",
+        hoverDark: "#15803d",
+      }
+    : isError
+    ? {
+        bg: "#fef2f2",
+        accent: "#dc2626",
+        text: "#991b1b",
+        border: "#fecaca",
+        hoverDark: "#b91c1c",
+      }
+    : {
+        bg: "#fffbeb",
+        accent: "#d97706",
+        text: "#92400e",
+        border: "#fef3c7",
+        hoverDark: "#b45309",
+      };
 
   var title = isSuccess ? "Success" : isError ? "Fatal error" : "Warning";
   var safeMsg = message
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-  var billingAction = options.showDeepLBillingAction ? `
+  var billingAction = options.showDeepLBillingAction
+    ? `
         <div class="billing-guidance">
           DeepL rejected the API key. An inactive subscription or billing issue
           is a possible cause. Sign in as <strong>denis.pelli@gmail.com</strong>.
@@ -71,9 +84,11 @@ function notify(message, type, options) {
           target="_blank"
           rel="noopener noreferrer"
         >Check DeepL billing</a>
-  ` : "";
+  `
+    : "";
 
-  var html = `
+  var html =
+    `
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
@@ -88,8 +103,12 @@ function notify(message, type, options) {
         padding: 16px;
       }
       .card {
-        background: ` + colors.bg + `;
-        border: 1.5px solid ` + colors.border + `;
+        background: ` +
+    colors.bg +
+    `;
+        border: 1.5px solid ` +
+    colors.border +
+    `;
         border-radius: 12px;
         padding: 8px 24px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -104,7 +123,9 @@ function notify(message, type, options) {
         width: 56px;
         height: 56px;
         margin: 0 auto 16px;
-        color: ` + colors.accent + `;
+        color: ` +
+    colors.accent +
+    `;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -114,20 +135,26 @@ function notify(message, type, options) {
       .title {
         font-size: 18px;
         font-weight: 600;
-        color: ` + colors.accent + `;
+        color: ` +
+    colors.accent +
+    `;
         margin-bottom: 10px;
         letter-spacing: -0.3px;
       }
       .message {
         font-size: 14px;
-        color: ` + colors.text + `;
+        color: ` +
+    colors.text +
+    `;
         line-height: 1.6;
         margin-bottom: 20px;
         word-break: break-word;
         white-space: pre-wrap;
       }
       .button {
-        background: ` + colors.accent + `;
+        background: ` +
+    colors.accent +
+    `;
         color: white;
         border: none;
         border-radius: 8px;
@@ -140,7 +167,9 @@ function notify(message, type, options) {
         letter-spacing: 0.3px;
       }
       .button:hover {
-        background: ` + colors.hoverDark + `;
+        background: ` +
+    colors.hoverDark +
+    `;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         transform: translateY(-2px);
       }
@@ -149,7 +178,9 @@ function notify(message, type, options) {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       .billing-guidance {
-        color: ` + colors.text + `;
+        color: ` +
+    colors.text +
+    `;
         font-size: 14px;
         line-height: 1.5;
         margin: 0 0 16px;
@@ -162,9 +193,15 @@ function notify(message, type, options) {
     </style>
     <div class="container">
       <div class="card">
-        <div class="icon-wrapper">` + (isSuccess ? "✅" : isError ? "⛔" : "⚠️") + `</div>
-        <div class="message">` + safeMsg + `</div>
-        ` + billingAction + `
+        <div class="icon-wrapper">` +
+    (isSuccess ? "✅" : isError ? "⛔" : "⚠️") +
+    `</div>
+        <div class="message">` +
+    safeMsg +
+    `</div>
+        ` +
+    billingAction +
+    `
         <button class="button" onclick="google.script.host.close()">OK</button>
       </div>
     </div>
@@ -173,7 +210,7 @@ function notify(message, type, options) {
   try {
     SpreadsheetApp.getUi().showModelessDialog(
       HtmlService.createHtmlOutput(html),
-      title
+      title,
     );
   } catch (e) {
     Logger.log("[phrases] " + message);
@@ -188,7 +225,7 @@ function fetchPhraseAuditJson(url, description) {
   var responseCode = response.getResponseCode();
   if (responseCode !== 200) {
     throw new Error(
-      "Failed to fetch " + description + " (" + responseCode + ")."
+      "Failed to fetch " + description + " (" + responseCode + ").",
     );
   }
   return JSON.parse(response.getContentText());
@@ -213,13 +250,14 @@ function compareLatestEasyEyesCopy() {
     // the data and publication date always describe the same Firebase copy.
     var metadata = fetchPhraseAuditJson(
       PHRASES_FUNCTION_URL + "?versionOnly=1&audit=" + Date.now(),
-      "the latest Firebase phrases version"
+      "the latest Firebase phrases version",
     );
-    if (!metadata.version) throw new Error("Firebase has no current phrases version.");
+    if (!metadata.version)
+      throw new Error("Firebase has no current phrases version.");
 
     var firebaseCopy = fetchPhraseAuditJson(
       PHRASES_FUNCTION_URL + "?v=" + encodeURIComponent(metadata.version),
-      "Firebase phrases version " + metadata.version
+      "Firebase phrases version " + metadata.version,
     );
     if (!firebaseCopy.phrases) {
       throw new Error("The Firebase phrases response did not contain phrases.");
@@ -239,13 +277,13 @@ function compareLatestEasyEyesCopy() {
 
     SpreadsheetApp.getUi().showModalDialog(
       HtmlService.createHtmlOutput(html).setWidth(1000).setHeight(700),
-      "International Phrases audit"
+      "International Phrases audit",
     );
   } catch (error) {
     notify(
       "Could not compare International Phrases with Firebase.\n\n" +
         (error && error.message ? error.message : String(error)),
-      "error"
+      "error",
     );
   }
 }
@@ -259,7 +297,8 @@ function buildPhraseAuditHtml(audit) {
     .replace(/\u2029/g, "\\u2029");
   var differenceCount = audit.differences.length;
 
-  return `
+  return (
+    `
     <!doctype html>
     <html>
       <head>
@@ -373,7 +412,9 @@ function buildPhraseAuditHtml(audit) {
           </section>
           <section class="view">
             <div class="summary" id="summary">
-              <h1>Differing cells: ` + differenceCount + `</h1>
+              <h1>Differing cells: ` +
+    differenceCount +
+    `</h1>
               <div class="cell-list" id="cell-list"></div>
             </div>
             <div class="detail" id="detail">
@@ -395,7 +436,9 @@ function buildPhraseAuditHtml(audit) {
           </section>
         </main>
         <script>
-          var audit = ` + safeAuditJson + `;
+          var audit = ` +
+    safeAuditJson +
+    `;
 
           function formatLocalDate(iso) {
             if (!iso) return "Unavailable";
@@ -454,11 +497,12 @@ function buildPhraseAuditHtml(audit) {
           });
         </script>
       </body>
-    </html>`;
+    </html>`
+  );
 }
 
 function showSpinner() {
-  CacheService.getUserCache().remove('spinnerProgress');
+  CacheService.getUserCache().remove("spinnerProgress");
   var html = `
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -504,7 +548,7 @@ function showSpinner() {
   try {
     SpreadsheetApp.getUi().showModelessDialog(
       HtmlService.createHtmlOutput(html).setHeight(155).setWidth(200),
-      "Translating …"
+      "Translating …",
     );
   } catch (e) {
     Logger.log("[phrases] showSpinner");
@@ -512,7 +556,7 @@ function showSpinner() {
 }
 
 function getSpinnerProgress() {
-  return CacheService.getUserCache().get('spinnerProgress') || '';
+  return CacheService.getUserCache().get("spinnerProgress") || "";
 }
 
 function updatePhrases() {
@@ -524,18 +568,18 @@ function fullResyncPhrases() {
 }
 
 function pushPhrases(isFullResync) {
-  var secret = PropertiesService.getScriptProperties().getProperty(
-    "PHRASES_SECRET"
-  );
+  var secret =
+    PropertiesService.getScriptProperties().getProperty("PHRASES_SECRET");
   if (!secret) {
     notify(
       "PHRASES_SECRET is not set in Script Properties. " +
-        "Add it under File > Project settings > Script properties."
+        "Add it under File > Project settings > Script properties.",
     );
     return;
   }
 
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
+  var sheet =
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
   if (!sheet) {
     notify('Sheet "Translations" not found.');
     return;
@@ -554,7 +598,7 @@ function pushPhrases(isFullResync) {
         "The International Phrases has duplicate phrase keys. Each key must be " +
         "unique. Please remove or rename the following duplicate key(s) and " +
         "try again:\n\n" +
-        duplicateKeys.join("\n")
+        duplicateKeys.join("\n"),
     );
     return;
   }
@@ -565,7 +609,7 @@ function pushPhrases(isFullResync) {
   var diffOptions = buildFetchOptions(secret, diffPayload);
 
   console.log("[phrases] Phase 1: POSTing diff to: " + PHRASES_FUNCTION_URL);
-  var diffResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, diffOptions);
+  var diffResponse = fetchPhrasesWithRetry(PHRASES_FUNCTION_URL, diffOptions);
   var diffCode = diffResponse.getResponseCode();
   var diffText = diffResponse.getContentText();
   console.log("[phrases] Phase 1 response code: " + diffCode);
@@ -601,35 +645,67 @@ function pushPhrases(isFullResync) {
       activeLanguages: activeLanguages,
       currentVersion: currentVersion,
     };
-    console.log("[phrases] Non-white step: POSTing to: " + PHRASES_FUNCTION_URL);
-    var nonWhiteResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, nonWhitePayload));
+    console.log(
+      "[phrases] Non-white step: POSTing to: " + PHRASES_FUNCTION_URL,
+    );
+    var nonWhiteResponse = fetchPhrasesWithRetry(
+      PHRASES_FUNCTION_URL,
+      buildFetchOptions(secret, nonWhitePayload),
+    );
     var nonWhiteCode = nonWhiteResponse.getResponseCode();
     var nonWhiteText = nonWhiteResponse.getContentText();
     console.log("[phrases] Non-white step response code: " + nonWhiteCode);
 
     if (nonWhiteCode === 409) {
-      var retryVersionResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL + "?versionOnly", {
-        method: "get",
-        muteHttpExceptions: true,
-      });
+      var retryVersionResponse = fetchPhrasesWithRetry(
+        PHRASES_FUNCTION_URL + "?versionOnly",
+        {
+          method: "get",
+          muteHttpExceptions: true,
+        },
+      );
       if (retryVersionResponse.getResponseCode() !== 200) {
-        notify("Non-white update had a version conflict and the version re-fetch failed. Please try again.");
+        notify(
+          "Non-white update had a version conflict and the version re-fetch failed. Please try again.",
+        );
         return;
       }
-      currentVersion = JSON.parse(retryVersionResponse.getContentText()).version;
+      currentVersion = JSON.parse(
+        retryVersionResponse.getContentText(),
+      ).version;
       nonWhitePayload.currentVersion = currentVersion;
-      nonWhiteResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, nonWhitePayload));
+      nonWhiteResponse = fetchPhrasesWithRetry(
+        PHRASES_FUNCTION_URL,
+        buildFetchOptions(secret, nonWhitePayload),
+      );
       nonWhiteCode = nonWhiteResponse.getResponseCode();
       nonWhiteText = nonWhiteResponse.getContentText();
-      console.log("[phrases] Non-white step retry response code: " + nonWhiteCode);
+      console.log(
+        "[phrases] Non-white step retry response code: " + nonWhiteCode,
+      );
     }
 
     if (nonWhiteCode !== 200) {
-      notify("Non-white values update failed (" + nonWhiteCode + "): " + nonWhiteText);
+      notify(
+        "Non-white values update failed (" +
+          nonWhiteCode +
+          "): " +
+          nonWhiteText,
+      );
       return;
     }
 
-    var nonWhiteResult = JSON.parse(nonWhiteText);
+    var nonWhiteResult;
+    try {
+      nonWhiteResult = parseVerifiedPhrasesResult(nonWhiteText);
+    } catch (e) {
+      notify(
+        "Fatal error: the phrases API did not verify the non-white update.\n\n" +
+          e.message,
+        "error",
+      );
+      return;
+    }
     if (nonWhiteResult.newVersion !== currentVersion) {
       nonWhiteChanged = true;
       currentVersion = nonWhiteResult.newVersion;
@@ -651,7 +727,7 @@ function pushPhrases(isFullResync) {
     backgrounds,
     changedKeys,
     currentVersion,
-    isFullResync
+    isFullResync,
   );
 
   var action = translatePayload.action;
@@ -669,7 +745,11 @@ function pushPhrases(isFullResync) {
   showSpinner();
   for (var b = 0; b < totalBatches; b++) {
     if (totalBatches > 1) {
-      CacheService.getUserCache().put('spinnerProgress', (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done", 60);
+      CacheService.getUserCache().put(
+        "spinnerProgress",
+        b * BATCH_SIZE + " of " + allKeys.length + " phrases done",
+        60,
+      );
     }
     var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
 
@@ -692,28 +772,59 @@ function pushPhrases(isFullResync) {
       currentVersion: newVersion,
     };
 
-    console.log("[phrases] Phase 2 batch " + (b + 1) + "/" + totalBatches + ": POSTing to: " + PHRASES_FUNCTION_URL);
-    var translateResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, batchPayload));
+    console.log(
+      "[phrases] Phase 2 batch " +
+        (b + 1) +
+        "/" +
+        totalBatches +
+        ": POSTing to: " +
+        PHRASES_FUNCTION_URL,
+    );
+    var translateResponse = fetchPhrasesWithRetry(
+      PHRASES_FUNCTION_URL,
+      buildFetchOptions(secret, batchPayload),
+    );
     var translateCode = translateResponse.getResponseCode();
     var translateText = translateResponse.getContentText();
-    console.log("[phrases] Phase 2 batch " + (b + 1) + " response code: " + translateCode);
+    console.log(
+      "[phrases] Phase 2 batch " + (b + 1) + " response code: " + translateCode,
+    );
 
     if (translateCode === 409) {
-      var retryVersion = UrlFetchApp.fetch(PHRASES_FUNCTION_URL + "?versionOnly", {
-        method: "get",
-        muteHttpExceptions: true,
-      });
+      var retryVersion = fetchPhrasesWithRetry(
+        PHRASES_FUNCTION_URL + "?versionOnly",
+        {
+          method: "get",
+          muteHttpExceptions: true,
+        },
+      );
       if (retryVersion.getResponseCode() !== 200) {
-        notify("Batch " + (b + 1) + " of " + totalBatches + " had a version conflict and the version re-fetch failed.\n\n" +
-               "Completed " + totalCellCount + " cell(s). Please try again.");
+        notify(
+          "Batch " +
+            (b + 1) +
+            " of " +
+            totalBatches +
+            " had a version conflict and the version re-fetch failed.\n\n" +
+            "Completed " +
+            totalCellCount +
+            " cell(s). Please try again.",
+        );
         return;
       }
       newVersion = JSON.parse(retryVersion.getContentText()).version;
       batchPayload.currentVersion = newVersion;
-      translateResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, batchPayload));
+      translateResponse = fetchPhrasesWithRetry(
+        PHRASES_FUNCTION_URL,
+        buildFetchOptions(secret, batchPayload),
+      );
       translateCode = translateResponse.getResponseCode();
       translateText = translateResponse.getContentText();
-      console.log("[phrases] Phase 2 batch " + (b + 1) + " retry response code: " + translateCode);
+      console.log(
+        "[phrases] Phase 2 batch " +
+          (b + 1) +
+          " retry response code: " +
+          translateCode,
+      );
     }
 
     if (translateCode === 400) {
@@ -723,34 +834,64 @@ function pushPhrases(isFullResync) {
       } catch (e) {
         errMsg = translateText;
       }
-      notify("Phrases push rejected: " + errMsg +
-             "\n\nCompleted " + totalCellCount + " cell(s) before failure.");
+      notify(
+        "Phrases push rejected: " +
+          errMsg +
+          "\n\nCompleted " +
+          totalCellCount +
+          " cell(s) before failure.",
+      );
       return;
     }
 
     if (translateCode !== 200) {
       var translateFailure = classifyPhrasesApiFailure(translateText);
-      notify("EasyEyes was NOT updated. No new phrases version was created.\n\n" +
-             "Batch " + (b + 1) + " of " + totalBatches + " failed (" + translateCode + "): " + translateFailure.message +
-             "\n\nCompleted " + totalCellCount + " cell(s) before failure.",
-             translateFailure.isFatal ? "error" : "warning",
-             { showDeepLBillingAction: translateFailure.showDeepLBillingAction });
+      notify(
+        "EasyEyes was NOT updated. No new phrases version was created.\n\n" +
+          "Batch " +
+          (b + 1) +
+          " of " +
+          totalBatches +
+          " failed (" +
+          translateCode +
+          "): " +
+          translateFailure.message +
+          "\n\nCompleted " +
+          totalCellCount +
+          " cell(s) before failure.",
+        translateFailure.isFatal ? "error" : "warning",
+        { showDeepLBillingAction: translateFailure.showDeepLBillingAction },
+      );
       return;
     }
 
-    var translateResult = JSON.parse(translateText);
+    var translateResult;
+    try {
+      translateResult = parseVerifiedPhrasesResult(translateText);
+    } catch (e) {
+      notify(
+        "Fatal error: the phrases API did not verify batch " +
+          (b + 1) +
+          ".\n\n" +
+          e.message,
+        "error",
+      );
+      return;
+    }
     newVersion = translateResult.newVersion;
 
     // Write-back: update target-language cells only
     var writes = planWriteBack(translateResult.translatedRows || {}, rows);
-    for (var j = 0; j < writes.length; j++) {
-      var w = writes[j];
-      try {
-        // Sheet rows and columns are 1-indexed; our indices are 0-indexed
-        sheet.getRange(w.rowIndex + 1, w.colIndex + 1).setValue(w.value);
-      } catch (e) {
-        Logger.log("[phrases] Write-back failed for rowIndex=" + w.rowIndex + " colIndex=" + w.colIndex + ": " + e);
-      }
+    try {
+      writeAndVerifySheetValues(sheet, writes);
+    } catch (e) {
+      notify(
+        "Fatal error: EasyEyes saved the phrase version, but the spreadsheet write-back could not be verified.\n\n" +
+          e.message +
+          "\n\nVerified partial writes were left in place. Retry the operation safely.",
+        "error",
+      );
+      return;
     }
     totalCellCount += writes.length;
   }
@@ -761,27 +902,30 @@ function pushPhrases(isFullResync) {
     notify(
       "Warning: the following phrase keys have no translatable (white) " +
         "target-language cells and were not translated:\n" +
-        missingKeys.join(", ")
+        missingKeys.join(", "),
     );
   } else {
     var label = isFullResync ? "Full Resync" : "update";
-    notify("Phrases " + label + " complete. New version: " + newVersion, "success");
+    notify(
+      "Phrases " + label + " complete. New version: " + newVersion,
+      "success",
+    );
   }
 }
 
 function retranslateSelectedCells() {
-  var secret = PropertiesService.getScriptProperties().getProperty(
-    "PHRASES_SECRET"
-  );
+  var secret =
+    PropertiesService.getScriptProperties().getProperty("PHRASES_SECRET");
   if (!secret) {
     notify(
       "PHRASES_SECRET is not set in Script Properties. " +
-        "Add it under File > Project settings > Script properties."
+        "Add it under File > Project settings > Script properties.",
     );
     return;
   }
 
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
+  var sheet =
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
   if (!sheet) {
     notify('Sheet "Translations" not found.');
     return;
@@ -801,7 +945,9 @@ function retranslateSelectedCells() {
   var keyIdx = header.indexOf("EE_LanguageCode");
   var enIdx = header.indexOf("en");
   if (keyIdx === -1 || enIdx === -1) {
-    notify('Required columns "EE_LanguageCode" and "en" not found in header row.');
+    notify(
+      'Required columns "EE_LanguageCode" and "en" not found in header row.',
+    );
     return;
   }
 
@@ -855,22 +1001,26 @@ function retranslateSelectedCells() {
 
   var nonWhiteWarning =
     nonWhiteCells.length > 0
-      ? "Skipped " + nonWhiteCells.length +
+      ? "Skipped " +
+        nonWhiteCells.length +
         " non-white cells. Change their background to white to include them."
       : "";
 
   if (whiteCells.length === 0) {
     notify(
       "No translatable cells found in selection." +
-        (nonWhiteWarning ? "\n\n" + nonWhiteWarning : "")
+        (nonWhiteWarning ? "\n\n" + nonWhiteWarning : ""),
     );
     return;
   }
 
-  var versionResponse = UrlFetchApp.fetch(PHRASES_FUNCTION_URL + "?versionOnly", {
-    method: "get",
-    muteHttpExceptions: true,
-  });
+  var versionResponse = fetchPhrasesWithRetry(
+    PHRASES_FUNCTION_URL + "?versionOnly",
+    {
+      method: "get",
+      muteHttpExceptions: true,
+    },
+  );
   if (versionResponse.getResponseCode() !== 200) {
     notify("Failed to fetch current phrase version. Please try again.");
     return;
@@ -900,7 +1050,11 @@ function retranslateSelectedCells() {
   showSpinner();
   for (var b = 0; b < totalBatches; b++) {
     if (totalBatches > 1) {
-      CacheService.getUserCache().put('spinnerProgress', (b * BATCH_SIZE) + " of " + allKeys.length + " phrases done", 60);
+      CacheService.getUserCache().put(
+        "spinnerProgress",
+        b * BATCH_SIZE + " of " + allKeys.length + " phrases done",
+        60,
+      );
     }
     var batchKeys = allKeys.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
 
@@ -923,51 +1077,115 @@ function retranslateSelectedCells() {
       currentVersion: currentVersion,
     };
 
-    console.log("[phrases] Re-translate batch " + (b + 1) + "/" + totalBatches + ": POSTing to: " + PHRASES_FUNCTION_URL);
-    var response = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, payload));
+    console.log(
+      "[phrases] Re-translate batch " +
+        (b + 1) +
+        "/" +
+        totalBatches +
+        ": POSTing to: " +
+        PHRASES_FUNCTION_URL,
+    );
+    var response = fetchPhrasesWithRetry(
+      PHRASES_FUNCTION_URL,
+      buildFetchOptions(secret, payload),
+    );
     var responseCode = response.getResponseCode();
     var responseText = response.getContentText();
-    console.log("[phrases] Re-translate batch " + (b + 1) + " response code: " + responseCode);
+    console.log(
+      "[phrases] Re-translate batch " +
+        (b + 1) +
+        " response code: " +
+        responseCode,
+    );
 
     if (responseCode === 409) {
-      var retryVersion = UrlFetchApp.fetch(PHRASES_FUNCTION_URL + "?versionOnly", {
-        method: "get",
-        muteHttpExceptions: true,
-      });
+      var retryVersion = fetchPhrasesWithRetry(
+        PHRASES_FUNCTION_URL + "?versionOnly",
+        {
+          method: "get",
+          muteHttpExceptions: true,
+        },
+      );
       if (retryVersion.getResponseCode() !== 200) {
-        notify("Batch " + (b + 1) + " of " + totalBatches + " had a version conflict and the version re-fetch failed.\n\n" +
-               "Completed " + totalCellCount + " of " + whiteCells.length + " cells. Please retry the remaining selection.");
+        notify(
+          "Batch " +
+            (b + 1) +
+            " of " +
+            totalBatches +
+            " had a version conflict and the version re-fetch failed.\n\n" +
+            "Completed " +
+            totalCellCount +
+            " of " +
+            whiteCells.length +
+            " cells. Please retry the remaining selection.",
+        );
         return;
       }
       currentVersion = JSON.parse(retryVersion.getContentText()).version;
       payload.currentVersion = currentVersion;
-      response = UrlFetchApp.fetch(PHRASES_FUNCTION_URL, buildFetchOptions(secret, payload));
+      response = fetchPhrasesWithRetry(
+        PHRASES_FUNCTION_URL,
+        buildFetchOptions(secret, payload),
+      );
       responseCode = response.getResponseCode();
       responseText = response.getContentText();
-      console.log("[phrases] Re-translate batch " + (b + 1) + " retry response code: " + responseCode);
+      console.log(
+        "[phrases] Re-translate batch " +
+          (b + 1) +
+          " retry response code: " +
+          responseCode,
+      );
     }
 
     if (responseCode !== 200) {
       var responseFailure = classifyPhrasesApiFailure(responseText);
-      notify("EasyEyes was NOT updated. No new phrases version was created.\n\n" +
-             "Batch " + (b + 1) + " of " + totalBatches + " failed (" + responseCode + "): " + responseFailure.message +
-             "\n\nCompleted " + totalCellCount + " of " + whiteCells.length + " cells before failure.",
-             responseFailure.isFatal ? "error" : "warning",
-             { showDeepLBillingAction: responseFailure.showDeepLBillingAction });
+      notify(
+        "EasyEyes was NOT updated. No new phrases version was created.\n\n" +
+          "Batch " +
+          (b + 1) +
+          " of " +
+          totalBatches +
+          " failed (" +
+          responseCode +
+          "): " +
+          responseFailure.message +
+          "\n\nCompleted " +
+          totalCellCount +
+          " of " +
+          whiteCells.length +
+          " cells before failure.",
+        responseFailure.isFatal ? "error" : "warning",
+        { showDeepLBillingAction: responseFailure.showDeepLBillingAction },
+      );
       return;
     }
 
-    var result = JSON.parse(responseText);
+    var result;
+    try {
+      result = parseVerifiedPhrasesResult(responseText);
+    } catch (e) {
+      notify(
+        "Fatal error: the phrases API did not verify batch " +
+          (b + 1) +
+          ".\n\n" +
+          e.message,
+        "error",
+      );
+      return;
+    }
     currentVersion = result.newVersion;
 
     var writes = planWriteBack(result.translatedRows || {}, rows);
-    for (var j = 0; j < writes.length; j++) {
-      var w = writes[j];
-      try {
-        sheet.getRange(w.rowIndex + 1, w.colIndex + 1).setValue(w.value);
-      } catch (e) {
-        Logger.log("[phrases] Write-back failed for rowIndex=" + w.rowIndex + " colIndex=" + w.colIndex + ": " + e);
-      }
+    try {
+      writeAndVerifySheetValues(sheet, writes);
+    } catch (e) {
+      notify(
+        "Fatal error: EasyEyes saved the phrase version, but the spreadsheet write-back could not be verified.\n\n" +
+          e.message +
+          "\n\nVerified partial writes were left in place. Retry the operation safely.",
+        "error",
+      );
+      return;
     }
     totalCellCount += writes.length;
   }
@@ -978,7 +1196,7 @@ function retranslateSelectedCells() {
       " cell(s). New version: " +
       currentVersion +
       (nonWhiteWarning ? "\n\n⚠️ " + nonWhiteWarning : ""),
-    "success"
+    "success",
   );
 }
 
@@ -990,6 +1208,109 @@ function extractPhrasesApiError(responseText) {
   }
 }
 
+function fetchPhrasesWithRetry(url, options) {
+  var response;
+  var lastError;
+  for (var attempt = 0; attempt < 3; attempt++) {
+    try {
+      response = UrlFetchApp.fetch(url, options);
+      var code = response.getResponseCode();
+      if (code !== 429 && code < 500) return response;
+      lastError = new Error("Phrases API returned HTTP " + code + ".");
+    } catch (e) {
+      lastError = e;
+    }
+    if (attempt < 2) Utilities.sleep(250 * (attempt + 1));
+  }
+  if (response) return response;
+  throw lastError;
+}
+
+function parseVerifiedPhrasesResult(responseText) {
+  var parsed;
+  try {
+    parsed = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error("The phrases API returned invalid JSON.");
+  }
+  if (!parsed || parsed.verified !== true) {
+    throw new Error("The phrases API did not confirm persisted data.");
+  }
+  return parsed;
+}
+
+function findUnverifiedSheetWrites(sheet, writes) {
+  var failures = [];
+  for (var i = 0; i < writes.length; i++) {
+    var write = writes[i];
+    var range = sheet.getRange(write.rowIndex + 1, write.colIndex + 1);
+    var actual = String(range.getDisplayValue());
+    var expected = String(write.value);
+    if (actual !== expected) {
+      failures.push({
+        coordinate: toA1Coordinate(write.colIndex + 1, write.rowIndex + 1),
+        expected: expected,
+        actual: actual,
+      });
+    }
+  }
+  return failures;
+}
+
+function writeAndVerifySheetValues(sheet, writes) {
+  var remaining = writes.slice();
+  for (var attempt = 0; attempt < 3 && remaining.length > 0; attempt++) {
+    for (var i = 0; i < remaining.length; i++) {
+      var write = remaining[i];
+      try {
+        sheet
+          .getRange(write.rowIndex + 1, write.colIndex + 1)
+          .setValue(write.value);
+      } catch (e) {
+        Logger.log(
+          "[phrases] Spreadsheet write attempt " +
+            (attempt + 1) +
+            " failed at " +
+            toA1Coordinate(write.colIndex + 1, write.rowIndex + 1) +
+            ": " +
+            e,
+        );
+      }
+    }
+    SpreadsheetApp.flush();
+    var failures = findUnverifiedSheetWrites(sheet, remaining);
+    var failedCoordinates = {};
+    for (var f = 0; f < failures.length; f++) {
+      failedCoordinates[failures[f].coordinate] = true;
+    }
+    remaining = remaining.filter(function (write) {
+      return failedCoordinates[
+        toA1Coordinate(write.colIndex + 1, write.rowIndex + 1)
+      ];
+    });
+    if (remaining.length > 0 && attempt < 2)
+      Utilities.sleep(200 * (attempt + 1));
+  }
+  var unverified = findUnverifiedSheetWrites(sheet, remaining);
+  if (unverified.length > 0) {
+    throw new Error(
+      "Unverified spreadsheet cells:\n" +
+        unverified
+          .map(function (failure) {
+            return (
+              failure.coordinate +
+              ': expected "' +
+              failure.expected +
+              '", read back "' +
+              failure.actual +
+              '"'
+            );
+          })
+          .join("\n"),
+    );
+  }
+}
+
 function classifyPhrasesApiFailure(responseText) {
   var parsed;
   try {
@@ -998,10 +1319,9 @@ function classifyPhrasesApiFailure(responseText) {
     parsed = null;
   }
 
+  var isFatalFailure = parsed && parsed.fatal === true;
   var isDeepLFailure =
-    parsed &&
-    parsed.code === "DEEPL_TRANSLATION_FAILED" &&
-    parsed.fatal === true;
+    isFatalFailure && parsed.code === "DEEPL_TRANSLATION_FAILED";
 
   return {
     message:
@@ -1009,14 +1329,15 @@ function classifyPhrasesApiFailure(responseText) {
       (parsed && parsed.technicalDetail
         ? "\n\nTechnical detail: " + parsed.technicalDetail
         : ""),
-    isFatal: Boolean(isDeepLFailure),
+    isFatal: Boolean(isFatalFailure),
     showDeepLBillingAction:
       Boolean(isDeepLFailure) && parsed.deeplStatus === 403,
   };
 }
 
 function checkPhraseKeys() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
+  var sheet =
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
   if (!sheet) {
     notify('Sheet "Translations" not found.');
     return;
@@ -1049,14 +1370,22 @@ function checkPhraseKeys() {
   sections.push(checkOrphanRows(rows));
   sections.push(checkDuplicateEnglishText(rows));
 
-  sections = sections.filter(function (s) { return s; });
+  sections = sections.filter(function (s) {
+    return s;
+  });
 
   if (sections.length === 0) {
-    notify("No potential problems found in the International Phrases.", "success");
+    notify(
+      "No potential problems found in the International Phrases.",
+      "success",
+    );
     return;
   }
 
-  notify("Found potential problems in the International Phrases:\n\n" + sections.join("\n\n"));
+  notify(
+    "Found potential problems in the International Phrases:\n\n" +
+      sections.join("\n\n"),
+  );
 }
 
 // ─── Individual phrase-key checks (each returns a report section, or "") ──────
@@ -1078,8 +1407,11 @@ function checkExactDuplicateKeys(rows) {
     if (rowsByKey[k].length > 1) lines.push(k);
   });
   if (!lines.length) return "";
-  return "Duplicate keys (exact). Only one row receives the translation; the " +
-    "others are left blank:\n" + lines.sort().join("\n");
+  return (
+    "Duplicate keys (exact). Only one row receives the translation; the " +
+    "others are left blank:\n" +
+    lines.sort().join("\n")
+  );
 }
 
 // Returns the sorted list of trimmed keys that appear in more than one row.
@@ -1114,8 +1446,11 @@ function checkKeyLeadingTrailingSpaces(rows) {
     if (raw !== key) lines.push('"' + raw + '"');
   }
   if (!lines.length) return "";
-  return "Keys with leading/trailing spaces (trimmed before use, so they collide " +
-    "with the un-spaced spelling):\n" + lines.sort().join("\n");
+  return (
+    "Keys with leading/trailing spaces (trimmed before use, so they collide " +
+    "with the un-spaced spelling):\n" +
+    lines.sort().join("\n")
+  );
 }
 
 // Keys containing invisible / look-alike characters that survive .trim() and
@@ -1139,8 +1474,11 @@ function checkKeyInvisibleChars(rows) {
     if (found.length) lines.push(key + " (" + found.join(", ") + ")");
   }
   if (!lines.length) return "";
-  return "Keys containing invisible/look-alike characters (they never match the " +
-    "visually identical key):\n" + lines.sort().join("\n");
+  return (
+    "Keys containing invisible/look-alike characters (they never match the " +
+    "visually identical key):\n" +
+    lines.sort().join("\n")
+  );
 }
 
 // Keys with a regular space somewhere inside the trimmed key (e.g. "my key").
@@ -1154,7 +1492,10 @@ function checkKeyInteriorSpaces(rows) {
     if (key.indexOf(" ") !== -1) lines.push(key);
   }
   if (!lines.length) return "";
-  return "Keys containing interior spaces (almost always a typo):\n" + lines.sort().join("\n");
+  return (
+    "Keys containing interior spaces (almost always a typo):\n" +
+    lines.sort().join("\n")
+  );
 }
 
 // Two or more target columns sharing the same header. Write-back uses
@@ -1162,7 +1503,7 @@ function checkKeyInteriorSpaces(rows) {
 function checkDuplicateLanguageColumns(rows) {
   var header = rows[0];
   var firstSeen = {}; // name -> first column number
-  var dups = {};      // name -> [column numbers]
+  var dups = {}; // name -> [column numbers]
   for (var h = 0; h < header.length; h++) {
     var name = (header[h] || "").trim();
     if (!name) continue;
@@ -1178,25 +1519,40 @@ function checkDuplicateLanguageColumns(rows) {
     lines.push(n + " — columns " + dups[n].join(", "));
   });
   if (!lines.length) return "";
-  return "Duplicate column headers. Only the first column is written; the rest are " +
-    "ignored on write-back:\n" + lines.sort().join("\n");
+  return (
+    "Duplicate column headers. Only the first column is written; the rest are " +
+    "ignored on write-back:\n" +
+    lines.sort().join("\n")
+  );
 }
 
 // Keys that do not start with one of the project's expected prefixes.
 function checkKeyNamingConvention(rows) {
-  var ALLOWED_PREFIXES = ["EE_", "RC_", "T_", "x", "_DOCUMENTATION_OF_THIS_TABLE"]; // edit to match the project's key prefixes
+  var ALLOWED_PREFIXES = [
+    "EE_",
+    "RC_",
+    "T_",
+    "x",
+    "_DOCUMENTATION_OF_THIS_TABLE",
+  ]; // edit to match the project's key prefixes
   var keyIdx = rows[0].indexOf("EE_LanguageCode");
   if (keyIdx === -1) return "";
   var lines = [];
   for (var i = 1; i < rows.length; i++) {
     var key = (rows[i][keyIdx] || "").trim();
     if (!key) continue;
-    var ok = ALLOWED_PREFIXES.some(function (p) { return key.indexOf(p) === 0; });
+    var ok = ALLOWED_PREFIXES.some(function (p) {
+      return key.indexOf(p) === 0;
+    });
     if (!ok) lines.push(key);
   }
   if (!lines.length) return "";
-  return "Keys not starting with an expected prefix (" + ALLOWED_PREFIXES.join(", ") +
-    "):\n" + lines.sort().join("\n");
+  return (
+    "Keys not starting with an expected prefix (" +
+    ALLOWED_PREFIXES.join(", ") +
+    "):\n" +
+    lines.sort().join("\n")
+  );
 }
 
 // Keys whose English (en) source cell is empty — nothing to translate.
@@ -1211,8 +1567,10 @@ function checkMissingEnglishSource(rows) {
     if (!(rows[i][enIdx] || "").trim()) lines.push(key);
   }
   if (!lines.length) return "";
-  return "Keys with an empty English (en) source cell (nothing to translate):\n" +
-    lines.sort().join("\n");
+  return (
+    "Keys with an empty English (en) source cell (nothing to translate):\n" +
+    lines.sort().join("\n")
+  );
 }
 
 // Empty white target-language cells may indicate that translation failed.
@@ -1229,15 +1587,18 @@ function checkEmptyTranslationCells(rows, backgrounds) {
     for (var h = 0; h < header.length; h++) {
       var language = (header[h] || "").trim();
       if (!language || h === keyIdx || h === enIdx) continue;
-      if (!isTranslatableBackground(backgrounds[i] && backgrounds[i][h])) continue;
+      if (!isTranslatableBackground(backgrounds[i] && backgrounds[i][h]))
+        continue;
       if ((rows[i][h] || "").trim()) continue;
 
       lines.push(key + " — " + language);
     }
   }
   if (!lines.length) return "";
-  return "Empty translatable cells (possible failed translations):\n" +
-    lines.sort().join("\n");
+  return (
+    "Empty translatable cells (possible failed translations):\n" +
+    lines.sort().join("\n")
+  );
 }
 
 // Rows that have content in some column but no key — silently skipped on every
@@ -1251,13 +1612,19 @@ function checkOrphanRows(rows) {
     var hasContent = false;
     for (var h = 0; h < rows[i].length; h++) {
       if (h === keyIdx) continue;
-      if ((rows[i][h] || "").trim()) { hasContent = true; break; }
+      if ((rows[i][h] || "").trim()) {
+        hasContent = true;
+        break;
+      }
     }
     if (hasContent) lines.push("row " + (i + 1));
   }
   if (!lines.length) return "";
-  return "Rows with content but no key in the EE_LanguageCode column (silently skipped on " +
-    "every push):\n" + lines.join("\n");
+  return (
+    "Rows with content but no key in the EE_LanguageCode column (silently skipped on " +
+    "every push):\n" +
+    lines.join("\n")
+  );
 }
 
 // Identical English source text under different keys — possible redundancy.
@@ -1272,7 +1639,10 @@ function checkDuplicateEnglishText(rows) {
     if (!key) continue;
     var text = (rows[i][enIdx] || "").trim();
     if (!text) continue;
-    if (!keysByText[text]) { keysByText[text] = {}; rowsByText[text] = []; }
+    if (!keysByText[text]) {
+      keysByText[text] = {};
+      rowsByText[text] = [];
+    }
     keysByText[text][key] = true;
     rowsByText[text].push(i + 1);
   }
@@ -1284,8 +1654,10 @@ function checkDuplicateEnglishText(rows) {
     }
   });
   if (!lines.length) return "";
-  return "Identical English text under different keys (possible redundancy):\n" +
-    lines.sort().join("\n\n");
+  return (
+    "Identical English text under different keys (possible redundancy):\n" +
+    lines.sort().join("\n\n")
+  );
 }
 
 // ─── Pure helpers (duplicated here; source of truth: source/appsScript/phrasesPush.js) ──
@@ -1339,7 +1711,8 @@ function comparePhraseCells(rows, firebasePhrases) {
 
       if (firebaseRow) {
         if (colIdx === keyIdx) firebaseValue = key;
-        else if (header[colIdx]) firebaseValue = firebaseRow[header[colIdx]] || "";
+        else if (header[colIdx])
+          firebaseValue = firebaseRow[header[colIdx]] || "";
       }
 
       if (sheetValue !== firebaseValue) {
@@ -1395,7 +1768,13 @@ function isTranslatableBackground(hex) {
   return hex.toLowerCase().trim() === TRANSLATABLE_BACKGROUND;
 }
 
-function buildTranslatePayload(rows, backgrounds, changedKeys, currentVersion, isFullResync) {
+function buildTranslatePayload(
+  rows,
+  backgrounds,
+  changedKeys,
+  currentVersion,
+  isFullResync,
+) {
   var header = rows[0];
   var keyIdx = header.indexOf("EE_LanguageCode");
   var enIdx = header.indexOf("en");
@@ -1450,9 +1829,17 @@ function findMissingTranslatableKeys(colorMask, changedKeys) {
   for (var i = 0; i < changedKeys.length; i++) {
     var key = changedKeys[i];
     var mask = colorMask[key];
-    if (!mask) { result.push(key); continue; }
+    if (!mask) {
+      result.push(key);
+      continue;
+    }
     var values = Object.values(mask);
-    if (values.every(function(v) { return !isTranslatableBackground(v); })) result.push(key);
+    if (
+      values.every(function (v) {
+        return !isTranslatableBackground(v);
+      })
+    )
+      result.push(key);
   }
   return result;
 }
