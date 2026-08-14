@@ -13,19 +13,6 @@ function loadAppsScript() {
 }
 
 describe("International Phrases completion verification", () => {
-  test("marks selected-cell retranslation requests for temporary Sentry logging", () => {
-    const source = fs.readFileSync(
-      path.resolve(__dirname, "../../apps-script/update-phrases.gs"),
-      "utf8",
-    );
-    const functionSource = source.slice(
-      source.indexOf("function retranslateSelectedCells()"),
-      source.indexOf("function extractPhrasesApiError"),
-    );
-
-    expect(functionSource).toContain('sentryEvent: "retranslateSelectedCells"');
-  });
-
   test("retries a transient phrases API failure before returning", () => {
     const transient = {
       getResponseCode: () => 503,

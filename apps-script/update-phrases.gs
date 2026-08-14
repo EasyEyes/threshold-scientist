@@ -1070,7 +1070,6 @@ function retranslateSelectedCells() {
 
     var payload = {
       action: "translate",
-      sentryEvent: "retranslateSelectedCells",
       changedPhrases: batchChangedPhrases,
       colorMask: batchColorMask,
       sentValues: batchSentValues,
