@@ -137,6 +137,13 @@ describe("International Phrases Firebase audit", () => {
     expect(html).toContain("AA123");
     expect(html).toContain('target="_blank"');
     expect(html).toContain("overflow: auto");
+    expect(html).toContain(
+      '<a id="sheet-link" target="_blank" rel="noopener noreferrer">',
+    );
+    expect(html).toContain(
+      '<pre class="value sheet-value" id="sheet-value"></pre>',
+    );
+    expect(html).not.toContain('<a class="value sheet-value" id="sheet-value"');
     expect(html).not.toContain("contenteditable");
     expect(html).not.toContain("</script><script>alert(1)</script>");
 

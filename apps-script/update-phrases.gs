@@ -358,7 +358,7 @@ function buildPhraseAuditHtml(audit) {
           }
           .cell-button:hover, .back-button:hover { background: #e8f0fe; }
           .cell-button:focus-visible, .back-button:focus-visible,
-          .sheet-value:focus-visible { outline: 3px solid #8ab4f8; outline-offset: 2px; }
+          #sheet-link:focus-visible { outline: 3px solid #8ab4f8; outline-offset: 2px; }
           .empty { color: #5f6368; font-size: 16px; }
           .detail { display: none; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
           .detail-header { display: flex; align-items: center; gap: 12px; }
@@ -392,7 +392,6 @@ function buildPhraseAuditHtml(audit) {
             overflow-wrap: anywhere;
             font: 14px/1.5 Arial, sans-serif;
           }
-          .sheet-value { color: inherit; text-decoration-color: #1a73e8; }
           @media (max-width: 700px) {
             .dates, .values { grid-template-columns: 1fr; }
           }
@@ -428,8 +427,8 @@ function buildPhraseAuditHtml(audit) {
                   <pre class="value" id="firebase-value"></pre>
                 </section>
                 <section class="value-panel">
-                  <h2>International Phrases spreadsheet — click to edit</h2>
-                  <a class="value sheet-value" id="sheet-value" target="_blank" rel="noopener noreferrer"></a>
+                  <h2><a id="sheet-link" target="_blank" rel="noopener noreferrer">International Phrases spreadsheet — click to edit</a></h2>
+                  <pre class="value sheet-value" id="sheet-value"></pre>
                 </section>
               </div>
             </div>
@@ -484,7 +483,8 @@ function buildPhraseAuditHtml(audit) {
             document.getElementById("firebase-value").textContent = difference.firebaseValue;
             var sheetValue = document.getElementById("sheet-value");
             sheetValue.textContent = difference.sheetValue;
-            sheetValue.href = audit.sheetUrl.split("#")[0] + "#gid=" + audit.sheetId +
+            document.getElementById("sheet-link").href =
+              audit.sheetUrl.split("#")[0] + "#gid=" + audit.sheetId +
               "&range=" + encodeURIComponent(difference.coordinate);
             document.getElementById("summary").style.display = "none";
             document.getElementById("detail").style.display = "grid";
