@@ -13,6 +13,7 @@ import {
   compressImageFile,
   isCompressibleImage,
 } from "./components/mediaCompression";
+import { VIEWER_ACCESS, fetchMediaAccess } from "./components/mediaAuthApi";
 
 import "./css/Media.scss";
 
@@ -32,13 +33,37 @@ export default class Media extends Component {
       busy: false,
       showFiles: false,
       copiedPath: null,
+      access: null,
     };
 
     this.fileInput = createRef();
     this.onFilesChosen = this.onFilesChosen.bind(this);
   }
 
+  componentDidMount() {
+    this.refreshAccess();
+  }
+
+  // Opening the page from the Media menu mounts this panel before the stored
+  // Pavlovia session has finished logging in, so the first check runs with no
+  // user. Re-check once login lands, or the panel would keep reporting the
+  // rights of nobody.
+  componentDidUpdate(prevProps) {
+    if (!prevProps.user && this.props.user) this.refreshAccess();
+  }
+
+  async refreshAccess() {
+    if (!this.props.user) {
+      this.setState({ access: VIEWER_ACCESS });
+      return;
+    }
+
+    const access = await fetchMediaAccess();
+    if (!this.unmounted) this.setState({ access });
+  }
+
   componentWillUnmount() {
+    this.unmounted = true;
     clearTimeout(this.copyTimer);
   }
 
@@ -162,9 +187,51 @@ export default class Media extends Component {
     );
   }
 
-  render() {
+  renderUploadAccess() {
     const { user } = this.props;
-    const { files, errors, compress, busy, showFiles } = this.state;
+    const { access, compress } = this.state;
+
+    if (!user)
+      return (
+        <p className="media-note">
+          Anyone can browse these files and copy their links. Log into Pavlovia
+          on the compiler page to upload media files.
+        </p>
+      );
+
+    if (!access)
+      return <p className="media-note">Checking your Pavlovia account …</p>;
+
+    if (!access.permissions.upload) {
+      const account = access.username
+        ? `The Pavlovia account "${access.username}"`
+        : "Your Pavlovia account";
+
+      return (
+        <p className="media-note">
+          {access.error ??
+            `${account} can browse and copy links, but not upload. Ask the EasyEyes team for upload access.`}
+        </p>
+      );
+    }
+
+    return (
+      <label className="media-option">
+        <input
+          type="checkbox"
+          checked={compress}
+          onChange={(event) =>
+            this.setState({ compress: event.target.checked })
+          }
+        />
+        Compress media file
+      </label>
+    );
+  }
+
+  render() {
+    const { files, errors, busy, showFiles, access } = this.state;
+    const canUpload = !!access?.permissions?.upload;
 
     return (
       <div className="media-manager media-fadeInUp">
@@ -189,7 +256,7 @@ export default class Media extends Component {
           </div>
 
           <div className="media-actions">
-            {user && (
+            {canUpload && (
               <button
                 className="button-green"
                 disabled={busy}
@@ -217,23 +284,7 @@ export default class Media extends Component {
             onChange={this.onFilesChosen}
           />
 
-          {user ? (
-            <label className="media-option">
-              <input
-                type="checkbox"
-                checked={compress}
-                onChange={(event) =>
-                  this.setState({ compress: event.target.checked })
-                }
-              />
-              Compress media file
-            </label>
-          ) : (
-            <p className="media-empty">
-              Log into Pavlovia on the compiler page to upload media files. You
-              can still copy links to media that is already here.
-            </p>
-          )}
+          {this.renderUploadAccess()}
 
           {errors.length > 0 && (
             <div className="errors">
