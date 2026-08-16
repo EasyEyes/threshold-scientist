@@ -105,4 +105,94 @@ describe("International Phrases completion verification", () => {
       },
     ]);
   });
+
+  test("reports partial publication truthfully when batch 8 fails", () => {
+    const { formatPhrasesBatchFailure } = loadAppsScript();
+
+    const message = formatPhrasesBatchFailure({
+      batchNumber: 8,
+      totalBatches: 18,
+      statusCode: 503,
+      failureMessage: "Phrases backend temporarily unavailable",
+      completedCells: 13992,
+      totalCells: 34399,
+      latestVersion: "40.31",
+    });
+
+    expect(message).toContain("Batches 1–7 were published successfully");
+    expect(message).toContain("Latest published version: 40.31");
+    expect(message).toContain("Completed 13992 of 34399 cells");
+    expect(message).toContain("20407 cells remain");
+    expect(message).not.toContain("EasyEyes was NOT updated");
+    expect(message).not.toContain("No new phrases version was created");
+  });
+
+  test("loads a matching retranslation checkpoint at the failed batch", () => {
+    const properties = new Map();
+    const context = vm.createContext({
+      console,
+      PropertiesService: {
+        getUserProperties: () => ({
+          getProperty: (key) => properties.get(key) ?? null,
+          setProperty: (key, value) => properties.set(key, value),
+          deleteProperty: (key) => properties.delete(key),
+        }),
+      },
+    });
+    const source = fs.readFileSync(
+      path.resolve(__dirname, "../../apps-script/update-phrases.gs"),
+      "utf8",
+    );
+    vm.runInContext(source, context);
+
+    context.savePhrasesCheckpoint({
+      fingerprint: "selection-a",
+      operationId: "operation-a",
+      nextBatchIndex: 7,
+      completedCells: 13992,
+      currentVersion: "40.31",
+    });
+
+    expect(context.loadPhrasesCheckpoint("selection-a")).toEqual({
+      fingerprint: "selection-a",
+      operationId: "operation-a",
+      nextBatchIndex: 7,
+      completedCells: 13992,
+      currentVersion: "40.31",
+    });
+    expect(context.loadPhrasesCheckpoint("different-selection")).toBeNull();
+  });
+
+  test("checkpoint fingerprint is unchanged by successful translation writes", () => {
+    const source = fs.readFileSync(
+      path.resolve(__dirname, "../../apps-script/update-phrases.gs"),
+      "utf8",
+    );
+    const context = vm.createContext({
+      console,
+      Utilities: {
+        DigestAlgorithm: { SHA_256: "SHA_256" },
+        computeDigest: (_algorithm, value) => value,
+        base64EncodeWebSafe: (value) => value,
+      },
+    });
+    vm.runInContext(source, context);
+    const stableSelection = {
+      operation: "retranslate",
+      keys: ["hello"],
+      changedPhrases: { hello: "Hello" },
+      colorMask: { hello: { fr: "#ffffff" } },
+    };
+
+    const beforeWrite = context.buildPhrasesCheckpointFingerprint({
+      ...stableSelection,
+      sentValues: { hello: { fr: "" } },
+    });
+    const afterWrite = context.buildPhrasesCheckpointFingerprint({
+      ...stableSelection,
+      sentValues: { hello: { fr: "Bonjour" } },
+    });
+
+    expect(afterWrite).toBe(beforeWrite);
+  });
 });

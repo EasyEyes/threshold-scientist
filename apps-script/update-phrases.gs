@@ -16,6 +16,7 @@
 
 var PHRASES_FUNCTION_URL = "https://easyeyes.app/.netlify/functions/phrases";
 var TRANSLATABLE_BACKGROUND = "#ffffff";
+var PHRASES_CHECKPOINT_KEY = "phrasesRetranslationCheckpoint";
 
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -739,11 +740,30 @@ function pushPhrases(isFullResync) {
   var BATCH_SIZE = 50;
   var allKeys = Object.keys(changedPhrases);
   var totalBatches = Math.ceil(allKeys.length / BATCH_SIZE);
-  var totalCellCount = 0;
-  var newVersion = currentVersion;
+  var checkpointFingerprint = buildPhrasesCheckpointFingerprint({
+    operation: action,
+    keys: allKeys,
+    changedPhrases: changedPhrases,
+    colorMask: colorMask,
+  });
+  var checkpoint = loadPhrasesCheckpoint(checkpointFingerprint);
+  var totalCellCount = checkpoint ? checkpoint.completedCells : 0;
+  var totalTargetCellCount = countTranslatableCells(colorMask);
+  var newVersion = checkpoint ? checkpoint.currentVersion : currentVersion;
+  var operationId = checkpoint ? checkpoint.operationId : Utilities.getUuid();
+  var startBatch = checkpoint ? checkpoint.nextBatchIndex : 0;
+  if (!checkpoint) {
+    savePhrasesCheckpoint({
+      fingerprint: checkpointFingerprint,
+      operationId: operationId,
+      nextBatchIndex: 0,
+      completedCells: 0,
+      currentVersion: newVersion,
+    });
+  }
 
   showSpinner();
-  for (var b = 0; b < totalBatches; b++) {
+  for (var b = startBatch; b < totalBatches; b++) {
     if (totalBatches > 1) {
       CacheService.getUserCache().put(
         "spinnerProgress",
@@ -770,6 +790,10 @@ function pushPhrases(isFullResync) {
       sentValues: batchSentValues,
       activeLanguages: activeLanguages,
       currentVersion: newVersion,
+      operationId: operationId,
+      batchNumber: b + 1,
+      totalBatches: totalBatches,
+      cellCount: countTranslatableCells(batchColorMask),
     };
 
     console.log(
@@ -834,31 +858,35 @@ function pushPhrases(isFullResync) {
       } catch (e) {
         errMsg = translateText;
       }
+      var latestVersion = fetchLatestPublishedPhrasesVersion(newVersion);
       notify(
-        "Phrases push rejected: " +
-          errMsg +
-          "\n\nCompleted " +
-          totalCellCount +
-          " cell(s) before failure.",
+        formatPhrasesBatchFailure({
+          batchNumber: b + 1,
+          totalBatches: totalBatches,
+          statusCode: translateCode,
+          failureMessage: "Phrases push rejected: " + errMsg,
+          completedCells: totalCellCount,
+          totalCells: totalTargetCellCount,
+          latestVersion: latestVersion,
+        }),
+        "error",
       );
       return;
     }
 
     if (translateCode !== 200) {
       var translateFailure = classifyPhrasesApiFailure(translateText);
+      var latestVersion = fetchLatestPublishedPhrasesVersion(newVersion);
       notify(
-        "EasyEyes was NOT updated. No new phrases version was created.\n\n" +
-          "Batch " +
-          (b + 1) +
-          " of " +
-          totalBatches +
-          " failed (" +
-          translateCode +
-          "): " +
-          translateFailure.message +
-          "\n\nCompleted " +
-          totalCellCount +
-          " cell(s) before failure.",
+        formatPhrasesBatchFailure({
+          batchNumber: b + 1,
+          totalBatches: totalBatches,
+          statusCode: translateCode,
+          failureMessage: translateFailure.message,
+          completedCells: totalCellCount,
+          totalCells: totalTargetCellCount,
+          latestVersion: latestVersion,
+        }),
         translateFailure.isFatal ? "error" : "warning",
         { showDeepLBillingAction: translateFailure.showDeepLBillingAction },
       );
@@ -894,8 +922,16 @@ function pushPhrases(isFullResync) {
       return;
     }
     totalCellCount += writes.length;
+    savePhrasesCheckpoint({
+      fingerprint: checkpointFingerprint,
+      operationId: operationId,
+      nextBatchIndex: b + 1,
+      completedCells: totalCellCount,
+      currentVersion: newVersion,
+    });
   }
 
+  clearPhrasesCheckpoint();
   // Warning: keys with no translatable target cells
   var missingKeys = findMissingTranslatableKeys(colorMask, changedKeys);
   if (missingKeys.length > 0) {
@@ -1046,10 +1082,29 @@ function retranslateSelectedCells() {
   var BATCH_SIZE = 50;
   var allKeys = Object.keys(changedPhrases);
   var totalBatches = Math.ceil(allKeys.length / BATCH_SIZE);
-  var totalCellCount = 0;
+  var checkpointFingerprint = buildPhrasesCheckpointFingerprint({
+    operation: "retranslate",
+    keys: allKeys,
+    changedPhrases: changedPhrases,
+    colorMask: colorMask,
+  });
+  var checkpoint = loadPhrasesCheckpoint(checkpointFingerprint);
+  var totalCellCount = checkpoint ? checkpoint.completedCells : 0;
+  var operationId = checkpoint ? checkpoint.operationId : Utilities.getUuid();
+  var startBatch = checkpoint ? checkpoint.nextBatchIndex : 0;
+  if (checkpoint) currentVersion = checkpoint.currentVersion;
+  if (!checkpoint) {
+    savePhrasesCheckpoint({
+      fingerprint: checkpointFingerprint,
+      operationId: operationId,
+      nextBatchIndex: 0,
+      completedCells: 0,
+      currentVersion: currentVersion,
+    });
+  }
 
   showSpinner();
-  for (var b = 0; b < totalBatches; b++) {
+  for (var b = startBatch; b < totalBatches; b++) {
     if (totalBatches > 1) {
       CacheService.getUserCache().put(
         "spinnerProgress",
@@ -1076,6 +1131,10 @@ function retranslateSelectedCells() {
       sentValues: batchSentValues,
       activeLanguages: activeLanguages,
       currentVersion: currentVersion,
+      operationId: operationId,
+      batchNumber: b + 1,
+      totalBatches: totalBatches,
+      cellCount: countTranslatableCells(batchColorMask),
     };
 
     console.log(
@@ -1140,21 +1199,17 @@ function retranslateSelectedCells() {
 
     if (responseCode !== 200) {
       var responseFailure = classifyPhrasesApiFailure(responseText);
+      var latestVersion = fetchLatestPublishedPhrasesVersion(currentVersion);
       notify(
-        "EasyEyes was NOT updated. No new phrases version was created.\n\n" +
-          "Batch " +
-          (b + 1) +
-          " of " +
-          totalBatches +
-          " failed (" +
-          responseCode +
-          "): " +
-          responseFailure.message +
-          "\n\nCompleted " +
-          totalCellCount +
-          " of " +
-          whiteCells.length +
-          " cells before failure.",
+        formatPhrasesBatchFailure({
+          batchNumber: b + 1,
+          totalBatches: totalBatches,
+          statusCode: responseCode,
+          failureMessage: responseFailure.message,
+          completedCells: totalCellCount,
+          totalCells: whiteCells.length,
+          latestVersion: latestVersion,
+        }),
         responseFailure.isFatal ? "error" : "warning",
         { showDeepLBillingAction: responseFailure.showDeepLBillingAction },
       );
@@ -1189,8 +1244,16 @@ function retranslateSelectedCells() {
       return;
     }
     totalCellCount += writes.length;
+    savePhrasesCheckpoint({
+      fingerprint: checkpointFingerprint,
+      operationId: operationId,
+      nextBatchIndex: b + 1,
+      completedCells: totalCellCount,
+      currentVersion: currentVersion,
+    });
   }
 
+  clearPhrasesCheckpoint();
   notify(
     "Translated " +
       totalCellCount +
@@ -1207,6 +1270,112 @@ function extractPhrasesApiError(responseText) {
   } catch (e) {
     return responseText;
   }
+}
+
+function buildPhrasesCheckpointFingerprint(value) {
+  var stableValue = {
+    operation: value.operation,
+    keys: value.keys,
+    changedPhrases: value.changedPhrases,
+    colorMask: value.colorMask,
+  };
+  var digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    JSON.stringify(stableValue),
+  );
+  return Utilities.base64EncodeWebSafe(digest);
+}
+
+function savePhrasesCheckpoint(checkpoint) {
+  PropertiesService.getUserProperties().setProperty(
+    PHRASES_CHECKPOINT_KEY,
+    JSON.stringify(checkpoint),
+  );
+}
+
+function loadPhrasesCheckpoint(fingerprint) {
+  var raw = PropertiesService.getUserProperties().getProperty(
+    PHRASES_CHECKPOINT_KEY,
+  );
+  if (!raw) return null;
+  try {
+    var checkpoint = JSON.parse(raw);
+    if (
+      checkpoint &&
+      checkpoint.fingerprint === fingerprint &&
+      typeof checkpoint.operationId === "string" &&
+      Number.isInteger(checkpoint.nextBatchIndex) &&
+      Number.isInteger(checkpoint.completedCells) &&
+      typeof checkpoint.currentVersion === "string"
+    ) {
+      return checkpoint;
+    }
+  } catch (e) {
+    console.warn("[phrases] Ignoring invalid retranslation checkpoint", e);
+  }
+  return null;
+}
+
+function clearPhrasesCheckpoint() {
+  PropertiesService.getUserProperties().deleteProperty(PHRASES_CHECKPOINT_KEY);
+}
+
+function countTranslatableCells(colorMask) {
+  var count = 0;
+  Object.keys(colorMask || {}).forEach(function (key) {
+    Object.keys(colorMask[key] || {}).forEach(function (language) {
+      if (isTranslatableBackground(colorMask[key][language])) count++;
+    });
+  });
+  return count;
+}
+
+function fetchLatestPublishedPhrasesVersion(fallbackVersion) {
+  try {
+    var response = fetchPhrasesWithRetry(
+      PHRASES_FUNCTION_URL + "?versionOnly",
+      { method: "get", muteHttpExceptions: true },
+    );
+    if (response.getResponseCode() === 200) {
+      var result = JSON.parse(response.getContentText());
+      if (result && result.version) return result.version;
+    }
+  } catch (e) {
+    console.warn("[phrases] Failed to fetch authoritative version", e);
+  }
+  return fallbackVersion || "unavailable";
+}
+
+function formatPhrasesBatchFailure(details) {
+  var completed = details.completedCells || 0;
+  var total = details.totalCells || 0;
+  var remaining = Math.max(0, total - completed);
+  var publicationStatus =
+    completed > 0
+      ? "Batches 1–" +
+        (details.batchNumber - 1) +
+        " were published successfully."
+      : "No cells were published by this operation.";
+  return (
+    publicationStatus +
+    "\n\nBatch " +
+    details.batchNumber +
+    " of " +
+    details.totalBatches +
+    " failed (" +
+    details.statusCode +
+    "): " +
+    details.failureMessage +
+    "\n\nLatest published version: " +
+    details.latestVersion +
+    "\nCompleted " +
+    completed +
+    " of " +
+    total +
+    " cells; " +
+    remaining +
+    " cells remain."
+  );
 }
 
 function fetchPhrasesWithRetry(url, options) {
@@ -1891,7 +2060,10 @@ function buildFetchOptions(secret, payload) {
   return {
     method: "post",
     contentType: "application/json",
-    headers: { "x-phrases-secret": secret },
+    headers: {
+      "x-phrases-secret": secret,
+      "x-request-id": payload.operationId || Utilities.getUuid(),
+    },
     payload: JSON.stringify(payload),
     muteHttpExceptions: true,
   };
