@@ -980,6 +980,7 @@ function retranslateSelectedCells() {
         if (colIdx >= header.length) continue;
         var lang = header[colIdx];
         if (!lang) continue;
+        if (!isAutomaticallyTranslatedLanguage(lang)) continue;
         if (!key) continue;
 
         var bg = backgrounds[rowIdx][colIdx];
@@ -1768,6 +1769,14 @@ function isTranslatableBackground(hex) {
   return hex.toLowerCase().trim() === TRANSLATABLE_BACKGROUND;
 }
 
+function isAutomaticallyTranslatedLanguage(language) {
+  return (
+    String(language || "")
+      .trim()
+      .toLowerCase() !== "pcm"
+  );
+}
+
 function buildTranslatePayload(
   rows,
   backgrounds,
@@ -1781,7 +1790,12 @@ function buildTranslatePayload(
   var targetLangs = [];
   var targetIdxs = [];
   for (var h = 0; h < header.length; h++) {
-    if (header[h] && h !== keyIdx && h !== enIdx) {
+    if (
+      header[h] &&
+      h !== keyIdx &&
+      h !== enIdx &&
+      isAutomaticallyTranslatedLanguage(header[h])
+    ) {
       targetLangs.push(header[h]);
       targetIdxs.push(h);
     }

@@ -13,6 +13,37 @@ function loadAppsScript() {
 }
 
 describe("International Phrases completion verification", () => {
+  test("does not automatically translate Nigerian Pidgin cells", () => {
+    const { isAutomaticallyTranslatedLanguage } = loadAppsScript();
+
+    expect(isAutomaticallyTranslatedLanguage("pcm")).toBe(false);
+    expect(isAutomaticallyTranslatedLanguage("tl")).toBe(true);
+  });
+
+  test("omits Nigerian Pidgin from phrase translation payloads", () => {
+    const { buildTranslatePayload } = loadAppsScript();
+    const rows = [
+      ["EE_LanguageCode", "en", "pcm", "tl"],
+      ["example", "Hello", "", "Kumusta"],
+    ];
+    const backgrounds = [
+      ["#ffffff", "#ffffff", "#ffffff", "#ffffff"],
+      ["#ffffff", "#ffffff", "#ffffff", "#ffffff"],
+    ];
+
+    const payload = buildTranslatePayload(
+      rows,
+      backgrounds,
+      ["example"],
+      "1.0",
+      false,
+    );
+
+    expect(payload.colorMask.example).toEqual({ tl: "#ffffff" });
+    expect(payload.sentValues.example).toEqual({ tl: "Kumusta" });
+    expect(payload.activeLanguages).toEqual(["en", "pcm", "tl"]);
+  });
+
   test("retries a transient phrases API failure before returning", () => {
     const transient = {
       getResponseCode: () => 503,
