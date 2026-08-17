@@ -1,13 +1,11 @@
 import React, { Component, createRef } from "react";
 
 import {
-  addMedia,
+  MediaError,
   formatFileSize,
   formatMediaDate,
-  isNameTaken,
   listMedia,
-  mediaUrlForPath,
-  sanitizeMediaFileName,
+  uploadMedia,
 } from "./components/mediaLibrary";
 import {
   compressImageFile,
@@ -27,10 +25,11 @@ export default class Media extends Component {
     super(props);
 
     this.state = {
-      files: listMedia(),
+      files: [],
       errors: [],
       compress: true,
       busy: false,
+      loading: false,
       showFiles: false,
       copiedPath: null,
       access: null,
@@ -42,6 +41,7 @@ export default class Media extends Component {
 
   componentDidMount() {
     this.refreshAccess();
+    this.refreshFiles();
   }
 
   // Opening the page from the Media menu mounts this panel before the stored
@@ -62,6 +62,18 @@ export default class Media extends Component {
     if (!this.unmounted) this.setState({ access });
   }
 
+  async refreshFiles() {
+    this.setState({ loading: true });
+
+    try {
+      const files = await listMedia();
+      if (!this.unmounted) this.setState({ files, loading: false });
+    } catch (err) {
+      if (!this.unmounted)
+        this.setState({ loading: false, errors: [err.message] });
+    }
+  }
+
   componentWillUnmount() {
     this.unmounted = true;
     clearTimeout(this.copyTimer);
@@ -74,60 +86,47 @@ export default class Media extends Component {
     this.addFiles(chosen);
   }
 
-  async addFiles(droppedFiles) {
-    if (!droppedFiles.length) return;
+  async addFiles(chosenFiles) {
+    if (!chosenFiles.length) return;
 
     this.setState({ busy: true, errors: [] });
 
     const errors = [];
-    const added = [];
 
-    for (const file of droppedFiles) {
+    for (const file of chosenFiles) {
       if (!isAccepted(file)) {
         errors.push(`${file.name} is not a supported media file.`);
         continue;
       }
 
-      const path = sanitizeMediaFileName(file.name);
-
-      if (isNameTaken(path) || added.some((record) => record.path === path)) {
-        errors.push(
-          `${file.name} matches a file already in the library. Rename it before adding, since existing media is never replaced.`,
-        );
-        continue;
-      }
-
-      let finalSize = file.size;
+      let blob = file;
       if (this.state.compress && isCompressibleImage(file)) {
         try {
-          const { blob } = await compressImageFile(file);
-          finalSize = blob.size;
+          ({ blob } = await compressImageFile(file));
         } catch {
           errors.push(
-            `${file.name} could not be compressed, so it was added unchanged.`,
+            `${file.name} could not be compressed, so it was uploaded unchanged.`,
           );
+          blob = file;
         }
       }
 
-      added.push(
-        addMedia({
-          path,
-          name: file.name,
-          url: mediaUrlForPath(path),
-          type: file.type,
-          size: finalSize,
-          originalSize: file.size,
-          addedAt: Date.now(),
-        }),
-      );
+      try {
+        await uploadMedia(file, blob);
+      } catch (err) {
+        errors.push(
+          err instanceof MediaError
+            ? err.message
+            : `${file.name} could not be uploaded.`,
+        );
+      }
     }
 
-    this.setState({
-      files: listMedia(),
-      errors,
-      busy: false,
-      showFiles: true,
-    });
+    this.setState({ errors, busy: false, showFiles: true });
+
+    // Re-read rather than append: the server decides the final name, date, and
+    // uploader, and one of those may differ from what was sent.
+    await this.refreshFiles();
   }
 
   async copyLink(record) {
@@ -230,7 +229,7 @@ export default class Media extends Component {
   }
 
   render() {
-    const { files, errors, busy, showFiles, access } = this.state;
+    const { files, errors, busy, loading, showFiles, access } = this.state;
     const canUpload = !!access?.permissions?.upload;
 
     return (
@@ -267,9 +266,11 @@ export default class Media extends Component {
             )}
             <button
               className="button-grey"
-              onClick={() =>
-                this.setState((state) => ({ showFiles: !state.showFiles }))
-              }
+              onClick={() => {
+                const opening = !showFiles;
+                this.setState({ showFiles: opening });
+                if (opening) this.refreshFiles();
+              }}
             >
               {showFiles ? "Hide media files" : "Show media files"}
             </button>
@@ -297,7 +298,9 @@ export default class Media extends Component {
           )}
 
           {showFiles &&
-            (files.length === 0 ? (
+            (loading ? (
+              <p className="media-note">Loading media files …</p>
+            ) : files.length === 0 ? (
               <p className="media-empty">
                 No media files yet. Anything you upload will be listed here with
                 its size, the date you added it, and its link.
