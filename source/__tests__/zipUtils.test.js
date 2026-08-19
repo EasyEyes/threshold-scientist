@@ -9,12 +9,13 @@ const {
 describe("isSourceArchiveFileName", () => {
   it("accepts the current *.source.zip suffix", () => {
     expect(isSourceArchiveFileName("study.source.zip")).toBe(true);
-    expect(isSourceArchiveFileName("study.lax.source.zip")).toBe(true);
+    expect(isSourceArchiveFileName("study.raw.source.zip")).toBe(true);
   });
 
   it("accepts the former *.export.zip suffix for backward compatibility", () => {
     expect(isSourceArchiveFileName("study.export.zip")).toBe(true);
     expect(isSourceArchiveFileName("study.lax.export.zip")).toBe(true);
+    expect(isSourceArchiveFileName("study.lax.source.zip")).toBe(true);
   });
 
   it("is case-insensitive", () => {

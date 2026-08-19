@@ -648,7 +648,7 @@ export default class Table extends Component {
           <ul>
             <li>Click SELECT FILE.</li>
           </ul>
-          To export your study as a lax.source.zip archive, without compiling
+          To export your study as a raw.source.zip archive, without compiling
           it, e.g. to share it or report a bug:
           <ul>
             <li>
