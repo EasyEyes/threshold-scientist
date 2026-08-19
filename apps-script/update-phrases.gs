@@ -17,6 +17,7 @@
 var PHRASES_FUNCTION_URL = "https://easyeyes.app/.netlify/functions/phrases";
 var TRANSLATABLE_BACKGROUND = "#ffffff";
 var PHRASES_CHECKPOINT_KEY = "phrasesRetranslationCheckpoint";
+var PHRASES_IMPORT_CHECKPOINT_KEY = "phrasesTranslationImportCheckpoint";
 
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -30,6 +31,9 @@ function onOpen() {
       "retranslateSelectedCells",
     )
     .addItem("Check all cells. No update.", "checkPhraseKeys")
+    .addItem("Color stale translation text red", "colorStaleTranslationTextRed")
+    .addItem("Tabulate needed translations", "tabulateNeededTranslations")
+    .addItem("Read new translations", "readNewTranslations")
     .addItem(
       "Compare latest EasyEyes copy with this spreadsheet",
       "compareLatestEasyEyesCopy",
@@ -1844,6 +1848,513 @@ function extractEnglishMap(rows) {
     if (key) result[key] = rows[i][enIdx] || "";
   }
   return result;
+}
+
+function buildPhraseSheetIndex(rows) {
+  if (!rows.length) throw new Error("Translations sheet is empty.");
+  var keyIdx = rows[0].indexOf("EE_LanguageCode");
+  var enIdx = rows[0].indexOf("en");
+  if (keyIdx === -1 || enIdx === -1) {
+    throw new Error(
+      'Required columns "EE_LanguageCode" and "en" were not found.',
+    );
+  }
+  var columnsByLanguage = {};
+  for (var column = 0; column < rows[0].length; column++) {
+    var language = String(rows[0][column] || "").trim();
+    if (!language || column === keyIdx) continue;
+    if (columnsByLanguage[language] !== undefined) {
+      throw new Error("Duplicate languageCode: " + language);
+    }
+    columnsByLanguage[language] = column;
+  }
+  var rowsByPhrase = {};
+  for (var row = 1; row < rows.length; row++) {
+    var phraseName = String(rows[row][keyIdx] || "").trim();
+    if (!phraseName) continue;
+    if (rowsByPhrase[phraseName] !== undefined) {
+      throw new Error("Duplicate phraseName: " + phraseName);
+    }
+    rowsByPhrase[phraseName] = row;
+  }
+  return {
+    keyIdx: keyIdx,
+    enIdx: enIdx,
+    rowsByPhrase: rowsByPhrase,
+    columnsByLanguage: columnsByLanguage,
+  };
+}
+
+function buildFreshnessBatches(rows, batchSize) {
+  var index = buildPhraseSheetIndex(rows);
+  var languageCodes = Object.keys(index.columnsByLanguage).filter(
+    function (lang) {
+      return lang !== "en";
+    },
+  );
+  var records = Object.keys(index.rowsByPhrase).map(function (phraseName) {
+    return {
+      phraseName: phraseName,
+      englishText: rows[index.rowsByPhrase[phraseName]][index.enIdx] || "",
+      languageCodes: languageCodes,
+    };
+  });
+  var batches = [];
+  for (var offset = 0; offset < records.length; offset += batchSize || 50) {
+    batches.push({
+      action: "checkFreshness",
+      phrases: records.slice(offset, offset + (batchSize || 50)),
+    });
+  }
+  return batches;
+}
+
+function freshnessLookup(results) {
+  var lookup = {};
+  (results || []).forEach(function (result) {
+    lookup[result.phraseName + "\u0000" + result.languageCode] = Boolean(
+      result.fresh,
+    );
+  });
+  return lookup;
+}
+
+function planFreshnessFontColors(rows, currentColors, freshnessResults) {
+  var index = buildPhraseSheetIndex(rows);
+  var planned = currentColors.map(function (row) {
+    return row.slice();
+  });
+  var lookup = freshnessLookup(freshnessResults);
+  Object.keys(index.rowsByPhrase).forEach(function (phraseName) {
+    var row = index.rowsByPhrase[phraseName];
+    Object.keys(index.columnsByLanguage).forEach(function (language) {
+      if (language === "en") return;
+      var column = index.columnsByLanguage[language];
+      var nonblank = String(rows[row][column] || "").length > 0;
+      planned[row][column] =
+        nonblank && lookup[phraseName + "\u0000" + language]
+          ? "#000000"
+          : "#ff0000";
+    });
+  });
+  return planned;
+}
+
+function fetchFreshness(rows, secret) {
+  var results = [];
+  buildFreshnessBatches(rows, 50).forEach(function (payload) {
+    var response = fetchPhrasesWithRetry(
+      PHRASES_FUNCTION_URL,
+      buildFetchOptions(secret, payload),
+    );
+    if (response.getResponseCode() !== 200) {
+      throw new Error(
+        "Freshness check failed (" +
+          response.getResponseCode() +
+          "): " +
+          extractPhrasesApiError(response.getContentText()),
+      );
+    }
+    var parsed = JSON.parse(response.getContentText());
+    if (!Array.isArray(parsed.freshness))
+      throw new Error("Freshness response was malformed.");
+    results = results.concat(parsed.freshness);
+  });
+  return results;
+}
+
+function colorStaleTranslationTextRed() {
+  try {
+    var secret =
+      PropertiesService.getScriptProperties().getProperty("PHRASES_SECRET");
+    if (!secret)
+      throw new Error("PHRASES_SECRET is not set in Script Properties.");
+    var sheet =
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
+    if (!sheet) throw new Error('Sheet "Translations" not found.');
+    var range = sheet.getDataRange();
+    var rows = range.getDisplayValues();
+    var colors = planFreshnessFontColors(
+      rows,
+      range.getFontColors(),
+      fetchFreshness(rows, secret),
+    );
+    range.setFontColors(colors);
+    notify("Translation freshness colors updated.", "success");
+  } catch (e) {
+    notify(e.message, "error");
+  }
+}
+
+function planCompactTranslationRequest(rows, backgrounds, freshnessResults) {
+  var index = buildPhraseSheetIndex(rows);
+  var fresh = freshnessLookup(freshnessResults);
+  var retained = {};
+  var clears = [];
+  Object.keys(index.rowsByPhrase).forEach(function (phraseName) {
+    var row = index.rowsByPhrase[phraseName];
+    Object.keys(index.columnsByLanguage).forEach(function (language) {
+      if (language === "en") return;
+      var column = index.columnsByLanguage[language];
+      var keep =
+        !isTranslatableBackground(backgrounds[row][column]) &&
+        !fresh[phraseName + "\u0000" + language];
+      if (keep) retained[row + "\u0000" + column] = true;
+      else clears.push({ rowIndex: row, colIndex: column });
+    });
+  });
+  var rowsToDelete = [];
+  for (var row = rows.length - 1; row >= 9; row--) {
+    var keepRow = Object.keys(index.columnsByLanguage).some(
+      function (language) {
+        return (
+          language !== "en" &&
+          retained[row + "\u0000" + index.columnsByLanguage[language]]
+        );
+      },
+    );
+    if (!keepRow) rowsToDelete.push(row);
+  }
+  var columnsToDelete = [];
+  for (var column = rows[0].length - 1; column >= 0; column--) {
+    if (column === index.keyIdx || column === index.enIdx) continue;
+    var keepColumn = Object.keys(index.rowsByPhrase).some(
+      function (phraseName) {
+        return retained[index.rowsByPhrase[phraseName] + "\u0000" + column];
+      },
+    );
+    if (!keepColumn) columnsToDelete.push(column);
+  }
+  return {
+    clears: clears,
+    rowsToDelete: rowsToDelete,
+    columnsToDelete: columnsToDelete,
+  };
+}
+
+function applyCompactTranslationPlan(sheet, plan) {
+  plan.clears.forEach(function (cell) {
+    sheet
+      .getRange(cell.rowIndex + 1, cell.colIndex + 1)
+      .clearContent()
+      .setBackground(TRANSLATABLE_BACKGROUND);
+  });
+  plan.rowsToDelete.forEach(function (row) {
+    sheet.deleteRow(row + 1);
+  });
+  plan.columnsToDelete.forEach(function (column) {
+    sheet.deleteColumn(column + 1);
+  });
+}
+
+function tabulateNeededTranslations() {
+  try {
+    var secret =
+      PropertiesService.getScriptProperties().getProperty("PHRASES_SECRET");
+    if (!secret)
+      throw new Error("PHRASES_SECRET is not set in Script Properties.");
+    var source = SpreadsheetApp.getActiveSpreadsheet();
+    var sourceSheet = source.getSheetByName("Translations");
+    if (!sourceSheet) throw new Error('Sheet "Translations" not found.');
+    var sourceRange = sourceSheet.getDataRange();
+    var rows = sourceRange.getDisplayValues();
+    var backgrounds = sourceRange.getBackgrounds();
+    var plan = planCompactTranslationRequest(
+      rows,
+      backgrounds,
+      fetchFreshness(rows, secret),
+    );
+    var copy = source.copy(source.getName() + " - needed translations");
+    var copySheet = copy.getSheetByName("Translations");
+    if (!copySheet)
+      throw new Error('Copied spreadsheet has no "Translations" sheet.');
+    applyCompactTranslationPlan(copySheet, plan);
+    notify("Translation request created: " + copy.getUrl(), "success");
+  } catch (e) {
+    notify(e.message, "error");
+  }
+}
+
+function validateTranslationImport(
+  compactRows,
+  compactBackgrounds,
+  currentRows,
+) {
+  var compact = buildPhraseSheetIndex(compactRows);
+  var current = buildPhraseSheetIndex(currentRows);
+  var incoming = [];
+  Object.keys(compact.rowsByPhrase).forEach(function (phraseName) {
+    if (current.rowsByPhrase[phraseName] === undefined) {
+      throw new Error("Unknown phraseName in returned sheet: " + phraseName);
+    }
+    Object.keys(compact.columnsByLanguage).forEach(function (language) {
+      if (language === "en") return;
+      if (current.columnsByLanguage[language] === undefined) {
+        throw new Error("Unknown languageCode in returned sheet: " + language);
+      }
+      var row = compact.rowsByPhrase[phraseName];
+      var column = compact.columnsByLanguage[language];
+      if (!isTranslatableBackground(compactBackgrounds[row][column])) {
+        incoming.push({
+          phraseName: phraseName,
+          languageCode: language,
+          englishText: compactRows[row][compact.enIdx] || "",
+          value: compactRows[row][column] || "",
+          background: compactBackgrounds[row][column],
+        });
+      }
+    });
+  });
+  var included = {};
+  incoming.forEach(function (cell) {
+    included[cell.phraseName] = cell.englishText;
+  });
+  var conflicts = Object.keys(included).reduce(function (all, phraseName) {
+    var currentEnglish =
+      currentRows[current.rowsByPhrase[phraseName]][current.enIdx] || "";
+    if (included[phraseName] !== currentEnglish) {
+      all.push({
+        phraseName: phraseName,
+        compactEnglish: included[phraseName],
+        currentEnglish: currentEnglish,
+      });
+    }
+    return all;
+  }, []);
+  return { incoming: incoming, conflicts: conflicts };
+}
+
+function formatEnglishConflicts(conflicts) {
+  return conflicts
+    .map(function (conflict) {
+      return (
+        conflict.phraseName +
+        "\nReturned: " +
+        conflict.compactEnglish +
+        "\nInternational: " +
+        conflict.currentEnglish
+      );
+    })
+    .join("\n\n");
+}
+
+function saveImportCheckpoint(checkpoint) {
+  PropertiesService.getUserProperties().setProperty(
+    PHRASES_IMPORT_CHECKPOINT_KEY,
+    JSON.stringify(checkpoint),
+  );
+}
+
+function loadImportCheckpoint(fingerprint) {
+  var raw = PropertiesService.getUserProperties().getProperty(
+    PHRASES_IMPORT_CHECKPOINT_KEY,
+  );
+  if (!raw) return null;
+  try {
+    var checkpoint = JSON.parse(raw);
+    return checkpoint.fingerprint === fingerprint ? checkpoint : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearImportCheckpoint() {
+  PropertiesService.getUserProperties().deleteProperty(
+    PHRASES_IMPORT_CHECKPOINT_KEY,
+  );
+}
+
+function writeAndVerifyImportedCells(sheet, writes) {
+  writes.forEach(function (write) {
+    var range = sheet.getRange(write.rowIndex + 1, write.colIndex + 1);
+    range.setValue(write.value);
+    range.setBackground(write.background);
+  });
+  var failures = writes.filter(function (write) {
+    var range = sheet.getRange(write.rowIndex + 1, write.colIndex + 1);
+    return (
+      range.getDisplayValue() !== String(write.value) ||
+      range.getBackground().toLowerCase() !==
+        String(write.background).toLowerCase()
+    );
+  });
+  if (failures.length) {
+    throw new Error(
+      "Imported spreadsheet cells did not read back correctly: " +
+        failures
+          .map(function (write) {
+            return toA1Coordinate(write.colIndex + 1, write.rowIndex + 1);
+          })
+          .join(", "),
+    );
+  }
+}
+
+function readNewTranslations() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+    var prompt = ui.prompt(
+      "Read new translations",
+      "Paste the returned Google Sheets URL.",
+      ui.ButtonSet.OK_CANCEL,
+    );
+    if (prompt.getSelectedButton() !== ui.Button.OK) return;
+    var returned = SpreadsheetApp.openByUrl(prompt.getResponseText().trim());
+    var compactSheet = returned.getSheetByName("Translations");
+    if (!compactSheet)
+      throw new Error('Returned spreadsheet has no "Translations" sheet.');
+    var destinationSheet =
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Translations");
+    if (!destinationSheet)
+      throw new Error('International Phrases has no "Translations" sheet.');
+    var compactRange = compactSheet.getDataRange();
+    var currentRange = destinationSheet.getDataRange();
+    var validation = validateTranslationImport(
+      compactRange.getDisplayValues(),
+      compactRange.getBackgrounds(),
+      currentRange.getDisplayValues(),
+    );
+    if (validation.conflicts.length) {
+      notify(
+        "English sources differ. No translations were imported.\n\n" +
+          formatEnglishConflicts(validation.conflicts),
+        "error",
+      );
+      return;
+    }
+    if (!validation.incoming.length) {
+      notify("No non-white translations were found in the returned sheet.");
+      return;
+    }
+    importValidatedTranslations(
+      returned.getId(),
+      destinationSheet,
+      validation.incoming,
+    );
+  } catch (e) {
+    notify("Translation import failed: " + e.message, "error");
+  }
+}
+
+function importValidatedTranslations(spreadsheetId, sheet, incoming) {
+  var secret =
+    PropertiesService.getScriptProperties().getProperty("PHRASES_SECRET");
+  if (!secret)
+    throw new Error("PHRASES_SECRET is not set in Script Properties.");
+  var rows = sheet.getDataRange().getDisplayValues();
+  var index = buildPhraseSheetIndex(rows);
+  var grouped = {};
+  incoming.forEach(function (cell) {
+    if (!grouped[cell.phraseName]) grouped[cell.phraseName] = [];
+    grouped[cell.phraseName].push(cell);
+  });
+  var phraseNames = Object.keys(grouped).sort();
+  var fingerprint = buildPhrasesCheckpointFingerprint({
+    operation: "translationImport",
+    spreadsheetId: spreadsheetId,
+    incoming: incoming,
+  });
+  var checkpoint = loadImportCheckpoint(fingerprint);
+  var operationId = checkpoint ? checkpoint.operationId : Utilities.getUuid();
+  var nextBatchIndex = checkpoint ? checkpoint.nextBatchIndex : 0;
+  var versionResponse = fetchPhrasesWithRetry(
+    PHRASES_FUNCTION_URL + "?versionOnly",
+    { method: "get", muteHttpExceptions: true },
+  );
+  if (versionResponse.getResponseCode() !== 200)
+    throw new Error("Could not read the current phrases version.");
+  var currentVersion = checkpoint
+    ? checkpoint.currentVersion
+    : JSON.parse(versionResponse.getContentText()).version;
+  if (!checkpoint)
+    saveImportCheckpoint({
+      fingerprint: fingerprint,
+      operationId: operationId,
+      nextBatchIndex: 0,
+      currentVersion: currentVersion,
+    });
+  var totalBatches = Math.ceil(phraseNames.length / 50);
+  for (
+    var batchIndex = nextBatchIndex;
+    batchIndex < totalBatches;
+    batchIndex++
+  ) {
+    rows = sheet.getDataRange().getDisplayValues();
+    index = buildPhraseSheetIndex(rows);
+    var batchNames = phraseNames.slice(batchIndex * 50, (batchIndex + 1) * 50);
+    var changedPhrases = {};
+    var colorMask = {};
+    var sentValues = {};
+    batchNames.forEach(function (phraseName) {
+      var expectedEnglish = grouped[phraseName][0].englishText;
+      var currentEnglish =
+        rows[index.rowsByPhrase[phraseName]][index.enIdx] || "";
+      if (currentEnglish !== expectedEnglish)
+        throw new Error(
+          "English changed during import for " +
+            phraseName +
+            ". No later batches were imported.",
+        );
+      changedPhrases[phraseName] = expectedEnglish;
+      colorMask[phraseName] = {};
+      sentValues[phraseName] = {};
+      grouped[phraseName].forEach(function (cell) {
+        colorMask[phraseName][cell.languageCode] = cell.background;
+        sentValues[phraseName][cell.languageCode] = cell.value;
+      });
+    });
+    var payload = {
+      action: "translate",
+      changedPhrases: changedPhrases,
+      colorMask: colorMask,
+      sentValues: sentValues,
+      activeLanguages: extractActiveLanguages(rows),
+      currentVersion: currentVersion,
+      operationId: operationId,
+      batchNumber: batchIndex + 1,
+      totalBatches: totalBatches,
+      cellCount: incoming.length,
+    };
+    var response = fetchPhrasesWithRetry(
+      PHRASES_FUNCTION_URL,
+      buildFetchOptions(secret, payload),
+    );
+    if (response.getResponseCode() !== 200)
+      throw new Error(
+        "Import batch " +
+          (batchIndex + 1) +
+          " failed: " +
+          extractPhrasesApiError(response.getContentText()),
+      );
+    var result = parseVerifiedPhrasesResult(response.getContentText());
+    currentVersion = result.newVersion;
+    var writes = [];
+    batchNames.forEach(function (phraseName) {
+      grouped[phraseName].forEach(function (cell) {
+        writes.push({
+          rowIndex: index.rowsByPhrase[phraseName],
+          colIndex: index.columnsByLanguage[cell.languageCode],
+          value: result.translatedRows[phraseName][cell.languageCode],
+          background: cell.background,
+        });
+      });
+    });
+    writeAndVerifyImportedCells(sheet, writes);
+    saveImportCheckpoint({
+      fingerprint: fingerprint,
+      operationId: operationId,
+      nextBatchIndex: batchIndex + 1,
+      currentVersion: currentVersion,
+    });
+  }
+  clearImportCheckpoint();
+  notify(
+    "Imported " +
+      incoming.length +
+      " translation cell(s). New version: " +
+      currentVersion,
+    "success",
+  );
 }
 
 function buildDiffPayload(english) {
