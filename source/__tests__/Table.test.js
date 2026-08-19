@@ -855,7 +855,7 @@ describe("Table.handleTable — glossary prefetch wiring", () => {
   });
 });
 
-describe("Select file for export button", () => {
+describe("Select file to download source button", () => {
   it("renders gray, immediately to the right of the green Select file button", () => {
     const { container } = render(<Table {...makeProps()} />);
     const dropzones = container.querySelectorAll(".file-zone .dropzone");
@@ -863,7 +863,7 @@ describe("Select file for export button", () => {
     expect(dropzones).toHaveLength(2);
     expect(dropzones[0].textContent).toBe("Select file");
     expect(dropzones[0]).not.toHaveClass("dropzone-export");
-    expect(dropzones[1].textContent).toBe("Select file for export");
+    expect(dropzones[1]).toHaveTextContent("Select file to download source");
     expect(dropzones[1]).toHaveClass("dropzone-export");
   });
 });

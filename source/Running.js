@@ -490,7 +490,7 @@ export default class Running extends Component {
                   );
                 }}
               >
-                Export source
+                Download source
               </button>
             )}
 

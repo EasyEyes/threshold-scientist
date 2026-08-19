@@ -1,6 +1,6 @@
 /**
  * Tests for the pre-compile export (exportBeforeCompile.ts): the gray
- * "Select file for export" flow that packages a study into
+ * "Select file to download source" flow that packages a study into
  * name.raw.source.zip without compiling it, tolerantly, so that even a study
  * with compiler errors can be shared, e.g. for a bug report.
  */

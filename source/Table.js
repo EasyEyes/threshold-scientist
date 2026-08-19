@@ -253,7 +253,7 @@ export default class Table extends Component {
     // Wait for resources to be loaded if they aren't already
     if (!this.props.resourcesLoaded) {
       Swal.fire({
-        title: "Listing resources...",
+        title: "Listing resources ...",
         allowOutsideClick: false,
         allowEscapeKey: false,
         showConfirmButton: false,
@@ -648,11 +648,11 @@ export default class Table extends Component {
           <ul>
             <li>Click SELECT FILE.</li>
           </ul>
-          To export your study as a raw.source.zip archive, without compiling
+          To download your study as a raw.source.zip archive, without compiling
           it, e.g. to share it or report a bug:
           <ul>
             <li>
-              Click SELECT FILE TO EXPORT SOURCE to select your spreadsheet.
+              Click SELECT FILE TO DOWNLOAD SOURCE to select your spreadsheet.
             </li>
           </ul>
           Resources uploaded individually are stored in your Pavlovia account
@@ -713,7 +713,7 @@ export default class Table extends Component {
               >
                 <input {...getInputProps()} />
                 <p className="dropzone-sub-text">
-                  Select file to export source
+                  Select file to download source
                 </p>
               </div>
             )}
