@@ -643,18 +643,20 @@ export default class Table extends Component {
               spreadsheet.
             </li>
           </ul>
-          To compile an export.zip archive (containing both the spreadsheet and
+          To compile a source.zip archive (containing both the spreadsheet and
           its resources):
           <ul>
             <li>Click SELECT FILE.</li>
           </ul>
-          To export your study as a lax.export.zip archive, without compiling
+          To export your study as a lax.source.zip archive, without compiling
           it, e.g. to share it or report a bug:
           <ul>
-            <li>Click SELECT FILE FOR EXPORT to select your spreadsheet.</li>
+            <li>
+              Click SELECT FILE FOR EXPORT SOURCE to select your spreadsheet.
+            </li>
           </ul>
           Resources uploaded individually are stored in your Pavlovia account
-          for future use. Resources in an export.zip are not.
+          for future use. Resources in a source.zip are not.
           <FreshnessStatus
             onPublicationDate={this.props.functions.updateLatestPublicationDate}
           />
@@ -710,7 +712,9 @@ export default class Table extends Component {
                 }}
               >
                 <input {...getInputProps()} />
-                <p className="dropzone-sub-text">Select file for export</p>
+                <p className="dropzone-sub-text">
+                  Select file for export source
+                </p>
               </div>
             )}
           </Dropzone>

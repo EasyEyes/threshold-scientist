@@ -9,7 +9,10 @@ import {
   isValidateFileName,
 } from "../../threshold/preprocess/fileUtils";
 import { isExpTableFile } from "../../threshold/preprocess/utils";
-import { flattenZipEntries } from "../../threshold/preprocess/zipUtils";
+import {
+  flattenZipEntries,
+  isSourceArchiveFileName,
+} from "../../threshold/preprocess/zipUtils";
 import {
   createOrUpdateCommonResources,
   getCommonResourcesNames,
@@ -57,7 +60,6 @@ export const handleDrop = async (
   const targetSoundListList: File[] = [];
   const phraseFileList: File[] = [];
   let experimentFile = null;
-  const regex = /^(.+)\.export\.zip$/;
   let isCompiledFromArchiveBool = false;
   let archivedZip = null;
 
@@ -71,7 +73,7 @@ export const handleDrop = async (
       continue;
     }
     // get extension
-    isCompiledFromArchiveBool = regex.test(file.name);
+    isCompiledFromArchiveBool = isSourceArchiveFileName(file.name);
     handleArchiveBool(isCompiledFromArchiveBool);
     if (isCompiledFromArchiveBool) {
       archivedZip = file;

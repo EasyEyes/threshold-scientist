@@ -1,7 +1,7 @@
 /**
  * Tests for the pre-compile export (exportBeforeCompile.ts): the gray
  * "Select file for export" flow that packages a study into
- * name.lax.export.zip without compiling it, tolerantly, so that even a study
+ * name.lax.source.zip without compiling it, tolerantly, so that even a study
  * with compiler errors can be shared, e.g. for a bug report.
  */
 import JSZip from "jszip";
@@ -164,11 +164,12 @@ describe("exportStudyBeforeCompiling", () => {
 
     expect(errors).toEqual([]);
     const { zip, name } = await savedZip();
-    // ".lax" marks the tolerant, uncompiled export, distinguishing it from the
-    // rigorous post-compile export. It must keep the ".export.zip" suffix,
-    // which is how the compiler's dropzone recognizes compilable archives.
-    expect(name).toBe("myStudy.lax.export.zip");
-    expect(name).toMatch(/\.export\.zip$/);
+    // ".lax" marks the tolerant, uncompiled archive, distinguishing it from the
+    // rigorous post-compile source.zip. The ".source.zip" suffix is how the
+    // compiler's dropzone recognizes compilable archives (older ".export.zip"
+    // names are still accepted when reading).
+    expect(name).toBe("myStudy.lax.source.zip");
+    expect(name).toMatch(/\.source\.zip$/);
     expect(Object.keys(zip.files).sort()).toEqual([
       "Sloan.woff2",
       "myStudy.csv",
