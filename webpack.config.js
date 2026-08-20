@@ -7,15 +7,14 @@ const fs = require("fs");
 const path = require("path");
 
 const DEPLOYMENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
-const PRODUCTION_FIREBASE_DATABASE_URL =
-  "https://easyeyes-compiler-default-rtdb.firebaseio.com";
-const DEPLOY_PREVIEW_FIREBASE_DATABASE_URL =
-  "https://easyeyes-compiler-ode01.firebaseio.com";
 
-const firebaseDatabaseUrlForContext = (context) =>
-  context === "deploy-preview"
-    ? DEPLOY_PREVIEW_FIREBASE_DATABASE_URL
-    : PRODUCTION_FIREBASE_DATABASE_URL;
+const requireFirebaseDatabaseUrl = () => {
+  const value = process.env.FIREBASE_DATABASE_URL;
+  if (!value) {
+    throw new Error("FIREBASE_DATABASE_URL is required for compiler builds");
+  }
+  return value.replace(/\/+$/, "");
+};
 
 const validateDeploymentId = (value) => {
   if (typeof value !== "string" || !DEPLOYMENT_ID_PATTERN.test(value)) {
@@ -186,7 +185,7 @@ module.exports = (env) => {
             process.env.FIREBASE_API_KEY_SOUND || "",
           ),
           "process.env.FIREBASE_DATABASE_URL": JSON.stringify(
-            PRODUCTION_FIREBASE_DATABASE_URL,
+            requireFirebaseDatabaseUrl(),
           ),
           "process.env.SENTRY_DSN": JSON.stringify(
             process.env.SENTRY_DSN || "",
@@ -272,7 +271,7 @@ module.exports = (env) => {
             process.env.FIREBASE_API_KEY_SOUND || "",
           ),
           "process.env.FIREBASE_DATABASE_URL": JSON.stringify(
-            firebaseDatabaseUrlForContext(process.env.CONTEXT),
+            requireFirebaseDatabaseUrl(),
           ),
           "process.env.SENTRY_DSN": JSON.stringify(
             process.env.SENTRY_DSN || "",
