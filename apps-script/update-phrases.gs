@@ -2300,6 +2300,32 @@ function readNewTranslations() {
   }
 }
 
+function buildTranslationImportPayload(
+  changedPhrases,
+  colorMask,
+  sentValues,
+  activeLanguages,
+  currentVersion,
+  operationId,
+  batchNumber,
+  totalBatches,
+  cellCount,
+) {
+  return {
+    action: "translate",
+    translationImport: true,
+    changedPhrases: changedPhrases,
+    colorMask: colorMask,
+    sentValues: sentValues,
+    activeLanguages: activeLanguages,
+    currentVersion: currentVersion,
+    operationId: operationId,
+    batchNumber: batchNumber,
+    totalBatches: totalBatches,
+    cellCount: cellCount,
+  };
+}
+
 function importValidatedTranslations(spreadsheetId, sheet, incoming) {
   var secret =
     PropertiesService.getScriptProperties().getProperty("PHRASES_SECRET");
@@ -2367,18 +2393,17 @@ function importValidatedTranslations(spreadsheetId, sheet, incoming) {
         sentValues[phraseName][cell.languageCode] = cell.value;
       });
     });
-    var payload = {
-      action: "translate",
-      changedPhrases: changedPhrases,
-      colorMask: colorMask,
-      sentValues: sentValues,
-      activeLanguages: extractActiveLanguages(rows),
-      currentVersion: currentVersion,
-      operationId: operationId,
-      batchNumber: batchIndex + 1,
-      totalBatches: totalBatches,
-      cellCount: incoming.length,
-    };
+    var payload = buildTranslationImportPayload(
+      changedPhrases,
+      colorMask,
+      sentValues,
+      extractActiveLanguages(rows),
+      currentVersion,
+      operationId,
+      batchIndex + 1,
+      totalBatches,
+      incoming.length,
+    );
     var response = fetchPhrasesWithRetry(
       PHRASES_FUNCTION_URL,
       buildFetchOptions(secret, payload),

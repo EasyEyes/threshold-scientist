@@ -13,6 +13,24 @@ function loadAppsScript() {
 }
 
 describe("returned translation validation", () => {
+  test("marks returned-sheet translation payloads as validated imports", () => {
+    const { buildTranslationImportPayload } = loadAppsScript();
+    const payload = buildTranslationImportPayload(
+      { first: "First" },
+      { first: { fr: "#ffff00" } },
+      { first: { fr: "Premier" } },
+      ["en", "fr"],
+      "1.0",
+      "operation-id",
+      1,
+      1,
+      1,
+    );
+
+    expect(payload.translationImport).toBe(true);
+    expect(payload.changedPhrases).toEqual({ first: "First" });
+  });
+
   test("matches moved rows and columns using stable identifiers", () => {
     const { validateTranslationImport } = loadAppsScript();
     const current = [
