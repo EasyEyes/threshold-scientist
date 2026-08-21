@@ -652,7 +652,8 @@ export default class Table extends Component {
           it, e.g. to share it or report a bug:
           <ul>
             <li>
-              Click SELECT FILE TO DOWNLOAD SOURCE to select your spreadsheet.
+              Click SELECT FILE TO DOWNLOAD RAW SOURCE to select your
+              spreadsheet.
             </li>
           </ul>
           Resources uploaded individually are stored in your Pavlovia account
@@ -713,7 +714,7 @@ export default class Table extends Component {
               >
                 <input {...getInputProps()} />
                 <p className="dropzone-sub-text">
-                  Select file to download source
+                  Select file to download raw source
                 </p>
               </div>
             )}
