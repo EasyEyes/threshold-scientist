@@ -134,4 +134,99 @@ describe("International Phrases freshness workflows", () => {
     expect(plan.clears).toContainEqual({ rowIndex: 1, colIndex: 2 });
     expect(plan.clears).not.toContainEqual({ rowIndex: 2, colIndex: 2 });
   });
+
+  test("applies compact requests with batched sheet operations", () => {
+    const { applyCompactTranslationPlan } = loadAppsScript();
+    const clearContent = jest.fn().mockReturnThis();
+    const setBackground = jest.fn().mockReturnThis();
+    const getRangeList = jest.fn(() => ({ clearContent, setBackground }));
+    const deleteRows = jest.fn();
+    const deleteColumns = jest.fn();
+
+    applyCompactTranslationPlan(
+      { getRangeList, deleteRows, deleteColumns },
+      {
+        clears: [
+          { rowIndex: 1, colIndex: 2 },
+          { rowIndex: 1, colIndex: 3 },
+          { rowIndex: 1, colIndex: 5 },
+          { rowIndex: 2, colIndex: 2 },
+          { rowIndex: 2, colIndex: 3 },
+        ],
+        rowsToDelete: [14, 13, 11, 10, 9],
+        columnsToDelete: [8, 7, 5],
+      },
+    );
+
+    expect(getRangeList).toHaveBeenCalledWith(["C2:D2", "F2", "C3:D3"]);
+    expect(clearContent).toHaveBeenCalledTimes(1);
+    expect(setBackground).toHaveBeenCalledWith("#ffffff");
+    expect(deleteRows.mock.calls).toEqual([
+      [14, 2],
+      [10, 3],
+    ]);
+    expect(deleteColumns.mock.calls).toEqual([
+      [8, 2],
+      [6, 1],
+    ]);
+  });
+
+  test("shows loading feedback while creating a translation request", () => {
+    const dialogTitles = [];
+    const htmlOutput = {
+      setHeight: jest.fn().mockReturnThis(),
+      setWidth: jest.fn().mockReturnThis(),
+    };
+    const rangeList = {
+      clearContent: jest.fn().mockReturnThis(),
+      setBackground: jest.fn().mockReturnThis(),
+    };
+    const copySheet = {
+      getRangeList: jest.fn(() => rangeList),
+      deleteRows: jest.fn(),
+      deleteColumns: jest.fn(),
+    };
+    const source = {
+      getName: () => "International Phrases",
+      getSheetByName: () => ({
+        getDataRange: () => ({
+          getDisplayValues: () => rows,
+          getBackgrounds: () => rows.map((row) => row.map(() => "#ffffff")),
+        }),
+      }),
+      copy: () => ({
+        getSheetByName: () => copySheet,
+        getUrl: () => "https://example.test/needed-translations",
+      }),
+    };
+    const response = {
+      getResponseCode: () => 200,
+      getContentText: () => JSON.stringify({ freshness: [] }),
+    };
+    const { tabulateNeededTranslations } = loadAppsScript({
+      CacheService: {
+        getUserCache: () => ({ remove: jest.fn(), get: jest.fn() }),
+      },
+      HtmlService: {
+        createHtmlOutput: jest.fn(() => htmlOutput),
+      },
+      Logger: { log: jest.fn() },
+      PropertiesService: {
+        getScriptProperties: () => ({ getProperty: () => "secret" }),
+      },
+      SpreadsheetApp: {
+        getActiveSpreadsheet: () => source,
+        getUi: () => ({
+          showModelessDialog: (_html, title) => dialogTitles.push(title),
+        }),
+      },
+      UrlFetchApp: { fetch: jest.fn(() => response) },
+      Utilities: { getUuid: () => "request-id", sleep: jest.fn() },
+    });
+
+    tabulateNeededTranslations();
+
+    expect(dialogTitles[0]).toBe("Creating translation request …");
+    expect(dialogTitles.at(-1)).toBe("Success");
+  });
 });

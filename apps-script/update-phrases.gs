@@ -2035,18 +2035,75 @@ function planCompactTranslationRequest(rows, backgrounds, freshnessResults) {
   };
 }
 
+function columnIndexToA1(columnIndex) {
+  var label = "";
+  for (
+    var column = columnIndex + 1;
+    column > 0;
+    column = Math.floor((column - 1) / 26)
+  ) {
+    label = String.fromCharCode(((column - 1) % 26) + 65) + label;
+  }
+  return label;
+}
+
+function buildCompactClearRanges(clears) {
+  var sorted = clears.slice().sort(function (a, b) {
+    return a.rowIndex - b.rowIndex || a.colIndex - b.colIndex;
+  });
+  var ranges = [];
+  var start = null;
+  var end = null;
+  sorted.forEach(function (cell) {
+    if (
+      start &&
+      cell.rowIndex === end.rowIndex &&
+      cell.colIndex === end.colIndex + 1
+    ) {
+      end = cell;
+      return;
+    }
+    if (start) ranges.push(compactClearRangeA1(start, end));
+    start = cell;
+    end = cell;
+  });
+  if (start) ranges.push(compactClearRangeA1(start, end));
+  return ranges;
+}
+
+function compactClearRangeA1(start, end) {
+  var first = columnIndexToA1(start.colIndex) + (start.rowIndex + 1);
+  var last = columnIndexToA1(end.colIndex) + (end.rowIndex + 1);
+  return first === last ? first : first + ":" + last;
+}
+
+function groupDescendingIndices(indices) {
+  var groups = [];
+  indices.forEach(function (index) {
+    var last = groups[groups.length - 1];
+    if (last && index === last.startIndex - 1) {
+      last.startIndex = index;
+      last.count += 1;
+    } else {
+      groups.push({ startIndex: index, count: 1 });
+    }
+  });
+  return groups;
+}
+
 function applyCompactTranslationPlan(sheet, plan) {
-  plan.clears.forEach(function (cell) {
+  var clearRanges = buildCompactClearRanges(plan.clears);
+  if (clearRanges.length) {
     sheet
-      .getRange(cell.rowIndex + 1, cell.colIndex + 1)
+      .getRangeList(clearRanges)
       .clearContent()
       .setBackground(TRANSLATABLE_BACKGROUND);
+  }
+  groupDescendingIndices(plan.rowsToDelete).forEach(function (group) {
+    sheet.deleteRows(group.startIndex + 1, group.count);
   });
-  plan.rowsToDelete.forEach(function (row) {
-    sheet.deleteRow(row + 1);
-  });
-  plan.columnsToDelete.forEach(function (column) {
-    sheet.deleteColumn(column + 1);
+  groupDescendingIndices(plan.columnsToDelete).forEach(function (group) {
+    sheet.deleteColumns(group.startIndex + 1, group.count);
   });
 }
 
@@ -2059,6 +2116,10 @@ function tabulateNeededTranslations() {
     var source = SpreadsheetApp.getActiveSpreadsheet();
     var sourceSheet = source.getSheetByName("Translations");
     if (!sourceSheet) throw new Error('Sheet "Translations" not found.');
+    showSpinner(
+      "Creating translation request…",
+      "Creating translation request …",
+    );
     var sourceRange = sourceSheet.getDataRange();
     var rows = sourceRange.getDisplayValues();
     var backgrounds = sourceRange.getBackgrounds();
