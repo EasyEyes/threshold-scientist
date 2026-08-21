@@ -506,7 +506,9 @@ function buildPhraseAuditHtml(audit) {
   );
 }
 
-function showSpinner() {
+function showSpinner(label, title) {
+  label = label || "Translating…";
+  title = title || "Translating …";
   CacheService.getUserCache().remove("spinnerProgress");
   var html = `
     <style>
@@ -534,7 +536,7 @@ function showSpinner() {
     </style>
     <div class="container">
       <div class="spinner"></div>
-      <div class="label">Translating…</div>
+      <div class="label">${label}</div>
       <div class="progress" id="progress"></div>
     </div>
     <script>
@@ -553,7 +555,7 @@ function showSpinner() {
   try {
     SpreadsheetApp.getUi().showModelessDialog(
       HtmlService.createHtmlOutput(html).setHeight(155).setWidth(200),
-      "Translating …",
+      title,
     );
   } catch (e) {
     Logger.log("[phrases] showSpinner");
@@ -1974,6 +1976,7 @@ function colorStaleTranslationTextRed() {
     if (!sheet) throw new Error('Sheet "Translations" not found.');
     var range = sheet.getDataRange();
     var rows = range.getDisplayValues();
+    showSpinner("Checking translation freshness…", "Checking freshness …");
     var colors = planFreshnessFontColors(
       rows,
       range.getFontColors(),

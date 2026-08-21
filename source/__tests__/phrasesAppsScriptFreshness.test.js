@@ -2,12 +2,12 @@ import fs from "fs";
 import path from "path";
 import vm from "vm";
 
-function loadAppsScript() {
+function loadAppsScript(overrides = {}) {
   const source = fs.readFileSync(
     path.resolve(__dirname, "../../apps-script/update-phrases.gs"),
     "utf8",
   );
-  const context = vm.createContext({ console });
+  const context = vm.createContext({ console, ...overrides });
   vm.runInContext(source, context);
   return context;
 }
@@ -61,6 +61,59 @@ describe("International Phrases freshness workflows", () => {
     expect(planned[0]).toEqual(colors[0]);
     expect(planned[1]).toEqual(["#654321", "#654321", "#000000", "#ff0000"]);
     expect(planned[2]).toEqual(["#654321", "#654321", "#000000", "#ff0000"]);
+  });
+
+  test("shows a freshness loading dialog while colors are being checked", () => {
+    const dialogTitles = [];
+    const setFontColors = jest.fn();
+    const response = {
+      getResponseCode: () => 200,
+      getContentText: () =>
+        JSON.stringify({
+          freshness: [
+            { phraseName: "second", languageCode: "fr", fresh: true },
+            { phraseName: "second", languageCode: "ar", fresh: true },
+            { phraseName: "first", languageCode: "fr", fresh: true },
+            { phraseName: "first", languageCode: "ar", fresh: true },
+          ],
+        }),
+    };
+    const htmlOutput = {
+      setHeight: jest.fn().mockReturnThis(),
+      setWidth: jest.fn().mockReturnThis(),
+    };
+    const { colorStaleTranslationTextRed } = loadAppsScript({
+      CacheService: {
+        getUserCache: () => ({ remove: jest.fn(), get: jest.fn() }),
+      },
+      HtmlService: { createHtmlOutput: jest.fn(() => htmlOutput) },
+      Logger: { log: jest.fn() },
+      PropertiesService: {
+        getScriptProperties: () => ({ getProperty: () => "secret" }),
+      },
+      SpreadsheetApp: {
+        getActiveSpreadsheet: () => ({
+          getSheetByName: () => ({
+            getDataRange: () => ({
+              getDisplayValues: () => rows,
+              getFontColors: () => rows.map((row) => row.map(() => "#000000")),
+              setFontColors,
+            }),
+          }),
+        }),
+        getUi: () => ({
+          showModelessDialog: (_html, title) => dialogTitles.push(title),
+        }),
+      },
+      UrlFetchApp: { fetch: jest.fn(() => response) },
+      Utilities: { getUuid: () => "request-id", sleep: jest.fn() },
+    });
+
+    colorStaleTranslationTextRed();
+
+    expect(dialogTitles[0]).toBe("Checking freshness …");
+    expect(dialogTitles.at(-1)).toBe("Success");
+    expect(setFontColors).toHaveBeenCalledTimes(1);
   });
 
   test("plans compact deletion bottom-up and right-to-left", () => {
