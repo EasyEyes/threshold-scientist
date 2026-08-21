@@ -184,7 +184,7 @@ describe("handleDrop — phrase file inside an export archive", () => {
 
 // ── Uncompiled archives: *.raw.source.zip (and older *.lax.export.zip) ──────
 
-describe("handleDrop — uncompiled source archive (from Select file to download source)", () => {
+describe("handleDrop — uncompiled source archive (from Select file to download raw source)", () => {
   it.each(["myStudy.raw.source.zip", "myStudy.lax.export.zip"])(
     "treats %s as a compilable source archive",
     async (fileName) => {
