@@ -547,6 +547,7 @@ function showSpinner(label, title) {
   var html = `
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; }
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
         display: flex;
@@ -588,7 +589,7 @@ function showSpinner(label, title) {
   `;
   try {
     SpreadsheetApp.getUi().showModelessDialog(
-      HtmlService.createHtmlOutput(html).setHeight(155).setWidth(200),
+      HtmlService.createHtmlOutput(html).setHeight(155).setWidth(280),
       title,
     );
   } catch (e) {
@@ -600,15 +601,35 @@ function getSpinnerProgress() {
   return CacheService.getUserCache().get("spinnerProgress") || "";
 }
 
-function updatePhrases() {
-  pushPhrases(false);
+function shouldShowPhrasesSuccess(options) {
+  return !(options && options.suppressSuccessNotification);
+}
+
+function updatePhrases(options) {
+  pushPhrases(false, options);
+}
+
+// Install this function as an authorized spreadsheet "On edit" trigger.
+function handleInternationalPhrasesEdit(e) {
+  if (!e || !e.range || e.range.getSheet().getName() !== "Translations") {
+    return;
+  }
+
+  showSpinner("Updating phrases…", "Updating phrases …");
+  updatePhrases({ suppressSuccessNotification: true });
+  var latestVersion = fetchLatestPublishedPhrasesVersion();
+  colorStaleTranslationTextRed(
+    "Translation freshness colors updated. Latest phrases version: " +
+      latestVersion +
+      ".",
+  );
 }
 
 function fullResyncPhrases() {
   pushPhrases(true);
 }
 
-function pushPhrases(isFullResync) {
+function pushPhrases(isFullResync, options) {
   var secret =
     PropertiesService.getScriptProperties().getProperty("PHRASES_SECRET");
   if (!secret) {
@@ -754,10 +775,12 @@ function pushPhrases(isFullResync) {
   }
 
   if (!changedKeys || changedKeys.length === 0) {
-    if (nonWhiteChanged) {
-      notify("Phrases updated. New version: " + currentVersion, "success");
-    } else {
-      notify("Phrases are up to date. No changes detected.", "success");
+    if (shouldShowPhrasesSuccess(options)) {
+      if (nonWhiteChanged) {
+        notify("Phrases updated. New version: " + currentVersion, "success");
+      } else {
+        notify("Phrases are up to date. No changes detected.", "success");
+      }
     }
     return;
   }
@@ -980,7 +1003,7 @@ function pushPhrases(isFullResync) {
         "target-language cells and were not translated:\n" +
         missingKeys.join(", "),
     );
-  } else {
+  } else if (shouldShowPhrasesSuccess(options)) {
     var label = isFullResync ? "Full Resync" : "update";
     notify(
       "Phrases " + label + " complete. New version: " + newVersion,
@@ -2019,7 +2042,7 @@ function fetchFreshness(rows, secret) {
   return results;
 }
 
-function colorStaleTranslationTextRed() {
+function colorStaleTranslationTextRed(successMessage) {
   try {
     var secret =
       PropertiesService.getScriptProperties().getProperty("PHRASES_SECRET");
@@ -2037,7 +2060,10 @@ function colorStaleTranslationTextRed() {
       fetchFreshness(rows, secret),
     );
     range.setFontColors(colors);
-    notify("Translation freshness colors updated.", "success");
+    notify(
+      successMessage || "Translation freshness colors updated.",
+      "success",
+    );
   } catch (e) {
     notify(e.message, "error");
   }

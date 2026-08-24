@@ -19,6 +19,61 @@ describe("International Phrases freshness workflows", () => {
     ["first", "First", "Premier", "أول"],
   ];
 
+  test("automatically updates phrases and then colors freshness after a translation edit", () => {
+    const context = loadAppsScript();
+    const calls = [];
+    context.showSpinner = jest.fn((label, title) =>
+      calls.push({ spinner: [label, title] }),
+    );
+    context.updatePhrases = jest.fn((options) =>
+      calls.push({ update: options }),
+    );
+    context.fetchLatestPublishedPhrasesVersion = jest.fn(() => "7.4");
+    context.colorStaleTranslationTextRed = jest.fn((message) =>
+      calls.push({ color: message }),
+    );
+
+    context.handleInternationalPhrasesEdit({
+      range: {
+        getSheet: () => ({ getName: () => "Translations" }),
+      },
+    });
+
+    expect(calls).toEqual([
+      { spinner: ["Updating phrases…", "Updating phrases …"] },
+      { update: { suppressSuccessNotification: true } },
+      {
+        color:
+          "Translation freshness colors updated. Latest phrases version: 7.4.",
+      },
+    ]);
+  });
+
+  test("ignores edits outside the Translations sheet", () => {
+    const context = loadAppsScript();
+    context.updatePhrases = jest.fn();
+    context.colorStaleTranslationTextRed = jest.fn();
+
+    context.handleInternationalPhrasesEdit({
+      range: {
+        getSheet: () => ({ getName: () => "Metadata" }),
+      },
+    });
+
+    expect(context.updatePhrases).not.toHaveBeenCalled();
+    expect(context.colorStaleTranslationTextRed).not.toHaveBeenCalled();
+  });
+
+  test("suppresses only automatic update success notifications", () => {
+    const { shouldShowPhrasesSuccess } = loadAppsScript();
+
+    expect(shouldShowPhrasesSuccess()).toBe(true);
+    expect(shouldShowPhrasesSuccess({})).toBe(true);
+    expect(
+      shouldShowPhrasesSuccess({ suppressSuccessNotification: true }),
+    ).toBe(false);
+  });
+
   test("keeps untrusted notification URLs as escaped plain text", () => {
     const { buildNotificationMessageHtml } = loadAppsScript();
     const message =
@@ -80,6 +135,7 @@ describe("International Phrases freshness workflows", () => {
 
   test("shows a freshness loading dialog while colors are being checked", () => {
     const dialogTitles = [];
+    const dialogHtml = [];
     const setFontColors = jest.fn();
     const response = {
       getResponseCode: () => 200,
@@ -101,7 +157,12 @@ describe("International Phrases freshness workflows", () => {
       CacheService: {
         getUserCache: () => ({ remove: jest.fn(), get: jest.fn() }),
       },
-      HtmlService: { createHtmlOutput: jest.fn(() => htmlOutput) },
+      HtmlService: {
+        createHtmlOutput: jest.fn((html) => {
+          dialogHtml.push(html);
+          return htmlOutput;
+        }),
+      },
       Logger: { log: jest.fn() },
       PropertiesService: {
         getScriptProperties: () => ({ getProperty: () => "secret" }),
@@ -124,10 +185,19 @@ describe("International Phrases freshness workflows", () => {
       Utilities: { getUuid: () => "request-id", sleep: jest.fn() },
     });
 
-    colorStaleTranslationTextRed();
+    colorStaleTranslationTextRed(
+      "Translation freshness colors updated. Latest phrases version: 7.4.",
+    );
 
     expect(dialogTitles[0]).toBe("Checking freshness …");
     expect(dialogTitles.at(-1)).toBe("Success");
+    expect(dialogHtml.at(-1)).toContain(
+      "Translation freshness colors updated. Latest phrases version: 7.4.",
+    );
+    expect(htmlOutput.setWidth).toHaveBeenCalledWith(280);
+    expect(dialogHtml[0]).toContain(
+      "html, body { width: 100%; height: 100%; }",
+    );
     expect(setFontColors).toHaveBeenCalledTimes(1);
   });
 
