@@ -19,6 +19,14 @@ function makeResponse(status, body) {
   };
 }
 
+function placeDataAtTranslationRows(rows) {
+  return [
+    rows[0],
+    ...Array.from({ length: 8 }, () => rows[0].map(() => "")),
+    ...rows.slice(1),
+  ];
+}
+
 function makeImportHarness({
   failBackgroundReadback = false,
   phraseCount = 1,
@@ -116,6 +124,36 @@ function makeImportHarness({
 }
 
 describe("returned translation validation", () => {
+  test("counts only non-white translation cells from spreadsheet row 10 onward", () => {
+    const { validateTranslationImport } = loadAppsScript();
+    const current = [
+      ["EE_LanguageCode", "en", "pcm", "fr"],
+      ["metadata", "English metadata", "Metadata", "Métadonnées"],
+      ...Array.from({ length: 7 }, () => ["", "", "", ""]),
+      ["first", "First", "Old Pcm", "Ancien"],
+    ];
+    const compact = current.map((row) => row.slice());
+    compact[9][2] = "New Pcm";
+    const backgrounds = compact.map((row) => row.map(() => "#ffffff"));
+    backgrounds[1][2] = "#ffff00";
+    backgrounds[1][3] = "#ffff00";
+    backgrounds[9][1] = "#ffff00";
+    backgrounds[9][2] = "#ffff00";
+
+    expect(validateTranslationImport(compact, backgrounds, current)).toEqual({
+      conflicts: [],
+      incoming: [
+        {
+          phraseName: "first",
+          languageCode: "pcm",
+          englishText: "First",
+          value: "New Pcm",
+          background: "#ffff00",
+        },
+      ],
+    });
+  });
+
   test("fingerprints checkpoints by returned and destination spreadsheet identities", () => {
     const { buildTranslationImportCheckpointFingerprint } = loadAppsScript({
       Utilities: {
@@ -315,19 +353,19 @@ describe("returned translation validation", () => {
 
   test("matches moved rows and columns using stable identifiers", () => {
     const { validateTranslationImport } = loadAppsScript();
-    const current = [
+    const current = placeDataAtTranslationRows([
       ["EE_LanguageCode", "en", "fr", "ar"],
       ["first", "First", "Premier", "أول"],
       ["second", "Second", "Deuxième", "ثانية"],
-    ];
-    const compact = [
+    ]);
+    const compact = placeDataAtTranslationRows([
       ["EE_LanguageCode", "en", "ar", "fr"],
       ["second", "Second", "ثانية جديدة", "Deuxième"],
       ["first", "First", "أول", "Nouveau"],
-    ];
+    ]);
     const backgrounds = compact.map((row) => row.map(() => "#ffffff"));
-    backgrounds[1][2] = "#ffff00";
-    backgrounds[2][3] = "#00ffff";
+    backgrounds[9][2] = "#ffff00";
+    backgrounds[10][3] = "#00ffff";
     expect(validateTranslationImport(compact, backgrounds, current)).toEqual({
       conflicts: [],
       incoming: [
@@ -352,19 +390,19 @@ describe("returned translation validation", () => {
   test("collects every English conflict before any caller mutation", () => {
     const { validateTranslationImport, formatEnglishConflicts } =
       loadAppsScript();
-    const current = [
+    const current = placeDataAtTranslationRows([
       ["EE_LanguageCode", "en", "fr"],
       ["first", "Current first", "Premier"],
       ["second", "Current second", "Deuxième"],
-    ];
-    const compact = [
+    ]);
+    const compact = placeDataAtTranslationRows([
       ["EE_LanguageCode", "en", "fr"],
       ["first", "Old first", "Nouveau"],
       ["second", "Old second", "Nouvelle"],
-    ];
+    ]);
     const backgrounds = compact.map((row) => row.map(() => "#ffffff"));
-    backgrounds[1][2] = "#ffff00";
-    backgrounds[2][2] = "#ffff00";
+    backgrounds[9][2] = "#ffff00";
+    backgrounds[10][2] = "#ffff00";
     const result = validateTranslationImport(compact, backgrounds, current);
     expect(result.conflicts).toHaveLength(2);
     const report = formatEnglishConflicts(result.conflicts);

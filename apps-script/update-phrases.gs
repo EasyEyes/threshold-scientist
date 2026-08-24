@@ -16,6 +16,7 @@
 
 var PHRASES_FUNCTION_URL = "https://easyeyes.app/.netlify/functions/phrases";
 var TRANSLATABLE_BACKGROUND = "#ffffff";
+var FIRST_TRANSLATION_ROW_INDEX = 9;
 var PHRASES_CHECKPOINT_KEY = "phrasesRetranslationCheckpoint";
 var PHRASES_IMPORT_CHECKPOINT_KEY = "phrasesTranslationImportCheckpoint";
 
@@ -2060,7 +2061,7 @@ function planCompactTranslationRequest(rows, backgrounds, freshnessResults) {
     });
   });
   var rowsToDelete = [];
-  for (var row = rows.length - 1; row >= 9; row--) {
+  for (var row = rows.length - 1; row >= FIRST_TRANSLATION_ROW_INDEX; row--) {
     var keepRow = Object.keys(index.columnsByLanguage).some(
       function (language) {
         return (
@@ -2181,8 +2182,18 @@ function tabulateNeededTranslations() {
       backgrounds,
       fetchFreshness(rows, secret),
     );
-    var copy = source.copy(source.getName() + " - needed translations");
-    var copySheet = copy.getSheetByName("Translations");
+    var copy = SpreadsheetApp.create(
+      source.getName() + " - needed translations",
+    );
+    var defaultSheets = copy.getSheets();
+    var copySheet = null;
+    source.getSheets().forEach(function (sheet) {
+      var copiedSheet = sheet.copyTo(copy).setName(sheet.getName());
+      if (sheet === sourceSheet) copySheet = copiedSheet;
+    });
+    defaultSheets.forEach(function (sheet) {
+      copy.deleteSheet(sheet);
+    });
     if (!copySheet)
       throw new Error('Copied spreadsheet has no "Translations" sheet.');
     applyCompactTranslationPlan(copySheet, plan);
@@ -2204,6 +2215,8 @@ function validateTranslationImport(
   var current = buildPhraseSheetIndex(currentRows);
   var incoming = [];
   Object.keys(compact.rowsByPhrase).forEach(function (phraseName) {
+    var row = compact.rowsByPhrase[phraseName];
+    if (row < FIRST_TRANSLATION_ROW_INDEX) return;
     if (current.rowsByPhrase[phraseName] === undefined) {
       throw new Error("Unknown phraseName in returned sheet: " + phraseName);
     }
@@ -2212,7 +2225,6 @@ function validateTranslationImport(
       if (current.columnsByLanguage[language] === undefined) {
         throw new Error("Unknown languageCode in returned sheet: " + language);
       }
-      var row = compact.rowsByPhrase[phraseName];
       var column = compact.columnsByLanguage[language];
       if (!isTranslatableBackground(compactBackgrounds[row][column])) {
         incoming.push({

@@ -198,23 +198,39 @@ describe("International Phrases freshness workflows", () => {
       setBackground: jest.fn().mockReturnThis(),
     };
     const copySheet = {
+      setName: jest.fn().mockReturnThis(),
       getRangeList: jest.fn(() => rangeList),
       deleteRows: jest.fn(),
       deleteColumns: jest.fn(),
     };
+    const copiedOtherSheet = {
+      setName: jest.fn().mockReturnThis(),
+    };
+    const defaultSheet = { getName: () => "Sheet1" };
+    const destination = {
+      deleteSheet: jest.fn(),
+      getSheets: () => [defaultSheet],
+      getUrl: () =>
+        "https://docs.google.com/spreadsheets/d/translation-request/edit",
+    };
+    const translationsSheet = {
+      copyTo: jest.fn(() => copySheet),
+      getName: () => "Translations",
+      getDataRange: () => ({
+        getDisplayValues: () => rows,
+        getBackgrounds: () => rows.map((row) => row.map(() => "#ffffff")),
+      }),
+    };
+    const metadataSheet = {
+      copyTo: jest.fn(() => copiedOtherSheet),
+      getName: () => "Metadata",
+    };
+    const createSpreadsheet = jest.fn(() => destination);
     const source = {
       getName: () => "International Phrases",
-      getSheetByName: () => ({
-        getDataRange: () => ({
-          getDisplayValues: () => rows,
-          getBackgrounds: () => rows.map((row) => row.map(() => "#ffffff")),
-        }),
-      }),
-      copy: () => ({
-        getSheetByName: () => copySheet,
-        getUrl: () =>
-          "https://docs.google.com/spreadsheets/d/translation-request/edit",
-      }),
+      getSheetByName: () => translationsSheet,
+      getSheets: () => [translationsSheet, metadataSheet],
+      copy: jest.fn(),
     };
     const response = {
       getResponseCode: () => 200,
@@ -235,6 +251,7 @@ describe("International Phrases freshness workflows", () => {
         getScriptProperties: () => ({ getProperty: () => "secret" }),
       },
       SpreadsheetApp: {
+        create: createSpreadsheet,
         getActiveSpreadsheet: () => source,
         getUi: () => ({
           showModelessDialog: (_html, title) => dialogTitles.push(title),
@@ -246,6 +263,15 @@ describe("International Phrases freshness workflows", () => {
 
     tabulateNeededTranslations();
 
+    expect(createSpreadsheet).toHaveBeenCalledWith(
+      "International Phrases - needed translations",
+    );
+    expect(source.copy).not.toHaveBeenCalled();
+    expect(translationsSheet.copyTo).toHaveBeenCalledWith(destination);
+    expect(metadataSheet.copyTo).toHaveBeenCalledWith(destination);
+    expect(copySheet.setName).toHaveBeenCalledWith("Translations");
+    expect(copiedOtherSheet.setName).toHaveBeenCalledWith("Metadata");
+    expect(destination.deleteSheet).toHaveBeenCalledWith(defaultSheet);
     expect(dialogTitles[0]).toBe("Creating translation request …");
     expect(dialogTitles.at(-1)).toBe("Success");
     expect(dialogHtml.at(-1)).toContain(
