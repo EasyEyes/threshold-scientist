@@ -19,11 +19,21 @@ function makeResponse(status, body) {
   };
 }
 
-function makeImportHarness({ failBackgroundReadback = false } = {}) {
+function makeImportHarness({
+  failBackgroundReadback = false,
+  phraseCount = 1,
+  changeEnglishAfterFirstBatch = false,
+} = {}) {
   const failureState = { failBackgroundReadback };
+  const phrases = Array.from({ length: phraseCount }, (_, index) => ({
+    phraseName:
+      phraseCount === 1 ? "first" : `phrase-${String(index).padStart(3, "0")}`,
+    englishText: phraseCount === 1 ? "First" : `English ${index}`,
+    value: phraseCount === 1 ? "Premier" : `French ${index}`,
+  }));
   const rows = [
     ["EE_LanguageCode", "en", "fr"],
-    ["first", "First", "Old"],
+    ...phrases.map((phrase) => [phrase.phraseName, phrase.englishText, "Old"]),
   ];
   const backgrounds = rows.map((row) => row.map(() => "#ffffff"));
   const userProperties = new Map();
@@ -62,10 +72,22 @@ function makeImportHarness({ failBackgroundReadback = false } = {}) {
         }
         const payload = JSON.parse(options.payload);
         requests.push(payload);
+        const translatedRows = Object.fromEntries(
+          Object.keys(payload.changedPhrases).map((phraseName) => [
+            phraseName,
+            {
+              fr: phrases.find((phrase) => phrase.phraseName === phraseName)
+                .value,
+            },
+          ]),
+        );
+        if (changeEnglishAfterFirstBatch && payload.batchNumber === 1) {
+          rows[51][1] = "Changed while importing";
+        }
         return makeResponse(200, {
           verified: true,
-          newVersion: "1.1",
-          translatedRows: { first: { fr: "Premier" } },
+          newVersion: `1.${payload.batchNumber}`,
+          translatedRows,
         });
       },
     },
@@ -78,7 +100,19 @@ function makeImportHarness({ failBackgroundReadback = false } = {}) {
     },
   });
   context.notify = jest.fn();
-  return { context, failureState, requests, sheet, userProperties };
+  return {
+    context,
+    failureState,
+    incoming: phrases.map((phrase) => ({
+      ...phrase,
+      languageCode: "fr",
+      background: "#ffff00",
+    })),
+    requests,
+    rows,
+    sheet,
+    userProperties,
+  };
 }
 
 describe("returned translation validation", () => {
@@ -213,6 +247,49 @@ describe("returned translation validation", () => {
       batchNumber: 1,
       currentVersion: "1.0",
     });
+    expect(userProperties.has("phrasesTranslationImportCheckpoint")).toBe(
+      false,
+    );
+  });
+
+  test("stops before a later batch when current English changes", () => {
+    const { context, incoming, requests, rows, sheet, userProperties } =
+      makeImportHarness({
+        phraseCount: 51,
+        changeEnglishAfterFirstBatch: true,
+      });
+
+    expect(() =>
+      context.importValidatedTranslations("returned-sheet", sheet, incoming),
+    ).toThrow("English changed during import for phrase-050");
+
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).toMatchObject({
+      batchNumber: 1,
+      totalBatches: 2,
+      cellCount: 51,
+    });
+    expect(Object.keys(requests[0].changedPhrases)).toHaveLength(50);
+    const checkpoint = JSON.parse(
+      userProperties.get("phrasesTranslationImportCheckpoint"),
+    );
+    expect(checkpoint).toMatchObject({
+      operationId: "operation-id",
+      nextBatchIndex: 1,
+      currentVersion: "1.1",
+    });
+
+    rows[51][1] = "English 50";
+    context.importValidatedTranslations("returned-sheet", sheet, incoming);
+
+    expect(requests).toHaveLength(2);
+    expect(requests[1]).toMatchObject({
+      operationId: "operation-id",
+      batchNumber: 2,
+      totalBatches: 2,
+      currentVersion: "1.1",
+    });
+    expect(Object.keys(requests[1].changedPhrases)).toEqual(["phrase-050"]);
     expect(userProperties.has("phrasesTranslationImportCheckpoint")).toBe(
       false,
     );
