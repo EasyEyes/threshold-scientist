@@ -32,6 +32,7 @@ const compile = (config) =>
 describe("compiler deployment build", () => {
   const originalDeployId = process.env.DEPLOY_ID;
   const originalContext = process.env.CONTEXT;
+  const originalFirebaseDatabaseUrl = process.env.FIREBASE_DATABASE_URL;
 
   it("declares dependencies imported from threshold compiler sources", () => {
     const compilerPackage = require("../../package.json");
@@ -55,6 +56,11 @@ describe("compiler deployment build", () => {
       delete process.env.CONTEXT;
     } else {
       process.env.CONTEXT = originalContext;
+    }
+    if (originalFirebaseDatabaseUrl === undefined) {
+      delete process.env.FIREBASE_DATABASE_URL;
+    } else {
+      process.env.FIREBASE_DATABASE_URL = originalFirebaseDatabaseUrl;
     }
   });
 
@@ -82,6 +88,8 @@ describe("compiler deployment build", () => {
 
   it("emits matching deployment identity and a content-hashed bundle", async () => {
     process.env.DEPLOY_ID = "deploy-test-123";
+    process.env.FIREBASE_DATABASE_URL =
+      "https://test-staging-default-rtdb.firebaseio.com";
     const outputPath = fs.mkdtempSync(
       path.join(os.tmpdir(), "compiler-deployment-build-"),
     );
@@ -113,22 +121,13 @@ describe("compiler deployment build", () => {
     );
   });
 
-  it.each([
-    [
-      "production",
-      "production",
-      "https://easyeyes-compiler-default-rtdb.firebaseio.com",
-    ],
-    [
-      "deploy preview",
-      "deploy-preview",
-      "https://easyeyes-compiler-ode01.firebaseio.com",
-    ],
-  ])(
-    "embeds the %s Firebase database in the production bundle",
-    async (_description, context, expectedDatabaseUrl) => {
+  it.each(["production", "deploy-preview"])(
+    "embeds FIREBASE_DATABASE_URL in the %s bundle",
+    async (context) => {
       process.env.DEPLOY_ID = `deploy-${context}`;
       process.env.CONTEXT = context;
+      process.env.FIREBASE_DATABASE_URL =
+        "https://test-staging-default-rtdb.firebaseio.com";
       const outputPath = fs.mkdtempSync(
         path.join(os.tmpdir(), "compiler-firebase-build-"),
       );
@@ -150,12 +149,23 @@ describe("compiler deployment build", () => {
         .find((file) => /^main\.[a-f0-9]+\.js$/.test(file));
       const bundle = fs.readFileSync(path.join(outputPath, bundleName), "utf8");
 
-      expect(bundle).toContain(expectedDatabaseUrl);
+      expect(bundle).toContain(process.env.FIREBASE_DATABASE_URL);
     },
   );
 
+  it("rejects a production build without FIREBASE_DATABASE_URL", () => {
+    process.env.DEPLOY_ID = "deploy-test-123";
+    delete process.env.FIREBASE_DATABASE_URL;
+
+    expect(() => createWebpackConfig({ production: true })).toThrow(
+      "FIREBASE_DATABASE_URL is required for compiler builds",
+    );
+  });
+
   it("keeps development independent from DEPLOY_ID with a fixed bundle name", () => {
     delete process.env.DEPLOY_ID;
+    process.env.FIREBASE_DATABASE_URL =
+      "https://test-local-default-rtdb.firebaseio.com";
 
     const config = createWebpackConfig({ development: true });
 
