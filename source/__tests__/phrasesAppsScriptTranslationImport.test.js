@@ -2,17 +2,222 @@ import fs from "fs";
 import path from "path";
 import vm from "vm";
 
-function loadAppsScript() {
+function loadAppsScript(overrides = {}) {
   const source = fs.readFileSync(
     path.resolve(__dirname, "../../apps-script/update-phrases.gs"),
     "utf8",
   );
-  const context = vm.createContext({ console });
+  const context = vm.createContext({ console, ...overrides });
   vm.runInContext(source, context);
   return context;
 }
 
+function makeResponse(status, body) {
+  return {
+    getResponseCode: () => status,
+    getContentText: () => JSON.stringify(body),
+  };
+}
+
+function makeImportHarness({ failBackgroundReadback = false } = {}) {
+  const failureState = { failBackgroundReadback };
+  const rows = [
+    ["EE_LanguageCode", "en", "fr"],
+    ["first", "First", "Old"],
+  ];
+  const backgrounds = rows.map((row) => row.map(() => "#ffffff"));
+  const userProperties = new Map();
+  const requests = [];
+  const sheet = {
+    getParent: () => ({ getId: () => "international-phrases" }),
+    getSheetId: () => 123,
+    getDataRange: () => ({
+      getDisplayValues: () => rows.map((row) => [...row]),
+    }),
+    getRange: (row, column) => ({
+      setValue: (value) => {
+        rows[row - 1][column - 1] = value;
+      },
+      setBackground: (value) => {
+        if (!failureState.failBackgroundReadback)
+          backgrounds[row - 1][column - 1] = value;
+      },
+      getDisplayValue: () => rows[row - 1][column - 1],
+      getBackground: () => backgrounds[row - 1][column - 1],
+    }),
+  };
+  const context = loadAppsScript({
+    PropertiesService: {
+      getScriptProperties: () => ({ getProperty: () => "secret" }),
+      getUserProperties: () => ({
+        getProperty: (key) => userProperties.get(key) || null,
+        setProperty: (key, value) => userProperties.set(key, value),
+        deleteProperty: (key) => userProperties.delete(key),
+      }),
+    },
+    UrlFetchApp: {
+      fetch: (url, options) => {
+        if (!options || options.method === "get") {
+          return makeResponse(200, { version: "1.0" });
+        }
+        const payload = JSON.parse(options.payload);
+        requests.push(payload);
+        return makeResponse(200, {
+          verified: true,
+          newVersion: "1.1",
+          translatedRows: { first: { fr: "Premier" } },
+        });
+      },
+    },
+    Utilities: {
+      DigestAlgorithm: { SHA_256: "SHA_256" },
+      computeDigest: (_algorithm, value) => value,
+      base64EncodeWebSafe: (value) => value,
+      getUuid: () => "operation-id",
+      sleep: jest.fn(),
+    },
+  });
+  context.notify = jest.fn();
+  return { context, failureState, requests, sheet, userProperties };
+}
+
 describe("returned translation validation", () => {
+  test("fingerprints checkpoints by returned and destination spreadsheet identities", () => {
+    const { buildTranslationImportCheckpointFingerprint } = loadAppsScript({
+      Utilities: {
+        DigestAlgorithm: { SHA_256: "SHA_256" },
+        computeDigest: (_algorithm, value) => value,
+        base64EncodeWebSafe: (value) => value,
+      },
+    });
+    const base = {
+      returnedSpreadsheetId: "returned-sheet-a",
+      destinationSpreadsheetId: "international-phrases-a",
+      destinationSheetId: 123,
+      incoming: [
+        {
+          phraseName: "first",
+          languageCode: "fr",
+          englishText: "First",
+          value: "Premier",
+          background: "#ffff00",
+        },
+      ],
+    };
+
+    expect(buildTranslationImportCheckpointFingerprint(base)).not.toBe(
+      buildTranslationImportCheckpointFingerprint({
+        ...base,
+        returnedSpreadsheetId: "returned-sheet-b",
+      }),
+    );
+    expect(buildTranslationImportCheckpointFingerprint(base)).not.toBe(
+      buildTranslationImportCheckpointFingerprint({
+        ...base,
+        destinationSpreadsheetId: "international-phrases-b",
+      }),
+    );
+    expect(buildTranslationImportCheckpointFingerprint(base)).not.toBe(
+      buildTranslationImportCheckpointFingerprint({
+        ...base,
+        destinationSheetId: 456,
+      }),
+    );
+  });
+
+  test("canonicalizes validated cells in import checkpoint fingerprints", () => {
+    const { buildTranslationImportCheckpointFingerprint } = loadAppsScript({
+      Utilities: {
+        DigestAlgorithm: { SHA_256: "SHA_256" },
+        computeDigest: (_algorithm, value) => value,
+        base64EncodeWebSafe: (value) => value,
+      },
+    });
+    const first = {
+      phraseName: "first",
+      languageCode: "fr",
+      englishText: "First",
+      value: "Premier",
+      background: "#ffff00",
+    };
+    const second = {
+      phraseName: "second",
+      languageCode: "ar",
+      englishText: "Second",
+      value: "ثانية",
+      background: "#00ffff",
+    };
+    const base = {
+      returnedSpreadsheetId: "returned-sheet",
+      destinationSpreadsheetId: "international-phrases",
+      destinationSheetId: 123,
+    };
+
+    expect(
+      buildTranslationImportCheckpointFingerprint({
+        ...base,
+        incoming: [first, second],
+      }),
+    ).toBe(
+      buildTranslationImportCheckpointFingerprint({
+        ...base,
+        incoming: [second, first],
+      }),
+    );
+    expect(
+      buildTranslationImportCheckpointFingerprint({
+        ...base,
+        incoming: [first],
+      }),
+    ).not.toBe(
+      buildTranslationImportCheckpointFingerprint({
+        ...base,
+        incoming: [{ ...first, value: "Première" }],
+      }),
+    );
+  });
+
+  test("does not advance the checkpoint when destination read-back fails", () => {
+    const { context, failureState, requests, sheet, userProperties } =
+      makeImportHarness({ failBackgroundReadback: true });
+    const incoming = [
+      {
+        phraseName: "first",
+        languageCode: "fr",
+        englishText: "First",
+        value: "Premier",
+        background: "#ffff00",
+      },
+    ];
+
+    expect(() =>
+      context.importValidatedTranslations("returned-sheet", sheet, incoming),
+    ).toThrow("did not read back correctly");
+
+    expect(requests).toHaveLength(1);
+    const checkpoint = JSON.parse(
+      userProperties.get("phrasesTranslationImportCheckpoint"),
+    );
+    expect(checkpoint).toMatchObject({
+      operationId: "operation-id",
+      nextBatchIndex: 0,
+      currentVersion: "1.0",
+    });
+
+    failureState.failBackgroundReadback = false;
+    context.importValidatedTranslations("returned-sheet", sheet, incoming);
+
+    expect(requests).toHaveLength(2);
+    expect(requests[1]).toMatchObject({
+      operationId: "operation-id",
+      batchNumber: 1,
+      currentVersion: "1.0",
+    });
+    expect(userProperties.has("phrasesTranslationImportCheckpoint")).toBe(
+      false,
+    );
+  });
+
   test("marks returned-sheet translation payloads as validated imports", () => {
     const { buildTranslationImportPayload } = loadAppsScript();
     const payload = buildTranslationImportPayload(

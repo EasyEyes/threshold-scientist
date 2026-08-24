@@ -1292,6 +1292,26 @@ function buildPhrasesCheckpointFingerprint(value) {
   return Utilities.base64EncodeWebSafe(digest);
 }
 
+function buildTranslationImportCheckpointFingerprint(value) {
+  var canonicalIncoming = value.incoming.slice().sort(function (left, right) {
+    return (
+      left.phraseName.localeCompare(right.phraseName) ||
+      left.languageCode.localeCompare(right.languageCode)
+    );
+  });
+  var digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    JSON.stringify({
+      operation: "translationImport",
+      returnedSpreadsheetId: value.returnedSpreadsheetId,
+      destinationSpreadsheetId: value.destinationSpreadsheetId,
+      destinationSheetId: value.destinationSheetId,
+      incoming: canonicalIncoming,
+    }),
+  );
+  return Utilities.base64EncodeWebSafe(digest);
+}
+
 function savePhrasesCheckpoint(checkpoint) {
   PropertiesService.getUserProperties().setProperty(
     PHRASES_CHECKPOINT_KEY,
@@ -2339,9 +2359,10 @@ function importValidatedTranslations(spreadsheetId, sheet, incoming) {
     grouped[cell.phraseName].push(cell);
   });
   var phraseNames = Object.keys(grouped).sort();
-  var fingerprint = buildPhrasesCheckpointFingerprint({
-    operation: "translationImport",
-    spreadsheetId: spreadsheetId,
+  var fingerprint = buildTranslationImportCheckpointFingerprint({
+    returnedSpreadsheetId: spreadsheetId,
+    destinationSpreadsheetId: sheet.getParent().getId(),
+    destinationSheetId: sheet.getSheetId(),
     incoming: incoming,
   });
   var checkpoint = loadImportCheckpoint(fingerprint);
