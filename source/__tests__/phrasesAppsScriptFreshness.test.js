@@ -115,6 +115,67 @@ describe("International Phrases freshness workflows", () => {
     ]);
   });
 
+  test("fetches freshness batches in bounded parallel groups", () => {
+    const fetchAll = jest.fn((requests) =>
+      requests.map(() => ({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ freshness: [] }),
+      })),
+    );
+    const largeSheet = [
+      ["EE_LanguageCode", "en", "fr"],
+      ...Array.from({ length: 251 }, (_, index) => [
+        "phrase" + index,
+        "English " + index,
+        "French " + index,
+      ]),
+    ];
+    const { fetchFreshness } = loadAppsScript({
+      UrlFetchApp: { fetchAll },
+      Utilities: { getUuid: () => "request-id", sleep: jest.fn() },
+    });
+
+    expect(fetchFreshness(largeSheet, "secret")).toEqual([]);
+    expect(fetchAll.mock.calls.map(([requests]) => requests.length)).toEqual([
+      4, 2,
+    ]);
+  });
+
+  test("retries only failed requests in a parallel freshness group", () => {
+    const ok = {
+      getResponseCode: () => 200,
+      getContentText: () => "ok",
+    };
+    const failed = {
+      getResponseCode: () => 500,
+      getContentText: () => "failed",
+    };
+    const fetchAll = jest
+      .fn()
+      .mockReturnValueOnce([failed, ok])
+      .mockReturnValueOnce([ok]);
+    const sleep = jest.fn();
+    const { fetchPhrasesBatchWithRetry } = loadAppsScript({
+      UrlFetchApp: { fetchAll },
+      Utilities: { sleep },
+    });
+
+    const responses = fetchPhrasesBatchWithRetry("https://example.test", [
+      { method: "post", payload: "first" },
+      { method: "post", payload: "second" },
+    ]);
+
+    expect(responses).toEqual([ok, ok]);
+    expect(fetchAll.mock.calls[1][0]).toEqual([
+      {
+        url: "https://example.test",
+        method: "post",
+        payload: "first",
+      },
+    ]);
+    expect(sleep).toHaveBeenCalledWith(250);
+  });
+
   test("changes only target font colors and treats blanks as stale", () => {
     const { planFreshnessFontColors } = loadAppsScript();
     const values = rows.map((row) => row.slice());
@@ -181,7 +242,7 @@ describe("International Phrases freshness workflows", () => {
           showModelessDialog: (_html, title) => dialogTitles.push(title),
         }),
       },
-      UrlFetchApp: { fetch: jest.fn(() => response) },
+      UrlFetchApp: { fetchAll: jest.fn(() => [response]) },
       Utilities: { getUuid: () => "request-id", sleep: jest.fn() },
     });
 
@@ -327,7 +388,7 @@ describe("International Phrases freshness workflows", () => {
           showModelessDialog: (_html, title) => dialogTitles.push(title),
         }),
       },
-      UrlFetchApp: { fetch: jest.fn(() => response) },
+      UrlFetchApp: { fetchAll: jest.fn(() => [response]) },
       Utilities: { getUuid: () => "request-id", sleep: jest.fn() },
     });
 

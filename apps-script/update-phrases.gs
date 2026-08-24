@@ -1479,6 +1479,54 @@ function fetchPhrasesWithRetry(url, options) {
   throw lastError;
 }
 
+function fetchPhrasesBatchWithRetry(url, optionsList) {
+  var responses = new Array(optionsList.length);
+  var pending = optionsList.map(function (_, index) {
+    return index;
+  });
+  var lastError;
+
+  for (var attempt = 0; attempt < 3 && pending.length > 0; attempt++) {
+    var requests = pending.map(function (index) {
+      var request = { url: url };
+      Object.keys(optionsList[index]).forEach(function (key) {
+        request[key] = optionsList[index][key];
+      });
+      return request;
+    });
+    try {
+      var batchResponses = UrlFetchApp.fetchAll(requests);
+      var retry = [];
+      pending.forEach(function (originalIndex, responseIndex) {
+        var response = batchResponses[responseIndex];
+        if (!response) {
+          lastError = new Error("Phrases API returned no response.");
+          retry.push(originalIndex);
+          return;
+        }
+        responses[originalIndex] = response;
+        var code = response.getResponseCode();
+        if (code === 429 || code >= 500) retry.push(originalIndex);
+      });
+      pending = retry;
+    } catch (e) {
+      lastError = e;
+    }
+    if (pending.length > 0 && attempt < 2) {
+      Utilities.sleep(250 * (attempt + 1));
+    }
+  }
+
+  if (
+    pending.some(function (index) {
+      return !responses[index];
+    })
+  ) {
+    throw lastError || new Error("Phrases API batch failed.");
+  }
+  return responses;
+}
+
 function parseVerifiedPhrasesResult(responseText) {
   var parsed;
   try {
@@ -2021,24 +2069,31 @@ function planFreshnessFontColors(rows, currentColors, freshnessResults) {
 
 function fetchFreshness(rows, secret) {
   var results = [];
-  buildFreshnessBatches(rows, 50).forEach(function (payload) {
-    var response = fetchPhrasesWithRetry(
+  var batches = buildFreshnessBatches(rows, 50);
+  var concurrency = 4;
+  for (var offset = 0; offset < batches.length; offset += concurrency) {
+    var group = batches.slice(offset, offset + concurrency);
+    var responses = fetchPhrasesBatchWithRetry(
       PHRASES_FUNCTION_URL,
-      buildFetchOptions(secret, payload),
+      group.map(function (payload) {
+        return buildFetchOptions(secret, payload);
+      }),
     );
-    if (response.getResponseCode() !== 200) {
-      throw new Error(
-        "Freshness check failed (" +
-          response.getResponseCode() +
-          "): " +
-          extractPhrasesApiError(response.getContentText()),
-      );
-    }
-    var parsed = JSON.parse(response.getContentText());
-    if (!Array.isArray(parsed.freshness))
-      throw new Error("Freshness response was malformed.");
-    results = results.concat(parsed.freshness);
-  });
+    responses.forEach(function (response) {
+      if (response.getResponseCode() !== 200) {
+        throw new Error(
+          "Freshness check failed (" +
+            response.getResponseCode() +
+            "): " +
+            extractPhrasesApiError(response.getContentText()),
+        );
+      }
+      var parsed = JSON.parse(response.getContentText());
+      if (!Array.isArray(parsed.freshness))
+        throw new Error("Freshness response was malformed.");
+      results = results.concat(parsed.freshness);
+    });
+  }
   return results;
 }
 
