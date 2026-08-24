@@ -19,6 +19,38 @@ var TRANSLATABLE_BACKGROUND = "#ffffff";
 var PHRASES_CHECKPOINT_KEY = "phrasesRetranslationCheckpoint";
 var PHRASES_IMPORT_CHECKPOINT_KEY = "phrasesTranslationImportCheckpoint";
 
+function escapeNotificationHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildNotificationMessageHtml(message, linkUrl) {
+  var text = String(message);
+  var trustedUrl = String(linkUrl || "");
+  if (
+    !/^https:\/\/docs\.google\.com\/spreadsheets\/d\/[A-Za-z0-9_-]+(?:\/|$)/.test(
+      trustedUrl,
+    ) ||
+    text.indexOf(trustedUrl) === -1
+  ) {
+    return escapeNotificationHtml(text);
+  }
+  var urlIndex = text.indexOf(trustedUrl);
+  return (
+    escapeNotificationHtml(text.slice(0, urlIndex)) +
+    '<a href="' +
+    escapeNotificationHtml(trustedUrl) +
+    '" target="_blank" rel="noopener noreferrer">' +
+    escapeNotificationHtml(trustedUrl) +
+    "</a>" +
+    escapeNotificationHtml(text.slice(urlIndex + trustedUrl.length))
+  );
+}
+
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("EasyEyes")
@@ -73,10 +105,7 @@ function notify(message, type, options) {
       };
 
   var title = isSuccess ? "Success" : isError ? "Fatal error" : "Warning";
-  var safeMsg = message
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  var safeMsg = buildNotificationMessageHtml(message, options.linkUrl);
   var billingAction = options.showDeepLBillingAction
     ? `
         <div class="billing-guidance">
@@ -155,6 +184,10 @@ function notify(message, type, options) {
         margin-bottom: 20px;
         word-break: break-word;
         white-space: pre-wrap;
+      }
+      .message a {
+        color: inherit;
+        text-decoration: underline;
       }
       .button {
         background: ` +
@@ -2153,7 +2186,10 @@ function tabulateNeededTranslations() {
     if (!copySheet)
       throw new Error('Copied spreadsheet has no "Translations" sheet.');
     applyCompactTranslationPlan(copySheet, plan);
-    notify("Translation request created: " + copy.getUrl(), "success");
+    var copyUrl = copy.getUrl();
+    notify("Translation request created: " + copyUrl, "success", {
+      linkUrl: copyUrl,
+    });
   } catch (e) {
     notify(e.message, "error");
   }

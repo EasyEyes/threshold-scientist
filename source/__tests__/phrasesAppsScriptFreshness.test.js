@@ -19,6 +19,21 @@ describe("International Phrases freshness workflows", () => {
     ["first", "First", "Premier", "أول"],
   ];
 
+  test("keeps untrusted notification URLs as escaped plain text", () => {
+    const { buildNotificationMessageHtml } = loadAppsScript();
+    const message =
+      'Failed at <script>alert("x")</script>: https://example.test/file';
+
+    const html = buildNotificationMessageHtml(
+      message,
+      "https://example.test/file",
+    );
+
+    expect(html).not.toContain("<a ");
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
   test("builds identifier-based batches independent of row order", () => {
     const { buildFreshnessBatches } = loadAppsScript();
     expect(buildFreshnessBatches(rows, 1)).toEqual([
@@ -173,6 +188,7 @@ describe("International Phrases freshness workflows", () => {
 
   test("shows loading feedback while creating a translation request", () => {
     const dialogTitles = [];
+    const dialogHtml = [];
     const htmlOutput = {
       setHeight: jest.fn().mockReturnThis(),
       setWidth: jest.fn().mockReturnThis(),
@@ -196,7 +212,8 @@ describe("International Phrases freshness workflows", () => {
       }),
       copy: () => ({
         getSheetByName: () => copySheet,
-        getUrl: () => "https://example.test/needed-translations",
+        getUrl: () =>
+          "https://docs.google.com/spreadsheets/d/translation-request/edit",
       }),
     };
     const response = {
@@ -208,7 +225,10 @@ describe("International Phrases freshness workflows", () => {
         getUserCache: () => ({ remove: jest.fn(), get: jest.fn() }),
       },
       HtmlService: {
-        createHtmlOutput: jest.fn(() => htmlOutput),
+        createHtmlOutput: jest.fn((html) => {
+          dialogHtml.push(html);
+          return htmlOutput;
+        }),
       },
       Logger: { log: jest.fn() },
       PropertiesService: {
@@ -228,5 +248,8 @@ describe("International Phrases freshness workflows", () => {
 
     expect(dialogTitles[0]).toBe("Creating translation request …");
     expect(dialogTitles.at(-1)).toBe("Success");
+    expect(dialogHtml.at(-1)).toContain(
+      '<a href="https://docs.google.com/spreadsheets/d/translation-request/edit" target="_blank" rel="noopener noreferrer">https://docs.google.com/spreadsheets/d/translation-request/edit</a>',
+    );
   });
 });
