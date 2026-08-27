@@ -107,7 +107,7 @@ export default class Table extends Component {
     // Exporting is deliberately tolerant and does not compile: whatever is
     // wrong with the study will be caught when the export is eventually
     // compiled. Any export failure is shown in the same list as compiler
-    // errors, disambiguated by the "Export error:" prefix (see render).
+    // errors, disambiguated by the "Download source error:" prefix (see render).
     const exportErrors = await exportStudyBeforeCompiling(
       this.props.user,
       files,
@@ -759,7 +759,9 @@ export default class Table extends Component {
                           red sentence states which one it is. */}
                       {error.kind === "error"
                         ? `${
-                            error.context === "export" ? "Export" : "Compiler"
+                            error.context === "export"
+                              ? "Download source"
+                              : "Compiler"
                           } error: ${error.name}`
                         : error.name}
                     </span>
