@@ -37,9 +37,7 @@ export default class Running extends Component {
       dataFolderLength: 0,
       latestDateForDataCollection: false,
       useLowercaseProjectName: false,
-      // "idle" | "preparing" | "ready" — first click prepares the study,
-      // second click opens it in a new tab (fresh user gesture, so the
-      // browser's popup blocker never fires).
+      // "idle" | "preparing" | "ready"
       prolificStudyState: "idle",
       preparedProlificStudyId: null,
     };
@@ -613,7 +611,24 @@ export default class Running extends Component {
                         }
                         if (prolificStudyState === "preparing") return;
 
-                        // First click: prepare the study.
+                        // Reserve the tab during the user gesture so popup
+                        // blockers allow us to navigate it after preparation.
+                        const prolificTab = window.open(
+                          "about:blank",
+                          "_blank",
+                        );
+                        const openStudy = (studyId) => {
+                          const url =
+                            "https://app.prolific.com/researcher/workspaces/studies/" +
+                            studyId;
+                          if (prolificTab && !prolificTab.closed) {
+                            prolificTab.location.href = url;
+                            prolificTab.focus();
+                          } else {
+                            window.open(url, "_blank")?.focus();
+                          }
+                        };
+
                         this.setState({ prolificStudyState: "preparing" });
 
                         try {
@@ -626,6 +641,7 @@ export default class Running extends Component {
                               prolificStudyState: "ready",
                               preparedProlificStudyId: existingStudyId,
                             });
+                            openStudy(existingStudyId);
                             return;
                           }
 
@@ -654,6 +670,7 @@ export default class Running extends Component {
                           );
 
                           if (result?.status === "UNPUBLISHED" && result.id) {
+                            openStudy(result.id);
                             await createProlificStudyIdFile(
                               activeExperiment,
                               user,
@@ -664,9 +681,13 @@ export default class Running extends Component {
                               preparedProlificStudyId: result.id,
                             });
                           } else {
+                            if (prolificTab && !prolificTab.closed)
+                              prolificTab.close();
                             this.setState({ prolificStudyState: "idle" });
                           }
                         } catch (err) {
+                          if (prolificTab && !prolificTab.closed)
+                            prolificTab.close();
                           this.setState({ prolificStudyState: "idle" });
                           throw err;
                         }
