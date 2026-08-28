@@ -61,6 +61,7 @@ jest.mock("../components/prolificIntegration", () => ({
   getProlificAccount: jest.fn(),
   getProlificStudySubmissions: jest.fn(),
   prolificCreateDraft: jest.fn(),
+  getProlificStudyWorkspaceId: jest.fn(),
   downloadDemographicData: jest.fn(),
 }));
 
@@ -407,6 +408,7 @@ describe("Prolific study creation", () => {
     prolificCreateDraft.mockResolvedValue({
       id: "new-study-id",
       status: "UNPUBLISHED",
+      workspaceId: "workspace-id",
     });
     createProlificStudyIdFile.mockResolvedValue(undefined);
 
@@ -440,7 +442,7 @@ describe("Prolific study creation", () => {
 
     await waitFor(() => {
       expect(prolificTab.location.href).toBe(
-        "https://app.prolific.com/researcher/workspaces/studies/new-study-id",
+        "https://app.prolific.com/researcher/workspaces/workspace-id/studies/new-study-id",
       );
     });
     expect(open).toHaveBeenCalledTimes(1);
@@ -479,6 +481,7 @@ describe("Prolific study creation", () => {
     prolificCreateDraft.mockResolvedValue({
       id: "new-study-id",
       status: "UNPUBLISHED",
+      workspaceId: "workspace-id",
     });
     createProlificStudyIdFile.mockResolvedValue(undefined);
 
@@ -517,7 +520,7 @@ describe("Prolific study creation", () => {
 
     await waitFor(() => {
       expect(prolificTab.location.href).toBe(
-        "https://app.prolific.com/researcher/workspaces/studies/new-study-id",
+        "https://app.prolific.com/researcher/workspaces/workspace-id/studies/new-study-id",
       );
     });
     expect(prolificCreateDraft).toHaveBeenCalledWith(
