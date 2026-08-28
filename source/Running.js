@@ -6,6 +6,7 @@ import { Question } from "./components";
 import { db } from "./components/firebase";
 import {
   prolificCreateDraft,
+  getProlificStudyWorkspaceId,
   downloadDemographicData,
 } from "./components/prolificIntegration";
 import {
@@ -40,6 +41,7 @@ export default class Running extends Component {
       // "idle" | "preparing" | "ready"
       prolificStudyState: "idle",
       preparedProlificStudyId: null,
+      preparedProlificWorkspaceId: null,
     };
 
     this._isActivating = false;
@@ -89,6 +91,7 @@ export default class Running extends Component {
         latestDateForDataCollection,
         prolificStudyState: "idle",
         preparedProlificStudyId: null,
+        preparedProlificWorkspaceId: null,
       });
       if (!repositoryIsEmpty) {
         await this.syncProlificStudyState(this.props.activeExperiment);
@@ -114,10 +117,15 @@ export default class Running extends Component {
     try {
       const studyId = await getProlificStudyId(this.props.user, experimentId);
       if (this.props.activeExperiment?.id !== experimentId) return;
+      const workspaceId = studyId
+        ? await getProlificStudyWorkspaceId(this.props.prolificToken, studyId)
+        : null;
+      if (this.props.activeExperiment?.id !== experimentId) return;
 
       this.setState({
         prolificStudyState: studyId ? "ready" : "idle",
         preparedProlificStudyId: studyId || null,
+        preparedProlificWorkspaceId: workspaceId,
       });
     } catch (error) {
       captureError(error, "Failed to load Prolific study ID", {
@@ -317,6 +325,7 @@ export default class Running extends Component {
       latestDateForDataCollection,
       prolificStudyState,
       preparedProlificStudyId,
+      preparedProlificWorkspaceId,
     } = this.state;
     const repositoryIsEmpty = isEmptyRepository(activeExperiment);
     const isRunning =
@@ -622,12 +631,12 @@ export default class Running extends Component {
                         // browser treats window.open as user-initiated.
                         if (
                           prolificStudyState === "ready" &&
-                          preparedProlificStudyId
+                          preparedProlificStudyId &&
+                          preparedProlificWorkspaceId
                         ) {
                           window
                             .open(
-                              "https://app.prolific.com/researcher/workspaces/studies/" +
-                                preparedProlificStudyId,
+                              `https://app.prolific.com/researcher/workspaces/${preparedProlificWorkspaceId}/studies/${preparedProlificStudyId}`,
                               "_blank",
                             )
                             ?.focus();
@@ -641,10 +650,8 @@ export default class Running extends Component {
                           "about:blank",
                           "_blank",
                         );
-                        const openStudy = (studyId) => {
-                          const url =
-                            "https://app.prolific.com/researcher/workspaces/studies/" +
-                            studyId;
+                        const openStudy = (studyId, workspaceId) => {
+                          const url = `https://app.prolific.com/researcher/workspaces/${workspaceId}/studies/${studyId}`;
                           if (prolificTab && !prolificTab.closed) {
                             prolificTab.location.href = url;
                             prolificTab.focus();
@@ -657,6 +664,9 @@ export default class Running extends Component {
                           currentExperiment: {
                             ...user.currentExperiment,
                             participantRecruitmentServiceName: recruitName,
+                            prolificWorkspaceProjectId:
+                              previousRecruitmentInformation?.recruitmentProlificProjectId ||
+                              user.currentExperiment.prolificWorkspaceProjectId,
                             experimentUrl:
                               user.currentExperiment.experimentUrl ||
                               `${this._getPavloviaExperimentUrl()}?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}`,
@@ -671,11 +681,23 @@ export default class Running extends Component {
                             activeExperiment?.id,
                           );
                           if (existingStudyId) {
+                            const workspaceId =
+                              preparedProlificWorkspaceId ||
+                              (await getProlificStudyWorkspaceId(
+                                prolificToken,
+                                existingStudyId,
+                              ));
+                            if (!workspaceId) {
+                              throw new Error(
+                                "Unable to resolve the Prolific workspace",
+                              );
+                            }
                             this.setState({
                               prolificStudyState: "ready",
                               preparedProlificStudyId: existingStudyId,
+                              preparedProlificWorkspaceId: workspaceId,
                             });
-                            openStudy(existingStudyId);
+                            openStudy(existingStudyId, workspaceId);
                             return;
                           }
 
@@ -703,8 +725,12 @@ export default class Running extends Component {
                             prolificToken,
                           );
 
-                          if (result?.status === "UNPUBLISHED" && result.id) {
-                            openStudy(result.id);
+                          if (
+                            result?.status === "UNPUBLISHED" &&
+                            result.id &&
+                            result.workspaceId
+                          ) {
+                            openStudy(result.id, result.workspaceId);
                             await createProlificStudyIdFile(
                               activeExperiment,
                               user,
@@ -713,6 +739,7 @@ export default class Running extends Component {
                             this.setState({
                               prolificStudyState: "ready",
                               preparedProlificStudyId: result.id,
+                              preparedProlificWorkspaceId: result.workspaceId,
                             });
                           } else {
                             if (prolificTab && !prolificTab.closed)
