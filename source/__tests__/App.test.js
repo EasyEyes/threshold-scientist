@@ -290,6 +290,56 @@ describe("empty repository view lifecycle", () => {
 });
 
 describe("Prolific study creation", () => {
+  it("offers opening an existing Prolific study when returning to a compiled study", async () => {
+    const {
+      getDataFolderCsvLength,
+      getProlificStudyId,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    const setModeToRun = jest
+      .spyOn(Running.prototype, "setModeToRun")
+      .mockResolvedValue(undefined);
+    getDataFolderCsvLength.mockResolvedValue([0, false]);
+    getProlificStudyId.mockResolvedValue("existing-study-id");
+
+    const { getByRole } = render(
+      <Running
+        activeExperiment={{ id: 42, name: "contrast-study" }}
+        compileWarnings={[]}
+        experimentStatus="RUNNING"
+        functions={{ handleSetCompileCount: jest.fn() }}
+        previousExperimentViewed={{
+          previousExperimentStatus: "RUNNING",
+          previousRecruitmentInformation: {
+            recruitmentServiceName: null,
+          },
+        }}
+        prolificToken="token"
+        projectName="contrast-study"
+        scrollToCurrentStep={jest.fn()}
+        user={{
+          username: "testuser",
+          currentExperiment: {
+            participantRecruitmentServiceName: "",
+            pavloviaPreferRunningModeBool: true,
+          },
+        }}
+        viewingPreviousExperiment={true}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        getByRole("button", { name: "Open Prolific study" }),
+      ).toBeEnabled();
+    });
+
+    expect(getProlificStudyId).toHaveBeenCalledWith(
+      expect.objectContaining({ username: "testuser" }),
+      42,
+    );
+    setModeToRun.mockRestore();
+  });
+
   it("offers Prolific creation when returning to a compiled study without recruitment metadata", () => {
     const componentDidMount = jest
       .spyOn(Running.prototype, "componentDidMount")
