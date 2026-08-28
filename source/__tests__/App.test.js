@@ -34,8 +34,6 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getRecruitmentServiceConfig: jest.fn(),
   getDurationForProject: jest.fn(),
   getProlificStudyId: jest.fn(),
-  createProlificStudyIdFile: jest.fn(),
-  generateAndUploadCompletionURL: jest.fn(),
   getDataFolderCsvLength: jest.fn(),
   runExperiment: jest.fn(),
   getAllProjects: jest.fn(),
@@ -60,8 +58,6 @@ jest.mock("../components/firebase", () => ({
 jest.mock("../components/prolificIntegration", () => ({
   getProlificAccount: jest.fn(),
   getProlificStudySubmissions: jest.fn(),
-  prolificCreateDraft: jest.fn(),
-  downloadDemographicData: jest.fn(),
 }));
 
 jest.mock("../../threshold/components/compatibilityCheck", () => ({
@@ -286,80 +282,6 @@ describe("empty repository view lifecycle", () => {
 
     fireEvent.click(getByRole("button", { name: "New" }));
     expect(handleSetActivateExperiment).toHaveBeenCalledWith("REFRESH");
-  });
-});
-
-describe("Prolific study creation", () => {
-  it("opens the newly created study after one click", async () => {
-    const {
-      createProlificStudyIdFile,
-      generateAndUploadCompletionURL,
-      getProlificStudyId,
-    } = require("../../threshold/preprocess/gitlabUtils");
-    const {
-      prolificCreateDraft,
-    } = require("../components/prolificIntegration");
-    const componentDidMount = jest
-      .spyOn(Running.prototype, "componentDidMount")
-      .mockImplementation(() => {});
-    const prolificTab = {
-      closed: false,
-      close: jest.fn(),
-      focus: jest.fn(),
-      location: { href: "about:blank" },
-    };
-    const open = jest.spyOn(window, "open").mockReturnValue(prolificTab);
-    getProlificStudyId.mockResolvedValue(null);
-    generateAndUploadCompletionURL.mockResolvedValue({
-      code: "complete",
-      incompatibleCompletionCode: "incompatible",
-      abortedCompletionCode: "aborted",
-    });
-    prolificCreateDraft.mockResolvedValue({
-      id: "new-study-id",
-      status: "UNPUBLISHED",
-    });
-    createProlificStudyIdFile.mockResolvedValue(undefined);
-
-    const { getByRole } = render(
-      <Running
-        activeExperiment={{ id: 42, name: "contrast-study" }}
-        compileWarnings={[]}
-        experimentStatus="RUNNING"
-        functions={{ handleUpdateUser: jest.fn() }}
-        previousExperimentViewed={{
-          previousExperimentStatus: "INACTIVE",
-          previousRecruitmentInformation: null,
-        }}
-        prolificToken="token"
-        projectName="contrast-study"
-        scrollToCurrentStep={jest.fn()}
-        user={{
-          username: "testuser",
-          currentExperiment: {
-            participantRecruitmentServiceName: "Prolific",
-            pavloviaPreferRunningModeBool: true,
-          },
-        }}
-        viewingPreviousExperiment={false}
-      />,
-    );
-
-    fireEvent.click(
-      getByRole("button", { name: "Create Prolific study to run online" }),
-    );
-
-    await waitFor(() => {
-      expect(prolificTab.location.href).toBe(
-        "https://app.prolific.com/researcher/workspaces/studies/new-study-id",
-      );
-    });
-    expect(open).toHaveBeenCalledTimes(1);
-    expect(open).toHaveBeenCalledWith("about:blank", "_blank");
-    expect(prolificTab.focus).toHaveBeenCalledTimes(1);
-
-    open.mockRestore();
-    componentDidMount.mockRestore();
   });
 });
 
