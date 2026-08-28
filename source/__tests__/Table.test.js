@@ -870,6 +870,31 @@ describe("Select file to download raw source button", () => {
   });
 });
 
+describe("Table.onDrop", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("clears displayed compiler errors when a resource upload starts", () => {
+    const { act } = require("@testing-library/react");
+    const ref = React.createRef();
+    const { queryByText } = render(<Table ref={ref} {...makeProps()} />);
+
+    act(() => {
+      ref.current.setState({
+        errors: [{ context: "preprocessor", kind: "error", name: "E" }],
+      });
+    });
+    expect(queryByText("Compiler error: E")).toBeInTheDocument();
+
+    act(() => {
+      ref.current.onDrop([new File(["resource"], "phrases.phrases.xlsx")]);
+    });
+
+    expect(queryByText("Compiler error: E")).not.toBeInTheDocument();
+  });
+});
+
 describe("Table.onDropForExport", () => {
   beforeEach(() => {
     jest.clearAllMocks();

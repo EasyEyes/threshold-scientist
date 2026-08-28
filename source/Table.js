@@ -85,6 +85,7 @@ export default class Table extends Component {
   }
 
   onDrop(files) {
+    this.setState({ errors: [] });
     const { user, functions } = this.props;
     if (!user || !user.initProjectList)
       throw new Error(
