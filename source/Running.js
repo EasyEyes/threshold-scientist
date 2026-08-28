@@ -67,7 +67,6 @@ export default class Running extends Component {
       this.props.functions.handleSetCompileCount(totalCompileCounts);
     });
     if (!isEmptyRepository(this.props.activeExperiment)) {
-      await this.syncProlificStudyState(this.props.activeExperiment);
       await this.setModeToRun();
     }
   }
@@ -90,9 +89,6 @@ export default class Running extends Component {
         prolificStudyState: "idle",
         preparedProlificStudyId: null,
       });
-      if (!repositoryIsEmpty) {
-        await this.syncProlificStudyState(this.props.activeExperiment);
-      }
     }
 
     const needSetModeToRun =
@@ -104,26 +100,6 @@ export default class Running extends Component {
           this.props.experimentStatus === "INACTIVE"));
     if (needSetModeToRun) {
       await this.setModeToRun();
-    }
-  }
-
-  async syncProlificStudyState(activeExperiment) {
-    const experimentId = activeExperiment?.id;
-    if (experimentId == null) return;
-
-    try {
-      const studyId = await getProlificStudyId(this.props.user, experimentId);
-      if (this.props.activeExperiment?.id !== experimentId) return;
-
-      this.setState({
-        prolificStudyState: studyId ? "ready" : "idle",
-        preparedProlificStudyId: studyId || null,
-      });
-    } catch (error) {
-      captureError(error, "Failed to load Prolific study ID", {
-        step: "syncProlificStudyState",
-        experimentId,
-      });
     }
   }
 
@@ -331,8 +307,8 @@ export default class Running extends Component {
       ? previousRecruitmentInformation?.recruitmentServiceName != null
       : !!user.currentExperiment.participantRecruitmentServiceName;
     const recruitName = viewingPreviousExperiment
-      ? previousRecruitmentInformation?.recruitmentServiceName ?? "Prolific"
-      : user.currentExperiment.participantRecruitmentServiceName || "Prolific";
+      ? previousRecruitmentInformation?.recruitmentServiceName ?? null
+      : user.currentExperiment.participantRecruitmentServiceName;
 
     // const offerPilotingOption =
     //   this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
@@ -598,7 +574,7 @@ export default class Running extends Component {
           </div>
         </div>
 
-        {isRunning && (hasRecruitmentService || showExperimentActions) && (
+        {hasRecruitmentService && isRunning && (
           <>
             <div className="recruit-service">
               <div className="link-set">
