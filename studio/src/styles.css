@@ -1,0 +1,1157 @@
+/* EasyEyes design language (from source/css/root.scss & Step.scss):
+   green #019267 / #00c897 / #e1efd8 / #157558, error #bb2c22,
+   step background #eee, radius 0.7rem, system font, #333 text. */
+
+:root {
+  --green: #019267;
+  --light-green: #00c897;
+  --pale-green: #e1efd8;
+  --dark-green: #157558;
+  --error: #bb2c22;
+  --error-bg: #f9ecea;
+  --warning: #b45309;
+  --warning-bg: #fdf6ec;
+  --step-bg: #eee;
+  --ink: #333;
+  --ink-soft: #666;
+  --line: #e2e2e2;
+  --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --radius: 0.7rem;
+  --icon-radius: 0.5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background: #fff;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---------- navbar (matches EasyEyes white navbar) ---------- */
+
+.ee-navbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 20px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ee-logo {
+  width: 56px;
+  height: 56px;
+}
+
+.ee-brand {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.ee-brand-name {
+  font-weight: 700;
+  font-size: 19px;
+  color: var(--ink);
+}
+
+.ee-brand-studio {
+  color: var(--green);
+}
+
+.ee-brand-sub {
+  font-size: 12px;
+  color: #999;
+}
+
+.ee-nav-links {
+  display: flex;
+  gap: 18px;
+}
+
+.ee-nav-links a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.ee-nav-links a:hover {
+  color: var(--green);
+}
+
+/* ---------- toolbar ---------- */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--step-bg);
+  flex-wrap: wrap;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.experiment-name {
+  background: #fff;
+  border: 1px solid #ddd;
+  color: var(--ink);
+  border-radius: var(--icon-radius);
+  padding: 8px 12px;
+  font-size: 13.5px;
+  width: 190px;
+  font-family: var(--mono);
+}
+
+.experiment-name:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.toolbar-select {
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid #ddd;
+  border-radius: var(--icon-radius);
+  padding: 8px 10px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+/* EasyEyes buttons (Step.scss idiom) */
+
+.button-easyeyes {
+  border-radius: var(--icon-radius);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 100%;
+  cursor: pointer;
+  outline: none !important;
+  border: none !important;
+  padding: 0.65rem 1rem;
+}
+
+.button-green {
+  background: var(--green);
+}
+
+.button-green:hover {
+  background: var(--dark-green);
+}
+
+.button-green:active {
+  background: var(--green);
+}
+
+.button-grey {
+  background: #999;
+}
+
+.button-grey:hover {
+  background: #aaa;
+}
+
+.button-grey:active {
+  background: #666;
+}
+
+/* status pill — green-status-banner colors */
+
+.status-pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+.status-pill.good {
+  background: var(--pale-green);
+  color: var(--green);
+}
+
+.status-pill.bad {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.status-pill.warn {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.status-pill.checking {
+  background: #e5e5e5;
+  color: #888;
+}
+
+/* ---------- layout ---------- */
+
+.workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 14px;
+  padding: 14px 20px;
+  background: #fff;
+}
+
+.editor {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+}
+
+.sidebar {
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.footnote {
+  padding: 8px 20px;
+  font-size: 11.5px;
+  color: #999;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+/* ---------- grid ---------- */
+
+.grid-wrap {
+  overflow: auto;
+  flex: 1;
+}
+
+.grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 13px;
+}
+
+.grid th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--step-bg);
+  border-bottom: 2px solid #ddd;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.grid th.col-param {
+  z-index: 4;
+}
+
+.cond-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.col-letter {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  background: var(--pale-green);
+  color: var(--green);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.add-cond-btn {
+  border: 1px dashed #bbb;
+  background: none;
+  color: var(--ink-soft);
+  border-radius: 6px;
+  padding: 4px 9px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.add-cond-btn:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.grid td {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.grid td.col-param,
+.grid th.col-param {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  min-width: 230px;
+  max-width: 300px;
+  border-right: 1px solid var(--line);
+  z-index: 2;
+}
+
+.grid th.col-param {
+  background: var(--step-bg);
+}
+
+.grid td.col-value {
+  min-width: 150px;
+}
+
+.grid td.col-add {
+  width: 110px;
+}
+
+tr.row-error td.col-param {
+  box-shadow: inset 3px 0 0 var(--error);
+}
+
+tr.row-warning td.col-param {
+  box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+tr.row-selected td {
+  background: #f4faf7;
+}
+
+tr.row-flash td {
+  animation: flash 1.4s ease-out;
+}
+
+@keyframes flash {
+  0% {
+    background: var(--pale-green);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.param-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+}
+
+.param-name {
+  background: none;
+  border: none;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 6px 4px;
+  text-align: left;
+  border-radius: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.param-name:hover {
+  color: var(--green);
+  background: var(--pale-green);
+}
+
+.param-name.unknown {
+  color: var(--error);
+  text-decoration: underline dashed;
+  text-underline-offset: 3px;
+}
+
+.param-rename {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  border: 1px solid var(--green);
+  border-radius: 5px;
+  padding: 5px 4px;
+  min-width: 0;
+}
+
+.param-rename:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(1, 146, 103, 0.18);
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #bbb;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.icon-btn:hover {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+tr .row-delete {
+  opacity: 0;
+}
+
+tr:hover .row-delete {
+  opacity: 1;
+}
+
+/* %-commented rows: skipped by the compiler, shown muted but intact */
+.param-name.comment {
+  color: #999;
+  font-style: italic;
+}
+
+tr.row-comment .cell-input {
+  color: #aaa;
+  font-style: italic;
+}
+
+.icon-btn.comment-btn:hover {
+  color: var(--green);
+  background: var(--pale-green);
+}
+
+.icon-btn.comment-btn.on {
+  opacity: 1;
+  color: var(--green);
+  font-weight: 700;
+}
+
+.cell-input {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: var(--mono);
+  color: var(--ink);
+  border-radius: 0;
+}
+
+.cell-input:hover {
+  background: #fafafa;
+}
+
+.cell-input:focus {
+  outline: none;
+  border-color: var(--green);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(1, 146, 103, 0.15);
+}
+
+.cell-input::placeholder {
+  color: #c4c4c4;
+}
+
+/* off-convention cell that already holds a value (bad import): editable so
+   it can be cleared, but visibly wrong */
+.cell-input.off-convention {
+  background: var(--error-bg);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    rgba(187, 44, 34, 0.08) 5px,
+    rgba(187, 44, 34, 0.08) 10px
+  );
+}
+
+/* off-convention cell that is empty: locked per the spreadsheet convention,
+   but visually clean — plain white, just not typable */
+.cell-input.locked,
+.cell-input.locked:hover {
+  background: #fff;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+select.cell-input {
+  appearance: auto;
+  cursor: pointer;
+}
+
+/* ---------- add-parameter row & autocomplete ---------- */
+
+.grid tfoot td {
+  position: sticky;
+  bottom: 0;
+  background: var(--step-bg);
+  border-top: 2px solid #ddd;
+  padding: 8px 10px;
+  z-index: 3;
+}
+
+.add-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.autocomplete {
+  position: relative;
+  flex: 1;
+  max-width: 520px;
+}
+
+.autocomplete-input {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: var(--icon-radius);
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: var(--mono);
+  background: #fff;
+}
+
+.autocomplete-input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(1, 146, 103, 0.12);
+}
+
+.autocomplete-list {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.14);
+  list-style: none;
+  margin: 0;
+  padding: 5px;
+  max-height: 380px;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.autocomplete-list li {
+  padding: 8px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.autocomplete-list li.active {
+  background: var(--pale-green);
+}
+
+.suggestion-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.suggestion-name {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.suggestion-default {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+}
+
+.suggestion-explanation {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 3px;
+}
+
+.type-chip {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: #ececec;
+  color: var(--ink-soft);
+}
+
+.type-chip.type-boolean {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.type-chip.type-numerical,
+.type-chip.type-integer {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.type-chip.type-categorical,
+.type-chip.type-multicategorical {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.type-chip.type-text {
+  background: var(--pale-green);
+  color: var(--dark-green);
+}
+
+.category-chip {
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--pale-green);
+  color: var(--green);
+  white-space: nowrap;
+}
+
+/* ---------- sidebar panels (EasyEyes step look) ---------- */
+
+.problems,
+.resource-panel,
+.glossary-panel {
+  background: var(--step-bg);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.panel-title {
+  font-weight: 700;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-note {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin: 8px 0 0;
+}
+
+.panel-note.phrase-note {
+  color: var(--green);
+}
+
+/* ~Tilde phrase references — resolved from the phrases spreadsheet */
+.cell-input.tilde {
+  color: #7a5ea8;
+  font-style: italic;
+}
+
+/* problems — green-status-banner when clean */
+
+.all-clear {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--pale-green);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  color: var(--green);
+}
+
+.all-clear-mark {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.all-clear-sub {
+  font-size: 12.5px;
+  color: var(--dark-green);
+}
+
+.error-summary {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.count-chip {
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.count-chip.errors {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.count-chip.warnings {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.count-chip.ok {
+  background: var(--pale-green);
+  color: var(--green);
+}
+
+.error-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.error-card {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--error);
+  border-radius: var(--icon-radius);
+  padding: 10px 12px;
+  cursor: pointer;
+  background: #fff;
+}
+
+.error-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.error-card.warning {
+  border-left-color: #f59e0b;
+}
+
+.error-name {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: var(--error);
+}
+
+.error-card.warning .error-name {
+  color: var(--warning);
+}
+
+.error-message {
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.45;
+  overflow-wrap: break-word;
+}
+
+.error-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.hint-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: var(--pale-green);
+  color: var(--green);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-right: 6px;
+}
+
+.error-parameter {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: #f0f0f0;
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+/* glossary panel */
+
+.glossary-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.glossary-name {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 14px;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.glossary-facts {
+  margin: 0 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.glossary-facts div {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.glossary-facts dt {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.glossary-facts dd {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.glossary-facts code,
+.category-code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-right: 4px;
+}
+
+.glossary-explanation {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  white-space: pre-line;
+}
+
+.glossary-missing {
+  font-size: 12.5px;
+  color: var(--error);
+  margin: 0;
+}
+
+/* resources */
+
+.resource-list,
+.uploaded-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resource-list li,
+.uploaded-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.resource-list li.present {
+  background: var(--pale-green);
+}
+
+.resource-list li.missing {
+  background: var(--warning-bg);
+}
+
+.resource-status {
+  font-weight: 800;
+  width: 14px;
+}
+
+li.present .resource-status {
+  color: var(--green);
+}
+
+li.missing .resource-status {
+  color: var(--warning);
+}
+
+.resource-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.resource-kind {
+  font-size: 11px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.dropzone {
+  border: 1.5px dashed #bbb;
+  border-radius: var(--icon-radius);
+  padding: 16px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  cursor: pointer;
+  background: #fff;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.dropzone:hover,
+.dropzone.drag-over {
+  border-color: var(--green);
+  background: var(--pale-green);
+  color: var(--green);
+}
+
+/* ---------- parameter catalog modal ---------- */
+
+.catalog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 4vh 4vw;
+}
+
+.catalog {
+  background: #fff;
+  border-radius: var(--radius);
+  width: min(1000px, 100%);
+  height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
+}
+
+.catalog-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--step-bg);
+  border-bottom: 1px solid #ddd;
+}
+
+.catalog-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.catalog-search {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: var(--icon-radius);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: var(--mono);
+}
+
+.catalog-search:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.catalog-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.catalog-cats {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  width: 265px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  background: #fafafa;
+}
+
+.cat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.cat-item:hover {
+  background: #f0f0f0;
+}
+
+.cat-item.active {
+  background: var(--pale-green);
+  color: var(--dark-green);
+  font-weight: 600;
+}
+
+.cat-item.recommended {
+  color: var(--green);
+  font-weight: 600;
+  border: 1px dashed var(--light-green);
+  margin-bottom: 6px;
+}
+
+.cat-star {
+  color: var(--light-green);
+}
+
+.cat-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: #999;
+  font-family: var(--mono);
+}
+
+.catalog-entries {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 14px;
+}
+
+.catalog-entries ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.catalog-group-label {
+  font-weight: 700;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-soft);
+  margin: 4px 0 10px;
+}
+
+.catalog-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #f0f0f0;
+  border-radius: var(--icon-radius);
+}
+
+.catalog-entry:hover {
+  border-color: var(--line);
+  background: #fafafa;
+}
+
+.catalog-entry-main {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.catalog-entry.open {
+  align-items: flex-start;
+  border-color: var(--green);
+  background: #fbfdfb;
+}
+
+.entry-caret {
+  font-size: 10px;
+  color: var(--ink-soft);
+  width: 12px;
+  flex: none;
+}
+
+.catalog-entry-full {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.catalog-entry-full p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
+.catalog-entry-allowed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.catalog-entry-example {
+  margin-top: 4px;
+  color: var(--ink-soft);
+}
+
+.catalog-add {
+  padding: 0.5rem 0.9rem;
+  font-size: 12.5px;
+  flex-shrink: 0;
+}
+
+.catalog-present {
+  color: var(--green);
+  font-weight: 600;
+  font-size: 12.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

@@ -1,0 +1,15 @@
+{
+  "name": "easyeyes-studio-demo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Demo: a live experiment-table editor that runs the production EasyEyes compiler checks on every keystroke.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.0"
+  }
+}
