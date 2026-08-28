@@ -664,6 +664,9 @@ export default class Running extends Component {
                           currentExperiment: {
                             ...user.currentExperiment,
                             participantRecruitmentServiceName: recruitName,
+                            prolificWorkspaceProjectId:
+                              previousRecruitmentInformation?.recruitmentProlificProjectId ||
+                              user.currentExperiment.prolificWorkspaceProjectId,
                             experimentUrl:
                               user.currentExperiment.experimentUrl ||
                               `${this._getPavloviaExperimentUrl()}?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}`,

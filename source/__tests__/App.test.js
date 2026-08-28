@@ -31,6 +31,7 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getCompatibilityRequirementsForProject: jest.fn(),
   getExperimentStatus: jest.fn(),
   getOriginalFileNameForProject: jest.fn(),
+  getPastProlificIdFromExperimentTables: jest.fn(),
   getRecruitmentServiceConfig: jest.fn(),
   getDurationForProject: jest.fn(),
   getProlificStudyId: jest.fn(),
@@ -122,6 +123,7 @@ describe("normalizeRecruitmentInformation", () => {
       recruitmentServiceCompletionCode: null,
       recruitmentServiceURL: null,
       recruitmentProlificWorkspace: null,
+      recruitmentProlificProjectId: null,
     });
   });
 
@@ -136,6 +138,7 @@ describe("normalizeRecruitmentInformation", () => {
       recruitmentServiceCompletionCode: "COMPLETE",
       recruitmentServiceURL: null,
       recruitmentProlificWorkspace: null,
+      recruitmentProlificProjectId: null,
     });
   });
 });
@@ -193,10 +196,57 @@ describe("App - handleSetActivateExperiment", () => {
         recruitmentServiceCompletionCode: null,
         recruitmentServiceURL: null,
         recruitmentProlificWorkspace: null,
+        recruitmentProlificProjectId: null,
       },
       previousCompatibilityRequirements: null,
       previousExperimentDuration: null,
     });
+  });
+
+  it("restores the Prolific project ID when retrieving a compiled study", async () => {
+    const Swal = require("sweetalert2");
+    const {
+      getCompatibilityRequirementsForProject,
+      getDurationForProject,
+      getExperimentStatus,
+      getOriginalFileNameForProject,
+      getPastProlificIdFromExperimentTables,
+      getRecruitmentServiceConfig,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    getDurationForProject.mockResolvedValue(10);
+    getCompatibilityRequirementsForProject.mockResolvedValue({});
+    getOriginalFileNameForProject.mockResolvedValue("study.csv");
+    getExperimentStatus.mockResolvedValue("RUNNING");
+    getRecruitmentServiceConfig.mockResolvedValue(null);
+    getPastProlificIdFromExperimentTables.mockResolvedValue(
+      "retrieved-project-id",
+    );
+    Swal.fire.mockImplementation(async ({ didOpen }) => didOpen());
+
+    const fakeThis = {
+      state: { user: { username: "testuser" } },
+      setState: jest.fn((update) => {
+        fakeThis.state = { ...fakeThis.state, ...update };
+      }),
+    };
+    const experiment = {
+      id: 42,
+      name: "compiled-study",
+      path_with_namespace: "testuser/compiled-study",
+      empty_repo: false,
+    };
+
+    await App.prototype.handleSetActivateExperiment.call(fakeThis, experiment);
+
+    expect(getPastProlificIdFromExperimentTables).toHaveBeenCalledWith(
+      fakeThis.state.user,
+      experiment.name,
+      "study.csv",
+    );
+    expect(
+      fakeThis.state.previousExperimentViewed.previousRecruitmentInformation
+        .recruitmentProlificProjectId,
+    ).toBe("retrieved-project-id");
   });
 });
 
@@ -495,6 +545,7 @@ describe("Prolific study creation", () => {
           previousExperimentStatus: "RUNNING",
           previousRecruitmentInformation: {
             recruitmentServiceName: "",
+            recruitmentProlificProjectId: "retrieved-project-id",
           },
         }}
         prolificToken="token"
@@ -529,6 +580,7 @@ describe("Prolific study creation", () => {
           experimentUrl:
             "https://run.pavlovia.org/testuser/contrast-study?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}",
           participantRecruitmentServiceName: "Prolific",
+          prolificWorkspaceProjectId: "retrieved-project-id",
         }),
       }),
       "contrast-study",
