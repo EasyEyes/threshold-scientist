@@ -331,7 +331,7 @@ export default class Running extends Component {
       ? previousRecruitmentInformation?.recruitmentServiceName != null
       : !!user.currentExperiment.participantRecruitmentServiceName;
     const recruitName = viewingPreviousExperiment
-      ? previousRecruitmentInformation?.recruitmentServiceName || "Prolific"
+      ? previousRecruitmentInformation?.recruitmentServiceName ?? "Prolific"
       : user.currentExperiment.participantRecruitmentServiceName || "Prolific";
 
     // const offerPilotingOption =
@@ -652,16 +652,6 @@ export default class Running extends Component {
                             window.open(url, "_blank")?.focus();
                           }
                         };
-                        const prolificUser = {
-                          ...user,
-                          currentExperiment: {
-                            ...user.currentExperiment,
-                            participantRecruitmentServiceName: recruitName,
-                            experimentUrl:
-                              user.currentExperiment.experimentUrl ||
-                              `${this._getPavloviaExperimentUrl()}?participant={{%PROLIFIC_PID%}}&study_id={{%STUDY_ID%}}&session={{%SESSION_ID%}}`,
-                          },
-                        };
 
                         this.setState({ prolificStudyState: "preparing" });
 
@@ -687,7 +677,7 @@ export default class Running extends Component {
                           } =
                             completionCode ??
                             (await generateAndUploadCompletionURL(
-                              prolificUser,
+                              user,
                               activeExperiment,
                               functions.handleUpdateUser,
                             ));
@@ -695,7 +685,7 @@ export default class Running extends Component {
                             this.setState({ completionCode: code });
 
                           const result = await prolificCreateDraft(
-                            prolificUser,
+                            user,
                             `${this.props.projectName}`,
                             code,
                             incompatibleCompletionCode,
