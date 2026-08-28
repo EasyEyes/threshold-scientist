@@ -17,7 +17,6 @@ import {
   getCompatibilityRequirementsForProject,
   getExperimentStatus,
   getOriginalFileNameForProject,
-  getPastProlificIdFromExperimentTables,
   getRecruitmentServiceConfig,
   getDurationForProject,
   getProlificStudyId,
@@ -82,7 +81,6 @@ const createEmptyRecruitmentInformation = () => ({
   recruitmentServiceCompletionCode: null,
   recruitmentServiceURL: null,
   recruitmentProlificWorkspace: null,
-  recruitmentProlificProjectId: null,
 });
 
 export const normalizeRecruitmentInformation = (recruitmentInformation) => ({
@@ -358,16 +356,6 @@ export default class App extends Component {
                 getRecruitmentServiceConfig(user, activeExperiment.name),
               ),
             );
-            if (originalFileName) {
-              previousRecruitmentInformation.recruitmentProlificProjectId =
-                await retrieveMetadata("prolific-project-requested", () =>
-                  getPastProlificIdFromExperimentTables(
-                    user,
-                    activeExperiment.name,
-                    originalFileName,
-                  ),
-                );
-            }
           }
           recordCompilerPhase(retrieval, "completed", {
             originalFilePresent: Boolean(originalFileName),

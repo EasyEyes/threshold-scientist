@@ -1,6 +1,5 @@
 import {
   prolificCreateDraft,
-  getProlificStudyWorkspaceId,
   getProlificAccount,
   getProlificStudySubmissions,
   downloadDemographicData,
@@ -100,55 +99,6 @@ describe("Prolific Integration - New Parameters", () => {
       });
     });
   };
-
-  it("resolves the workspace for a created draft from its project", async () => {
-    global.fetch.mockImplementation((url, options) => {
-      if (url === "/.netlify/functions/prolific/studies/") {
-        return Promise.resolve({
-          json: () =>
-            Promise.resolve({
-              status: "UNPUBLISHED",
-              id: "test-study-id",
-              project: "test-project-id",
-            }),
-        });
-      }
-      if (
-        url === "/.netlify/functions/prolific/projects/test-project-id/" &&
-        options.method === "GET"
-      ) {
-        return Promise.resolve({
-          json: () => Promise.resolve({ workspace: "test-workspace-id" }),
-        });
-      }
-      throw new Error(`Unexpected request: ${url}`);
-    });
-
-    const result = await prolificCreateDraft(
-      mockUser,
-      mockInternalName,
-      mockCompletionCode,
-      mockIncompatibleCode,
-      mockAbortedCode,
-      mockToken,
-    );
-
-    expect(result.workspaceId).toBe("test-workspace-id");
-  });
-
-  it("resolves the workspace for an existing study", async () => {
-    global.fetch
-      .mockResolvedValueOnce({
-        json: () => Promise.resolve({ project: "test-project-id" }),
-      })
-      .mockResolvedValueOnce({
-        json: () => Promise.resolve({ workspace: "test-workspace-id" }),
-      });
-
-    await expect(
-      getProlificStudyWorkspaceId(mockToken, "test-study-id"),
-    ).resolves.toBe("test-workspace-id");
-  });
 
   describe("_prolific2CompletionPath Parameter", () => {
     it("should default to AUTOMATICALLY_APPROVE when _prolific2CompletionPath is not set", async () => {

@@ -623,36 +623,7 @@ export const prolificCreateDraft = async (
     console.error(result);
   }
 
-  if (result?.status === "UNPUBLISHED") {
-    const projectId =
-      typeof result.project === "string"
-        ? result.project
-        : result.project?.id ||
-          user.currentExperiment.prolificWorkspaceProjectId;
-    const workspaceId = projectId
-      ? await fetchProlificProjectWorkspaceId(token, projectId)
-      : null;
-    return { ...result, workspaceId };
-  }
-
   return result;
-};
-
-const fetchProlificProjectWorkspaceId = async (token, projectId) => {
-  const response = await fetch(
-    `/.netlify/functions/prolific/projects/${projectId}/`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: `Token ${token}`,
-      },
-    },
-  );
-  const project = await response.json();
-  return typeof project.workspace === "string"
-    ? project.workspace
-    : project.workspace?.id || null;
 };
 
 const fetchProlificStudy = async (token, prolificStudyId) => {
@@ -677,15 +648,6 @@ const fetchProlificStudy = async (token, prolificStudyId) => {
           return "";
         })
     : "";
-};
-
-export const getProlificStudyWorkspaceId = async (token, prolificStudyId) => {
-  const study = await fetchProlificStudy(token, prolificStudyId);
-  const projectId =
-    typeof study?.project === "string" ? study.project : study?.project?.id;
-  return projectId
-    ? await fetchProlificProjectWorkspaceId(token, projectId)
-    : null;
 };
 
 const fetchProlificStudySubmissions = async (token, prolificStudyId) => {
