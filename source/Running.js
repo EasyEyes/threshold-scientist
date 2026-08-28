@@ -307,8 +307,8 @@ export default class Running extends Component {
       ? previousRecruitmentInformation?.recruitmentServiceName != null
       : !!user.currentExperiment.participantRecruitmentServiceName;
     const recruitName = viewingPreviousExperiment
-      ? previousRecruitmentInformation?.recruitmentServiceName ?? null
-      : user.currentExperiment.participantRecruitmentServiceName;
+      ? previousRecruitmentInformation?.recruitmentServiceName ?? "Prolific"
+      : user.currentExperiment.participantRecruitmentServiceName || "Prolific";
 
     // const offerPilotingOption =
     //   this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
@@ -574,7 +574,7 @@ export default class Running extends Component {
           </div>
         </div>
 
-        {hasRecruitmentService && isRunning && (
+        {isRunning && (hasRecruitmentService || showExperimentActions) && (
           <>
             <div className="recruit-service">
               <div className="link-set">

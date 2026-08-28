@@ -290,6 +290,45 @@ describe("empty repository view lifecycle", () => {
 });
 
 describe("Prolific study creation", () => {
+  it("offers Prolific creation when returning to a compiled study without recruitment metadata", () => {
+    const componentDidMount = jest
+      .spyOn(Running.prototype, "componentDidMount")
+      .mockImplementation(() => {});
+
+    const { getByRole } = render(
+      <Running
+        activeExperiment={{ id: 42, name: "contrast-study" }}
+        compileWarnings={[]}
+        experimentStatus="RUNNING"
+        functions={{}}
+        previousExperimentViewed={{
+          previousExperimentStatus: "RUNNING",
+          previousRecruitmentInformation: {
+            recruitmentServiceName: null,
+          },
+        }}
+        prolificToken="token"
+        projectName="contrast-study"
+        scrollToCurrentStep={jest.fn()}
+        user={{
+          username: "testuser",
+          currentExperiment: {
+            participantRecruitmentServiceName: "",
+            pavloviaPreferRunningModeBool: true,
+          },
+        }}
+        viewingPreviousExperiment={true}
+      />,
+    );
+
+    expect(getByRole("button", { name: "Run" })).toBeEnabled();
+    expect(
+      getByRole("button", { name: "Create Prolific study to run online" }),
+    ).toBeEnabled();
+
+    componentDidMount.mockRestore();
+  });
+
   it("opens the newly created study after one click", async () => {
     const {
       createProlificStudyIdFile,
