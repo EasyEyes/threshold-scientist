@@ -19,7 +19,9 @@
     "test": "jest",
     "test:database-rules": "npx --yes firebase-tools@13.29.2 emulators:exec --project demo-easyeyes-compiler --only database \"jest --config jest.database-rules.config.js --runInBand --runTestsByPath source/__tests__/databaseRules.test.js\"",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots"
   },
   "keywords": [],
   "author": "",
@@ -48,6 +50,7 @@
     "@babel/preset-env": "^7.23.3",
     "@babel/preset-react": "^7.23.3",
     "@firebase/rules-unit-testing": "3.0.4",
+    "@playwright/test": "^1.55.0",
     "@svgr/webpack": "^8.1.0",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
