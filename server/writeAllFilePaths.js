@@ -14,6 +14,10 @@ const ignorePattern = [
   ".aider",
   ".claude",
   ".env",
+  ".jj",
+  ".crush",
+  ".dsh",
+  ".playwright-cli",
 
   // Build/dev config files
   "tsconfig.json",
@@ -40,11 +44,14 @@ const ignorePattern = [
   "parameters",
   "server",
   "conditions/",
+  "tests",
+  "fuzz",
   "examples",
   "notes",
 
   // PsychoJS non-runtime files
   "psychojs/src",
+  "psychojs/patches",
   "psychojs/docs",
   "psychojs/scripts",
   "psychojs/out",
@@ -63,6 +70,15 @@ const ignorePattern = [
   "threshold.js",
   "first.js",
   "debugExperiment.csv",
+  "AGENTS.md",
+  ".psychojs-setup-sha",
+  "dist/",
+  "test-results",
+  "playwright.config",
+  "jest.esm",
+  "testR.xlsx",
+  "psychojs/jest.setup",
+  "RemoteCalibrator",
   "init",
 ];
 

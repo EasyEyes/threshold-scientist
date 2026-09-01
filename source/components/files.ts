@@ -19,6 +19,8 @@ export const _loadFiles: string[] = [
   "js/easyeyes_wasm.min.js.map",
   "js/first.min.js",
   "js/first.min.js.map",
+  "js/index.js",
+  "js/index.min.js.map",
   "js/threshold.css",
   "js/threshold.min.js",
   "js/threshold.min.js.map",
