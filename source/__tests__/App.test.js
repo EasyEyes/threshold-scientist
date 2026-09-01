@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import App, { normalizeRecruitmentInformation } from "../App";
 import Running from "../Running";
 import { formatLocalDeploymentTime } from "../freshness/formatLocalDeploymentTime";
@@ -33,6 +33,7 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getOriginalFileNameForProject: jest.fn(),
   getRecruitmentServiceConfig: jest.fn(),
   getDurationForProject: jest.fn(),
+  getProlificStudyConfig: jest.fn(),
   getProlificStudyId: jest.fn(),
   getDataFolderCsvLength: jest.fn(),
   runExperiment: jest.fn(),
@@ -191,6 +192,7 @@ describe("App - handleSetActivateExperiment", () => {
       },
       previousCompatibilityRequirements: null,
       previousExperimentDuration: null,
+      previousProlificConfig: null,
     });
   });
 });
@@ -273,8 +275,10 @@ describe("empty repository view lifecycle", () => {
     );
 
     expect(getByRole("button", { name: "Go to Pavlovia" })).toBeInTheDocument();
-    expect(getByRole("button", { name: "Run" })).toBeEnabled();
-    expect(getByRole("button", { name: "Export" })).toBeEnabled();
+    expect(getByRole("button", { name: "Download source" })).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Run" }),
+    ).not.toBeInTheDocument();
     expect(getByRole("button", { name: "Download results" })).toBeEnabled();
     expect(getByRole("button", { name: "Analyze" })).toBeEnabled();
     expect(getByRole("button", { name: "Refresh" })).toBeEnabled();

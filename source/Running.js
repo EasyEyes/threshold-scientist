@@ -22,6 +22,7 @@ import {
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
 import { captureError } from "./sentry";
 import { isEmptyRepository } from "./repositoryState";
+import { deriveStudyActions } from "./studyActions";
 
 import "./css/Running.scss";
 import { Dropdown } from "./components/Dropdown";
@@ -86,6 +87,7 @@ export default class Running extends Component {
       this.setState({
         dataFolderLength,
         latestDateForDataCollection,
+        completionCode: undefined,
         prolificStudyState: "idle",
         preparedProlificStudyId: null,
       });
@@ -293,6 +295,20 @@ export default class Running extends Component {
     try {
       let studyId = await getProlificStudyId(user, activeExperiment?.id);
       if (!studyId) {
+        const prolificConfig = this.props.viewingPreviousExperiment
+          ? this.props.previousExperimentViewed.previousProlificConfig
+          : this.props.currentProlificConfig;
+        if (!prolificConfig) {
+          studyWindow?.close();
+          this.setState({ prolificStudyState: "idle" });
+          await Swal.fire({
+            icon: "error",
+            title: "Prolific study settings unavailable",
+            text: "This study was compiled before EasyEyes started saving Prolific settings. Compile it again before creating a Prolific study.",
+            confirmButtonColor: "#666",
+          });
+          return;
+        }
         const hasCompletionCode = !!completionCode;
         const { code, incompatibleCompletionCode, abortedCompletionCode } =
           completionCode ??
@@ -304,7 +320,7 @@ export default class Running extends Component {
         if (!hasCompletionCode) this.setState({ completionCode: code });
 
         const result = await prolificCreateDraft(
-          user,
+          prolificConfig,
           `${projectName}`,
           code,
           incompatibleCompletionCode,
@@ -346,10 +362,7 @@ export default class Running extends Component {
       activeExperiment,
       functions,
       experimentStatus,
-      previousExperimentViewed: {
-        previousRecruitmentInformation,
-        previousExperimentStatus,
-      },
+      previousExperimentViewed: { previousExperimentStatus },
       viewingPreviousExperiment,
     } = this.props;
     const {
@@ -366,13 +379,11 @@ export default class Running extends Component {
         : experimentStatus === "RUNNING");
     const showExperimentActions =
       repositoryIsEmpty || (isRunning && pavloviaIsReady);
-
-    const hasRecruitmentService = viewingPreviousExperiment
-      ? previousRecruitmentInformation?.recruitmentServiceName != null
-      : !!user.currentExperiment.participantRecruitmentServiceName;
-    const recruitName = viewingPreviousExperiment
-      ? previousRecruitmentInformation?.recruitmentServiceName ?? null
-      : user.currentExperiment.participantRecruitmentServiceName;
+    const studyActions = deriveStudyActions({
+      repositoryIsEmpty,
+      isRunning,
+      pavloviaIsReady,
+    });
 
     // const offerPilotingOption =
     //   this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
@@ -524,7 +535,7 @@ export default class Running extends Component {
               </button>
             )}
 
-            {showExperimentActions && (
+            {studyActions.showRun && (
               <>
                 <button
                   className="button-green button-large-font"
@@ -638,7 +649,7 @@ export default class Running extends Component {
           </div>
         </div>
 
-        {hasRecruitmentService && isRunning && (
+        {studyActions.showCreateProlificStudy && (
           <>
             <div className="recruit-service">
               <div className="link-set">
@@ -667,12 +678,12 @@ export default class Running extends Component {
                               color: "inherit",
                             }}
                           ></i>
-                          Preparing {recruitName} study…
+                          Preparing Prolific study…
                         </>
                       )}
                       {prolificStudyState === "ready" && (
                         <>
-                          Open {recruitName} study
+                          Open Prolific study
                           <i
                             className="bi bi-box-arrow-up-right"
                             style={{
@@ -683,7 +694,7 @@ export default class Running extends Component {
                         </>
                       )}
                       {prolificStudyState === "idle" && (
-                        <>Create {recruitName} study to run online</>
+                        <>Create Prolific study to run online</>
                       )}
                     </button>
                   </>
@@ -705,7 +716,7 @@ export default class Running extends Component {
                       );
                     }}
                   >
-                    Go to {recruitName}
+                    Go to Prolific
                   </button>
                   <Question
                     title={"Why go to Prolific?"}

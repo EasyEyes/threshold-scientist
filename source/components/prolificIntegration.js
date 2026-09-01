@@ -353,20 +353,23 @@ const findProlificLocationAttributes = (field) => {
 };
 
 export const prolificCreateDraft = async (
-  user,
+  prolificConfigInput,
   internalName,
   completionCode,
   incompatibleCompletionCode,
   abortedCompletionCode,
   token,
 ) => {
+  // Accept the former User-shaped argument temporarily for callers outside this
+  // package. Running passes the selected study's immutable config directly.
+  const prolificConfig =
+    prolificConfigInput?.currentExperiment ?? prolificConfigInput ?? {};
   // const prolificStudyDraftApiUrl = "https://api.prolific.com/api/v1/studies/";
   const prolificStudyDraftApiUrl = "/.netlify/functions/prolific/studies/";
   const hours =
-    parseFloat(user.currentExperiment._participantDurationMinutes / 60) || 0;
-  const pay = parseFloat(user.currentExperiment?._online2Pay) || 0;
-  const payPerHour =
-    parseFloat(user.currentExperiment?._online2PayPerHour) || 0;
+    parseFloat(prolificConfig._participantDurationMinutes / 60) || 0;
+  const pay = parseFloat(prolificConfig._online2Pay) || 0;
+  const payPerHour = parseFloat(prolificConfig._online2PayPerHour) || 0;
   const reward = parseInt(
     parseFloat((pay + payPerHour * hours).toFixed(2) * 100),
   );
@@ -375,7 +378,7 @@ export const prolificCreateDraft = async (
     approveAndPay: COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE,
     requestAReturn: COMPLETION_CODE_ACTION.REQUEST_RETURN,
   };
-  const completionPath = user.currentExperiment?._prolific2CompletionPath;
+  const completionPath = prolificConfig._prolific2CompletionPath;
   const completionCodeAction =
     completionPathMapping[completionPath] ||
     COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE;
@@ -385,37 +388,37 @@ export const prolificCreateDraft = async (
     approveAndPay: COMPLETION_CODE_ACTION.AUTOMATICALLY_APPROVE,
     manuallyReview: COMPLETION_CODE_ACTION.MANUALLY_REVIEW,
   };
-  const abortedPath = user.currentExperiment?._prolific2Aborted;
+  const abortedPath = prolificConfig._prolific2Aborted;
   const abortedCodeAction =
     abortedPathMapping[abortedPath] || COMPLETION_CODE_ACTION.REQUEST_RETURN;
-  const allowList = user.currentExperiment._prolific3CustomAllowList;
+  const allowList = prolificConfig._prolific3CustomAllowList;
   const whiteListParticipants = allowList
     ? allowList.split(",").map((item) => item.trim())
     : [];
 
-  const blockList = user.currentExperiment._prolific3CustomBlockList;
+  const blockList = prolificConfig._prolific3CustomBlockList;
   const blockListParticipants = blockList
     ? blockList.split(",").map((item) => item.trim())
     : [];
 
   // Fetch project studies if needed for name-to-ID resolution or AllowCompletedExperiment
   const needsProjectStudies =
-    user.currentExperiment._prolific3ParticipantInPreviousStudyExclude ||
-    user.currentExperiment._prolific3ParticipantInPreviousStudyInclude ||
-    user.currentExperiment._prolific3AllowCompletedExperiment;
+    prolificConfig._prolific3ParticipantInPreviousStudyExclude ||
+    prolificConfig._prolific3ParticipantInPreviousStudyInclude ||
+    prolificConfig._prolific3AllowCompletedExperiment;
   const projectStudies = needsProjectStudies
     ? await fetchProjectStudies(
         token,
-        user.currentExperiment.prolificWorkspaceProjectId,
+        prolificConfig.prolificWorkspaceProjectId,
       )
     : [];
 
   // _prolific3AllowCompletedExperiment: add participants from completed studies to the allowlist
-  if (user.currentExperiment._prolific3AllowCompletedExperiment) {
+  if (prolificConfig._prolific3AllowCompletedExperiment) {
     const allowAfterHours =
-      parseFloat(user.currentExperiment._prolific3AllowAfterHours) || 0;
+      parseFloat(prolificConfig._prolific3AllowAfterHours) || 0;
     const completedStudyNames =
-      user.currentExperiment._prolific3AllowCompletedExperiment
+      prolificConfig._prolific3AllowCompletedExperiment
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
@@ -447,11 +450,11 @@ export const prolificCreateDraft = async (
 
   // _prolific2ScreenerSet: resolve screener set name -> filter_set_id.
   // When set, Prolific ignores the filters array, so we skip building it.
-  const screenerSetName = user.currentExperiment._prolific2ScreenerSet?.trim();
+  const screenerSetName = prolificConfig._prolific2ScreenerSet?.trim();
   const participantGroupName =
-    user.currentExperiment._prolific2CompletionPathAddToGroup?.trim();
+    prolificConfig._prolific2CompletionPathAddToGroup?.trim();
   const abortedParticipantGroupName =
-    user.currentExperiment._prolific2AbortedAddToGroup?.trim();
+    prolificConfig._prolific2AbortedAddToGroup?.trim();
   const needsParticipantGroups =
     !!participantGroupName || !!abortedParticipantGroupName;
 
@@ -510,21 +513,20 @@ export const prolificCreateDraft = async (
 
   const payload = {
     name:
-      user.currentExperiment.titleOfStudy &&
-      user.currentExperiment.titleOfStudy !== ""
-        ? user.currentExperiment.titleOfStudy
+      prolificConfig.titleOfStudy && prolificConfig.titleOfStudy !== ""
+        ? prolificConfig.titleOfStudy
         : getGlossary()["_online1Title"].default,
     internal_name:
-      user.currentExperiment._online1InternalName &&
-      user.currentExperiment._online1InternalName !== ""
-        ? user.currentExperiment._online1InternalName
+      prolificConfig._online1InternalName &&
+      prolificConfig._online1InternalName !== ""
+        ? prolificConfig._online1InternalName
         : internalName,
     description:
-      user.currentExperiment.descriptionOfStudy &&
-      user.currentExperiment.descriptionOfStudy !== ""
-        ? user.currentExperiment.descriptionOfStudy
+      prolificConfig.descriptionOfStudy &&
+      prolificConfig.descriptionOfStudy !== ""
+        ? prolificConfig.descriptionOfStudy
         : getGlossary()["_online2Description"].default,
-    external_study_url: user.currentExperiment.experimentUrl,
+    external_study_url: prolificConfig.experimentUrl,
     prolific_id_option: "url_parameters",
     completion_option: "url",
     completion_codes: [
@@ -549,24 +551,22 @@ export const prolificCreateDraft = async (
         actions: abortedActions,
       },
     ],
-    total_available_places: isNaN(
-      parseInt(user.currentExperiment._participantsHowMany),
-    )
+    total_available_places: isNaN(parseInt(prolificConfig._participantsHowMany))
       ? 1
-      : parseInt(user.currentExperiment._participantsHowMany),
+      : parseInt(prolificConfig._participantsHowMany),
     estimated_completion_time: isNaN(
-      parseInt(user.currentExperiment._participantDurationMinutes),
+      parseInt(prolificConfig._participantDurationMinutes),
     )
       ? 1
-      : parseInt(user.currentExperiment._participantDurationMinutes),
+      : parseInt(prolificConfig._participantDurationMinutes),
     reward: reward ?? 0,
     device_compatibility:
-      user.currentExperiment._prolific2DeviceKind
+      prolificConfig._prolific2DeviceKind
         ?.split(",")
         .map((el) => el.trim())
         .filter((element) => element !== "") ?? [],
     peripheral_requirements:
-      user.currentExperiment._prolific2RequiredServices
+      prolificConfig._prolific2RequiredServices
         ?.split(",")
         .map((element) => element.trim())
         .filter((element) => element !== "") ?? [],
@@ -574,29 +574,28 @@ export const prolificCreateDraft = async (
       ? []
       : buildFilters(
           whiteListParticipants,
-          user,
+          { currentExperiment: prolificConfig },
           blockListParticipants,
           projectStudies,
         ),
     ...(filterSetId ? { filter_set_id: filterSetId } : {}),
-    project: user.currentExperiment.prolificWorkspaceProjectId ?? undefined,
+    project: prolificConfig.prolificWorkspaceProjectId ?? undefined,
     selected_location: findProlificLocationAttributes(
-      user.currentExperiment._prolific3Location,
+      prolificConfig._prolific3Location,
     ),
-    ...(user.currentExperiment._prolific3StudyDistribution &&
-    user.currentExperiment._prolific3StudyDistribution !== "Standard sample"
+    ...(prolificConfig._prolific3StudyDistribution &&
+    prolificConfig._prolific3StudyDistribution !== "Standard sample"
       ? {
           naivety_distribution_rate:
-            user.currentExperiment._prolific3StudyDistribution ===
-            "Balanced sample"
+            prolificConfig._prolific3StudyDistribution === "Balanced sample"
               ? 0.5
               : 0,
         }
       : {}),
-    ...(user.currentExperiment._prolific2StudyLabel &&
-    user.currentExperiment._prolific2StudyLabel.trim() !== ""
+    ...(prolificConfig._prolific2StudyLabel &&
+    prolificConfig._prolific2StudyLabel.trim() !== ""
       ? {
-          study_labels: user.currentExperiment._prolific2StudyLabel
+          study_labels: prolificConfig._prolific2StudyLabel
             .split(",")
             .map((s) => s.trim().toLowerCase().replace(/\s+/g, "_"))
             .filter(Boolean),
