@@ -125,3 +125,7 @@ localtest.html
 .netlify/state.json
 .netlify/functions-serve/prolific/
 .aider*
+
+# Playwright runtime artifacts (visual baselines remain tracked)
+playwright-report/
+test-results/

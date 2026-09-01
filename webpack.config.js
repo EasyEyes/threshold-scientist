@@ -164,7 +164,10 @@ const redirect_uri = (uri) =>
 
 module.exports = (env) => {
   if (env.development) {
-    return Object.assign({}, config, {
+    const developmentConfig = Object.assign({}, config, {
+      entry: env.e2e
+        ? path.resolve(__dirname, "tests/e2e/fixtures/compilerHarness.jsx")
+        : config.entry,
       mode: "development",
       optimization: {
         minimize: false,
@@ -243,6 +246,24 @@ module.exports = (env) => {
         publicPath: "/compiler/dist/",
       },
     });
+    if (env.e2e) {
+      developmentConfig.resolve = {
+        ...config.resolve,
+        alias: {
+          "../threshold/preprocess/gitlabUtils": path.resolve(
+            __dirname,
+            "tests/e2e/fixtures/gitlabBoundary.js",
+          ),
+          "./components/firebase": path.resolve(
+            __dirname,
+            "tests/e2e/fixtures/firebaseBoundary.js",
+          ),
+        },
+      };
+      developmentConfig.devServer.open = false;
+      developmentConfig.devServer.port = 5510;
+    }
+    return developmentConfig;
   } else if (env.production) {
     const deploymentIdInput = process.env.DEPLOY_ID;
     if (!deploymentIdInput) {

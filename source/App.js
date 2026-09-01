@@ -19,6 +19,7 @@ import {
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
   getDurationForProject,
+  getProlificStudyConfig,
   getProlificStudyId,
   copyUser,
   getCommonResourcesNames,
@@ -57,6 +58,10 @@ import { fetchGitHubStats } from "./components/githubStatsApi";
 import { isEmptyRepository } from "./repositoryState";
 import { registerTestFontOpener } from "./components/testFont/openTestFont";
 import { setTestFontContext } from "./components/testFont/testFontContext";
+import {
+  createProlificExperimentUrl,
+  createProlificStudyConfig,
+} from "./components/prolificStudyConfig";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -109,6 +114,7 @@ export default class App extends Component {
         previousRecruitmentInformation: createEmptyRecruitmentInformation(),
         previousCompatibilityRequirements: null,
         previousExperimentDuration: null,
+        previousProlificConfig: null,
       },
       /* -------------------------------------------------------------------------- */
       currentStep: "login", // 'login', 'table', 'upload', 'running', 'deploy', ('download')
@@ -118,6 +124,7 @@ export default class App extends Component {
       user: null,
       accessToken: null,
       prolificToken: null,
+      currentProlificConfig: null,
       prolificAccount: null,
       resources: createEmptyResourcesObject(),
       filename: null,
@@ -286,6 +293,7 @@ export default class App extends Component {
     let previousRecruitmentInformation = createEmptyRecruitmentInformation();
     let previousCompatibilityRequirements = null;
     let previousExperimentDuration = null;
+    let previousProlificConfig = null;
     if (activeExperiment !== "new") {
       // viewing a previous experiment
       const { user } = this.state;
@@ -356,6 +364,10 @@ export default class App extends Component {
                 getRecruitmentServiceConfig(user, activeExperiment.name),
               ),
             );
+            previousProlificConfig = await retrieveMetadata(
+              "prolific-config-requested",
+              () => getProlificStudyConfig(user, activeExperiment.id),
+            );
           }
           recordCompilerPhase(retrieval, "completed", {
             originalFilePresent: Boolean(originalFileName),
@@ -373,6 +385,7 @@ export default class App extends Component {
           previousRecruitmentInformation,
           previousCompatibilityRequirements: previousCompatibilityRequirements,
           previousExperimentDuration,
+          previousProlificConfig,
         },
         compatibilityLanguage: "en",
       });
@@ -392,6 +405,7 @@ export default class App extends Component {
               previousCompatibilityRequirements:
                 previousCompatibilityRequirements,
               previousExperimentDuration,
+              previousProlificConfig,
             },
             compatibilityLanguage: "en",
           });
@@ -488,6 +502,7 @@ export default class App extends Component {
         ),
         futureSteps: [...this.allSteps].slice(this.allSteps.indexOf(step) + 1),
         user: refreshedUser,
+        currentProlificConfig: null,
         projectName: null,
         newRepo: null,
         compatibilityRequirements: "",
@@ -706,6 +721,10 @@ export default class App extends Component {
       activeExperiment: newRepo,
       experimentStatus: "INACTIVE",
       user: updatedUser,
+      currentProlificConfig: createProlificStudyConfig(
+        updatedUser.currentExperiment,
+        { experimentUrl: createProlificExperimentUrl(experimentUrl) },
+      ),
       projectName: newRepo.path,
       ...this.nextStepStatus("running"),
     });
@@ -865,6 +884,7 @@ export default class App extends Component {
       futureSteps,
       user,
       prolificToken,
+      currentProlificConfig,
       prolificAccount,
       resources,
       filename,
@@ -901,6 +921,7 @@ export default class App extends Component {
           functions={this.functions}
           user={user}
           prolificToken={prolificToken}
+          currentProlificConfig={currentProlificConfig}
           resources={resources}
           projectName={activeExperiment.name}
           newRepo={null}
@@ -927,6 +948,7 @@ export default class App extends Component {
           functions={this.functions}
           user={user}
           prolificToken={prolificToken}
+          currentProlificConfig={currentProlificConfig}
           resources={resources}
           projectName={projectName}
           newRepo={newRepo}
