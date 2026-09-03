@@ -663,80 +663,83 @@ export default class Table extends Component {
             onPublicationDate={this.props.functions.updateLatestPublicationDate}
           />
         </div>
-        <div style={{ marginTop: "8px", marginBottom: "10px" }}>
-          <span
-            style={{
-              display: "flex",
-              justifyContent: "flex-start",
-              gap: "0.3rem",
-            }}
-          >
-            <Dropdown
-              selected={this.props.activeExperiment}
-              setSelectedProject={
-                this.props.functions.handleSetActivateExperiment
-              }
-              projectList={this.props.user.projectList}
-              newExperimentProjectName={this.props.projectName}
+        <div className="table-sticky-controls">
+          <div style={{ marginTop: "8px", marginBottom: "10px" }}>
+            <span
               style={{
-                padding: "0.6rem 1rem",
-                backgroundColor: "#999",
-                fontSize: "1.2rem",
-                fontWeight: "500",
+                display: "flex",
+                justifyContent: "flex-start",
+                gap: "0.3rem",
               }}
-              user={this.props.user}
-              isFromStartTable={true}
-            />
-          </span>
-        </div>
-        <div className="file-zone">
-          <Dropzone onDrop={this.onDrop}>
-            {({ getRootProps, getInputProps }) => (
-              <div
-                {...getRootProps({ className: "dropzone" })}
-                ref={this.dropZoneRef}
+            >
+              <Dropdown
+                selected={this.props.activeExperiment}
+                setSelectedProject={
+                  this.props.functions.handleSetActivateExperiment
+                }
+                projectList={this.props.user.projectList}
+                newExperimentProjectName={this.props.projectName}
                 style={{
-                  visibility: this.state.showDropZone ? "visible" : "hidden",
+                  padding: "0.6rem 1rem",
+                  backgroundColor: "#999",
+                  fontSize: "1.2rem",
+                  fontWeight: "500",
                 }}
-              >
-                <input {...getInputProps()} />
-                <p className="dropzone-sub-text">Select file</p>
-              </div>
-            )}
-          </Dropzone>
+                user={this.props.user}
+                isFromStartTable={true}
+              />
+            </span>
+          </div>
+          <div className="file-zone">
+            <Dropzone onDrop={this.onDrop}>
+              {({ getRootProps, getInputProps }) => (
+                <div
+                  {...getRootProps({ className: "dropzone" })}
+                  ref={this.dropZoneRef}
+                  style={{
+                    visibility: this.state.showDropZone ? "visible" : "hidden",
+                  }}
+                >
+                  <input {...getInputProps()} />
+                  <p className="dropzone-sub-text">Select file</p>
+                </div>
+              )}
+            </Dropzone>
 
-          <Dropzone onDrop={this.onDropForExport}>
-            {({ getRootProps, getInputProps }) => (
-              <div
-                {...getRootProps({ className: "dropzone dropzone-export" })}
-                style={{
-                  visibility: this.state.showDropZone ? "visible" : "hidden",
-                }}
-              >
-                <input {...getInputProps()} />
-                <p className="dropzone-sub-text">
-                  Select file to download raw source
-                </p>
-              </div>
-            )}
-          </Dropzone>
+            <Dropzone onDrop={this.onDropForExport}>
+              {({ getRootProps, getInputProps }) => (
+                <div
+                  {...getRootProps({ className: "dropzone dropzone-export" })}
+                  style={{
+                    visibility: this.state.showDropZone ? "visible" : "hidden",
+                  }}
+                >
+                  <input {...getInputProps()} />
+                  <p className="dropzone-sub-text">
+                    Select file to download raw source
+                  </p>
+                </div>
+              )}
+            </Dropzone>
 
-          <div className="resource-buttons">{resourceButtons}</div>
+            <div className="resource-buttons">{resourceButtons}</div>
+          </div>
+
+          {this.state.tableName ? (
+            <p
+              className={`dropzone-around-text emphasize${
+                this.state.errors.filter(
+                  (err) =>
+                    err.context === "preprocessor" && err.kind === "error",
+                ).length
+                  ? " has-error"
+                  : ""
+              }`}
+            >
+              {this.state.tableName}
+            </p>
+          ) : null}
         </div>
-
-        {this.state.tableName ? (
-          <p
-            className={`dropzone-around-text emphasize${
-              this.state.errors.filter(
-                (err) => err.context === "preprocessor" && err.kind === "error",
-              ).length
-                ? " has-error"
-                : ""
-            }`}
-          >
-            {this.state.tableName}
-          </p>
-        ) : null}
 
         {this.state.errors.length !== 0 && (
           <div className="errors">

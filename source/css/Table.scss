@@ -19,11 +19,28 @@ $table-step-padding: 0.4rem;
 }
 
 .step-table {
+  // Animate.css otherwise retains transform: translateX(0) after headShake.
+  // A transformed ancestor makes sticky positioning unreliable when zoomed.
+  -webkit-animation-fill-mode: none;
+  animation-fill-mode: none;
+
   // padding-left: $table-step-padding !important;
   // padding-right: $table-step-padding !important;
 
   .table {
     margin: 0;
+  }
+
+  .table-sticky-controls {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    box-sizing: border-box;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow-y: auto;
+    padding-bottom: 0.7rem;
+    background: white;
   }
 
   .dropzone-around-text {

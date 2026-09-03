@@ -1,5 +1,5 @@
 import React from "react";
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import Table from "../Table";
 import Swal from "sweetalert2";
 import { preprocessExperimentFile } from "../../threshold/preprocess/main";
@@ -140,6 +140,27 @@ describe("Table freshness status", () => {
       "✅Fresh. The compiler is running in development mode.",
     );
     expect(fileInput).toBeEnabled();
+  });
+
+  it("groups file controls below the instructions for sticky positioning", () => {
+    const ref = React.createRef();
+    const { container } = render(<Table ref={ref} {...makeProps()} />);
+
+    act(() => {
+      ref.current.setState({
+        tableName: "study.csv",
+        errors: [{ context: "preprocessor", kind: "error" }],
+      });
+    });
+
+    const banner = container.querySelector(".green-status-banner");
+    const controls = container.querySelector(".table-sticky-controls");
+
+    expect(banner.nextElementSibling).toBe(controls);
+    expect(controls).toContainElement(container.querySelector(".file-zone"));
+    expect(controls).toContainElement(
+      container.querySelector(".dropzone-around-text.emphasize.has-error"),
+    );
   });
 });
 
