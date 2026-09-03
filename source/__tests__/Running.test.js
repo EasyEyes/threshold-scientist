@@ -67,9 +67,15 @@ describe("Running Prolific study creation", () => {
 
     expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument();
     expect(
+      screen.getByRole("button", { name: "Go to Pavlovia" }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("button", {
         name: "Create Prolific study to run online",
       }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Go to Prolific" }),
     ).toBeInTheDocument();
   });
 

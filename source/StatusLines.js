@@ -1,7 +1,10 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
 
-import { createOrUpdateProlificToken } from "../threshold/preprocess/gitlabUtils";
+import {
+  createOrUpdateProlificToken,
+  DEFAULT_EXPERIMENT_LANGUAGE,
+} from "../threshold/preprocess/gitlabUtils";
 import { compatibilityRequirements as globalCompatibilityReq } from "../threshold/preprocess/global";
 import { displayExperimentNeedsPopup } from "./components/ExperimentNeeds";
 import { durations } from "../threshold/preprocess/getDuration";
@@ -194,6 +197,7 @@ export default class StatusLines extends Component {
         previousExperimentStatus,
         previousCompatibilityRequirements,
         previousExperimentDuration,
+        previousExperimentLanguage,
         previousRecruitmentInformation,
       },
       // currentStep,
@@ -411,6 +415,17 @@ export default class StatusLines extends Component {
               : user && filename && experimentStatus === "RUNNING"
               ? durations.durationForStatusline
               : ""
+          }
+        />
+
+        <StatusLine
+          activated={!!filename || viewingPreviousExperiment}
+          title={"_language"}
+          content={
+            viewingPreviousExperiment
+              ? previousExperimentLanguage || DEFAULT_EXPERIMENT_LANGUAGE
+              : user?.currentExperiment?._language ||
+                DEFAULT_EXPERIMENT_LANGUAGE
           }
         />
 

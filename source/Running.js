@@ -391,17 +391,7 @@ export default class Running extends Component {
       ? false
       : !this.props.user.currentExperiment.pavloviaPreferRunningModeBool;
 
-    const smallButtonExtraStyle = {
-      whiteSpace: "nowrap",
-      fontSize: "0.7rem",
-      padding: "0.6rem",
-      borderRadius: "0.3rem",
-    };
-
-    const buttonGoToPavlovia = (
-      displayText = "Go to Pavlovia",
-      extraStyle = {},
-    ) => (
+    const buttonGoToPavlovia = (displayText = "Go to Pavlovia") => (
       <button
         className={`button-grey button-small`}
         onClick={() => {
@@ -414,13 +404,12 @@ export default class Running extends Component {
             "_blank",
           );
         }}
-        style={extraStyle}
       >
         {displayText}
       </button>
     );
 
-    const buttonSetToRunning = (extraStyle = {}) => (
+    const buttonSetToRunning = () => (
       <button
         className={`button-grey button-small`}
         onClick={
@@ -431,7 +420,6 @@ export default class Running extends Component {
                 await this.setModeToRun(e);
               }
         }
-        style={extraStyle}
       >
         Set to RUNNING mode
       </button>
@@ -584,10 +572,7 @@ export default class Running extends Component {
 
             {!repositoryIsEmpty && !isRunning && (
               <>
-                {buttonGoToPavlovia(
-                  "Go to Pavlovia to run in PILOTING mode",
-                  {},
-                )}
+                {buttonGoToPavlovia("Go to Pavlovia to run in PILOTING mode")}
                 <button
                   className="button-grey button-small"
                   onClick={async (e) => {
@@ -614,16 +599,10 @@ export default class Running extends Component {
             )}
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.3rem",
-            }}
-          >
+          <div className="link-set-side-actions">
             {repositoryIsEmpty || isRunning
-              ? buttonGoToPavlovia("Go to Pavlovia", smallButtonExtraStyle)
-              : buttonSetToRunning(smallButtonExtraStyle)}
+              ? buttonGoToPavlovia("Go to Pavlovia")
+              : buttonSetToRunning()}
 
             <Question
               title={"Why go to Pavlovia?"}
@@ -699,16 +678,9 @@ export default class Running extends Component {
                     </button>
                   </>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.3rem",
-                  }}
-                >
+                <div className="link-set-side-actions">
                   <button
                     className="button-grey button-small"
-                    style={smallButtonExtraStyle}
                     onClick={async () => {
                       await this.goToProlificOnClick(
                         user,
@@ -799,16 +771,9 @@ export default class Running extends Component {
                 </span>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.3rem",
-                }}
-              >
+              <div className="link-set-side-actions">
                 <button
                   className="button-grey button-small"
-                  style={smallButtonExtraStyle}
                   onClick={async () => {
                     const {
                       user,

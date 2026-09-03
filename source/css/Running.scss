@@ -23,6 +23,35 @@
     display: flex;
     gap: 0.3rem;
   }
+
+  .link-set-side-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    .button-small {
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      font-size: 0.7rem;
+      font-weight: 400;
+      padding: 4px 10px;
+      height: 20px;
+      /* Match the width of the widest button ("Go to Pavlovia") so all three
+         lower-right buttons line up as a column of equal-sized buttons. */
+      min-width: 6.5rem;
+      color: #fff;
+      text-shadow: 0 0 0 #fff;
+      line-height: 100%;
+      @media screen and (max-width: 560px) {
+        height: unset;
+        min-width: unset;
+        white-space: unset;
+      }
+    }
+  }
 }
 
 /* -------------------------------------------------------------------------- */

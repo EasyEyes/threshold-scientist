@@ -19,6 +19,7 @@ import {
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
   getDurationForProject,
+  getLanguageForProject,
   getProlificStudyConfig,
   getProlificStudyId,
   copyUser,
@@ -118,6 +119,7 @@ export default class App extends Component {
         previousRecruitmentInformation: createEmptyRecruitmentInformation(),
         previousCompatibilityRequirements: null,
         previousExperimentDuration: null,
+        previousExperimentLanguage: null,
         previousProlificConfig: null,
       },
       /* -------------------------------------------------------------------------- */
@@ -297,6 +299,7 @@ export default class App extends Component {
     let previousRecruitmentInformation = createEmptyRecruitmentInformation();
     let previousCompatibilityRequirements = null;
     let previousExperimentDuration = null;
+    let previousExperimentLanguage = null;
     let previousProlificConfig = null;
     if (activeExperiment !== "new") {
       // viewing a previous experiment
@@ -340,6 +343,10 @@ export default class App extends Component {
             previousExperimentDuration = await retrieveMetadata(
               "duration-requested",
               () => getDurationForProject(user, activeExperiment.name),
+            );
+            previousExperimentLanguage = await retrieveMetadata(
+              "language-requested",
+              () => getLanguageForProject(user, activeExperiment.name),
             );
             previousCompatibilityRequirements = await retrieveMetadata(
               "compatibility-requested",
@@ -389,6 +396,7 @@ export default class App extends Component {
           previousRecruitmentInformation,
           previousCompatibilityRequirements: previousCompatibilityRequirements,
           previousExperimentDuration,
+          previousExperimentLanguage,
           previousProlificConfig,
         },
         compatibilityLanguage: "en",
@@ -409,6 +417,7 @@ export default class App extends Component {
               previousCompatibilityRequirements:
                 previousCompatibilityRequirements,
               previousExperimentDuration,
+              previousExperimentLanguage,
               previousProlificConfig,
             },
             compatibilityLanguage: "en",
