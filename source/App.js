@@ -25,6 +25,10 @@ import {
   getCommonResourcesNames,
 } from "../threshold/preprocess/gitlabUtils";
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
+import {
+  handleAuthError,
+  isAuthenticationError,
+} from "../threshold/preprocess/auth/errorHandler";
 import { resourcesFileTypes } from "../threshold/preprocess/constants";
 import { auth, db } from "./components/firebase";
 import {
@@ -550,6 +554,9 @@ export default class App extends Component {
   handleResourcesLoaded(resourcesPromise, user, attempt = 0) {
     resourcesPromise
       .then((r) => {
+        // A pending retry can outlive an account switch; its result belongs
+        // to a user who is no longer current and must not clobber state.
+        if (this.state.user !== user) return r;
         // Check if any resource type failed to fetch (null values)
         const failedTypes = Object.entries(r)
           .filter(([_, value]) => value === null)
@@ -579,12 +586,24 @@ export default class App extends Component {
         return r;
       })
       .catch((error) => {
-        // getCommonResourcesNames should always resolve (catches per-type errors internally).
-        // If we're here, it's an unexpected bug.
+        // Same staleness rule: never act on a failed load for a user who is
+        // no longer current — re-authenticating would clear the NEW session.
+        if (this.state.user !== user) return;
+        // getCommonResourcesNames resolves unless the failure is global:
+        // an auth failure (stale/expired session) re-authenticates silently;
+        // anything else is an unexpected bug.
+        if (isAuthenticationError(error)) {
+          handleAuthError(error).catch((redirectError) =>
+            captureError(redirectError, "Re-authentication failed", {
+              type: "resources",
+              originalError: String(error),
+            }),
+          );
+          return;
+        }
         captureError(error, "Unexpected error loading resources", {
           type: "resources",
         });
-        throw error;
       });
   }
 
