@@ -92,9 +92,24 @@
       margin-bottom: 0;
     }
 
-    .compile-warning-parameters,
     .error-parameter {
       font-weight: bold;
+    }
+
+    .error-relevant-parameters {
+      font-weight: bold;
+      margin-top: 0.2rem;
+    }
+
+    .error-relevant-parameters-prefix {
+      font-weight: bold;
+      color: #f78812;
+    }
+
+    a.error-parameter-link,
+    a.error-parameter-link:visited {
+      color: inherit;
+      text-decoration: underline;
     }
 
     .compile-warning-name {

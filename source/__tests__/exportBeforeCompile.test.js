@@ -268,7 +268,7 @@ describe("exportStudyBeforeCompiling", () => {
 
     expect(errors).toHaveLength(1);
     expect(errors[0].context).toBe("export");
-    expect(errors[0].name).toBe("Export failed");
+    expect(errors[0].name).toBe("Download source failed");
     expect(errors[0].message).toContain("disk full");
     expect(Swal.close).toHaveBeenCalled();
   });

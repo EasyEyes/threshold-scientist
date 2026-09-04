@@ -3,6 +3,37 @@ import { render } from "@testing-library/react";
 import Table from "../Table";
 import Swal from "sweetalert2";
 import { preprocessExperimentFile } from "../../threshold/preprocess/main";
+import { loadGlossaryRows } from "../../threshold/parameters/glossaryLink";
+
+// Row map for the glossary-link mock below. name → row; 0 = known parameter
+// with unknown row (whole-sheet link).
+const mockGlossaryRows = {};
+const mockGlossaryUrl = (name) => {
+  if (!(name in mockGlossaryRows)) return null;
+  const row = mockGlossaryRows[name];
+  return row
+    ? `https://example.test/glossary&range=A${row}`
+    : "https://example.test/glossary";
+};
+
+jest.mock("../../threshold/parameters/glossaryLink", () => ({
+  glossaryParameterUrl: (name) => mockGlossaryUrl(name),
+  linkGlossaryParameters: (html) =>
+    html.replace(
+      /<span class="error-parameter">([^<]+)<\/span>/g,
+      (span, name) => {
+        const href = mockGlossaryUrl(name);
+        return href
+          ? `<a class="error-parameter-link" href="${href}" target="_blank" rel="noopener noreferrer">${span}</a>`
+          : span;
+      },
+    ),
+  loadGlossaryRows: jest.fn().mockResolvedValue(null),
+}));
+
+afterEach(() => {
+  for (const key of Object.keys(mockGlossaryRows)) delete mockGlossaryRows[key];
+});
 
 jest.mock("sweetalert2", () => ({
   fire: jest.fn(),
@@ -31,6 +62,7 @@ jest.mock("../components/glossaryApi", () => ({
 jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
   initGlossary: jest.fn(),
   getGlossaryVersion: jest.fn(),
+  getGlossary: jest.fn(() => ({})),
 }));
 
 jest.mock("../components/phrasesApi", () => ({
@@ -1014,10 +1046,382 @@ describe("Error label prefixes", () => {
     );
     expect(names).toEqual([
       "Compiler error: Unbalanced commas",
-      "Export error: Export failed",
+      "Download source error: Export failed",
       "LOGGING CAUTION",
       "Compiled successfully.",
     ]);
+  });
+});
+
+describe("Parameter(s) row", () => {
+  const renderTableWithErrors = (errors) => {
+    const { act } = require("@testing-library/react");
+    const ref = React.createRef();
+    const { container } = render(<Table ref={ref} {...makeProps()} />);
+    act(() => {
+      ref.current.setState({ errors });
+    });
+    return container;
+  };
+
+  const withGlossaryRows = (rows) => {
+    for (const key of Object.keys(mockGlossaryRows))
+      delete mockGlossaryRows[key];
+    Object.assign(mockGlossaryRows, rows);
+  };
+
+  afterEach(() => withGlossaryRows({}));
+
+  it("labels the parameter list, comma-separated, so it is self-explanatory", () => {
+    withGlossaryRows({});
+    const container = renderTableWithErrors([
+      {
+        context: "preprocessor",
+        kind: "error",
+        name: "Font missing readingCorpus characters",
+        parameters: ["font", "readingCorpus", "fontTolerateFaults"],
+      },
+    ]);
+    const row = container.querySelector(".error-relevant-parameters");
+    expect(row).not.toBeNull();
+    expect(row.textContent).toBe(
+      "PARAMETERS: font, readingCorpus, fontTolerateFaults",
+    );
+  });
+
+  it("uses the singular label for a single parameter", () => {
+    withGlossaryRows({});
+    const container = renderTableWithErrors([
+      {
+        context: "preprocessor",
+        kind: "error",
+        name: "E1",
+        parameters: ["font"],
+      },
+    ]);
+    const row = container.querySelector(".error-relevant-parameters");
+    expect(row.textContent).toBe("PARAMETER: font");
+  });
+
+  it("links each parameter in the row to its glossary entry", () => {
+    withGlossaryRows({
+      font: 288,
+      readingCorpus: 416,
+      fontTolerateFaults: 320,
+    });
+    const container = renderTableWithErrors([
+      {
+        context: "preprocessor",
+        kind: "error",
+        name: "E1",
+        parameters: ["font", "readingCorpus", "fontTolerateFaults"],
+      },
+    ]);
+    const links = [
+      ...container.querySelectorAll(".error-relevant-parameters a"),
+    ];
+    expect(links.map((a) => a.textContent)).toEqual([
+      "font",
+      "readingCorpus",
+      "fontTolerateFaults",
+    ]);
+    expect(links[0].href).toContain("range=A288");
+    expect(links[0].target).toBe("_blank");
+    expect(links[1].href).toContain("range=A416");
+  });
+
+  it("leaves row parameters unlinked when the glossary has no entry", () => {
+    withGlossaryRows({ font: 288 });
+    const container = renderTableWithErrors([
+      {
+        context: "preprocessor",
+        kind: "error",
+        name: "E1",
+        parameters: ["font", "notAParameter"],
+      },
+    ]);
+    const row = container.querySelector(".error-relevant-parameters");
+    const links = [...row.querySelectorAll("a")];
+    expect(links).toHaveLength(1);
+    expect(row.textContent).toBe("PARAMETERS: font, notAParameter");
+  });
+
+  it("links parameter mentions inside message and hint", () => {
+    withGlossaryRows({ font: 288 });
+    const container = renderTableWithErrors([
+      {
+        context: "preprocessor",
+        kind: "error",
+        name: "E1",
+        message: 'Check <span class="error-parameter">font</span> in column C.',
+        hint: 'Set <span class="error-parameter">font</span> or pick another file.',
+      },
+    ]);
+    const messageLink = container.querySelector(".error-message a");
+    const hintLink = container.querySelector(".error-hint a");
+    expect(messageLink).not.toBeNull();
+    expect(messageLink.href).toContain("range=A288");
+    expect(hintLink).not.toBeNull();
+    expect(hintLink.href).toContain("range=A288");
+  });
+
+  it("shows each parameter once even when the error lists it twice", () => {
+    // UNBALANCED_COMMAS can list the same parameter twice (duplicate rows).
+    withGlossaryRows({ block: 10, font: 288 });
+    const container = renderTableWithErrors([
+      {
+        context: "preprocessor",
+        kind: "error",
+        name: "E1",
+        parameters: ["block", "block", "font"],
+      },
+    ]);
+    const row = container.querySelector(".error-relevant-parameters");
+    expect(row.textContent).toBe("PARAMETERS: block, font");
+    expect(row.querySelectorAll("a")).toHaveLength(2);
+  });
+
+  it("renders an unrecognized (possibly hostile) parameter name as inert text", () => {
+    withGlossaryRows({});
+    const container = renderTableWithErrors([
+      {
+        context: "preprocessor",
+        kind: "error",
+        name: "Parameter is unrecognized",
+        parameters: ['<img src=x onerror="window.pwned=1">'],
+      },
+    ]);
+    expect(container.querySelector("img")).toBeNull();
+    expect(
+      container.querySelector(".error-relevant-parameters").textContent,
+    ).toContain("<img src=x");
+  });
+
+  it("places the Parameter(s) line last in the error box", () => {
+    withGlossaryRows({});
+    const container = renderTableWithErrors([
+      {
+        context: "preprocessor",
+        kind: "error",
+        name: "E1",
+        message: "M",
+        hint: "H",
+        parameters: ["font"],
+      },
+    ]);
+    const item = container.querySelector(".error-item");
+    expect(
+      item.lastElementChild.classList.contains("error-relevant-parameters"),
+    ).toBe(true);
+  });
+
+  it("warms the glossary-row map at mount, before any compile", () => {
+    loadGlossaryRows.mockClear();
+    render(<Table {...makeProps()} />);
+    expect(loadGlossaryRows).toHaveBeenCalledTimes(1);
+  });
+
+  it("omits the row when the error has no parameters", () => {
+    withGlossaryRows({});
+    const container = renderTableWithErrors([
+      { context: "preprocessor", kind: "error", name: "E", parameters: [] },
+    ]);
+    expect(container.querySelector(".error-relevant-parameters")).toBeNull();
+  });
+});
+
+describe("Error ordering", () => {
+  const compileWithErrors = async (errorList) => {
+    const {
+      fetchGlossaryData,
+      fetchGlossaryVersion,
+    } = require("../components/glossaryApi");
+    const {
+      getGlossaryVersion,
+    } = require("../../threshold/parameters/glossaryRegistry");
+    const {
+      preprocessExperimentFile,
+    } = require("../../threshold/preprocess/main");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    preprocessExperimentFile.mockImplementation(async (...args) => {
+      const callback = args[5];
+      callback({}, {}, [], [], [], [], [], [], errorList, [], [], [], "");
+    });
+    const ref = React.createRef();
+    const { container } = render(<Table ref={ref} {...makeProps()} />);
+    const { act } = require("@testing-library/react");
+    await act(async () => {
+      await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+    });
+    return [...container.querySelectorAll(".error-name")].map(
+      (element) => element.textContent,
+    );
+  };
+
+  it("keeps compiler emission order among errors with the same parameters", async () => {
+    const corpusError = (font) => ({
+      context: "preprocessor",
+      kind: "error",
+      name: `Font missing readingCorpus characters (${font})`,
+      parameters: ["font", "readingCorpus", "fontTolerateFaults"],
+    });
+    expect(
+      await compileWithErrors([
+        corpusError("F1"),
+        corpusError("F2"),
+        corpusError("F3"),
+      ]),
+    ).toEqual([
+      "Compiler error: Font missing readingCorpus characters (F1)",
+      "Compiler error: Font missing readingCorpus characters (F2)",
+      "Compiler error: Font missing readingCorpus characters (F3)",
+    ]);
+  });
+
+  it("sorts by parameter list first, so a block error precedes font errors", async () => {
+    const corpusError = (font) => ({
+      context: "preprocessor",
+      kind: "error",
+      name: `Font missing readingCorpus characters (${font})`,
+      parameters: ["font", "readingCorpus", "fontTolerateFaults"],
+    });
+    const blockError = {
+      context: "preprocessor",
+      kind: "error",
+      name: "block value is empty",
+      parameters: ["block"],
+    };
+    expect(
+      await compileWithErrors([
+        corpusError("F1"),
+        blockError,
+        corpusError("F2"),
+      ]),
+    ).toEqual([
+      "Compiler error: block value is empty",
+      "Compiler error: Font missing readingCorpus characters (F1)",
+      "Compiler error: Font missing readingCorpus characters (F2)",
+    ]);
+  });
+  it("loads glossary rows during the compile and links rendered errors", async () => {
+    const {
+      fetchGlossaryData,
+      fetchGlossaryVersion,
+    } = require("../components/glossaryApi");
+    const {
+      getGlossaryVersion,
+    } = require("../../threshold/parameters/glossaryRegistry");
+    const {
+      preprocessExperimentFile,
+    } = require("../../threshold/preprocess/main");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    loadGlossaryRows.mockClear();
+    for (const key of Object.keys(mockGlossaryRows))
+      delete mockGlossaryRows[key];
+    mockGlossaryRows.font = 288;
+
+    let rowsLoadedWhenPreprocessRan = false;
+    preprocessExperimentFile.mockImplementation(async (...args) => {
+      // The row fetch must be kicked off before the compile, in parallel.
+      rowsLoadedWhenPreprocessRan = loadGlossaryRows.mock.calls.length > 0;
+      const callback = args[5];
+      callback(
+        {},
+        {},
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [
+          {
+            context: "preprocessor",
+            kind: "error",
+            name: "E",
+            parameters: ["font"],
+          },
+        ],
+        [],
+        [],
+        [],
+        "",
+      );
+    });
+    const ref = React.createRef();
+    const { container } = render(<Table ref={ref} {...makeProps()} />);
+    const { act } = require("@testing-library/react");
+    await act(async () => {
+      await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+    });
+
+    expect(rowsLoadedWhenPreprocessRan).toBe(true);
+    const link = container.querySelector(".error-relevant-parameters a");
+    expect(link).not.toBeNull();
+    expect(link.href).toContain("range=A288");
+  });
+  it("never blocks error display on a hanging glossary-row fetch", async () => {
+    const {
+      fetchGlossaryData,
+      fetchGlossaryVersion,
+    } = require("../components/glossaryApi");
+    const {
+      getGlossaryVersion,
+    } = require("../../threshold/parameters/glossaryRegistry");
+    const {
+      preprocessExperimentFile,
+    } = require("../../threshold/preprocess/main");
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    // A hung fetch (e.g. docs.google.com black-holed): errors must still
+    // render within the bounded grace period, not wait for it.
+    loadGlossaryRows.mockReset();
+    loadGlossaryRows.mockImplementation(() => new Promise(() => {}));
+    preprocessExperimentFile.mockImplementation(async (...args) => {
+      args[5](
+        {},
+        {},
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [
+          {
+            context: "preprocessor",
+            kind: "error",
+            name: "E",
+            parameters: [],
+          },
+        ],
+        [],
+        [],
+        [],
+        "",
+      );
+    });
+    const ref = React.createRef();
+    const { container } = render(<Table ref={ref} {...makeProps()} />);
+    const { act, waitFor } = require("@testing-library/react");
+    await act(async () => {
+      await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+    });
+    loadGlossaryRows.mockResolvedValue(null); // restore for later tests
+    // Renders after the 500 ms grace period — and would never render at all
+    // if the callback awaited the hung fetch unbounded.
+    await waitFor(
+      () =>
+        expect(container.querySelector(".error-name").textContent).toBe(
+          "Compiler error: E",
+        ),
+      { timeout: 3000 },
+    );
   });
 });
 

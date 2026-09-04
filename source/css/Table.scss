@@ -133,15 +133,6 @@ $table-step-padding: 0.4rem;
   }
 
   .errors {
-    max-height: 80vh;
-    overflow-y: scroll;
-    scrollbar-width: none;
-
-    &::-webkit-scrollbar {
-      display: none;
-      width: 0;
-    }
-
     .error-item {
       position: relative;
       border-radius: $icon-radius;
@@ -162,6 +153,26 @@ $table-step-padding: 0.4rem;
       ol {
         margin-bottom: 0 !important;
         list-style: none;
+      }
+
+      // The "PARAMETERS: …" line: last line of the error box, styled like
+      // the bold parameter mentions it lists; prefix matches the HINT prefix.
+      .error-relevant-parameters {
+        font-weight: bold;
+        margin-top: 0.2rem;
+      }
+
+      .error-relevant-parameters-prefix {
+        font-weight: bold;
+        color: $error;
+      }
+
+      // Parameter mentions inside message/hint HTML, wrapped in glossary
+      // links at render time.
+      a.error-parameter-link,
+      a.error-parameter-link:visited {
+        color: inherit;
+        text-decoration: underline;
       }
 
       .error-parameter {

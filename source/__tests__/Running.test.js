@@ -22,6 +22,31 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   runExperiment: jest.fn(),
 }));
 
+jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
+  getGlossary: jest.fn(() => ({})),
+}));
+
+// Row map for the glossary-link mock below. name → row.
+const mockGlossaryRows = {};
+const mockGlossaryUrl = (name) =>
+  name in mockGlossaryRows
+    ? `https://example.test/glossary&range=A${mockGlossaryRows[name]}`
+    : null;
+
+jest.mock("../../threshold/parameters/glossaryLink", () => ({
+  glossaryParameterUrl: (name) => mockGlossaryUrl(name),
+  linkGlossaryParameters: (html) =>
+    html.replace(
+      /<span class="error-parameter">([^<]+)<\/span>/g,
+      (span, name) => {
+        const href = mockGlossaryUrl(name);
+        return href
+          ? `<a class="error-parameter-link" href="${href}" target="_blank" rel="noopener noreferrer">${span}</a>`
+          : span;
+      },
+    ),
+}));
+
 import Running from "../Running";
 import { render, screen } from "@testing-library/react";
 import { prolificCreateDraft } from "../components/prolificIntegration";
@@ -31,6 +56,125 @@ import {
   getDataFolderCsvLength,
   getProlificStudyId,
 } from "../../threshold/preprocess/gitlabUtils";
+
+describe("Running compile warnings", () => {
+  const baseProps = {
+    user: {
+      username: "scientist",
+      currentExperiment: {},
+      projectList: Promise.resolve([]),
+    },
+    activeExperiment: { id: 42, name: "compiled-study" },
+    projectName: "compiled-study",
+    experimentStatus: "RUNNING",
+    viewingPreviousExperiment: false,
+    previousExperimentViewed: {
+      previousExperimentStatus: "RUNNING",
+      previousRecruitmentInformation: null,
+      previousProlificConfig: null,
+    },
+    functions: {
+      handleSetActivateExperiment: jest.fn(),
+    },
+  };
+
+  it("shows each parameter once even when the warning lists it twice", () => {
+    mockGlossaryRows.font = 288;
+    const running = new Running({
+      user: {
+        username: "s",
+        currentExperiment: {},
+        projectList: Promise.resolve([]),
+      },
+      activeExperiment: { id: 42, name: "e" },
+      projectName: "e",
+      experimentStatus: "RUNNING",
+      viewingPreviousExperiment: false,
+      previousExperimentViewed: {
+        previousExperimentStatus: "RUNNING",
+        previousRecruitmentInformation: null,
+        previousProlificConfig: null,
+      },
+      functions: { handleSetActivateExperiment: jest.fn() },
+      compileWarnings: [
+        {
+          context: "preprocessor",
+          kind: "warning",
+          name: "W",
+          parameters: ["font", "font"],
+        },
+      ],
+    });
+    const { container } = render(running.render());
+    const row = container.querySelector(".error-relevant-parameters");
+    expect(row.textContent).toBe("PARAMETER: font");
+    expect(row.querySelectorAll("a")).toHaveLength(1);
+  });
+
+  it("places the Parameter(s) line last in the warning box", () => {
+    mockGlossaryRows.font = 288;
+    const running = new Running({
+      user: {
+        username: "s",
+        currentExperiment: {},
+        projectList: Promise.resolve([]),
+      },
+      activeExperiment: { id: 42, name: "e" },
+      projectName: "e",
+      experimentStatus: "RUNNING",
+      viewingPreviousExperiment: false,
+      previousExperimentViewed: {
+        previousExperimentStatus: "RUNNING",
+        previousRecruitmentInformation: null,
+        previousProlificConfig: null,
+      },
+      functions: { handleSetActivateExperiment: jest.fn() },
+      compileWarnings: [
+        {
+          context: "preprocessor",
+          kind: "warning",
+          name: "W",
+          parameters: ["font"],
+          message: "M",
+          hint: "H",
+        },
+      ],
+    });
+    const { container } = render(running.render());
+    const item = container.querySelector(".compile-warning-item");
+    expect(
+      item.lastElementChild.classList.contains("error-relevant-parameters"),
+    ).toBe(true);
+  });
+
+  it("labels and links the parameters of each warning", () => {
+    mockGlossaryRows.font = 288;
+    const running = new Running({
+      ...baseProps,
+      compileWarnings: [
+        {
+          context: "preprocessor",
+          kind: "warning",
+          name: "W",
+          parameters: ["font"],
+          message: 'Set <span class="error-parameter">font</span> to taste.',
+        },
+      ],
+    });
+    const { container } = render(running.render());
+
+    const row = container.querySelector(".error-relevant-parameters");
+    expect(row.textContent).toBe("PARAMETER: font");
+    const links = [...row.querySelectorAll("a")];
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toContain("range=A288");
+    expect(links[0].target).toBe("_blank");
+
+    const messageLink = container.querySelector(".compile-warning-message a");
+    expect(messageLink).not.toBeNull();
+    expect(messageLink.href).toContain("range=A288");
+  });
+});
 
 describe("Running Prolific study creation", () => {
   beforeEach(() => {

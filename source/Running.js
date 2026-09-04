@@ -20,6 +20,8 @@ import {
   getAllProjects,
 } from "../threshold/preprocess/gitlabUtils";
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
+import { linkGlossaryParameters } from "../threshold/parameters/glossaryLink";
+import ParameterList from "./components/ParameterList";
 import { captureError } from "./sentry";
 import { isEmptyRepository } from "./repositoryState";
 import { deriveStudyActions } from "./studyActions";
@@ -435,16 +437,13 @@ export default class Running extends Component {
                   className="compile-warning-item"
                   key={`compile-warning-${index}`}
                 >
-                  {w.parameters && w.parameters.length ? (
-                    <div className="compile-warning-parameters">
-                      {w.parameters.join(" ")}
-                    </div>
-                  ) : null}
                   <div className="compile-warning-name">{w.name}</div>
                   {w.message && (
                     <p
                       className="compile-warning-message"
-                      dangerouslySetInnerHTML={{ __html: w.message }}
+                      dangerouslySetInnerHTML={{
+                        __html: linkGlossaryParameters(w.message),
+                      }}
                     ></p>
                   )}
                   {w.hint && (
@@ -452,9 +451,16 @@ export default class Running extends Component {
                       <span className="compile-warning-hint-prefix">
                         HINT:{" "}
                       </span>
-                      <span dangerouslySetInnerHTML={{ __html: w.hint }}></span>
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: linkGlossaryParameters(w.hint),
+                        }}
+                      ></span>
                     </p>
                   )}
+                  {w.parameters && w.parameters.length ? (
+                    <ParameterList parameters={w.parameters} />
+                  ) : null}
                 </div>
               ))}
             </div>

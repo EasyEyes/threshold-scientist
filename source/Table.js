@@ -6,6 +6,11 @@ import { handleDrop } from "./components/dropzone";
 import ResourceButton from "./ResourceButton";
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
 import {
+  linkGlossaryParameters,
+  loadGlossaryRows,
+} from "../threshold/parameters/glossaryLink";
+import ParameterList from "./components/ParameterList";
+import {
   userRepoFiles,
   resourcesRepoName,
 } from "../threshold/preprocess/constants";
@@ -70,6 +75,13 @@ export default class Table extends Component {
 
     this.finalSuccessMessage =
       "Compiled successfully. Compile a new experiment, anytime, by submitting it above.";
+  }
+
+  componentDidMount() {
+    // Warm the parameter→glossary-row map in the background so the first
+    // compile's errors can already link to exact glossary rows. Non-blocking:
+    // the page renders while this fetch runs.
+    loadGlossaryRows();
   }
 
   componentDidUpdate(_prevProps, prevState) {
@@ -384,6 +396,10 @@ export default class Table extends Component {
     }
 
     recordCompilerPhase(operation, "preprocessing-started");
+    // Parameter→glossary-row map for error links: fetch in parallel with the
+    // compile so it costs no wall-clock time. Failures degrade to
+    // whole-glossary links (see loadGlossaryRows).
+    loadGlossaryRows();
     try {
       await preprocessExperimentFile(
         file,
@@ -406,6 +422,16 @@ export default class Table extends Component {
           requestedTargetSoundListList, // : string[]
           requestedPhraseFileName, // : string
         ) => {
+          // Rows for parameter links were fetched in parallel with the
+          // compile (kicked off before preprocessing), so this is normally
+          // already resolved. If a slow retry just started, render after a
+          // short grace period instead of blocking on it — a later compile
+          // will have the rows.
+          if (errorList.length > 0)
+            await Promise.race([
+              loadGlossaryRows(),
+              new Promise((resolve) => setTimeout(resolve, 500)),
+            ]);
           // scroll to the top of the step block
           this.props.scrollToCurrentStep();
 
@@ -463,10 +489,14 @@ export default class Table extends Component {
               "user-correctable",
             );
 
-            // sort according to parameter name
+            // Sort by parameter list (codepoint order, as before);
+            // Array.prototype.sort is stable, so errors listing the same
+            // parameters keep the compiler's emission order (e.g. font-by-font
+            // for corpus coverage errors).
             blockingErrors.sort((errA, errB) => {
-              if (errA.parameters < errB.parameters) return -1;
-              else return 1;
+              const a = (errA.parameters ?? []).join(",");
+              const b = (errB.parameters ?? []).join(",");
+              return a < b ? -1 : a > b ? 1 : 0;
             });
 
             // show errors
@@ -747,14 +777,6 @@ export default class Table extends Component {
               >
                 <div className="error-flex">
                   <p>
-                    {error.parameters && error.parameters.length ? (
-                      <>
-                        <span className="error-parameter">
-                          {error.parameters.join(" ")}
-                        </span>
-                        <br />
-                      </>
-                    ) : null}
                     <span className={`error-name error-name-${error.kind}`}>
                       {/* Compiler and export errors share this display, so the
                           red sentence states which one it is. */}
@@ -786,7 +808,7 @@ export default class Table extends Component {
                   <p
                     className="error-message"
                     dangerouslySetInnerHTML={{
-                      __html: error.message,
+                      __html: linkGlossaryParameters(error.message),
                     }}
                   ></p>
                 )}
@@ -795,11 +817,14 @@ export default class Table extends Component {
                     <span className="error-hint-prefix">HINT: </span>
                     <span
                       dangerouslySetInnerHTML={{
-                        __html: error.hint,
+                        __html: linkGlossaryParameters(error.hint),
                       }}
                     ></span>
                   </p>
                 )}
+                {error.parameters && error.parameters.length ? (
+                  <ParameterList parameters={error.parameters} />
+                ) : null}
               </div>
             ))}
           </div>
