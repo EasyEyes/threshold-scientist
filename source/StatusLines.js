@@ -404,6 +404,17 @@ export default class StatusLines extends Component {
           }
         />
         <StatusLine
+          activated={!!filename || viewingPreviousExperiment}
+          title={"_language"}
+          content={
+            viewingPreviousExperiment
+              ? previousExperimentLanguage || DEFAULT_EXPERIMENT_LANGUAGE
+              : user?.currentExperiment?._language ||
+                DEFAULT_EXPERIMENT_LANGUAGE
+          }
+        />
+
+        <StatusLine
           activated={
             !!(user && filename && experimentStatus === "RUNNING") ||
             viewingPreviousExperiment
@@ -415,17 +426,6 @@ export default class StatusLines extends Component {
               : user && filename && experimentStatus === "RUNNING"
               ? durations.durationForStatusline
               : ""
-          }
-        />
-
-        <StatusLine
-          activated={!!filename || viewingPreviousExperiment}
-          title={"_language"}
-          content={
-            viewingPreviousExperiment
-              ? previousExperimentLanguage || DEFAULT_EXPERIMENT_LANGUAGE
-              : user?.currentExperiment?._language ||
-                DEFAULT_EXPERIMENT_LANGUAGE
           }
         />
 
