@@ -86,7 +86,7 @@ describe("glossaryApi", () => {
         json: jest.fn().mockResolvedValueOnce({ version: "1.2" }),
       });
 
-      const result = await pinGlossaryVersion("alice", "my-experiment");
+      const result = await pinGlossaryVersion("alice", "my-experiment", "1.2");
 
       expect(global.fetch).toHaveBeenCalledWith(
         "/.netlify/functions/glossary",
@@ -96,6 +96,7 @@ describe("glossaryApi", () => {
           body: JSON.stringify({
             username: "alice",
             experimentName: "my-experiment",
+            version: "1.2",
           }),
         },
       );

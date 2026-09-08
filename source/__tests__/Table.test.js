@@ -701,7 +701,7 @@ describe("Table.handleTable phrases", () => {
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(pinPhrasesVersion).toHaveBeenCalledWith("alice", "project");
+    expect(pinPhrasesVersion).toHaveBeenCalledWith("alice", "project", "2.0");
   });
 
   it("aborts compile when pinPhrasesVersion rejects", async () => {
@@ -750,7 +750,7 @@ describe("Table.handleTable phrases", () => {
 
     expect(props.functions.handleNextStep).not.toHaveBeenCalledWith("upload");
     expect(consoleError).toHaveBeenCalledWith(
-      "Failed to pin phrases version:",
+      "Failed to pin catalog versions:",
       expect.any(Error),
     );
 

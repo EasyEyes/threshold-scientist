@@ -522,34 +522,35 @@ export default class Table extends Component {
                 file.name.split(".")[0],
               );
               this.props.functions.handleSetProjectName(resolvedProjectName);
-              pinGlossaryVersion(user.username, resolvedProjectName)
-                .then(({ version }) =>
-                  console.log("Glossary version pinned:", version),
-                )
-                .catch((error) => {
-                  console.warn("Failed to pin glossary version:", error);
-                  captureCompilerFailure(
-                    error,
-                    operation,
-                    "glossary-version-pin",
-                    {},
-                    "external-service",
-                  );
-                });
-
               try {
-                await pinPhrasesVersion(user.username, resolvedProjectName);
+                const validatedGlossaryVersion = getGlossaryVersion();
+                const validatedPhrasesVersion = getPhrasesVersion();
+                if (!validatedGlossaryVersion || !validatedPhrasesVersion) {
+                  throw new Error(
+                    "Cannot pin catalogs before their exact validated versions are resolved",
+                  );
+                }
+                await pinGlossaryVersion(
+                  user.username,
+                  resolvedProjectName,
+                  validatedGlossaryVersion,
+                );
+                await pinPhrasesVersion(
+                  user.username,
+                  resolvedProjectName,
+                  validatedPhrasesVersion,
+                );
               } catch (error) {
-                console.error("Failed to pin phrases version:", error);
+                console.error("Failed to pin catalog versions:", error);
                 captureCompilerFailure(
                   error,
                   operation,
-                  "phrases-version-pin",
+                  "catalog-version-pin",
                   {},
                   "external-service",
                 );
                 finishCompilerOperation(operation, "failed", {
-                  failedPhase: "phrases-version-pin",
+                  failedPhase: "catalog-version-pin",
                 });
                 return;
               }
