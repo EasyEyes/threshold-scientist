@@ -35,18 +35,13 @@ import { createReleaseManifestClient } from "./engine/releaseManifestClient";
 import {
   fetchGlossaryData,
   fetchGlossaryVersion,
-  pinGlossaryVersion,
   getGlossaryPrefetch,
 } from "./components/glossaryApi";
 import {
   initGlossary,
   getGlossaryVersion,
 } from "../threshold/parameters/glossaryRegistry";
-import {
-  fetchPhrasesData,
-  fetchPhrasesVersion,
-  pinPhrasesVersion,
-} from "./components/phrasesApi";
+import { fetchPhrasesData, fetchPhrasesVersion } from "./components/phrasesApi";
 import {
   initPhrases,
   getPhrasesVersion,
@@ -442,7 +437,21 @@ export default class Table extends Component {
         outcome.requested.targetSoundLists;
       userRepoFiles.requestedPhrases = outcome.requested.phrases;
       userRepoFiles.blockFiles = [];
-      userRepoFiles.compiledFiles = outcome.files;
+      userRepoFiles.compiledFiles = [
+        ...outcome.files,
+        {
+          path: ".easyeyes/release.json",
+          content: JSON.stringify({
+            schemaVersion: 1,
+            releaseId: outcome.release,
+            contractVersion: outcome.contractVersion,
+            engine: outcome.engine,
+            glossaryVersion: outcome.glossaryVersion,
+            phrasesVersion: outcome.phrasesVersion,
+          }),
+        },
+      ];
+      userRepoFiles.releaseId = outcome.release;
 
       // Warnings (kind === "warning") do not block compilation; only real
       // errors do. They are shown alongside the success message below.
@@ -503,39 +512,6 @@ export default class Table extends Component {
             file.name.split(".")[0],
           );
           this.props.functions.handleSetProjectName(resolvedProjectName);
-          try {
-            const validatedGlossaryVersion = getGlossaryVersion();
-            const validatedPhrasesVersion = getPhrasesVersion();
-            if (!validatedGlossaryVersion || !validatedPhrasesVersion) {
-              throw new Error(
-                "Cannot pin catalogs before their exact validated versions are resolved",
-              );
-            }
-            await pinGlossaryVersion(
-              user.username,
-              resolvedProjectName,
-              validatedGlossaryVersion,
-            );
-            await pinPhrasesVersion(
-              user.username,
-              resolvedProjectName,
-              validatedPhrasesVersion,
-            );
-          } catch (error) {
-            console.error("Failed to pin catalog versions:", error);
-            captureCompilerFailure(
-              error,
-              operation,
-              "catalog-version-pin",
-              {},
-              "external-service",
-            );
-            finishCompilerOperation(operation, "failed", {
-              failedPhase: "catalog-version-pin",
-            });
-            return;
-          }
-
           const projectsPromise = getAllProjects(user);
           const updatedProjects = await projectsPromise;
           this.props.functions.handleSetProjectList(updatedProjects);

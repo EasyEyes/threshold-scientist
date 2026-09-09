@@ -682,8 +682,7 @@ describe("Table.handleTable phrases", () => {
     consoleError.mockRestore();
   });
 
-  it("calls pinPhrasesVersion at compile time", async () => {
-    const { compileExperimentWithEngine } = require("../engine/engineCompile");
+  it("defers release pinning until the artifact upload", async () => {
     const {
       fetchPhrasesVersion,
       pinPhrasesVersion,
@@ -706,40 +705,10 @@ describe("Table.handleTable phrases", () => {
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(pinPhrasesVersion).toHaveBeenCalledWith("alice", "project", "2.0");
-  });
-
-  it("aborts compile when pinPhrasesVersion rejects", async () => {
-    const { compileExperimentWithEngine } = require("../engine/engineCompile");
-    const {
-      fetchPhrasesVersion,
-      pinPhrasesVersion,
-    } = require("../components/phrasesApi");
-    const {
-      getPhrasesVersion,
-    } = require("../../threshold/parameters/phrasesRegistry");
-    fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
-    getPhrasesVersion.mockReturnValue("2.0");
-    pinPhrasesVersion.mockRejectedValue(new Error("pin failed"));
-    const consoleError = jest
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-
-    const props = makeProps({
-      user: { ...makeProps().user, id: 1, username: "alice" },
-    });
-    const ref = React.createRef();
-    render(<Table ref={ref} {...props} />);
-
-    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
-
-    expect(props.functions.handleNextStep).not.toHaveBeenCalledWith("upload");
-    expect(consoleError).toHaveBeenCalledWith(
-      "Failed to pin catalog versions:",
-      expect.any(Error),
+    expect(pinPhrasesVersion).not.toHaveBeenCalled();
+    expect(ref.current.props.functions.handleNextStep).toHaveBeenCalledWith(
+      "upload",
     );
-
-    consoleError.mockRestore();
   });
 });
 
@@ -874,6 +843,11 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
   const successOutcome = (overrides = {}) => ({
     files: [],
     diagnostics: [],
+    release: "2026-09-09",
+    contractVersion: 1,
+    engine: { name: "@easyeyes/threshold-engine", version: "2026.7.7" },
+    glossaryVersion: "4.2",
+    phrasesVersion: "2.1",
     requested: {
       forms: [],
       fonts: [],
@@ -999,7 +973,22 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
 
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(userRepoFiles.compiledFiles).toBe(compiledFiles);
+    expect(userRepoFiles.compiledFiles.slice(0, 2)).toEqual(compiledFiles);
+    expect(userRepoFiles.compiledFiles.at(-1)).toEqual({
+      path: ".easyeyes/release.json",
+      content: JSON.stringify({
+        schemaVersion: 1,
+        releaseId: "2026-09-09",
+        contractVersion: 1,
+        engine: {
+          name: "@easyeyes/threshold-engine",
+          version: "2026.7.7",
+        },
+        glossaryVersion: "4.2",
+        phrasesVersion: "2.1",
+      }),
+    });
+    expect(userRepoFiles.releaseId).toBe("2026-09-09");
     expect(userRepoFiles.requestedForms).toEqual(["consent.pdf"]);
     expect(userRepoFiles.requestedFonts).toEqual(["Sloan.woff2"]);
     expect(userRepoFiles.requestedPhrases).toEqual(["myPhrases.xlsx"]);
