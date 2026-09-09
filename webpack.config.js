@@ -85,6 +85,12 @@ const config = {
         type: "asset/resource",
       },
       {
+        // Example experiment tables, bundled as text for the studio's
+        // templates (source/studio/examples.ts).
+        test: /\.csv$/i,
+        type: "asset/source",
+      },
+      {
         test: /\.css$/i,
         exclude: /node_modules/,
         use: ["style-loader", "css-loader"],
@@ -212,6 +218,12 @@ module.exports = (env) => {
         liveReload: true,
         historyApiFallback: {
           rewrites: [
+            // The Studio's URL (/compiler/studio) serves the compiler page,
+            // as netlify.toml does in production.
+            {
+              from: /^\/compiler\/studio\/?$/,
+              to: "/experiment/index.html",
+            },
             {
               from: /^\/compiler(\/|$)/,
               to: (context) =>

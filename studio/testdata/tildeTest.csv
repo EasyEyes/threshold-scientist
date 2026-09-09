@@ -1,9 +1,0 @@
-_language,en
-_languagePhrasesSpreadsheet,test.phrases.xlsx
-block,,1
-conditionName,,c1
-fontCharacterSet,,~fontCharacterSet
-spacingDirection,,horizontal
-targetKind,,letter
-targetTask,,identify
-thresholdParameter,,spacingDeg

@@ -20,6 +20,15 @@ import {
   getAllProjects,
 } from "../threshold/preprocess/gitlabUtils";
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
+import {
+  endCompileTiming,
+  markCompilePhase,
+  printCompileTiming,
+} from "../threshold/preprocess/compileTiming";
+import {
+  endCompile,
+  optimizationOn,
+} from "../threshold/preprocess/compileMode";
 import { linkGlossaryParameters } from "../threshold/parameters/glossaryLink";
 import ParameterList from "./components/ParameterList";
 import { captureError } from "./sentry";
@@ -53,12 +62,22 @@ export default class Running extends Component {
     this.props.scrollToCurrentStep();
 
     if (!isEmptyRepository(this.props.activeExperiment)) {
-      const [dataFolderLength, latestDateForDataCollection] =
-        await getDataFolderCsvLength(
-          this.props.user,
-          this.props.activeExperiment,
+      const dataFolderCounted = getDataFolderCsvLength(
+        this.props.user,
+        this.props.activeExperiment,
+      ).then(([dataFolderLength, latestDateForDataCollection]) =>
+        this.setState({ dataFolderLength, latestDateForDataCollection }),
+      );
+      // The count only feeds the "N CSV file(s)" display, so with the
+      // "overlapMetadataCalls" optimization (compileMode.ts) it no longer
+      // delays activation; otherwise wait for it first, as before.
+      if (optimizationOn("overlapMetadataCalls"))
+        dataFolderCounted.catch((error) =>
+          captureError(error, "Failed to count data folder", {
+            step: "getDataFolderCsvLength",
+          }),
         );
-      this.setState({ dataFolderLength, latestDateForDataCollection });
+      else await dataFolderCounted;
     }
 
     // get total compile counts
@@ -124,13 +143,20 @@ export default class Running extends Component {
             this.props.functions.handleSetProjectList(updatedProjects);
           });
           const { user, activeExperiment, newRepo, functions } = this.props;
+          // Timing marks only (no-ops unless a compile is being timed).
+          markCompilePhase("activation-requested");
           const result = await runExperiment(
             user,
             activeExperiment,
             user.currentExperiment.experimentUrl,
           );
           if (result && result.newStatus === "RUNNING") {
+            markCompilePhase("activation-set-running");
             await this.waitForPavloviaReady();
+            markCompilePhase("pavlovia-ready");
+            printCompileTiming("compile → upload → Pavlovia ready");
+            endCompileTiming();
+            endCompile();
             if (e !== null) e.target.removeAttribute("disabled");
           }
           Swal.close();
@@ -153,13 +179,30 @@ export default class Running extends Component {
     return `https://run.pavlovia.org/${this.props.user.username}/${projectName}`;
   }
 
-  async waitForPavloviaReady(maxTries = 60, initialDelayMs = 5000) {
+  async waitForPavloviaReady(
+    maxTries = 60,
+    // Give Pavlovia a moment to deploy before the first check. With the
+    // "fastActivationPolling" optimization (compileMode.ts) the first check
+    // comes after 1 s and the next ones every 0.4 s for the first 15 checks
+    // (~7 s in), so a typical 3–5 s deploy is noticed within half a second;
+    // after that the retries back off exponentially as before, so a slow
+    // deploy is polled at the same pace as before.
+    initialDelayMs = optimizationOn("fastActivationPolling") ? 1000 : 5000,
+    steadyPolling = optimizationOn("fastActivationPolling")
+      ? { everyMs: 400, forTries: 15 }
+      : null,
+  ) {
     const { newRepo, functions } = this.props;
 
-    // Wait for Pavlovia deployment before first check
     if (initialDelayMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, initialDelayMs));
     }
+    const retryDelayMs = (tries) =>
+      steadyPolling && tries < steadyPolling.forTries
+        ? steadyPolling.everyMs
+        : getRetryDelayMs(
+            steadyPolling ? tries - steadyPolling.forTries : tries,
+          );
 
     for (let tries = 0; tries < maxTries; tries++) {
       try {
@@ -181,7 +224,7 @@ export default class Running extends Component {
         }
         // Single delay using exponential backoff only
         if (tries !== maxTries - 1) {
-          await new Promise((res) => setTimeout(res, getRetryDelayMs(tries)));
+          await new Promise((res) => setTimeout(res, retryDelayMs(tries)));
         }
       }
     }

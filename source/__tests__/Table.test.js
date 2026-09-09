@@ -71,6 +71,12 @@ jest.mock("../components/phrasesApi", () => ({
   pinPhrasesVersion: jest.fn().mockResolvedValue({ version: "1.0" }),
 }));
 
+jest.mock("../studio/preview", () => ({
+  PREVIEW_PIN: { username: "compiler", experimentName: "preview" },
+  stagePreview: jest.fn().mockResolvedValue("/compiler/preview/abc/index.html"),
+  showPreview: jest.fn(),
+}));
+
 jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
   initPhrases: jest.fn(),
   getPhrasesVersion: jest.fn(),
@@ -89,6 +95,18 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getAllProjects: jest.fn().mockResolvedValue([]),
   copyUser: jest.fn((u) => u),
   setRepoName: jest.fn().mockResolvedValue("project"),
+  searchRepoNameMatches: jest.fn().mockResolvedValue([]),
+  gatherGeneratedFileActions: jest
+    .fn()
+    .mockResolvedValue([{ action: "create", file_path: "durations.json" }]),
+  gatherUserUploadedFileActions: jest
+    .fn()
+    .mockResolvedValue([
+      { action: "create", file_path: "conditions/block_1.csv" },
+    ]),
+  gatherRequestedResourceActions: jest
+    .fn()
+    .mockResolvedValue([{ action: "create", file_path: "fonts/Roboto.woff2" }]),
   manuallySetSwalTitle: jest.fn(),
   getProjectByNameInProjectList: jest.fn(() => null),
 }));
@@ -924,6 +942,333 @@ describe("Table.onDrop", () => {
     });
 
     expect(queryByText("Compiler error: E")).not.toBeInTheDocument();
+  });
+
+  it("marks a dropped file as a classic compile, and a Studio hand-off as a Studio compile", () => {
+    const {
+      currentCompileSource,
+      endCompile,
+    } = require("../../threshold/preprocess/compileMode");
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+
+    ref.current.onDrop([new File(["a,b"], "exp.csv")]);
+    expect(currentCompileSource()).toBe("compiler");
+
+    ref.current.compileFiles([new File(["a,b"], "exp.csv")], "studio");
+    expect(currentCompileSource()).toBe("studio");
+    endCompile();
+  });
+});
+
+describe("Table.handleTable preamble — Studio-only optimization", () => {
+  const { beginCompile, endCompile } = jest.requireActual(
+    "../../threshold/preprocess/compileMode",
+  );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const {
+      fetchGlossaryData,
+      fetchGlossaryVersion,
+    } = require("../components/glossaryApi");
+    const {
+      getGlossaryVersion,
+    } = require("../../threshold/parameters/glossaryRegistry");
+    const {
+      fetchPhrasesVersion,
+      pinPhrasesVersion,
+    } = require("../components/phrasesApi");
+    const {
+      getPhrasesVersion,
+    } = require("../../threshold/parameters/phrasesRegistry");
+    // Glossary needs a download; phrases are current; pinning succeeds
+    // (earlier suites leave it rejecting).
+    fetchGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    getGlossaryVersion.mockReturnValue(null);
+    fetchGlossaryData.mockResolvedValue(mockGlossaryData);
+    fetchPhrasesVersion.mockResolvedValue({ version: "2.0" });
+    getPhrasesVersion.mockReturnValue("2.0");
+    pinPhrasesVersion.mockResolvedValue({ version: "2.0" });
+  });
+
+  afterEach(() => endCompile());
+
+  const order = (mock) => mock.mock.invocationCallOrder[0];
+
+  it("classic compile: refreshes the glossary fully before probing phrases", async () => {
+    beginCompile("compiler");
+    const { fetchGlossaryData } = require("../components/glossaryApi");
+    const { fetchPhrasesVersion } = require("../components/phrasesApi");
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(order(fetchPhrasesVersion)).toBeGreaterThan(
+      order(fetchGlossaryData),
+    );
+    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("Studio compile: probes phrases while the glossary is still downloading", async () => {
+    beginCompile("studio");
+    const { fetchGlossaryData } = require("../components/glossaryApi");
+    const { fetchPhrasesVersion } = require("../components/phrasesApi");
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(order(fetchPhrasesVersion)).toBeLessThan(order(fetchGlossaryData));
+    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("Studio compile: a glossary failure still aborts and closes the dialog", async () => {
+    beginCompile("studio");
+    const { fetchGlossaryData } = require("../components/glossaryApi");
+    fetchGlossaryData.mockRejectedValue(new Error("network down"));
+    const consoleError = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...makeProps()} />);
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(Swal.close).toHaveBeenCalledTimes(1);
+    expect(preprocessExperimentFile).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  // Post-validation flow: the callback preprocessExperimentFile hands the
+  // compiled experiment to.
+  const compileSucceeds = () =>
+    preprocessExperimentFile.mockImplementationOnce(
+      async (_f, user, _e, _r, _a, callback) => {
+        await callback(
+          user,
+          { debriefForm: null, consentForm: null },
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+        );
+      },
+    );
+  const signedIn = () =>
+    makeProps({ user: { ...makeProps().user, id: 1, username: "alice" } });
+
+  it("classic compile: waits for the project list, searches the repo name only after validation, and refreshes projects after the phrases pin", async () => {
+    beginCompile("compiler");
+    const {
+      setRepoName,
+      searchRepoNameMatches,
+      getAllProjects,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    const { pinPhrasesVersion } = require("../components/phrasesApi");
+    let projectListAwaited = false;
+    const props = signedIn();
+    props.user.projectList = {
+      then: (resolve) => {
+        projectListAwaited = true;
+        return Promise.resolve(resolve([]));
+      },
+    };
+    compileSucceeds();
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(projectListAwaited).toBe(true);
+    expect(searchRepoNameMatches).not.toHaveBeenCalled();
+    expect(setRepoName).toHaveBeenCalledWith(props.user, "exp", undefined);
+    expect(order(getAllProjects)).toBeGreaterThan(order(pinPhrasesVersion));
+    expect(props.functions.handleNextStep).toHaveBeenCalledWith("upload");
+  });
+
+  it("Studio compile: does not wait for the project list, starts the repo-name search before validation, and refreshes projects alongside the phrases pin", async () => {
+    beginCompile("studio");
+    const {
+      setRepoName,
+      searchRepoNameMatches,
+      getAllProjects,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    const { pinPhrasesVersion } = require("../components/phrasesApi");
+    const matches = Promise.resolve([{ name: "exp1" }]);
+    searchRepoNameMatches.mockReturnValue(matches);
+    const props = signedIn();
+    props.user.projectList = new Promise(() => {}); // never resolves
+    compileSucceeds();
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(searchRepoNameMatches).toHaveBeenCalledWith(props.user, "exp");
+    expect(order(searchRepoNameMatches)).toBeLessThan(
+      order(preprocessExperimentFile),
+    );
+    expect(setRepoName).toHaveBeenCalledWith(props.user, "exp", matches);
+    expect(order(getAllProjects)).toBeLessThan(order(pinPhrasesVersion));
+    expect(props.functions.handleNextStep).toHaveBeenCalledWith("upload");
+  });
+
+  it("Studio compile: a phrases-pin failure still aborts before the upload step", async () => {
+    beginCompile("studio");
+    const { pinPhrasesVersion } = require("../components/phrasesApi");
+    pinPhrasesVersion.mockRejectedValueOnce(new Error("pin failed"));
+    const consoleError = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    const props = signedIn();
+    compileSucceeds();
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(props.functions.handleNextStep).not.toHaveBeenCalledWith("upload");
+    consoleError.mockRestore();
+  });
+
+  it("Studio preview: validates, stages the experiment's files for the browser, opens the tab, and uploads nothing", async () => {
+    beginCompile("studio");
+    const {
+      setRepoName,
+      gatherGeneratedFileActions,
+      gatherUserUploadedFileActions,
+      gatherRequestedResourceActions,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    const { pinGlossaryVersion } = require("../components/glossaryApi");
+    const { pinPhrasesVersion } = require("../components/phrasesApi");
+    const { stagePreview, showPreview } = require("../studio/preview");
+    pinGlossaryVersion.mockResolvedValue({ version: "2.0" });
+    const props = signedIn();
+    const placeholder = { close: jest.fn(), closed: false };
+    compileSucceeds();
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    // What compileFiles(files, "studio", { placeholder }) sets before handleDrop.
+    ref.current.pendingPreview = { placeholder };
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+    expect(gatherGeneratedFileActions).toHaveBeenCalled();
+    expect(gatherUserUploadedFileActions).toHaveBeenCalled();
+    expect(gatherRequestedResourceActions).toHaveBeenCalled();
+    expect(stagePreview).toHaveBeenCalledWith([
+      { action: "create", file_path: "durations.json" },
+      { action: "create", file_path: "conditions/block_1.csv" },
+      { action: "create", file_path: "fonts/Roboto.woff2" },
+    ]);
+    expect(pinGlossaryVersion).toHaveBeenCalledWith("compiler", "preview");
+    expect(pinPhrasesVersion).toHaveBeenCalledWith("compiler", "preview");
+    expect(showPreview).toHaveBeenCalledWith(
+      "/compiler/preview/abc/index.html",
+      placeholder,
+    );
+    expect(placeholder.close).not.toHaveBeenCalled();
+    // Nothing that a real compile does after validation:
+    expect(setRepoName).not.toHaveBeenCalled();
+    expect(props.functions.handleSetFilename).not.toHaveBeenCalled();
+    expect(props.functions.handleNextStep).not.toHaveBeenCalledWith("upload");
+    expect(ref.current.pendingPreview).toBeNull();
+  });
+
+  it("Studio preview: a validation failure closes the placeholder tab and shows the errors", async () => {
+    beginCompile("studio");
+    const { stagePreview, showPreview } = require("../studio/preview");
+    const props = signedIn();
+    const placeholder = { close: jest.fn(), closed: false };
+    preprocessExperimentFile.mockImplementationOnce(
+      async (_f, user, _e, _r, _a, callback) => {
+        await callback(
+          user,
+          { debriefForm: null, consentForm: null },
+          [], // fonts
+          [], // texts
+          [], // folders
+          [], // images
+          [], // code
+          [], // files
+          [
+            {
+              context: "preprocessor",
+              kind: "error",
+              name: "Unbalanced commas",
+              parameters: [],
+            },
+          ],
+          [],
+          [],
+          [],
+        );
+      },
+    );
+
+    const { act } = require("@testing-library/react");
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    ref.current.pendingPreview = { placeholder };
+    await act(async () => {
+      await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+    });
+
+    expect(placeholder.close).toHaveBeenCalledTimes(1);
+    expect(stagePreview).not.toHaveBeenCalled();
+    expect(showPreview).not.toHaveBeenCalled();
+    expect(ref.current.state.errors.map((e) => e.name)).toEqual([
+      "Unbalanced commas",
+    ]);
+  });
+
+  it("Studio compile: corpus texts read during the preamble still reach the compiler", async () => {
+    beginCompile("studio");
+    const { fetchGlossaryData } = require("../components/glossaryApi");
+    const {
+      searchProjectByName,
+    } = require("../../threshold/preprocess/gitlabSearch");
+    const {
+      getTextFileDataFromGitLab,
+    } = require("../../threshold/preprocess/fileUtils");
+    const {
+      GitLabOAuthClient,
+    } = require("../../threshold/preprocess/auth/gitlabOAuthClient");
+    searchProjectByName.mockResolvedValue({ id: "7" });
+    GitLabOAuthClient.loadFromStorage.mockReturnValue({});
+    getTextFileDataFromGitLab.mockResolvedValue("the corpus");
+    // A slow glossary download, so the text read has time to land first.
+    fetchGlossaryData.mockImplementation(
+      () => new Promise((r) => setTimeout(() => r(mockGlossaryData), 30)),
+    );
+    const props = makeProps({
+      resources: { ...makeProps().resources, texts: ["corpus.txt"] },
+    });
+
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(getTextFileDataFromGitLab).toHaveBeenCalledWith(
+      7,
+      "texts/corpus.txt",
+      expect.anything(),
+    );
+    expect(order(getTextFileDataFromGitLab)).toBeLessThan(
+      order(preprocessExperimentFile),
+    );
+    expect(preprocessExperimentFile.mock.calls[0][3].textContents).toEqual({
+      "corpus.txt": "the corpus",
+    });
   });
 });
 

@@ -10,6 +10,13 @@
  */
 
 import * as Sentry from "@sentry/react";
+import {
+  isTimedCompilerOperation,
+  markCompilePhase,
+  printCompileTiming,
+  startCompileTiming,
+} from "../threshold/preprocess/compileTiming";
+import { endCompile } from "../threshold/preprocess/compileMode";
 
 const SENSITIVE_KEY =
   /token|authorization|password|secret|spreadsheet|workbook|content|participant/i;
@@ -128,6 +135,7 @@ export function startCompilerOperation(operation, details = {}) {
     globalThis.crypto?.randomUUID?.() ??
     `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   const context = { operation, operationId, ...sanitize(details) };
+  startCompileTiming(operation);
   Sentry.setTag("compiler.operation", operation);
   Sentry.setTag("compiler.operation_id", operationId);
   Sentry.setContext("compiler", context);
@@ -147,13 +155,25 @@ export function getCurrentCompilerOperation() {
 
 export function finishCompilerOperation(context, outcome, details = {}) {
   recordCompilerPhase(context, outcome, details);
+  // Activation (Running.js) continues this timeline and prints the final
+  // summary; this one covers compile + upload.
+  printCompileTiming(`${context.operation} ${outcome}`);
+  // A failed compile/upload is over; a completed one continues to activation.
+  if (outcome !== "completed" && isTimedCompilerOperation(context.operation))
+    endCompile();
   if (currentCompilerOperation?.operationId === context.operationId) {
     currentCompilerOperation = null;
   }
 }
 
 export function recordCompilerPhase(context, phase, details = {}) {
-  const data = { ...context, phase, ...sanitize(details) };
+  const elapsedMs = markCompilePhase(phase);
+  const data = {
+    ...context,
+    phase,
+    ...(elapsedMs === null ? {} : { elapsedMs }),
+    ...sanitize(details),
+  };
   Sentry.setTag("compiler.phase", phase);
   Sentry.setContext("compiler", data);
   Sentry.addBreadcrumb({

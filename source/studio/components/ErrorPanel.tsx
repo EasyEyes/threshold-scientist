@@ -32,7 +32,9 @@ export function ErrorPanel({ errors, onJump }: Props) {
     <div className="error-panel">
       <div className="error-summary">
         {errorCount > 0 && (
-          <span className="count-chip errors">{errorCount} error{errorCount !== 1 ? "s" : ""}</span>
+          <span className="count-chip errors">
+            {errorCount} error{errorCount !== 1 ? "s" : ""}
+          </span>
         )}
         {warningCount > 0 && (
           <span className="count-chip warnings">
@@ -46,7 +48,9 @@ export function ErrorPanel({ errors, onJump }: Props) {
             key={i}
             className={`error-card ${e.kind}`}
             onClick={() => e.parameters[0] && onJump(e.parameters[0])}
-            title={e.parameters[0] ? "Click to jump to the parameter" : undefined}
+            title={
+              e.parameters[0] ? "Click to jump to the parameter" : undefined
+            }
           >
             <div className="error-name">
               {e.kind === "error" ? "⛔" : "⚠️"} {e.name}

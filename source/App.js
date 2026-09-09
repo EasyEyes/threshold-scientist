@@ -8,6 +8,24 @@ import { latestPublicationDate } from "./freshness/latestPublicationDate";
 import Step from "./Step";
 const Glossary = React.lazy(() => import("./Glossary"));
 const Media = React.lazy(() => import("./Media"));
+// EasyEyes Studio (live table editor), opened from the Studio navbar tab or
+// by its URL, /compiler/studio. It reads the glossary registry at import
+// time, so the chunk loads only once the glossary is in place, and is only
+// downloaded when opened.
+const StudioPanel = React.lazy(() =>
+  import("./studio/glossary").then(({ ensureGlossaryReady }) =>
+    ensureGlossaryReady().then(() => import("./studio/StudioPanel")),
+  ),
+);
+
+// The Studio's URL is the compiler's path plus "/studio" (/compiler/studio;
+// the host serves the compiler page for it — netlify.toml, and the dev
+// server's historyApiFallback). The pre-release ?studio=1 flag still opens it
+// and is rewritten to the path.
+const STUDIO_PATH = /\/studio\/?$/;
+const studioInUrl = () =>
+  STUDIO_PATH.test(window.location.pathname) ||
+  new URLSearchParams(window.location.search).get("studio") === "1";
 
 // import StatusBar from "./StatusBar";
 import StatusLines from "./StatusLines";
@@ -24,6 +42,7 @@ import {
   getProlificStudyId,
   copyUser,
   getCommonResourcesNames,
+  fetchPhraseFileFromResources,
 } from "../threshold/preprocess/gitlabUtils";
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
 import {
@@ -110,6 +129,12 @@ export default class App extends Component {
       githubLicense: null,
       readingGlossary: false,
       managingMedia: false,
+      // Read here (not in componentDidMount) because child components such as
+      // Login may rewrite the URL during their own mount, which runs first.
+      usingStudio: studioInUrl(),
+      // Once opened, the Studio stays mounted (hidden) so switching to the
+      // compiler and back — e.g. to compile — keeps the table being edited.
+      studioMounted: studioInUrl(),
       phrasesError: false,
       /* -------------------------------------------------------------------------- */
       activeExperiment: "new",
@@ -189,10 +214,19 @@ export default class App extends Component {
 
     this.closeGlossary = this.closeGlossary.bind(this);
     this.closeMedia = this.closeMedia.bind(this);
+    this.closeStudio = this.closeStudio.bind(this);
+    this.compileFromStudio = this.compileFromStudio.bind(this);
+    this.previewFromStudio = this.previewFromStudio.bind(this);
+    this.fetchStudioPhraseFile = this.fetchStudioPhraseFile.bind(this);
+
+    // The mounted Table (compiler step "table"), so the Studio can hand its
+    // files to the same drop handler a scientist uses.
+    this.tableRef = React.createRef();
   }
 
   async componentDidMount() {
     this.initMediaMenu();
+    this.initStudio();
     // The Test Font item in the navbar is plain HTML in the page shell, so it
     // reaches the tool through a global rather than through props.
     registerTestFontOpener();
@@ -723,6 +757,10 @@ export default class App extends Component {
 
   handleSetCompileErrorsVisible(visible) {
     this.setState({ compileErrorsVisible: !!visible });
+    // Compiler errors are shown by the compiler view. A Studio preview runs
+    // the compile while the Studio is still showing; if it fails, bring the
+    // compiler view forward so the errors are seen.
+    if (visible && this.state.usingStudio) this.closeStudio();
   }
 
   handleSetExperiment(experiment) {
@@ -860,9 +898,10 @@ export default class App extends Component {
     );
     if (compilerLink)
       compilerLink.addEventListener("click", (event) => {
-        if (!this.state.managingMedia) return;
+        if (!this.state.managingMedia && !this.state.usingStudio) return;
         event.preventDefault();
         this.closeMedia();
+        this.closeStudio();
       });
 
     if (new URLSearchParams(window.location.search).get("media") === "1")
@@ -878,15 +917,25 @@ export default class App extends Component {
     document
       .getElementById("nav-media-link")
       ?.classList.toggle("active", isOpen);
+    this.syncCompilerMenu();
+  }
+
+  // The Compiler tab is highlighted whenever no panel (Media, Studio) is open.
+  syncCompilerMenu() {
+    const url = new URL(window.location.href);
+    const panelOpen =
+      url.searchParams.get("media") === "1" || STUDIO_PATH.test(url.pathname);
     document
       .querySelector('.navbar-nav a[href="../compiler/"]')
-      ?.classList.toggle("active", !isOpen);
+      ?.classList.toggle("active", !panelOpen);
   }
 
   openMedia() {
     this.setState({
       managingMedia: true,
+      usingStudio: false,
     });
+    this.syncStudioMenu(false);
     this.syncMediaMenu(true);
   }
 
@@ -897,6 +946,169 @@ export default class App extends Component {
     this.syncMediaMenu(false);
   }
 
+  // EasyEyes Studio: same pattern as Media. The Studio menu item is a plain
+  // link (../compiler/studio) so it works from every page; here we take the
+  // click over to open the panel without reloading the compiler.
+  initStudio() {
+    const studioLink = document.getElementById("nav-studio-link");
+    if (studioLink)
+      studioLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        this.openStudio();
+      });
+
+    // usingStudio was read from the URL in the constructor; re-sync the URL
+    // (turning a legacy ?studio=1 into /compiler/studio) and the menu
+    // highlight, in case a child (Login) rewrote the URL while mounting.
+    if (this.state.usingStudio) this.syncStudioMenu(true);
+  }
+
+  syncStudioMenu(isOpen) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("studio"); // pre-release flag
+    if (isOpen) {
+      if (!STUDIO_PATH.test(url.pathname))
+        url.pathname = url.pathname.replace(/\/?$/, "/studio");
+    } else url.pathname = url.pathname.replace(STUDIO_PATH, "/");
+    window.history.replaceState({}, "", url);
+
+    document
+      .getElementById("nav-studio-link")
+      ?.classList.toggle("active", isOpen);
+    // The site shell caps <main> at 960px (uni.css), which suits the
+    // step-based compiler but not a spreadsheet grid. Lift the cap only while
+    // the Studio is showing.
+    document.querySelector("main")?.classList.toggle("ee-studio-wide", isOpen);
+    this.syncCompilerMenu();
+  }
+
+  openStudio() {
+    this.setState({
+      usingStudio: true,
+      studioMounted: true,
+      managingMedia: false,
+    });
+    this.syncMediaMenu(false);
+    this.syncStudioMenu(true);
+  }
+
+  closeStudio() {
+    this.setState({ usingStudio: false });
+    this.syncStudioMenu(false);
+  }
+
+  /**
+   * Studio → compiler hand-off. The Studio produces the same files a scientist
+   * would drop on the compiler (the experiment table plus any resources), and
+   * they enter the very same path: Table.onDrop → handleDrop → handleTable →
+   * upload → activation. Nothing about compilation differs.
+   * Resolves true once the files have been handed over.
+   */
+  async compileFromStudio(files) {
+    if (!this.state.accessToken || !this.state.user) {
+      await Swal.fire({
+        title: "Sign in to compile",
+        text: "Compiling uploads the experiment to your Pavlovia account. Sign in on the Compiler tab, then compile from the Studio.",
+        confirmButtonColor: "#666",
+      });
+      return false;
+    }
+    // Show the compiler: that is where the progress dialog, any compile
+    // errors, and the upload/run steps appear.
+    this.closeStudio();
+    // A fresh compile, whatever the compiler was showing — the table step, the
+    // Run page of an experiment just compiled, or a previous experiment.
+    await this.resetCompilerForNewExperiment();
+    const table = await this.waitForTable();
+    if (!table) {
+      await Swal.fire({
+        title: "Compiler not ready",
+        text: "The compiler view did not open. Please try again.",
+        confirmButtonColor: "#666",
+      });
+      return false;
+    }
+    // "studio" turns on the Studio-only speed optimizations (compileMode.ts);
+    // the compile itself is the same as a drop on this page.
+    table.compileFiles(files, "studio");
+    return true;
+  }
+
+  /**
+   * Studio → preview. The same files and the same compile as
+   * compileFromStudio, up to and including validation; then, instead of
+   * uploading to Pavlovia, the experiment is served from the browser into
+   * `placeholder` (a tab the Studio opened on the click). The Studio stays
+   * showing; compiler errors, if any, bring the compiler view forward
+   * (handleSetCompileErrorsVisible).
+   */
+  async previewFromStudio(files, placeholder) {
+    if (!this.state.accessToken || !this.state.user) {
+      placeholder?.close?.();
+      await Swal.fire({
+        title: "Sign in to preview",
+        text: "The preview reads the fonts, forms and other resources your table names from your EasyEyesResources. Sign in on the Compiler tab, then preview from the Studio.",
+        confirmButtonColor: "#666",
+      });
+      return false;
+    }
+    await this.resetCompilerForNewExperiment();
+    const table = await this.waitForTable();
+    if (!table) {
+      placeholder?.close?.();
+      await Swal.fire({
+        title: "Compiler not ready",
+        text: "The compiler did not initialize. Please try again.",
+        confirmButtonColor: "#666",
+      });
+      return false;
+    }
+    table.compileFiles(files, "studio", { placeholder });
+    return true;
+  }
+
+  /**
+   * Studio live checks → the phrase file `_languagePhrasesSpreadsheet` names,
+   * read from the scientist's EasyEyesResources `phrases/` folder — exactly
+   * what the compile does when the file was not dropped this session
+   * (Table.handleTable sets easyeyesResources.fetchPhraseFromRepo to the same
+   * function). Null when signed out or when the file is not there.
+   */
+  fetchStudioPhraseFile(name) {
+    if (!this.state.accessToken || !this.state.user)
+      return Promise.resolve(null);
+    return fetchPhraseFileFromResources(this.state.user, name);
+  }
+
+  /**
+   * Put the compiler in the state it has before a first compile, so the Table
+   * step renders and a Studio compile/preview is a fresh compilation. After a
+   * classic compile the page shows the Run step of the experiment it just
+   * made (activeExperiment = that repo), and returning to the table step
+   * alone would leave that "previous experiment" view in place — the same
+   * reset the compiler's own "new experiment" action uses handles both.
+   */
+  async resetCompilerForNewExperiment() {
+    if (
+      this.state.currentStep !== "table" ||
+      this.state.activeExperiment !== "new"
+    )
+      await this.handleSetActivateExperiment("REFRESH");
+  }
+
+  /** The mounted Table, waiting for React to render it if needed. */
+  waitForTable(timeoutMs = 3000) {
+    return new Promise((resolve) => {
+      const startedAt = Date.now();
+      const check = () => {
+        if (this.tableRef.current) resolve(this.tableRef.current);
+        else if (Date.now() - startedAt > timeoutMs) resolve(null);
+        else setTimeout(check, 50);
+      };
+      check();
+    });
+  }
+
   render() {
     const {
       websiteRepoLastCommitDeploy,
@@ -904,6 +1116,8 @@ export default class App extends Component {
       githubLicense,
       readingGlossary,
       managingMedia,
+      usingStudio,
+      studioMounted,
       phrasesError,
       activeExperiment,
       previousExperimentViewed,
@@ -987,6 +1201,7 @@ export default class App extends Component {
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}
           compileWarnings={compileWarnings}
+          tableRef={this.tableRef}
         />,
       );
 
@@ -1007,9 +1222,25 @@ export default class App extends Component {
           </Suspense>
         )}
 
-        {/* Kept mounted while the media panel is open, so returning to the
-            compiler does not discard an experiment in progress. */}
-        <div hidden={managingMedia}>
+        {studioMounted && (
+          <div hidden={!usingStudio}>
+            <Suspense fallback={<></>}>
+              <StudioPanel
+                onClose={this.closeStudio}
+                onCompile={this.compileFromStudio}
+                onPreview={this.previewFromStudio}
+                fetchUserPhraseFile={this.fetchStudioPhraseFile}
+                userResources={accessToken ? resources : null}
+                resourcesLoaded={Boolean(resourcesLoaded)}
+                signedIn={Boolean(accessToken)}
+              />
+            </Suspense>
+          </div>
+        )}
+
+        {/* Kept mounted while the media or studio panel is open, so returning
+            to the compiler does not discard an experiment in progress. */}
+        <div hidden={managingMedia || usingStudio}>
           <div id="header">
             <div id="header-title">
               <h1>EasyEyes Compiler</h1>

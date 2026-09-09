@@ -3,8 +3,8 @@
  * are derived from the (very regular) parameter naming conventions.
  * First matching rule wins.
  */
-import { suggestibleEntries, getEntry } from "./glossary";
-import type { GlossaryEntry } from "../../source/components/types";
+import { suggestibleEntries, getEntry, memoByVersion } from "./glossary";
+import type { GlossaryEntry } from "../components/types";
 
 const RULES: [RegExp, string][] = [
   [/^_?calibrate/i, "Calibration"],
@@ -52,10 +52,10 @@ export interface Category {
   entries: GlossaryEntry[];
 }
 
-/** All categories with their (non-obsolete) parameters, biggest impact first. */
-export const CATEGORIES: Category[] = (() => {
+/** All categories with their (non-obsolete) parameters, alphabetical. */
+export const getCategories = memoByVersion((): Category[] => {
   const map = new Map<string, GlossaryEntry[]>();
-  for (const e of suggestibleEntries) {
+  for (const e of suggestibleEntries()) {
     const c = categoryOf(e.name);
     const list = map.get(c);
     if (list) list.push(e);
@@ -64,12 +64,12 @@ export const CATEGORIES: Category[] = (() => {
   return [...map.entries()]
     .map(([name, entries]) => ({ name, entries }))
     .sort((a, b) => a.name.localeCompare(b.name));
-})();
+});
 
 /**
  * Which categories matter most for a given experiment, judged from the
  * table's targetKind / targetTask values. Used to build the
- * "Recommended for …" group in the catalog.
+ * "For <targetKind>" group pinned at the top of the catalog.
  */
 const KIND_CATEGORIES: Record<string, string[]> = {
   letter: [
@@ -115,11 +115,12 @@ export function recommendedFor(
   for (const t of new Set(targetTasks))
     for (const c of TASK_CATEGORIES[t] ?? []) catNames.add(c);
   if (catNames.size === 0) return null;
-  const entries = CATEGORIES.filter((c) => catNames.has(c.name)).flatMap(
-    (c) => c.entries,
-  );
+  const entries = getCategories()
+    .filter((c) => catNames.has(c.name))
+    .flatMap((c) => c.entries);
   return {
-    label: `Recommended for ${kinds.join(" + ") || "this experiment"}`,
+    // Same wording as the pinned "For reading" / "For sound" groups.
+    label: `For ${kinds.join(" + ") || "this experiment"}`,
     entries: entries.sort((a, b) =>
       a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
     ),
@@ -132,28 +133,31 @@ export function categoryOfEntry(name: string): string | null {
 
 function entriesForCategories(catNames: string[]): GlossaryEntry[] {
   const wanted = new Set(catNames);
-  return CATEGORIES.filter((c) => wanted.has(c.name))
+  return getCategories()
+    .filter((c) => wanted.has(c.name))
     .flatMap((c) => c.entries)
     .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 }
 
 /** Always-available recommendation groups, pinned in the catalog. */
-export const PRESET_RECOMMENDATIONS: Recommendation[] = [
-  {
-    label: "For reading",
-    entries: entriesForCategories([
-      ...KIND_CATEGORIES.reading,
-      ...KIND_CATEGORIES.rsvpReading,
-    ]),
-  },
-  {
-    label: "For sound",
-    entries: entriesForCategories([
-      ...KIND_CATEGORIES.sound,
-      ...KIND_CATEGORIES.vocoderPhrase,
-    ]),
-  },
-].map((r) => ({
-  ...r,
-  entries: [...new Map(r.entries.map((e) => [e.name, e])).values()],
-}));
+export const getPresetRecommendations = memoByVersion((): Recommendation[] =>
+  [
+    {
+      label: "For reading",
+      entries: entriesForCategories([
+        ...KIND_CATEGORIES.reading,
+        ...KIND_CATEGORIES.rsvpReading,
+      ]),
+    },
+    {
+      label: "For sound",
+      entries: entriesForCategories([
+        ...KIND_CATEGORIES.sound,
+        ...KIND_CATEGORIES.vocoderPhrase,
+      ]),
+    },
+  ].map((r) => ({
+    ...r,
+    entries: [...new Map(r.entries.map((e) => [e.name, e])).values()],
+  })),
+);
