@@ -34,6 +34,8 @@ export interface EngineHandle {
   glossaryVersion: string;
   /** This release's manifest-pinned phrases dataset version. */
   phrasesVersion: string;
+  manifestDigest: string;
+  engineIdentity: { package: string; version: string; integrity: string };
 }
 
 export const resolveEngine = async (
@@ -70,5 +72,7 @@ export const resolveEngine = async (
     release: resolvedRelease,
     glossaryVersion: entry.glossary.version,
     phrasesVersion: entry.phrases.version,
+    manifestDigest: entry.manifestDigest,
+    engineIdentity: entry.engine,
   };
 };

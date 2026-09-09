@@ -16,6 +16,7 @@ export interface ManifestEntry {
   phrases: { version: string; digest: string };
   catalogUsageReportId: string;
   publishedAt: string;
+  manifestDigest: string;
 }
 
 export interface ReleaseListEntry {
@@ -27,6 +28,18 @@ export interface ManifestClient {
   getManifest: (releaseId: string) => Promise<ManifestEntry | null>;
   getLatest: () => Promise<string | null>;
   listReleases: () => Promise<ReleaseListEntry[]>;
+  getExperimentPin: (
+    username: string,
+    experiment: string,
+    accessToken: string,
+  ) => Promise<ExperimentReleasePin | null>;
+}
+
+export interface ExperimentReleasePin {
+  releaseId: string;
+  manifestDigest: string;
+  artifactRevision: string;
+  pinnedAt: string;
 }
 
 type FetchImpl = typeof fetch;
@@ -72,5 +85,20 @@ export const createReleaseManifestClient = (
       fetchImpl,
     );
     return (data as ReleaseListEntry[] | null) ?? [];
+  },
+  getExperimentPin: async (username, experiment, accessToken) => {
+    const base = await getEasyEyesBaseUrl();
+    try {
+      const response = await fetchImpl(
+        `${base}/.netlify/functions/release-manifest?username=${encodeURIComponent(
+          username,
+        )}&experiment=${encodeURIComponent(experiment)}`,
+        { headers: { authorization: `Bearer ${accessToken}` } },
+      );
+      if (!response.ok) return null;
+      return (await response.json()) as ExperimentReleasePin;
+    } catch {
+      return null;
+    }
   },
 });

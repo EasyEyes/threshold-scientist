@@ -67,6 +67,7 @@ import {
   createProlificExperimentUrl,
   createProlificStudyConfig,
 } from "./components/prolificStudyConfig";
+import { createReleaseManifestClient } from "./engine/releaseManifestClient";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -311,6 +312,14 @@ export default class App extends Component {
         null;
       // viewing a previous experiment
       const { user } = this.state;
+      if (!previousReleasePin && user?.username && user?.accessToken) {
+        const storedPin = await createReleaseManifestClient().getExperimentPin(
+          user.username,
+          activeExperiment.name,
+          user.accessToken,
+        );
+        previousReleasePin = storedPin?.releaseId ?? null;
+      }
       const repositoryIsEmpty = isEmptyRepository(activeExperiment);
       const retrieval = startCompilerOperation("experiment-retrieval", {
         projectId: activeExperiment.id,

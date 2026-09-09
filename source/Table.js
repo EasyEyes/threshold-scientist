@@ -448,6 +448,7 @@ export default class Table extends Component {
             engine: outcome.engine,
             glossaryVersion: outcome.glossaryVersion,
             phrasesVersion: outcome.phrasesVersion,
+            manifestDigest: outcome.manifestDigest,
           }),
         },
       ];

@@ -105,6 +105,13 @@ jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
   initPhrases: jest.fn(),
 }));
 
+const mockGetExperimentPin = jest.fn();
+jest.mock("../engine/releaseManifestClient", () => ({
+  createReleaseManifestClient: () => ({
+    getExperimentPin: mockGetExperimentPin,
+  }),
+}));
+
 global.fetch = jest.fn().mockResolvedValue({ ok: false });
 
 const mockPhrasesData = {
@@ -140,6 +147,7 @@ describe("normalizeRecruitmentInformation", () => {
 describe("App - handleSetActivateExperiment", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetExperimentPin.mockResolvedValue(null);
   });
 
   it("does not request repository files when a failed compilation left an empty repository", async () => {
@@ -583,6 +591,35 @@ describe("App - footnote suppression while compiler errors show", () => {
     });
 
     expect(fakeThis.state.selectedRelease).toBe("latest");
+  });
+
+  it("loads the authoritative release pin when reopening an experiment", async () => {
+    const Swal = require("sweetalert2");
+    Swal.fire.mockImplementation(async ({ didOpen }) => didOpen?.());
+    mockGetExperimentPin.mockResolvedValue({ releaseId: "2026-09-09.1" });
+    const user = {
+      id: "42",
+      username: "alice",
+      accessToken: "gitlab-token",
+    };
+    const fakeThis = {
+      state: { user },
+      setState: jest.fn((update) => {
+        fakeThis.state = { ...fakeThis.state, ...update };
+      }),
+    };
+
+    await App.prototype.handleSetActivateExperiment.call(fakeThis, {
+      name: "study",
+      id: 9,
+    });
+
+    expect(mockGetExperimentPin).toHaveBeenCalledWith(
+      "alice",
+      "study",
+      "gitlab-token",
+    );
+    expect(fakeThis.state.selectedRelease).toBe("2026-09-09.1");
   });
 
   it("defaults selectedRelease to latest for a brand-new experiment (issue #178)", async () => {

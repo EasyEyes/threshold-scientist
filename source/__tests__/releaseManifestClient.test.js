@@ -112,3 +112,24 @@ describe("releaseManifestClient — listReleases", () => {
     await expect(client.listReleases()).resolves.toEqual([]);
   });
 });
+
+describe("releaseManifestClient — getExperimentPin", () => {
+  it("uses the GitLab bearer token and experiment identity", async () => {
+    const pin = {
+      releaseId: "2026-09-09.1",
+      manifestDigest: "sha256-manifest",
+      artifactRevision: "abc123",
+      pinnedAt: "2026-09-09T12:00:00.000Z",
+    };
+    const fetchImpl = jest.fn().mockResolvedValue(jsonResponse(pin));
+    const client = createReleaseManifestClient(fetchImpl);
+
+    await expect(
+      client.getExperimentPin("alice", "study", "gitlab-token"),
+    ).resolves.toEqual(pin);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      expect.stringContaining("username=alice&experiment=study"),
+      { headers: { authorization: "Bearer gitlab-token" } },
+    );
+  });
+});

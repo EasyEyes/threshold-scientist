@@ -89,6 +89,7 @@ export interface CompileExperimentOutcome {
   engine?: unknown;
   glossaryVersion?: string;
   phrasesVersion?: string;
+  manifestDigest?: string;
 }
 
 const groupRequests = (
@@ -198,19 +199,28 @@ export const compileExperimentWithEngine = async (
   args: CompileExperimentArgs,
   deps: CompileExperimentDeps = {},
 ): Promise<CompileExperimentOutcome> => {
-  const { engine, runtimeBaseUrl, release, glossaryVersion, phrasesVersion } =
-    deps.engine
-      ? {
-          engine: deps.engine,
-          runtimeBaseUrl: deps.runtimeBaseUrl ?? "",
-          release: deps.release ?? "latest",
-          glossaryVersion: undefined,
-          phrasesVersion: undefined,
-        }
-      : await (deps.resolveEngine ?? resolveEngine)(
-          args.pinnedRelease ?? "latest",
-          {},
-        );
+  const {
+    engine,
+    runtimeBaseUrl,
+    release,
+    glossaryVersion,
+    phrasesVersion,
+    manifestDigest,
+    engineIdentity,
+  } = deps.engine
+    ? {
+        engine: deps.engine,
+        runtimeBaseUrl: deps.runtimeBaseUrl ?? "",
+        release: deps.release ?? "latest",
+        glossaryVersion: undefined,
+        phrasesVersion: undefined,
+        manifestDigest: undefined,
+        engineIdentity: undefined,
+      }
+    : await (deps.resolveEngine ?? resolveEngine)(
+        args.pinnedRelease ?? "latest",
+        {},
+      );
 
   // Release-pinned datasets (issue #182): fetched by the resolved release's
   // manifest versions when one was resolved, so an older release's compile
@@ -271,10 +281,11 @@ export const compileExperimentWithEngine = async (
     requested: groupRequests(result.manifest.requests),
     release,
     contractVersion: result.manifest.contractVersion,
-    engine: result.manifest.engine,
+    engine: engineIdentity ?? result.manifest.engine,
     glossaryVersion:
       glossaryVersion ?? (glossaryData as { version?: string })?.version,
     phrasesVersion:
       phrasesVersion ?? (phrasesData as { version?: string })?.version,
+    manifestDigest,
   };
 };
