@@ -44,6 +44,8 @@ export default class Step extends PureComponent {
         component = (
           <Table
             {...this.props}
+            // Lets App hand Studio-made files to Table.onDrop.
+            ref={this.props.tableRef}
             scrollToCurrentStep={this.scrollToCurrentStep.bind(this)}
           />
         );

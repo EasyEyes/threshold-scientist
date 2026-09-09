@@ -3,8 +3,8 @@
  * Built by patching the real example tables so they stay compile-clean.
  */
 import { parseCsvString } from "./fileImport";
-import minimal from "../../threshold/examples/tables/minimalExperiment.csv?raw";
-import reading from "../../threshold/examples/tables/readingExperiment.csv?raw";
+import minimal from "../../threshold/examples/tables/minimalExperiment.csv";
+import reading from "../../threshold/examples/tables/readingExperiment.csv";
 
 type Matrix = string[][];
 

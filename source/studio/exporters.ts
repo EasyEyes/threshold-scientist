@@ -7,9 +7,18 @@ import * as XLSX from "xlsx";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
+/**
+ * The experiment table as the csv File the compiler accepts — what a
+ * scientist would drop on the compiler after "Export csv".
+ */
+export function tableToCsvFile(matrix: string[][], name: string): File {
+  return new File([Papa.unparse(matrix)], `${name}.csv`, {
+    type: "text/csv;charset=utf-8",
+  });
+}
+
 export function exportCsv(matrix: string[][], name: string): void {
-  const csv = Papa.unparse(matrix);
-  saveAs(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${name}.csv`);
+  saveAs(tableToCsvFile(matrix, name), `${name}.csv`);
 }
 
 export function exportXlsx(matrix: string[][], name: string): void {

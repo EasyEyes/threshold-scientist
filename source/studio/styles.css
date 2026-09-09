@@ -2,7 +2,11 @@
    green #019267 / #00c897 / #e1efd8 / #157558, error #bb2c22,
    step background #eee, radius 0.7rem, system font, #333 text. */
 
-:root {
+/* Everything is scoped under .ee-studio so the panel can live inside the
+   compiler page without touching its styles (see the prefixing note in
+   StudioPanel.tsx). Design tokens live on the root element. */
+
+.ee-studio {
   --green: #019267;
   --light-green: #00c897;
   --pale-green: #e1efd8;
@@ -18,88 +22,77 @@
   --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
   --radius: 0.7rem;
   --icon-radius: 0.5rem;
-}
 
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-}
-
-body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   background: #fff;
   color: var(--ink);
   font-size: 14px;
+  text-align: left;
 }
 
-.app {
+.ee-studio *,
+.ee-studio *::before,
+.ee-studio *::after {
+  box-sizing: border-box;
+}
+
+/* Applied to the page's <main> only while the studio is mounted
+   (StudioPanel.tsx), overriding uni.css's 960px content column. */
+main.ee-studio-wide {
+  width: 100%;
+  max-width: none;
+}
+
+.ee-studio .app {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* At least the viewport below the page navbar. The page itself scrolls a
+     bounded amount — past the navbar, the title and the toolbar — which lets
+     the editor (a full viewport tall, see .editor) take the whole screen while
+     the sidebar stays put (sticky) and the grid's header row stays frozen
+     inside .grid-wrap. */
+  min-height: calc(100vh - 80px);
 }
 
-/* ---------- navbar (matches EasyEyes white navbar) ---------- */
+/* ---------- panel header ---------- */
 
-.ee-navbar {
+.ee-studio .studio-head {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 6px 20px;
+  gap: 10px;
+  padding: 8px 20px;
   background: #fff;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.ee-logo {
-  width: 56px;
-  height: 56px;
-}
-
-.ee-brand {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.ee-brand-name {
+.ee-studio .studio-title {
   font-weight: 700;
   font-size: 19px;
   color: var(--ink);
 }
 
-.ee-brand-studio {
+.ee-studio .ee-brand-studio {
   color: var(--green);
 }
 
-.ee-brand-sub {
-  font-size: 12px;
-  color: #999;
-}
-
-.ee-nav-links {
-  display: flex;
-  gap: 18px;
-}
-
-.ee-nav-links a {
-  color: var(--ink-soft);
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.ee-nav-links a:hover {
-  color: var(--green);
+.ee-studio .studio-beta {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f78812;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 /* ---------- toolbar ---------- */
 
-.toolbar {
+.ee-studio .toolbar {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -108,11 +101,11 @@ body {
   flex-wrap: wrap;
 }
 
-.toolbar-spacer {
+.ee-studio .toolbar-spacer {
   flex: 1;
 }
 
-.experiment-name {
+.ee-studio .experiment-name {
   background: #fff;
   border: 1px solid #ddd;
   color: var(--ink);
@@ -123,12 +116,12 @@ body {
   font-family: var(--mono);
 }
 
-.experiment-name:focus {
+.ee-studio .experiment-name:focus {
   outline: none;
   border-color: var(--green);
 }
 
-.toolbar-select {
+.ee-studio .toolbar-select {
   background: #fff;
   color: var(--ink);
   border: 1px solid #ddd;
@@ -140,7 +133,7 @@ body {
 
 /* EasyEyes buttons (Step.scss idiom) */
 
-.button-easyeyes {
+.ee-studio .button-easyeyes {
   border-radius: var(--icon-radius);
   color: #fff;
   font-size: 13.5px;
@@ -153,63 +146,65 @@ body {
   padding: 0.65rem 1rem;
 }
 
-.button-green {
+.ee-studio .button-green {
   background: var(--green);
 }
 
-.button-green:hover {
+.ee-studio .button-green:hover {
   background: var(--dark-green);
 }
 
-.button-green:active {
+.ee-studio .button-green:active {
   background: var(--green);
 }
 
-.button-grey {
+.ee-studio .button-grey {
   background: #999;
 }
 
-.button-grey:hover {
+.ee-studio .button-grey:hover {
   background: #aaa;
 }
 
-.button-grey:active {
+.ee-studio .button-grey:active {
   background: #666;
 }
 
-/* status pill — green-status-banner colors */
+/* The orange the compiler uses for piloting/running (Running.scss) */
 
-.status-pill {
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 13.5px;
-  white-space: nowrap;
+.ee-studio .button-orange {
+  background: #f78812;
 }
 
-.status-pill.good {
-  background: var(--pale-green);
-  color: var(--green);
+.ee-studio .button-orange:hover {
+  background: #dd7508;
 }
 
-.status-pill.bad {
-  background: var(--error-bg);
-  color: var(--error);
+.ee-studio .button-orange:active {
+  background: #f78812;
 }
 
-.status-pill.warn {
-  background: var(--warning-bg);
-  color: var(--warning);
+/* Compile — the one primary action in the toolbar */
+
+.ee-studio .button-compile {
+  padding-left: 1.4rem;
+  padding-right: 1.4rem;
 }
 
-.status-pill.checking {
-  background: #e5e5e5;
-  color: #888;
+.ee-studio .button-easyeyes:disabled,
+.ee-studio .button-easyeyes:disabled:hover {
+  background: #c5c5c5;
+  cursor: not-allowed;
+}
+
+.ee-studio .button-preview {
+  padding-left: 1.2rem;
+  padding-right: 1.2rem;
 }
 
 /* ---------- layout ---------- */
 
-.workspace {
+.ee-studio .workspace {
   display: flex;
   flex: 1;
   min-height: 0;
@@ -218,26 +213,43 @@ body {
   background: #fff;
 }
 
-.editor {
+.ee-studio .editor {
   flex: 1;
   min-width: 0;
+  /* Nearly as tall as the viewport: once the page is scrolled past the
+     toolbar the grid fills the screen — as many rows as the screen holds,
+     header row frozen — and no taller, since a taller grid would scroll the
+     header or the sidebar out of view. The 100px leaves room for the
+     workspace padding plus what sits below the grid (the footnote and the
+     page footer), so at the page's maximum scroll the grid's top edge, and
+     with it the header row, is still on screen. */
+  height: calc(100vh - 100px);
+  min-height: 420px;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
   display: flex;
+  /* The add-parameter row on top, the grid filling the rest. */
+  flex-direction: column;
 }
 
-.sidebar {
+.ee-studio .sidebar {
   width: 380px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /* Stays in view while the page scrolls, so the definition of the clicked
+     parameter (first panel) and the checks are always beside the grid. */
+  position: sticky;
+  top: 14px;
+  align-self: flex-start;
+  max-height: calc(100vh - 100px);
   overflow-y: auto;
 }
 
-.footnote {
+.ee-studio .footnote {
   padding: 8px 20px;
   font-size: 11.5px;
   color: #999;
@@ -247,19 +259,19 @@ body {
 
 /* ---------- grid ---------- */
 
-.grid-wrap {
+.ee-studio .grid-wrap {
   overflow: auto;
   flex: 1;
 }
 
-.grid {
+.ee-studio .grid {
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;
   font-size: 13px;
 }
 
-.grid th {
+.ee-studio .grid th {
   position: sticky;
   top: 0;
   z-index: 3;
@@ -272,17 +284,20 @@ body {
   white-space: nowrap;
 }
 
-.grid th.col-param {
+/* The corner cell is sticky both ways; it must paint over the frozen first
+   column and the frozen header row (the shared td/th.col-param rule below
+   sets z-index 2, hence the extra specificity here). */
+.ee-studio .grid thead th.col-param {
   z-index: 4;
 }
 
-.cond-head {
+.ee-studio .cond-head {
   display: flex;
   align-items: center;
   gap: 7px;
 }
 
-.col-letter {
+.ee-studio .col-letter {
   font-family: var(--mono);
   font-size: 10.5px;
   background: var(--pale-green);
@@ -291,7 +306,7 @@ body {
   padding: 1px 5px;
 }
 
-.add-cond-btn {
+.ee-studio .add-cond-btn {
   border: 1px dashed #bbb;
   background: none;
   color: var(--ink-soft);
@@ -302,19 +317,19 @@ body {
   white-space: nowrap;
 }
 
-.add-cond-btn:hover {
+.ee-studio .add-cond-btn:hover {
   border-color: var(--green);
   color: var(--green);
 }
 
-.grid td {
+.ee-studio .grid td {
   border-bottom: 1px solid #f0f0f0;
   padding: 0;
   vertical-align: middle;
 }
 
-.grid td.col-param,
-.grid th.col-param {
+.ee-studio .grid td.col-param,
+.ee-studio .grid th.col-param {
   position: sticky;
   left: 0;
   background: #fff;
@@ -324,31 +339,31 @@ body {
   z-index: 2;
 }
 
-.grid th.col-param {
+.ee-studio .grid th.col-param {
   background: var(--step-bg);
 }
 
-.grid td.col-value {
+.ee-studio .grid td.col-value {
   min-width: 150px;
 }
 
-.grid td.col-add {
+.ee-studio .grid td.col-add {
   width: 110px;
 }
 
-tr.row-error td.col-param {
+.ee-studio tr.row-error td.col-param {
   box-shadow: inset 3px 0 0 var(--error);
 }
 
-tr.row-warning td.col-param {
+.ee-studio tr.row-warning td.col-param {
   box-shadow: inset 3px 0 0 #f59e0b;
 }
 
-tr.row-selected td {
+.ee-studio tr.row-selected td {
   background: #f4faf7;
 }
 
-tr.row-flash td {
+.ee-studio tr.row-flash td {
   animation: flash 1.4s ease-out;
 }
 
@@ -361,14 +376,14 @@ tr.row-flash td {
   }
 }
 
-.param-cell {
+.ee-studio .param-cell {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 2px 6px;
 }
 
-.param-name {
+.ee-studio .param-name {
   background: none;
   border: none;
   font-family: var(--mono);
@@ -384,18 +399,18 @@ tr.row-flash td {
   flex: 1;
 }
 
-.param-name:hover {
+.ee-studio .param-name:hover {
   color: var(--green);
   background: var(--pale-green);
 }
 
-.param-name.unknown {
+.ee-studio .param-name.unknown {
   color: var(--error);
   text-decoration: underline dashed;
   text-underline-offset: 3px;
 }
 
-.param-rename {
+.ee-studio .param-rename {
   flex: 1;
   font-family: var(--mono);
   font-size: 12.5px;
@@ -405,12 +420,12 @@ tr.row-flash td {
   min-width: 0;
 }
 
-.param-rename:focus {
+.ee-studio .param-rename:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(1, 146, 103, 0.18);
 }
 
-.icon-btn {
+.ee-studio .icon-btn {
   background: none;
   border: none;
   color: #bbb;
@@ -421,42 +436,42 @@ tr.row-flash td {
   line-height: 1;
 }
 
-.icon-btn:hover {
+.ee-studio .icon-btn:hover {
   color: var(--error);
   background: var(--error-bg);
 }
 
-tr .row-delete {
+.ee-studio tr .row-delete {
   opacity: 0;
 }
 
-tr:hover .row-delete {
+.ee-studio tr:hover .row-delete {
   opacity: 1;
 }
 
 /* %-commented rows: skipped by the compiler, shown muted but intact */
-.param-name.comment {
+.ee-studio .param-name.comment {
   color: #999;
   font-style: italic;
 }
 
-tr.row-comment .cell-input {
+.ee-studio tr.row-comment .cell-input {
   color: #aaa;
   font-style: italic;
 }
 
-.icon-btn.comment-btn:hover {
+.ee-studio .icon-btn.comment-btn:hover {
   color: var(--green);
   background: var(--pale-green);
 }
 
-.icon-btn.comment-btn.on {
+.ee-studio .icon-btn.comment-btn.on {
   opacity: 1;
   color: var(--green);
   font-weight: 700;
 }
 
-.cell-input {
+.ee-studio .cell-input {
   width: 100%;
   border: 1px solid transparent;
   background: transparent;
@@ -467,24 +482,24 @@ tr.row-comment .cell-input {
   border-radius: 0;
 }
 
-.cell-input:hover {
+.ee-studio .cell-input:hover {
   background: #fafafa;
 }
 
-.cell-input:focus {
+.ee-studio .cell-input:focus {
   outline: none;
   border-color: var(--green);
   background: #fff;
   box-shadow: 0 0 0 2px rgba(1, 146, 103, 0.15);
 }
 
-.cell-input::placeholder {
+.ee-studio .cell-input::placeholder {
   color: #c4c4c4;
 }
 
 /* off-convention cell that already holds a value (bad import): editable so
    it can be cleared, but visibly wrong */
-.cell-input.off-convention {
+.ee-studio .cell-input.off-convention {
   background: var(--error-bg);
   background-image: repeating-linear-gradient(
     -45deg,
@@ -497,42 +512,45 @@ tr.row-comment .cell-input {
 
 /* off-convention cell that is empty: locked per the spreadsheet convention,
    but visually clean — plain white, just not typable */
-.cell-input.locked,
-.cell-input.locked:hover {
+.ee-studio .cell-input.locked,
+.ee-studio .cell-input.locked:hover {
   background: #fff;
   cursor: not-allowed;
   opacity: 1;
 }
 
-select.cell-input {
+.ee-studio select.cell-input {
   appearance: auto;
   cursor: pointer;
 }
 
 /* ---------- add-parameter row & autocomplete ---------- */
 
-.grid tfoot td {
-  position: sticky;
-  bottom: 0;
-  background: var(--step-bg);
-  border-top: 2px solid #ddd;
-  padding: 8px 10px;
-  z-index: 3;
-}
-
-.add-row {
+/* The add-parameter strip at the top of the editor: search box + catalog
+   button, on the same quiet background as the toolbar, above the grid. */
+.ee-studio .add-row {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-shrink: 0;
+  padding: 10px 12px;
+  background: var(--step-bg);
+  border-bottom: 1px solid var(--line);
 }
 
-.autocomplete {
+.ee-studio .add-row .button-easyeyes {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.ee-studio .autocomplete {
   position: relative;
   flex: 1;
-  max-width: 520px;
+  min-width: 0;
+  max-width: 560px;
 }
 
-.autocomplete-input {
+.ee-studio .autocomplete-input {
   width: 100%;
   border: 1px solid #ccc;
   border-radius: var(--icon-radius);
@@ -542,21 +560,22 @@ select.cell-input {
   background: #fff;
 }
 
-.autocomplete-input:focus {
+.ee-studio .autocomplete-input:focus {
   outline: none;
   border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(1, 146, 103, 0.12);
 }
 
-.autocomplete-list {
+.ee-studio .autocomplete-list {
   position: absolute;
-  bottom: calc(100% + 6px);
+  /* Opens downward, over the grid (the strip sits above it). */
+  top: calc(100% + 6px);
   left: 0;
   right: 0;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
   list-style: none;
   margin: 0;
   padding: 5px;
@@ -565,42 +584,42 @@ select.cell-input {
   z-index: 20;
 }
 
-.autocomplete-list li {
+.ee-studio .autocomplete-list li {
   padding: 8px 10px;
   border-radius: 7px;
   cursor: pointer;
 }
 
-.autocomplete-list li.active {
+.ee-studio .autocomplete-list li.active {
   background: var(--pale-green);
 }
 
-.suggestion-head {
+.ee-studio .suggestion-head {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.suggestion-name {
+.ee-studio .suggestion-name {
   font-family: var(--mono);
   font-weight: 600;
   font-size: 12.5px;
 }
 
-.suggestion-default {
+.ee-studio .suggestion-default {
   font-size: 11px;
   color: var(--ink-soft);
   font-family: var(--mono);
 }
 
-.suggestion-explanation {
+.ee-studio .suggestion-explanation {
   font-size: 12px;
   color: var(--ink-soft);
   margin-top: 3px;
 }
 
-.type-chip {
+.ee-studio .type-chip {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -611,29 +630,29 @@ select.cell-input {
   color: var(--ink-soft);
 }
 
-.type-chip.type-boolean {
+.ee-studio .type-chip.type-boolean {
   background: #ede9fe;
   color: #6d28d9;
 }
 
-.type-chip.type-numerical,
-.type-chip.type-integer {
+.ee-studio .type-chip.type-numerical,
+.ee-studio .type-chip.type-integer {
   background: #e0f2fe;
   color: #0369a1;
 }
 
-.type-chip.type-categorical,
-.type-chip.type-multicategorical {
+.ee-studio .type-chip.type-categorical,
+.ee-studio .type-chip.type-multicategorical {
   background: #fef3c7;
   color: #92400e;
 }
 
-.type-chip.type-text {
+.ee-studio .type-chip.type-text {
   background: var(--pale-green);
   color: var(--dark-green);
 }
 
-.category-chip {
+.ee-studio .category-chip {
   font-size: 10.5px;
   font-weight: 600;
   border-radius: 999px;
@@ -645,15 +664,15 @@ select.cell-input {
 
 /* ---------- sidebar panels (EasyEyes step look) ---------- */
 
-.problems,
-.resource-panel,
-.glossary-panel {
+.ee-studio .problems,
+.ee-studio .resource-panel,
+.ee-studio .glossary-panel {
   background: var(--step-bg);
   border-radius: var(--radius);
   padding: 14px;
 }
 
-.panel-title {
+.ee-studio .panel-title {
   font-weight: 700;
   font-size: 12.5px;
   text-transform: uppercase;
@@ -665,25 +684,25 @@ select.cell-input {
   gap: 8px;
 }
 
-.panel-note {
+.ee-studio .panel-note {
   font-size: 12.5px;
   color: var(--ink-soft);
   margin: 8px 0 0;
 }
 
-.panel-note.phrase-note {
+.ee-studio .panel-note.phrase-note {
   color: var(--green);
 }
 
 /* ~Tilde phrase references — resolved from the phrases spreadsheet */
-.cell-input.tilde {
+.ee-studio .cell-input.tilde {
   color: #7a5ea8;
   font-style: italic;
 }
 
 /* problems — green-status-banner when clean */
 
-.all-clear {
+.ee-studio .all-clear {
   display: flex;
   gap: 12px;
   align-items: center;
@@ -693,45 +712,45 @@ select.cell-input {
   color: var(--green);
 }
 
-.all-clear-mark {
+.ee-studio .all-clear-mark {
   font-size: 22px;
   font-weight: 700;
 }
 
-.all-clear-sub {
+.ee-studio .all-clear-sub {
   font-size: 12.5px;
   color: var(--dark-green);
 }
 
-.error-summary {
+.ee-studio .error-summary {
   display: flex;
   gap: 8px;
   margin-bottom: 10px;
 }
 
-.count-chip {
+.ee-studio .count-chip {
   font-size: 11.5px;
   font-weight: 700;
   border-radius: 999px;
   padding: 3px 10px;
 }
 
-.count-chip.errors {
+.ee-studio .count-chip.errors {
   background: var(--error-bg);
   color: var(--error);
 }
 
-.count-chip.warnings {
+.ee-studio .count-chip.warnings {
   background: var(--warning-bg);
   color: var(--warning);
 }
 
-.count-chip.ok {
+.ee-studio .count-chip.ok {
   background: var(--pale-green);
   color: var(--green);
 }
 
-.error-list {
+.ee-studio .error-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -742,7 +761,7 @@ select.cell-input {
   overflow-y: auto;
 }
 
-.error-card {
+.ee-studio .error-card {
   border: 1px solid var(--line);
   border-left: 4px solid var(--error);
   border-radius: var(--icon-radius);
@@ -751,40 +770,40 @@ select.cell-input {
   background: #fff;
 }
 
-.error-card:hover {
+.ee-studio .error-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.error-card.warning {
+.ee-studio .error-card.warning {
   border-left-color: #f59e0b;
 }
 
-.error-name {
+.ee-studio .error-name {
   font-weight: 700;
   font-size: 13px;
   margin-bottom: 4px;
   color: var(--error);
 }
 
-.error-card.warning .error-name {
+.ee-studio .error-card.warning .error-name {
   color: var(--warning);
 }
 
-.error-message {
+.ee-studio .error-message {
   font-size: 12.5px;
   color: var(--ink);
   line-height: 1.45;
   overflow-wrap: break-word;
 }
 
-.error-hint {
+.ee-studio .error-hint {
   margin-top: 6px;
   font-size: 12px;
   color: var(--ink-soft);
   line-height: 1.45;
 }
 
-.hint-label {
+.ee-studio .hint-label {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.5px;
@@ -795,7 +814,7 @@ select.cell-input {
   margin-right: 6px;
 }
 
-.error-parameter {
+.ee-studio .error-parameter {
   font-family: var(--mono);
   font-size: 0.92em;
   background: #f0f0f0;
@@ -805,36 +824,62 @@ select.cell-input {
 
 /* glossary panel */
 
-.glossary-head {
+.ee-studio .glossary-head {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   margin-bottom: 8px;
-  flex-wrap: wrap;
 }
 
-.glossary-name {
+/* Name on its own line, close button at the right. The name may wrap when
+   longer than the panel, but only as a last resort (break-word), never
+   letter by letter. */
+.ee-studio .glossary-name-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ee-studio .glossary-name {
   font-family: var(--mono);
   font-weight: 700;
   font-size: 14px;
+  line-height: 1.35;
   flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.ee-studio .glossary-name-row .icon-btn {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ee-studio .glossary-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+.ee-studio .glossary-chips .type-chip {
   overflow-wrap: anywhere;
 }
 
-.glossary-facts {
+.ee-studio .glossary-facts {
   margin: 0 0 8px;
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.glossary-facts div {
+.ee-studio .glossary-facts div {
   display: flex;
   gap: 8px;
   align-items: baseline;
 }
 
-.glossary-facts dt {
+.ee-studio .glossary-facts dt {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -843,13 +888,13 @@ select.cell-input {
   flex-shrink: 0;
 }
 
-.glossary-facts dd {
+.ee-studio .glossary-facts dd {
   margin: 0;
   font-size: 12.5px;
 }
 
-.glossary-facts code,
-.category-code {
+.ee-studio .glossary-facts code,
+.ee-studio .category-code {
   font-family: var(--mono);
   font-size: 11.5px;
   background: #fff;
@@ -859,7 +904,7 @@ select.cell-input {
   margin-right: 4px;
 }
 
-.glossary-explanation {
+.ee-studio .glossary-explanation {
   font-size: 12.5px;
   line-height: 1.55;
   color: var(--ink);
@@ -869,7 +914,7 @@ select.cell-input {
   white-space: pre-line;
 }
 
-.glossary-missing {
+.ee-studio .glossary-missing {
   font-size: 12.5px;
   color: var(--error);
   margin: 0;
@@ -877,8 +922,8 @@ select.cell-input {
 
 /* resources */
 
-.resource-list,
-.uploaded-list {
+.ee-studio .resource-list,
+.ee-studio .uploaded-list {
   list-style: none;
   margin: 0 0 10px;
   padding: 0;
@@ -887,52 +932,130 @@ select.cell-input {
   gap: 4px;
 }
 
-.resource-list li,
-.uploaded-list li {
-  display: flex;
+/* One row per file: status mark | file name (its own full-width cell, so long
+   names without spaces wrap there instead of being squeezed) | remove button;
+   the parameter names that reference the file go on a second line under the
+   name. */
+.ee-studio .resource-list li,
+.ee-studio .uploaded-list li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  column-gap: 8px;
+  row-gap: 1px;
   align-items: center;
-  gap: 8px;
   font-size: 12.5px;
   padding: 5px 8px;
   border-radius: 6px;
   background: #fff;
 }
 
-.resource-list li.present {
+.ee-studio .uploaded-list li {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ee-studio .resource-list li.present {
   background: var(--pale-green);
 }
 
-.resource-list li.missing {
+.ee-studio .resource-list li.missing {
   background: var(--warning-bg);
 }
 
-.resource-status {
+.ee-studio .resource-status {
   font-weight: 800;
-  width: 14px;
+  grid-column: 1;
+  grid-row: 1;
 }
 
-li.present .resource-status {
+.ee-studio li.present .resource-status {
   color: var(--green);
 }
 
-li.missing .resource-status {
+.ee-studio li.missing .resource-status {
   color: var(--warning);
 }
 
-.resource-name {
+.ee-studio .resource-name {
   font-family: var(--mono);
   font-size: 12px;
-  flex: 1;
+  line-height: 1.4;
+  min-width: 0;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  grid-column: 2;
+  grid-row: 1;
 }
 
-.resource-kind {
+.ee-studio .resource-kind {
   font-size: 11px;
   color: var(--ink-soft);
-  white-space: nowrap;
+  grid-column: 2;
+  grid-row: 2;
 }
 
-.dropzone {
+.ee-studio .uploaded-list .resource-name,
+.ee-studio .uploaded-list .resource-kind {
+  grid-column: 1;
+}
+
+.ee-studio .uploaded-list .icon-btn {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* The compiler's own missing-resource messages, folded under the checklist.
+   Informational (amber): a compile would report these, but the Studio does
+   not block compiling on them. */
+.ee-studio .compiler-will-say {
+  margin-top: 10px;
+}
+
+.ee-studio .compiler-will-say > summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--warning);
+  line-height: 1.4;
+}
+
+.ee-studio .compiler-will-say[open] > summary {
+  margin-bottom: 8px;
+}
+
+.ee-studio .compiler-will-say .error-list {
+  max-height: 32vh;
+}
+
+/* Quiet footer row of a panel, for secondary actions. */
+.ee-studio .panel-footer {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  text-align: right;
+}
+
+.ee-studio .link-button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition:
+    color 0.15s,
+    text-decoration-color 0.15s;
+}
+
+.ee-studio .link-button:hover {
+  color: var(--green);
+  text-decoration-color: var(--green);
+}
+
+.ee-studio .dropzone {
   border: 1.5px dashed #bbb;
   border-radius: var(--icon-radius);
   padding: 16px;
@@ -946,8 +1069,8 @@ li.missing .resource-status {
     background 0.15s;
 }
 
-.dropzone:hover,
-.dropzone.drag-over {
+.ee-studio .dropzone:hover,
+.ee-studio .dropzone.drag-over {
   border-color: var(--green);
   background: var(--pale-green);
   color: var(--green);
@@ -955,7 +1078,7 @@ li.missing .resource-status {
 
 /* ---------- parameter catalog modal ---------- */
 
-.catalog-overlay {
+.ee-studio .catalog-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
@@ -966,7 +1089,7 @@ li.missing .resource-status {
   padding: 4vh 4vw;
 }
 
-.catalog {
+.ee-studio .catalog {
   background: #fff;
   border-radius: var(--radius);
   width: min(1000px, 100%);
@@ -977,7 +1100,7 @@ li.missing .resource-status {
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
 }
 
-.catalog-head {
+.ee-studio .catalog-head {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -986,12 +1109,12 @@ li.missing .resource-status {
   border-bottom: 1px solid #ddd;
 }
 
-.catalog-title {
+.ee-studio .catalog-title {
   font-weight: 700;
   font-size: 15px;
 }
 
-.catalog-search {
+.ee-studio .catalog-search {
   flex: 1;
   border: 1px solid #ccc;
   border-radius: var(--icon-radius);
@@ -1000,18 +1123,18 @@ li.missing .resource-status {
   font-family: var(--mono);
 }
 
-.catalog-search:focus {
+.ee-studio .catalog-search:focus {
   outline: none;
   border-color: var(--green);
 }
 
-.catalog-body {
+.ee-studio .catalog-body {
   display: flex;
   flex: 1;
   min-height: 0;
 }
 
-.catalog-cats {
+.ee-studio .catalog-cats {
   list-style: none;
   margin: 0;
   padding: 8px;
@@ -1022,7 +1145,7 @@ li.missing .resource-status {
   background: #fafafa;
 }
 
-.cat-item {
+.ee-studio .cat-item {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1033,41 +1156,64 @@ li.missing .resource-status {
   color: var(--ink);
 }
 
-.cat-item:hover {
+.ee-studio .cat-item:hover {
   background: #f0f0f0;
 }
 
-.cat-item.active {
+.ee-studio .cat-item.active {
   background: var(--pale-green);
   color: var(--dark-green);
   font-weight: 600;
 }
 
-.cat-item.recommended {
+.ee-studio .cat-item.empty {
+  color: #999;
+}
+
+.ee-studio .catalog-subtitle {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.ee-studio .catalog-entry.file-entry .suggestion-name {
+  font-family: var(--mono);
+}
+
+.ee-studio .catalog-entry.file-entry .type-chip {
+  text-transform: none;
+}
+
+.ee-studio .catalog-group-label .cat-count {
+  margin-left: 8px;
+}
+
+.ee-studio .cat-item.recommended {
   color: var(--green);
   font-weight: 600;
   border: 1px dashed var(--light-green);
   margin-bottom: 6px;
 }
 
-.cat-star {
+.ee-studio .cat-star {
   color: var(--light-green);
 }
 
-.cat-count {
+.ee-studio .cat-count {
   margin-left: auto;
   font-size: 11px;
   color: #999;
   font-family: var(--mono);
 }
 
-.catalog-entries {
+.ee-studio .catalog-entries {
   flex: 1;
   overflow-y: auto;
   padding: 10px 14px;
 }
 
-.catalog-entries ul {
+.ee-studio .catalog-entries ul {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1076,7 +1222,7 @@ li.missing .resource-status {
   gap: 6px;
 }
 
-.catalog-group-label {
+.ee-studio .catalog-group-label {
   font-weight: 700;
   font-size: 12.5px;
   text-transform: uppercase;
@@ -1085,7 +1231,7 @@ li.missing .resource-status {
   margin: 4px 0 10px;
 }
 
-.catalog-entry {
+.ee-studio .catalog-entry {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1094,61 +1240,76 @@ li.missing .resource-status {
   border-radius: var(--icon-radius);
 }
 
-.catalog-entry:hover {
+.ee-studio .catalog-entry:hover {
   border-color: var(--line);
   background: #fafafa;
 }
 
-.catalog-entry-main {
+.ee-studio .catalog-entry-main {
   flex: 1;
   min-width: 0;
   cursor: pointer;
 }
 
-.catalog-entry.open {
+.ee-studio .catalog-entry.open {
   align-items: flex-start;
   border-color: var(--green);
   background: #fbfdfb;
 }
 
-.entry-caret {
+.ee-studio .entry-caret {
   font-size: 10px;
   color: var(--ink-soft);
   width: 12px;
   flex: none;
 }
 
-.catalog-entry-full {
+.ee-studio .catalog-entry-full {
   margin-top: 6px;
   font-size: 12.5px;
   color: var(--ink);
   line-height: 1.55;
 }
 
-.catalog-entry-full p {
+/* The site's global `p` rule (uni.css: 1.2rem, 170%) would otherwise win
+   over the inherited size and font; keep the description in the modal's own
+   type. */
+.ee-studio .catalog-entry-full p {
   margin: 6px 0 0;
   white-space: pre-wrap;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
 }
 
-.catalog-entry-allowed {
+.ee-studio .catalog-entry-full code,
+.ee-studio .catalog-entry-example code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: inherit;
+  background: none;
+}
+
+.ee-studio .catalog-entry-allowed {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 2px;
 }
 
-.catalog-entry-example {
+.ee-studio .catalog-entry-example {
   margin-top: 4px;
   color: var(--ink-soft);
 }
 
-.catalog-add {
+.ee-studio .catalog-add {
   padding: 0.5rem 0.9rem;
   font-size: 12.5px;
   flex-shrink: 0;
 }
 
-.catalog-present {
+.ee-studio .catalog-present {
   color: var(--green);
   font-weight: 600;
   font-size: 12.5px;

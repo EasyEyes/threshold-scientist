@@ -192,6 +192,7 @@ describe("App - handleSetActivateExperiment", () => {
       },
       previousCompatibilityRequirements: null,
       previousExperimentDuration: null,
+      previousExperimentLanguage: null,
       previousProlificConfig: null,
     });
   });
@@ -396,6 +397,66 @@ describe("App - handleReturnToStep", () => {
 
     // At the time initProjectList ran, this.projectList must be the original promise
     expect(projectListAtCallTime).toBe(existingProjectList);
+  });
+});
+
+describe("App - compileFromStudio after a classic compile", () => {
+  // After a compile the page shows the Run step of the experiment it just
+  // made (activeExperiment = that repo). A Studio compile must be a fresh
+  // compilation from there — not "Compiler not ready".
+  const fakeApp = (state) => {
+    const table = { compileFiles: jest.fn() };
+    const app = {
+      state: {
+        accessToken: "t",
+        user: { username: "u" },
+        currentStep: "table",
+        activeExperiment: "new",
+        ...state,
+      },
+      tableRef: { current: table },
+      closeStudio: jest.fn(),
+      handleSetActivateExperiment: jest.fn(async function (which) {
+        // The real one resets activeExperiment and returns to the table step.
+        if (which === "REFRESH")
+          app.state = {
+            ...app.state,
+            activeExperiment: "new",
+            currentStep: "table",
+          };
+      }),
+      resetCompilerForNewExperiment:
+        App.prototype.resetCompilerForNewExperiment,
+      waitForTable: App.prototype.waitForTable,
+    };
+    return { app, table };
+  };
+  const files = [new File(["a"], "exp.csv")];
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it("resets the compiler (as 'new experiment' does) when the Run step of a compiled experiment is showing", async () => {
+    const { app, table } = fakeApp({
+      currentStep: "running",
+      activeExperiment: "my_exp_1",
+      newRepo: "my_exp_1",
+    });
+    expect(await App.prototype.compileFromStudio.call(app, files)).toBe(true);
+    expect(app.handleSetActivateExperiment).toHaveBeenCalledWith("REFRESH");
+    expect(table.compileFiles).toHaveBeenCalledWith(files, "studio");
+  });
+
+  it("also resets when a previous experiment is being viewed", async () => {
+    const { app } = fakeApp({ activeExperiment: "older_exp" });
+    await App.prototype.previewFromStudio.call(app, files, null);
+    expect(app.handleSetActivateExperiment).toHaveBeenCalledWith("REFRESH");
+  });
+
+  it("does not reset a compiler already on a fresh table step", async () => {
+    const { app, table } = fakeApp({});
+    expect(await App.prototype.compileFromStudio.call(app, files)).toBe(true);
+    expect(app.handleSetActivateExperiment).not.toHaveBeenCalled();
+    expect(table.compileFiles).toHaveBeenCalledWith(files, "studio");
   });
 });
 

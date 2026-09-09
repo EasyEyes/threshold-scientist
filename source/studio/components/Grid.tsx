@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { isCommentName, stripCommentPrefix, type TableState } from "../tableModel";
+import {
+  isCommentName,
+  stripCommentPrefix,
+  type TableState,
+} from "../tableModel";
 import { resolveEntry } from "../glossary";
 import { EditableCell } from "./EditableCell";
-import { ParamAutocomplete } from "./ParamAutocomplete";
 import { conditionIndexToColumnName } from "../../../threshold/preprocess/utils";
 
 interface Props {
@@ -14,8 +17,6 @@ interface Props {
   onCellChange: (rowId: number, valueIndex: number, value: string) => void;
   onRenameRow: (rowId: number, name: string) => void;
   onDeleteRow: (rowId: number) => void;
-  onAddParam: (name: string) => void;
-  onOpenCatalog: () => void;
   onAddCondition: () => void;
   onDeleteCondition: (conditionIndex: number) => void;
 }
@@ -29,8 +30,6 @@ export function Grid({
   onCellChange,
   onRenameRow,
   onDeleteRow,
-  onAddParam,
-  onOpenCatalog,
   onAddCondition,
   onDeleteCondition,
 }: Props) {
@@ -44,8 +43,6 @@ export function Grid({
     );
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [flashParam]);
-
-  const existingNames = new Set(table.rows.map((r) => r.name));
 
   return (
     <div className="grid-wrap" ref={containerRef}>
@@ -100,8 +97,8 @@ export function Grid({
               problem === "error"
                 ? "row-error"
                 : problem === "warning"
-                  ? "row-warning"
-                  : "",
+                ? "row-warning"
+                : "",
               flashParam === row.name ? "row-flash" : "",
               selectedParam === row.name ? "row-selected" : "",
               isComment ? "row-comment" : "",
@@ -138,8 +135,8 @@ export function Grid({
                           (isComment
                             ? "Commented out — the compiler skips this row"
                             : unknown
-                              ? "Unknown parameter (not in glossary)"
-                              : entry?.type) + " — double-click to rename"
+                            ? "Unknown parameter (not in glossary)"
+                            : entry?.type) + " — double-click to rename"
                         }
                         onClick={() => onSelectParam(row.name)}
                         onDoubleClick={() => setEditingRowId(row.id)}
@@ -148,7 +145,9 @@ export function Grid({
                       </button>
                     )}
                     <button
-                      className={`icon-btn comment-btn row-delete${isComment ? " on" : ""}`}
+                      className={`icon-btn comment-btn row-delete${
+                        isComment ? " on" : ""
+                      }`}
                       title={
                         isComment
                           ? "Uncomment — include this row again"
@@ -206,21 +205,6 @@ export function Grid({
             );
           })}
         </tbody>
-        <tfoot>
-          <tr>
-            <td colSpan={table.conditionCount + 3}>
-              <div className="add-row">
-                <ParamAutocomplete
-                  existingNames={existingNames}
-                  onAdd={onAddParam}
-                />
-                <button className="button-easyeyes button-green" onClick={onOpenCatalog}>
-                  Browse by category…
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tfoot>
       </table>
     </div>
   );

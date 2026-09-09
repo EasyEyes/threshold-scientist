@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { suggestibleEntries } from "../glossary";
-import type { GlossaryEntry } from "../../../source/components/types";
+import type { GlossaryEntry } from "../../components/types";
 
 interface Props {
   existingNames: Set<string>;
@@ -18,7 +18,7 @@ export function ParamAutocomplete({ existingNames, onAdd }: Props) {
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    const pool = suggestibleEntries.filter((e) => !existingNames.has(e.name));
+    const pool = suggestibleEntries().filter((e) => !existingNames.has(e.name));
     const starts: GlossaryEntry[] = [];
     const contains: GlossaryEntry[] = [];
     for (const e of pool) {

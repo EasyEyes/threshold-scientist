@@ -18,9 +18,14 @@ import {
   getAllProjects,
   copyUser,
   setRepoName,
+  searchRepoNameMatches,
   manuallySetSwalTitle,
   fetchPhraseFileFromResources,
+  gatherGeneratedFileActions,
+  gatherUserUploadedFileActions,
+  gatherRequestedResourceActions,
 } from "../threshold/preprocess/gitlabUtils";
+import { PREVIEW_PIN, stagePreview, showPreview } from "./studio/preview";
 import { buildArchiveResources } from "../threshold/preprocess/archiveResources";
 import { exportStudyBeforeCompiling } from "../threshold/preprocess/exportBeforeCompile";
 import { searchProjectByName } from "../threshold/preprocess/gitlabSearch";
@@ -56,6 +61,12 @@ import {
   recordCompilerPhase,
   startCompilerOperation,
 } from "./sentry";
+import {
+  beginCompile,
+  endCompile,
+  optimizationOn,
+} from "../threshold/preprocess/compileMode";
+import { endCompileTiming } from "../threshold/preprocess/compileTiming";
 
 export default class Table extends Component {
   constructor(props) {
@@ -97,6 +108,22 @@ export default class Table extends Component {
   }
 
   onDrop(files) {
+    this.compileFiles(files, "compiler");
+  }
+
+  /**
+   * The one entry point to compilation, for files dropped on this page
+   * ("compiler") and for files handed over by the Studio ("studio"). The
+   * source only selects which speed optimizations are on (compileMode.ts);
+   * the compile itself is the same.
+   *
+   * With `preview` ({ placeholder: Window | null }), the compile stops after
+   * validation and, instead of uploading, opens the experiment in the
+   * placeholder tab served from the browser (see studio/preview.ts).
+   */
+  compileFiles(files, source, preview = undefined) {
+    beginCompile(source);
+    this.pendingPreview = preview ?? null;
     this.setState({ errors: [] });
     const { user, functions } = this.props;
     if (!user || !user.initProjectList)
@@ -138,18 +165,12 @@ export default class Table extends Component {
     }
   }
 
-  async handleTable(file) {
-    const operation = startCompilerOperation("experiment-compilation", {
-      source: this.props.isCompiledFromArchiveBool ? "archive" : "spreadsheet",
-      fileExtension: file.name.split(".").pop()?.toLowerCase(),
-      fileSize: file.size,
-    });
-    recordCompilerPhase(operation, "input-accepted");
-    // The glossary is fetched lazily on first compile (no longer at app launch).
-    // handleDrop has already opened a "Compiling ..." dialog before calling us;
-    // we relabel that same dialog for each phase instead of firing/closing our
-    // own, so the modal stays open continuously — closing it would leave a blank
-    // screen through the rest of the compile.
+  /**
+   * Make sure the glossary registry holds the server's current version.
+   * Returns true when it does, false after reporting a download failure (the
+   * caller aborts the compile and closes the dialog).
+   */
+  async refreshGlossary(operation) {
     const prefetchPromise = getGlossaryPrefetch();
     if (prefetchPromise !== null) {
       manuallySetSwalTitle("Loading glossary …");
@@ -210,15 +231,21 @@ export default class Table extends Component {
         finishCompilerOperation(operation, "failed", {
           failedPhase: "glossary-download",
         });
-        Swal.close();
         console.error("Failed to refresh glossary:", err);
-        return;
+        return false;
       }
     }
-    // Restore the compiling status before handing off to the resource/compile
-    // flow, which manages its own status dialog.
-    manuallySetSwalTitle("Compiling ...");
+    if (optimizationOn("timing"))
+      recordCompilerPhase(operation, "glossary-ready", {
+        downloaded: shouldFetch,
+      });
+    return true;
+  }
 
+  /**
+   * Same contract as refreshGlossary, for the phrases registry.
+   */
+  async refreshPhrases(operation) {
     try {
       let shouldFetchPhrases = true;
       try {
@@ -246,6 +273,11 @@ export default class Table extends Component {
         const data = await fetchPhrasesData();
         initPhrases(data);
       }
+      if (optimizationOn("timing"))
+        recordCompilerPhase(operation, "phrases-ready", {
+          downloaded: shouldFetchPhrases,
+        });
+      return true;
     } catch (err) {
       captureCompilerFailure(
         err,
@@ -258,13 +290,22 @@ export default class Table extends Component {
         failedPhase: "phrases-download",
       });
       console.error("Failed to refresh phrases:", err);
-      return;
+      return false;
     }
+  }
 
-    let resolvedResources;
-
-    // Wait for resources to be loaded if they aren't already
-    if (!this.props.resourcesLoaded) {
+  /**
+   * Resolve once App has listed the scientist's EasyEyesResources.
+   * When run alongside the other preamble tasks (parallel), relabel the open
+   * "Compiling ..." dialog rather than firing a new one, so the modal stays
+   * put; otherwise show the classic "Listing resources ..." dialog.
+   */
+  waitForResourcesLoaded(parallel) {
+    if (this.props.resourcesLoaded) return Promise.resolve();
+    if (parallel) {
+      manuallySetSwalTitle("Listing resources ...");
+      Swal.showLoading(null);
+    } else {
       Swal.fire({
         title: "Listing resources ...",
         allowOutsideClick: false,
@@ -274,29 +315,192 @@ export default class Table extends Component {
           Swal.showLoading(null);
         },
       });
+    }
+    return new Promise((resolve) => {
+      const checkResourcesLoaded = () => {
+        if (this.props.resourcesLoaded) {
+          // Leave the dialog open; it seamlessly becomes the compiling dialog.
+          manuallySetSwalTitle("Compiling ...");
+          resolve();
+        } else setTimeout(checkResourcesLoaded, 10);
+      };
+      checkResourcesLoaded();
+    });
+  }
 
-      await new Promise((resolve) => {
-        const checkResourcesLoaded = () => {
-          if (this.props.resourcesLoaded) {
-            // Swal.close(); // Leave open actually, we want to seamlessly transition to the compiling Swal
-            manuallySetSwalTitle("Compiling ...");
-            resolve();
-          } else {
-            setTimeout(checkResourcesLoaded, 10);
-          }
-        };
-        checkResourcesLoaded();
-      });
+  /** Resolve once the user's project list (a promise while loading) is in. */
+  async waitForProjectList() {
+    const { user } = this.props;
+    if (user && user.projectList && typeof user.projectList.then === "function")
+      await user.projectList;
+  }
+
+  /**
+   * Content of every text file in the scientist's EasyEyesResources (from
+   * `this.props.resources.texts`, so the listing must be in), keyed by file
+   * name, for compile-time corpus length validation. Never rejects: read
+   * failures are reported and the affected files are left out.
+   */
+  async readTextResources(operation, resourcesRepoPromise) {
+    const textContents = {};
+    try {
+      const resourcesRepo = await resourcesRepoPromise;
+      const texts = this.props.resources?.texts;
+      if (resourcesRepo && texts?.length > 0) {
+        const repoID = parseInt(resourcesRepo.id);
+        const { clientId, redirectUri } = getAuthConfig();
+        const gitlabOAuthClient = GitLabOAuthClient.loadFromStorage(
+          clientId,
+          redirectUri,
+        );
+        if (!gitlabOAuthClient) throw new Error("AUTH_TOKEN_INVALID");
+        const entries = await Promise.all(
+          texts.map(async (filename) => {
+            try {
+              const content = await getTextFileDataFromGitLab(
+                repoID,
+                `texts/${filename}`,
+                gitlabOAuthClient,
+              );
+              return [filename, content];
+            } catch (e) {
+              captureCompilerFailure(
+                e,
+                operation,
+                "optional-text-resource-read",
+                { resourceType: "texts" },
+                "user-correctable",
+              );
+              return null;
+            }
+          }),
+        );
+        Object.assign(
+          textContents,
+          Object.fromEntries(entries.filter(Boolean)),
+        );
+      }
+    } catch (e) {
+      captureCompilerFailure(
+        e,
+        operation,
+        "text-resources-list",
+        {},
+        "dependency",
+      );
+    }
+    return textContents;
+  }
+
+  async handleTable(file) {
+    // Set by compileFiles for a Studio preview; consumed by this compile only.
+    const preview = this.pendingPreview ?? null;
+    this.pendingPreview = null;
+    const operation = startCompilerOperation("experiment-compilation", {
+      source: this.props.isCompiledFromArchiveBool ? "archive" : "spreadsheet",
+      fileExtension: file.name.split(".").pop()?.toLowerCase(),
+      fileSize: file.size,
+      ...(preview ? { preview: true } : {}),
+    });
+    recordCompilerPhase(operation, "input-accepted");
+    // Any early exit below leaves the preview's placeholder tab orphaned;
+    // close it so the scientist is not left with a blank "Preparing…" tab.
+    const closePlaceholder = () => preview?.placeholder?.close?.();
+    // Preamble: refresh the glossary and phrases, wait for the resources
+    // listing and the project list. handleDrop has already opened a
+    // "Compiling ..." dialog before calling us; we relabel that same dialog
+    // for each phase instead of firing/closing our own, so the modal stays
+    // open continuously — closing it would leave a blank screen through the
+    // rest of the compile.
+    //
+    // The EasyEyesResources lookup is only needed for a plain spreadsheet
+    // compile (an archive is self-contained); its result is consumed below.
+    const lookupResourcesRepo = () =>
+      this.props.isCompiledFromArchiveBool
+        ? Promise.resolve(null)
+        : Promise.resolve()
+            .then(() => searchProjectByName(this.props.user, resourcesRepoName))
+            .catch((e) => {
+              captureCompilerFailure(
+                e,
+                operation,
+                "text-resources-list",
+                {},
+                "dependency",
+              );
+              return null;
+            });
+
+    // With "overlapMetadataCalls", metadata round trips run alongside the
+    // work they used to precede (each is consumed below where it was before):
+    // - the project list is not waited for — nothing before the upload step
+    //   reads it (the drop already refreshed it in the background);
+    // - the corpus texts are read as soon as the resources listing is in,
+    //   instead of after the whole preamble;
+    // - the repo-name search (read-only) starts now rather than after
+    //   validation.
+    const overlapMetadata =
+      optimizationOn("overlapMetadataCalls") &&
+      !this.props.isCompiledFromArchiveBool;
+    const baseName = file.name.split(".")[0];
+    let repoNameMatches;
+    if (overlapMetadata) {
+      repoNameMatches = searchRepoNameMatches(this.props.user, baseName);
+      // setRepoName awaits (and fails on) this later; this only prevents an
+      // unhandled-rejection report if the compile stops before that.
+      repoNameMatches.catch(() => {});
     }
 
-    // Ensure project list is resolved before proceeding if user object exists and projectList is a promise
-    if (
-      this.props.user &&
-      this.props.user.projectList &&
-      typeof this.props.user.projectList.then === "function"
-    ) {
-      await this.props.user.projectList;
+    let resourcesRepoPromise;
+    let textContentsPromise;
+    if (optimizationOn("parallelPreamble")) {
+      // These are independent round trips, so run them concurrently. Each
+      // refresh keeps its own failure handling and reports false on failure;
+      // the compile aborts on either, exactly as when they ran in sequence.
+      resourcesRepoPromise = lookupResourcesRepo();
+      const resourcesListed = this.waitForResourcesLoaded(true);
+      if (overlapMetadata)
+        textContentsPromise = resourcesListed.then(() =>
+          this.readTextResources(operation, resourcesRepoPromise),
+        );
+      const [glossaryReady, phrasesReady] = await Promise.all([
+        this.refreshGlossary(operation),
+        this.refreshPhrases(operation),
+        resourcesListed,
+        overlapMetadata ? Promise.resolve() : this.waitForProjectList(),
+      ]);
+      if (!glossaryReady) {
+        Swal.close();
+        closePlaceholder();
+        return;
+      }
+      if (!phrasesReady) {
+        closePlaceholder();
+        return;
+      }
+      recordCompilerPhase(operation, "preamble-completed");
+    } else {
+      // The classic order: one after another.
+      if (!(await this.refreshGlossary(operation))) {
+        Swal.close();
+        closePlaceholder();
+        return;
+      }
+      // Restore the compiling status before handing off to the resource/compile
+      // flow, which manages its own status dialog.
+      manuallySetSwalTitle("Compiling ...");
+      if (!(await this.refreshPhrases(operation))) {
+        closePlaceholder();
+        return;
+      }
+      await this.waitForResourcesLoaded(false);
+      await this.waitForProjectList();
     }
+    // Restore the compiling status before handing off to the resource/compile
+    // flow, which manages its own status dialog.
+    manuallySetSwalTitle("Compiling ...");
+
+    let resolvedResources;
 
     this.dropZoneRef.current.classList.add("drop-disabled");
     await this.reset();
@@ -340,54 +544,14 @@ export default class Table extends Component {
       // shown by the resource buttons with raw File objects ("[object File]").
       resolvedResources = { ...this.props.resources };
 
-      // Fetch corpus text file content for compile-time length validation
-      let textContents = {};
-      try {
-        const resourcesRepo = await searchProjectByName(
-          this.props.user,
-          resourcesRepoName,
-        );
-        if (resourcesRepo && resolvedResources.texts?.length > 0) {
-          const repoID = parseInt(resourcesRepo.id);
-          const { clientId, redirectUri } = getAuthConfig();
-          const gitlabOAuthClient = GitLabOAuthClient.loadFromStorage(
-            clientId,
-            redirectUri,
-          );
-          if (!gitlabOAuthClient) throw new Error("AUTH_TOKEN_INVALID");
-          const entries = await Promise.all(
-            resolvedResources.texts.map(async (filename) => {
-              try {
-                const content = await getTextFileDataFromGitLab(
-                  repoID,
-                  `texts/${filename}`,
-                  gitlabOAuthClient,
-                );
-                return [filename, content];
-              } catch (e) {
-                captureCompilerFailure(
-                  e,
-                  operation,
-                  "optional-text-resource-read",
-                  { resourceType: "texts" },
-                  "user-correctable",
-                );
-                return null;
-              }
-            }),
-          );
-          textContents = Object.fromEntries(entries.filter(Boolean));
-        }
-      } catch (e) {
-        captureCompilerFailure(
-          e,
+      // Corpus text file content for compile-time length validation. With
+      // "overlapMetadataCalls" the read was started during the preamble and
+      // is normally already resolved; otherwise read now, as before.
+      resolvedResources.textContents = await (textContentsPromise ??
+        this.readTextResources(
           operation,
-          "text-resources-list",
-          {},
-          "dependency",
-        );
-      }
-      resolvedResources.textContents = textContents;
+          resourcesRepoPromise ?? lookupResourcesRepo(),
+        ));
       resolvedResources.phrases = userRepoFiles.phrases;
       // Let the compiler fetch a previously-uploaded phrase file from the
       // scientist's `phrases/` folder when it was not dropped this session.
@@ -506,12 +670,21 @@ export default class Table extends Component {
             });
 
             Swal.close();
+            closePlaceholder();
 
             return;
           } else {
             recordCompilerPhase(operation, "preprocessing-completed", {
               warningCount: warningList.length,
             });
+
+            // A Studio preview ends here: the validated experiment is served
+            // from the browser instead of being uploaded.
+            if (preview) {
+              await this.openPreview(user, operation, preview, warningList);
+              return;
+            }
+
             // only accept the filename as official when there are no errors
             this.props.functions.handleSetFilename(file.name);
 
@@ -519,9 +692,18 @@ export default class Table extends Component {
               // user logged in
               const resolvedProjectName = await setRepoName(
                 user,
-                file.name.split(".")[0],
+                baseName,
+                repoNameMatches,
               );
               this.props.functions.handleSetProjectName(resolvedProjectName);
+              // The project-list refresh does not depend on the phrases pin;
+              // with "overlapMetadataCalls" it runs alongside it. Its result
+              // is awaited (and any failure surfaces) below, where it was.
+              let projectsPromise;
+              if (overlapMetadata) {
+                projectsPromise = getAllProjects(user);
+                projectsPromise.catch(() => {});
+              }
               pinGlossaryVersion(user.username, resolvedProjectName)
                 .then(({ version }) =>
                   console.log("Glossary version pinned:", version),
@@ -554,10 +736,9 @@ export default class Table extends Component {
                 return;
               }
 
-              const projectsPromise = getAllProjects(user);
-              const updatedProjects = await projectsPromise;
+              const updatedProjects = await (projectsPromise ??
+                getAllProjects(user));
               this.props.functions.handleSetProjectList(updatedProjects);
-              const baseName = file.name.split(".")[0];
               const newProj = updatedProjects.find((p) => p.name === baseName);
               if (newProj) {
                 this.props.functions.handleSetActivateExperiment(newProj);
@@ -599,12 +780,94 @@ export default class Table extends Component {
       finishCompilerOperation(operation, "failed", {
         failedPhase: "preprocessing",
       });
+      closePlaceholder();
       throw error;
     }
 
     // this.setState({
     //   errors: [...errors],
     // });
+  }
+
+  /**
+   * Studio preview. `user` is the compiled experiment's user (from the
+   * preprocess callback); the files a compile would commit — the compiler's
+   * generated files, the table and block CSVs, and the requested resources
+   * from EasyEyesResources — are staged for the preview service worker, the
+   * runtime's glossary/phrases pins for the preview path are set to the
+   * current versions (as a compile pins them for its project), and the
+   * placeholder tab is sent to the preview. Nothing is uploaded.
+   */
+  async openPreview(user, operation, preview, warningList) {
+    try {
+      manuallySetSwalTitle("Preparing preview ...");
+      const [generated, uploaded, resources] = await Promise.all([
+        gatherGeneratedFileActions(user),
+        gatherUserUploadedFileActions(userRepoFiles),
+        gatherRequestedResourceActions(
+          user,
+          this.props.isCompiledFromArchiveBool,
+          this.props.archivedZip,
+        ),
+        pinGlossaryVersion(
+          PREVIEW_PIN.username,
+          PREVIEW_PIN.experimentName,
+        ).catch((error) => {
+          // As for a compile: the runtime falls back to its bundled glossary.
+          console.warn("Failed to pin glossary version for preview:", error);
+          captureCompilerFailure(
+            error,
+            operation,
+            "glossary-version-pin",
+            { preview: true },
+            "external-service",
+          );
+        }),
+        // Required: the runtime refuses to start without a phrases pin.
+        pinPhrasesVersion(PREVIEW_PIN.username, PREVIEW_PIN.experimentName),
+      ]);
+      const actions = [...generated, ...uploaded, ...resources];
+      const url = await stagePreview(actions);
+      recordCompilerPhase(operation, "preview-staged", {
+        fileCount: actions.length,
+      });
+      Swal.close();
+      showPreview(url, preview.placeholder);
+      this.setState({
+        showDropZone: true,
+        errors: [
+          ...warningList,
+          {
+            context: "preprocessor",
+            kind: "correct",
+            name: "Preview opened in a new tab. Nothing was uploaded; compile when the experiment is ready.",
+          },
+        ],
+      });
+      finishCompilerOperation(operation, "completed", { preview: true });
+    } catch (error) {
+      preview.placeholder?.close?.();
+      captureCompilerFailure(
+        error,
+        operation,
+        "preview",
+        {},
+        "external-service",
+      );
+      finishCompilerOperation(operation, "failed", { failedPhase: "preview" });
+      this.setState({ showDropZone: true });
+      Swal.fire({
+        icon: "error",
+        title: "Preview failed",
+        text: error?.message ?? String(error),
+        confirmButtonColor: "#666",
+      });
+    } finally {
+      // A compile's timeline continues into upload and activation; a preview
+      // is over here.
+      endCompileTiming();
+      endCompile();
+    }
   }
 
   async reset() {

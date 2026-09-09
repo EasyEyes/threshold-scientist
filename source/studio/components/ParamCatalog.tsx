@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  CATEGORIES,
-  PRESET_RECOMMENDATIONS,
+  getCategories,
+  getPresetRecommendations,
   recommendedFor,
   type Recommendation,
 } from "../categories";
-import type { GlossaryEntry } from "../../../source/components/types";
+import type { GlossaryEntry } from "../../components/types";
 
 interface Props {
   existingNames: Set<string>;
@@ -28,6 +28,9 @@ export function ParamCatalog({
   onAdd,
   onClose,
 }: Props) {
+  // Derived from the live glossary registry (memoized per glossary version).
+  const CATEGORIES = getCategories();
+  const PRESET_RECOMMENDATIONS = getPresetRecommendations();
   const recommendation: Recommendation | null = useMemo(
     () => recommendedFor(targetKinds, targetTasks),
     [targetKinds, targetTasks],
@@ -54,21 +57,27 @@ export function ParamCatalog({
   }, [onClose]);
 
   const q = query.trim().toLowerCase();
-  const shown: { label: string; entries: GlossaryEntry[] } | null = useMemo(() => {
-    if (q) {
-      const all = CATEGORIES.flatMap((c) => c.entries);
-      const starts = all.filter((e) => e.name.toLowerCase().startsWith(q));
-      const contains = all.filter(
-        (e) => !e.name.toLowerCase().startsWith(q) && e.name.toLowerCase().includes(q),
-      );
-      return { label: `Search: “${query.trim()}”`, entries: [...starts, ...contains] };
-    }
-    if (selected === RECOMMENDED && recommendation) return recommendation;
-    const preset = PRESET_RECOMMENDATIONS.find((p) => p.label === selected);
-    if (preset) return preset;
-    const cat = CATEGORIES.find((c) => c.name === selected);
-    return cat ? { label: cat.name, entries: cat.entries } : null;
-  }, [q, query, selected, recommendation]);
+  const shown: { label: string; entries: GlossaryEntry[] } | null =
+    useMemo(() => {
+      if (q) {
+        const all = CATEGORIES.flatMap((c) => c.entries);
+        const starts = all.filter((e) => e.name.toLowerCase().startsWith(q));
+        const contains = all.filter(
+          (e) =>
+            !e.name.toLowerCase().startsWith(q) &&
+            e.name.toLowerCase().includes(q),
+        );
+        return {
+          label: `Search: “${query.trim()}”`,
+          entries: [...starts, ...contains],
+        };
+      }
+      if (selected === RECOMMENDED && recommendation) return recommendation;
+      const preset = PRESET_RECOMMENDATIONS.find((p) => p.label === selected);
+      if (preset) return preset;
+      const cat = CATEGORIES.find((c) => c.name === selected);
+      return cat ? { label: cat.name, entries: cat.entries } : null;
+    }, [q, query, selected, recommendation]);
 
   const presentCount = (entries: GlossaryEntry[]) =>
     entries.filter((e) => existingNames.has(e.name)).length;
@@ -103,7 +112,8 @@ export function ParamCatalog({
               >
                 <span className="cat-star">★</span> {recommendation.label}
                 <span className="cat-count">
-                  {presentCount(recommendation.entries)}/{recommendation.entries.length}
+                  {presentCount(recommendation.entries)}/
+                  {recommendation.entries.length}
                 </span>
               </li>
             )}
@@ -127,7 +137,9 @@ export function ParamCatalog({
             {CATEGORIES.map((c) => (
               <li
                 key={c.name}
-                className={`cat-item${selected === c.name && !q ? " active" : ""}`}
+                className={`cat-item${
+                  selected === c.name && !q ? " active" : ""
+                }`}
                 onClick={() => {
                   setSelected(c.name);
                   setQuery("");
@@ -161,13 +173,19 @@ export function ParamCatalog({
                               : "Click to read the full description"
                           }
                           onClick={() =>
-                            setExpanded((cur) => (cur === e.name ? null : e.name))
+                            setExpanded((cur) =>
+                              cur === e.name ? null : e.name,
+                            )
                           }
                         >
                           <div className="suggestion-head">
-                            <span className="entry-caret">{isOpen ? "▾" : "▸"}</span>
+                            <span className="entry-caret">
+                              {isOpen ? "▾" : "▸"}
+                            </span>
                             <span className="suggestion-name">{e.name}</span>
-                            <span className={`type-chip type-${e.type}`}>{e.type}</span>
+                            <span className={`type-chip type-${e.type}`}>
+                              {e.type}
+                            </span>
                             {e.default !== "" && (
                               <span className="suggestion-default">
                                 default {e.default}

@@ -1,4 +1,4 @@
-import type { GlossaryEntry } from "../../../source/components/types";
+import type { GlossaryEntry } from "../../components/types";
 
 // Parameters whose categories are BCP-47 codes get a human-readable label
 // ("en — English") so nobody needs to memorize language codes.
@@ -114,10 +114,10 @@ export function EditableCell({
         offConvention
           ? offConventionHint
           : isTilde
-            ? "~Tilde value — looked up in the phrases spreadsheet (per _language) before compiling"
-            : type === "multicategorical" && entry?.categories?.length
-              ? `Comma-separated. Options: ${entry.categories.join(", ")}`
-              : undefined
+          ? "~Tilde value — looked up in the phrases spreadsheet (per _language) before compiling"
+          : type === "multicategorical" && entry?.categories?.length
+          ? `Comma-separated. Options: ${entry.categories.join(", ")}`
+          : undefined
       }
       onChange={(e) => onChange(e.target.value)}
       spellCheck={false}
