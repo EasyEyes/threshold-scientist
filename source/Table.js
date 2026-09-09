@@ -20,6 +20,7 @@ import {
   setRepoName,
   manuallySetSwalTitle,
   fetchPhraseFileFromResources,
+  getDataFolderCsvLength,
 } from "../threshold/preprocess/gitlabUtils";
 import { buildArchiveResources } from "../threshold/preprocess/archiveResources";
 import { exportStudyBeforeCompiling } from "../threshold/preprocess/exportBeforeCompile";
@@ -140,6 +141,30 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
+    const currentRelease =
+      this.props.previousExperimentViewed?.previousReleasePin ?? null;
+    if (
+      this.props.activeExperiment !== "new" &&
+      currentRelease &&
+      this.props.selectedRelease !== currentRelease
+    ) {
+      const [resultFiles] = await getDataFolderCsvLength(
+        this.props.user,
+        this.props.activeExperiment,
+      );
+      if (resultFiles > 0) {
+        const warning = await Swal.fire({
+          icon: "warning",
+          title: "This experiment has collected data",
+          text: "Changing the release will make this dataset span two EasyEyes versions. Continue and recompile?",
+          showCancelButton: true,
+          confirmButtonText: "Continue",
+          cancelButtonText: "Cancel",
+          confirmButtonColor: "#d33",
+        });
+        if (!warning.isConfirmed) return;
+      }
+    }
     const operation = startCompilerOperation("experiment-compilation", {
       source: this.props.isCompiledFromArchiveBool ? "archive" : "spreadsheet",
       fileExtension: file.name.split(".").pop()?.toLowerCase(),

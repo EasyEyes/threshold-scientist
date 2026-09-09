@@ -203,6 +203,7 @@ describe("App - handleSetActivateExperiment", () => {
       previousExperimentDuration: null,
       previousExperimentLanguage: null,
       previousProlificConfig: null,
+      previousReleasePin: null,
     });
   });
 });

@@ -120,6 +120,7 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   setRepoName: jest.fn().mockResolvedValue("project"),
   manuallySetSwalTitle: jest.fn(),
   getProjectByNameInProjectList: jest.fn(() => null),
+  getDataFolderCsvLength: jest.fn().mockResolvedValue([0, []]),
 }));
 
 jest.mock("../../threshold/preprocess/fileUtils", () => ({
@@ -207,6 +208,34 @@ describe("Table freshness status", () => {
 describe("Table.handleTable", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it("requires confirmation before recompiling collected data with another release", async () => {
+    const {
+      getDataFolderCsvLength,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    getDataFolderCsvLength.mockResolvedValue([2, []]);
+    Swal.fire.mockResolvedValue({ isConfirmed: false });
+    const ref = React.createRef();
+    render(
+      <Table
+        ref={ref}
+        {...makeProps({
+          activeExperiment: { id: 7, name: "study" },
+          selectedRelease: "2026-09-09.2",
+          previousExperimentViewed: {
+            previousReleasePin: "2026-09-09.1",
+          },
+        })}
+      />,
+    );
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(Swal.fire).toHaveBeenCalledWith(
+      expect.objectContaining({ icon: "warning", showCancelButton: true }),
+    );
+    expect(compileExperimentWithEngine).not.toHaveBeenCalled();
   });
 
   it("fetches and initializes the latest glossary before preprocessing a fresh spreadsheet", async () => {

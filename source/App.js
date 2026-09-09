@@ -415,6 +415,7 @@ export default class App extends Component {
           previousExperimentDuration,
           previousExperimentLanguage,
           previousProlificConfig,
+          previousReleasePin,
         },
         compatibilityLanguage: "en",
       });
@@ -437,6 +438,7 @@ export default class App extends Component {
               previousExperimentDuration,
               previousExperimentLanguage,
               previousProlificConfig,
+              previousReleasePin,
             },
             compatibilityLanguage: "en",
           });
