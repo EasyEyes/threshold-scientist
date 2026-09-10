@@ -28,6 +28,14 @@ export function exportXlsx(matrix: string[][], name: string): void {
   XLSX.writeFile(wb, `${name}.xlsx`);
 }
 
+/**
+ * Signed-out "Download source": the table plus the files dropped in this
+ * session, which is everything the Studio can reach without a Pavlovia
+ * session. Signed in, the Studio uses the compiler's own pre-compile export
+ * instead (exportStudyBeforeCompiling), which also bundles every resource the
+ * table names from EasyEyesResources. Both produce a `<name>.raw.source.zip`
+ * — the uncompiled archive the compiler accepts like any *.source.zip.
+ */
 export async function exportSourceZip(
   matrix: string[][],
   resourceFiles: File[],
@@ -37,5 +45,5 @@ export async function exportSourceZip(
   zip.file(`${name}.csv`, Papa.unparse(matrix));
   for (const f of resourceFiles) zip.file(f.name, await f.arrayBuffer());
   const blob = await zip.generateAsync({ type: "blob" });
-  saveAs(blob, `${name}.source.zip`);
+  saveAs(blob, `${name}.raw.source.zip`);
 }

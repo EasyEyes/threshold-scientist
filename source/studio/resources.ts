@@ -16,7 +16,7 @@
  * GitLab (image-folder contents, target sound lists) and only run at compile
  * time; here their folders are checked by name.
  *
- * Nothing here blocks the Compile button: these are shown in the resource
+ * Nothing here blocks the Fast compile button: these are shown in the resource
  * panel as what the compiler will report, not as table errors.
  */
 import type { ExperimentTable } from "../../threshold/preprocess/experimentTable";

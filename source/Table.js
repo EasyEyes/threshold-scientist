@@ -166,6 +166,23 @@ export default class Table extends Component {
   }
 
   /**
+   * Whether this compile shows its progress in the classic step dialogs. With
+   * the "singleProgressUi" optimization (compileMode.ts, Studio compiles) the
+   * whole compile is shown by one continuous progress view that follows the
+   * recorded phases (studio/fastCompileProgress.ts); no dialog is open, so the
+   * retitles below (manuallySetSwalTitle) find nothing and Swal.showLoading()
+   * — which would open an empty dialog — must not be called.
+   */
+  usingStepDialogs() {
+    return !optimizationOn("singleProgressUi");
+  }
+
+  /** Spin the open step dialog's loader (a no-op without step dialogs). */
+  showDialogSpinner() {
+    if (this.usingStepDialogs()) Swal.showLoading(null);
+  }
+
+  /**
    * Make sure the glossary registry holds the server's current version.
    * Returns true when it does, false after reporting a download failure (the
    * caller aborts the compile and closes the dialog).
@@ -174,7 +191,7 @@ export default class Table extends Component {
     const prefetchPromise = getGlossaryPrefetch();
     if (prefetchPromise !== null) {
       manuallySetSwalTitle("Loading glossary …");
-      Swal.showLoading(null);
+      this.showDialogSpinner();
       try {
         await prefetchPromise;
       } catch (error) {
@@ -213,7 +230,7 @@ export default class Table extends Component {
     if (shouldFetch) {
       // The glossary isn't ready yet; tell the scientist we're waiting on it.
       manuallySetSwalTitle("Loading glossary …");
-      Swal.showLoading(null);
+      this.showDialogSpinner();
       try {
         // Fetch by explicit version so the CDN returns the just-published
         // glossary (new version = new URL = cache miss), never a stale copy.
@@ -304,7 +321,9 @@ export default class Table extends Component {
     if (this.props.resourcesLoaded) return Promise.resolve();
     if (parallel) {
       manuallySetSwalTitle("Listing resources ...");
-      Swal.showLoading(null);
+      this.showDialogSpinner();
+    } else if (!this.usingStepDialogs()) {
+      // No dialog to open; the progress view is showing the compile.
     } else {
       Swal.fire({
         title: "Listing resources ...",

@@ -434,6 +434,10 @@ describe("App - compileFromStudio after a classic compile", () => {
   const files = [new File(["a"], "exp.csv")];
 
   beforeEach(() => jest.clearAllMocks());
+  afterEach(() => {
+    // The Fast compile progress dialog each of these opens.
+    require("../studio/fastCompileProgress").hideFastCompileProgress();
+  });
 
   it("resets the compiler (as 'new experiment' does) when the Run step of a compiled experiment is showing", async () => {
     const { app, table } = fakeApp({
@@ -444,6 +448,39 @@ describe("App - compileFromStudio after a classic compile", () => {
     expect(await App.prototype.compileFromStudio.call(app, files)).toBe(true);
     expect(app.handleSetActivateExperiment).toHaveBeenCalledWith("REFRESH");
     expect(table.compileFiles).toHaveBeenCalledWith(files, "studio");
+  });
+
+  it("opens the Fast compile progress dialog before handing the files over", async () => {
+    const Swal = require("sweetalert2");
+    const { app, table } = fakeApp({});
+    table.compileFiles.mockImplementation(() => {
+      // Already up when the compile starts, so the first phases land on it.
+      expect(Swal.fire).toHaveBeenCalledTimes(1);
+    });
+    expect(await App.prototype.compileFromStudio.call(app, files)).toBe(true);
+    expect(table.compileFiles).toHaveBeenCalledTimes(1);
+    const options = Swal.fire.mock.calls[0][0];
+    expect(options.title).toContain("Fast compile");
+    expect(options.html).toContain("ee-fast-compile-time");
+    expect(options.showConfirmButton).toBe(false);
+  });
+
+  it("a preview opens the dialog labelled Preview", async () => {
+    const Swal = require("sweetalert2");
+    const { app } = fakeApp({});
+    await App.prototype.previewFromStudio.call(app, files, null);
+    expect(Swal.fire.mock.calls[0][0].title).toContain("Preview");
+    expect(Swal.fire.mock.calls[0][0].title).not.toContain("Fast compile");
+  });
+
+  it("still rethrows if handing the files over throws", async () => {
+    const { app, table } = fakeApp({});
+    table.compileFiles.mockImplementation(() => {
+      throw new Error("no table");
+    });
+    await expect(
+      App.prototype.compileFromStudio.call(app, files),
+    ).rejects.toThrow("no table");
   });
 
   it("also resets when a previous experiment is being viewed", async () => {
@@ -457,6 +494,44 @@ describe("App - compileFromStudio after a classic compile", () => {
     expect(await App.prototype.compileFromStudio.call(app, files)).toBe(true);
     expect(app.handleSetActivateExperiment).not.toHaveBeenCalled();
     expect(table.compileFiles).toHaveBeenCalledWith(files, "studio");
+  });
+});
+
+describe("App - studioPastExperiments", () => {
+  // The Studio's "Open past experiment…" gets one api object per signed-in
+  // User (a stable prop), and nothing when signed out.
+  it("is null when signed out", () => {
+    expect(
+      App.prototype.studioPastExperiments.call({
+        state: { accessToken: null, user: null },
+      }),
+    ).toBeNull();
+    expect(
+      App.prototype.studioPastExperiments.call({
+        state: { accessToken: "t", user: null },
+      }),
+    ).toBeNull();
+  });
+
+  it("is built once per User object and lists that user's experiments", async () => {
+    const user = {
+      projectList: Promise.resolve([
+        { id: 1, name: "reading", created_at: "2026-01-01T00:00:00Z" },
+      ]),
+      totalProjectPages: 1,
+    };
+    const fakeThis = { state: { accessToken: "t", user } };
+    const api = App.prototype.studioPastExperiments.call(fakeThis);
+    expect(App.prototype.studioPastExperiments.call(fakeThis)).toBe(api);
+    await expect(api.list()).resolves.toEqual({
+      experiments: [
+        { id: 1, name: "reading", created_at: "2026-01-01T00:00:00Z" },
+      ],
+      totalPages: 1,
+    });
+
+    fakeThis.state = { accessToken: "t", user: { ...user } };
+    expect(App.prototype.studioPastExperiments.call(fakeThis)).not.toBe(api);
   });
 });
 

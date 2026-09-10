@@ -44,6 +44,12 @@ import {
   getCommonResourcesNames,
   fetchPhraseFileFromResources,
 } from "../threshold/preprocess/gitlabUtils";
+import { exportStudyBeforeCompiling } from "../threshold/preprocess/exportBeforeCompile";
+import {
+  hideFastCompileProgress,
+  showFastCompileProgress,
+} from "./studio/fastCompileProgress";
+import { makePastExperimentsApi } from "./studio/pastExperiments";
 import { getRetryDelayMs } from "../threshold/preprocess/retry";
 import {
   handleAuthError,
@@ -217,6 +223,7 @@ export default class App extends Component {
     this.closeStudio = this.closeStudio.bind(this);
     this.compileFromStudio = this.compileFromStudio.bind(this);
     this.previewFromStudio = this.previewFromStudio.bind(this);
+    this.downloadSourceFromStudio = this.downloadSourceFromStudio.bind(this);
     this.fetchStudioPhraseFile = this.fetchStudioPhraseFile.bind(this);
 
     // The mounted Table (compiler step "table"), so the Studio can hand its
@@ -1029,8 +1036,16 @@ export default class App extends Component {
       return false;
     }
     // "studio" turns on the Studio-only speed optimizations (compileMode.ts);
-    // the compile itself is the same as a drop on this page.
-    table.compileFiles(files, "studio");
+    // the compile itself is the same as a drop on this page. One of them,
+    // "singleProgressUi", replaces the step dialogs with this progress view,
+    // which follows the compile's phases and leaves when it ends.
+    showFastCompileProgress({ mode: "compile" });
+    try {
+      table.compileFiles(files, "studio");
+    } catch (error) {
+      hideFastCompileProgress();
+      throw error;
+    }
     return true;
   }
 
@@ -1063,8 +1078,41 @@ export default class App extends Component {
       });
       return false;
     }
-    table.compileFiles(files, "studio", { placeholder });
+    // The preview's compile shows the same progress view (over the Studio),
+    // in its shorter "preview" shape: it ends when the preview tab opens.
+    showFastCompileProgress({ mode: "preview" });
+    try {
+      table.compileFiles(files, "studio", { placeholder });
+    } catch (error) {
+      hideFastCompileProgress();
+      throw error;
+    }
     return true;
+  }
+
+  /**
+   * Studio → Download source. The Studio's files (the table as csv plus the
+   * resources uploaded there) go through the compiler's own pre-compile
+   * export — the "Select file to download raw source" path — which adds every
+   * resource the table names from the scientist's EasyEyesResources, resolves
+   * ~tilde values through the phrases file, and saves
+   * `<name>.raw.source.zip`. Export problems are reported here (the Studio has
+   * no compiler error list). Resolves true when the download was produced.
+   */
+  async downloadSourceFromStudio(files) {
+    if (!this.state.accessToken || !this.state.user) return false;
+    const exportErrors = await exportStudyBeforeCompiling(
+      this.state.user,
+      files,
+    );
+    if (exportErrors.length === 0) return true;
+    const [error] = exportErrors;
+    await Swal.fire({
+      title: error.name,
+      html: `${error.message}${error.hint ? `<br/><br/>${error.hint}` : ""}`,
+      confirmButtonColor: "#666",
+    });
+    return false;
   }
 
   /**
@@ -1078,6 +1126,23 @@ export default class App extends Component {
     if (!this.state.accessToken || !this.state.user)
       return Promise.resolve(null);
     return fetchPhraseFileFromResources(this.state.user, name);
+  }
+
+  /**
+   * Studio → "Open past experiment…": the signed-in scientist's compiled
+   * experiments (studio/pastExperiments.ts), listed from the same project
+   * list as the Compiler tab's "Select compiled study" and read back from
+   * their Pavlovia repositories. Built once per User object so the Studio's
+   * prop is stable across renders; null when signed out.
+   */
+  studioPastExperiments() {
+    const { accessToken, user } = this.state;
+    if (!accessToken || !user) return null;
+    if (this._pastExperimentsUser !== user) {
+      this._pastExperimentsUser = user;
+      this._pastExperiments = makePastExperimentsApi(user);
+    }
+    return this._pastExperiments;
   }
 
   /**
@@ -1229,10 +1294,12 @@ export default class App extends Component {
                 onClose={this.closeStudio}
                 onCompile={this.compileFromStudio}
                 onPreview={this.previewFromStudio}
+                onDownloadSource={this.downloadSourceFromStudio}
                 fetchUserPhraseFile={this.fetchStudioPhraseFile}
                 userResources={accessToken ? resources : null}
                 resourcesLoaded={Boolean(resourcesLoaded)}
                 signedIn={Boolean(accessToken)}
+                pastExperiments={this.studioPastExperiments()}
               />
             </Suspense>
           </div>

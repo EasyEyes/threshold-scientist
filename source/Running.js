@@ -131,38 +131,56 @@ export default class Running extends Component {
       return;
     }
     this._isActivating = true;
-    try {
-      await Swal.fire({
-        title: "Activating ...",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        showConfirmButton: false,
-        didOpen: async () => {
-          Swal.showLoading(null);
-          getAllProjects(this.props.user).then((updatedProjects) => {
-            this.props.functions.handleSetProjectList(updatedProjects);
-          });
-          const { user, activeExperiment, newRepo, functions } = this.props;
-          // Timing marks only (no-ops unless a compile is being timed).
-          markCompilePhase("activation-requested");
-          const result = await runExperiment(
-            user,
-            activeExperiment,
-            user.currentExperiment.experimentUrl,
-          );
-          if (result && result.newStatus === "RUNNING") {
-            markCompilePhase("activation-set-running");
-            await this.waitForPavloviaReady();
-            markCompilePhase("pavlovia-ready");
-            printCompileTiming("compile → upload → Pavlovia ready");
-            endCompileTiming();
-            endCompile();
-            if (e !== null) e.target.removeAttribute("disabled");
-          }
-          Swal.close();
-        },
+    const activate = async () => {
+      getAllProjects(this.props.user).then((updatedProjects) => {
+        this.props.functions.handleSetProjectList(updatedProjects);
       });
+      const { user, activeExperiment } = this.props;
+      // Timing marks and progress-view phases only (timing is a no-op unless
+      // a compile is being timed).
+      markCompilePhase("activation-requested");
+      const result = await runExperiment(
+        user,
+        activeExperiment,
+        user.currentExperiment.experimentUrl,
+      );
+      if (result && result.newStatus === "RUNNING") {
+        markCompilePhase("activation-set-running");
+        await this.waitForPavloviaReady();
+        markCompilePhase("pavlovia-ready");
+        printCompileTiming("compile → upload → Pavlovia ready");
+        endCompileTiming();
+        endCompile();
+        if (e !== null) e.target.removeAttribute("disabled");
+      } else {
+        // Activation did not happen (runExperiment reported the failure);
+        // the compile is over, so the progress view can step aside.
+        endCompileTiming();
+        endCompile();
+      }
+    };
+    try {
+      if (!optimizationOn("singleProgressUi")) {
+        await Swal.fire({
+          title: "Activating ...",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: async () => {
+            Swal.showLoading(null);
+            await activate();
+            Swal.close();
+          },
+        });
+      } else {
+        // The Studio's progress view is showing the compile (its "Starting on
+        // Pavlovia" stretch); no dialog.
+        await activate();
+      }
     } catch (error) {
+      // Whatever went wrong, the compile is over.
+      endCompileTiming();
+      endCompile();
       captureError(error, "Failed to setModeToRun", {
         step: "setModeToRun",
         info: "Experiment Activation",

@@ -22,6 +22,80 @@ import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidTok
 import { redirectToOauth2 } from "../../threshold/preprocess/user";
 import { translatePhraseFileApi } from "./phraseFileApi";
 import { userRepoFiles } from "../../threshold/preprocess/constants";
+import {
+  endCompile,
+  optimizationOn,
+} from "../../threshold/preprocess/compileMode";
+import { markCompilePhase } from "../../threshold/preprocess/compileTiming";
+
+/**
+ * The step dialogs below ("Compiling ...", "Translating …", "Uploading ...")
+ * are the classic compile's progress display. With the "singleProgressUi"
+ * optimization (compileMode.ts, Studio compiles) the compile is shown by one
+ * continuous progress view that follows the recorded phases instead, so the
+ * dialogs are not opened and the work runs directly.
+ */
+const stepDialogs = () => !optimizationOn("singleProgressUi");
+
+/**
+ * The drop did not lead to a compile (no valid experiment file, or the
+ * session must be re-authenticated). With step dialogs the scientist has just
+ * dismissed the explanation; without them, the progress view is waiting for
+ * phases that will never come — tell it the compile is over.
+ */
+const noCompileFromThisDrop = () => {
+  if (!stepDialogs()) endCompile();
+};
+
+/** Open the "Compiling ..." dialog the rest of the compile retitles. */
+const openCompilingDialog = () => {
+  if (!stepDialogs()) return;
+  Swal.fire({
+    title: "Compiling ...",
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    // Show the spinner immediately. Later phases only retitle this same modal
+    // (manuallySetSwalTitle), so if we don't start the loader here it never
+    // appears when resources are already loaded and the glossary is cached.
+    didOpen: () => Swal.showLoading(),
+  });
+};
+
+/**
+ * Run `work` behind a blocking "<title>" dialog with a spinner, closing it
+ * when done — or, without step dialogs, run it directly after recording
+ * `phase` for the progress view.
+ */
+const runStep = async (
+  title: string,
+  phase: string,
+  work: () => Promise<void>,
+) => {
+  if (!stepDialogs()) {
+    markCompilePhase(phase);
+    try {
+      await work();
+    } catch (error) {
+      // The compile will not happen; let the progress view go before the
+      // failure propagates.
+      endCompile();
+      throw error;
+    }
+    return;
+  }
+  await Swal.fire({
+    title,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    didOpen: async () => {
+      // @ts-ignore
+      Swal.showLoading(null);
+      await work();
+      Swal.close();
+    },
+  });
+};
 
 // Helper function to identify impulse response files by their filename pattern
 const isImpulseResponseFile = (file: File): boolean => {
@@ -52,7 +126,10 @@ export const handleDrop = async (
   handleArchiveBool: (isArchivedBool: boolean) => void,
   handleArchiveZip: (archiveZip: any) => void,
 ) => {
-  if (!(await ensureValidToken(redirectToOauth2))) return;
+  if (!(await ensureValidToken(redirectToOauth2))) {
+    noCompileFromThisDrop();
+    return;
+  }
 
   const resourcesList: File[] = [];
   const impulseResponseList: File[] = [];
@@ -137,16 +214,7 @@ export const handleDrop = async (
         }),
       );
     });
-    Swal.fire({
-      title: "Compiling ...",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      // Show the spinner immediately. Later phases only retitle this same modal
-      // (manuallySetSwalTitle), so if we don't start the loader here it never
-      // appears when resources are already loaded and the glossary is cached.
-      didOpen: () => Swal.showLoading(),
-    });
+    openCompilingDialog();
     if (experimentFile) {
       // Store impulse response files
       userRepoFiles.impulseResponses = impulseResponseList;
@@ -161,26 +229,18 @@ export const handleDrop = async (
       // Build an experiment
       userRepoFiles.experiment = experimentFile;
       handleExperimentFile(experimentFile);
-    }
+    } else noCompileFromThisDrop();
     return;
   }
 
   // Translate, store, and upload phrase files before other uploads
   if (phraseFileList.length > 0) {
-    await Swal.fire({
-      title: "Translating …",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      didOpen: async () => {
-        // @ts-ignore
-        Swal.showLoading(null);
-        const translatedFiles = await Promise.all(
-          phraseFileList.map((f) => translatePhraseFileApi(f)),
-        );
-        userRepoFiles.phrases = translatedFiles;
-        await createOrUpdateCommonResources(user, translatedFiles);
-        Swal.close();
-      },
+    await runStep("Translating …", "resources-translating", async () => {
+      const translatedFiles = await Promise.all(
+        phraseFileList.map((f) => translatePhraseFileApi(f)),
+      );
+      userRepoFiles.phrases = translatedFiles;
+      await createOrUpdateCommonResources(user, translatedFiles);
     });
   }
 
@@ -191,51 +251,32 @@ export const handleDrop = async (
     frequencyResponseList.length > 0 ||
     targetSoundListList.length > 0
   ) {
-    await Swal.fire({
-      title: "Uploading ...",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      didOpen: async () => {
-        // @ts-ignore
-        Swal.showLoading(null);
+    await runStep("Uploading ...", "resources-saving", async () => {
+      // Store impulse response files
+      userRepoFiles.impulseResponses = impulseResponseList;
 
-        // Store impulse response files
-        userRepoFiles.impulseResponses = impulseResponseList;
+      // Store frequency response files
+      userRepoFiles.frequencyResponses = frequencyResponseList;
 
-        // Store frequency response files
-        userRepoFiles.frequencyResponses = frequencyResponseList;
+      // Store target sound list files
+      userRepoFiles.targetSoundLists = targetSoundListList;
 
-        // Store target sound list files
-        userRepoFiles.targetSoundLists = targetSoundListList;
-
-        // Upload all resources, including impulse responses and frequency responses
-        const allResources = [
-          ...resourcesList,
-          ...impulseResponseList,
-          ...frequencyResponseList,
-          ...targetSoundListList,
-        ];
-        await createOrUpdateCommonResources(user, allResources);
-        addResourcesForApp(await getCommonResourcesNames(user));
-
-        Swal.close();
-      },
+      // Upload all resources, including impulse responses and frequency responses
+      const allResources = [
+        ...resourcesList,
+        ...impulseResponseList,
+        ...frequencyResponseList,
+        ...targetSoundListList,
+      ];
+      await createOrUpdateCommonResources(user, allResources);
+      addResourcesForApp(await getCommonResourcesNames(user));
     });
   }
   if (experimentFile) {
-    Swal.fire({
-      title: "Compiling ...",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      // Show the spinner immediately. Later phases only retitle this same modal
-      // (manuallySetSwalTitle), so if we don't start the loader here it never
-      // appears when resources are already loaded and the glossary is cached.
-      didOpen: () => Swal.showLoading(),
-    });
+    openCompilingDialog();
 
     // Build an experiment
     userRepoFiles.experiment = experimentFile;
     handleExperimentFile(experimentFile);
-  }
+  } else noCompileFromThisDrop();
 };

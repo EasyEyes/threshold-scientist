@@ -1,0 +1,66 @@
+/* Fast compile progress dialog (fastCompileProgress.ts).
+
+   A SweetAlert2 dialog, so the popup, its fonts, sizes, radius, backdrop and
+   the green loader ring are the compiler page's own (source/css/components.scss
+   styles .swal2-popup). Only the content is ours: the seconds counting up and
+   a one-line status. Imported by fastCompileProgress.ts so it is present
+   whenever the dialog is. */
+
+/* Bolt in the title, drawn in EasyEyes green, sized to the title's text. */
+.ee-fast-compile-popup .ee-fast-compile-bolt {
+  width: 0.85em;
+  height: 0.85em;
+  vertical-align: -0.08em;
+  margin-right: 0.25em;
+  fill: #019267;
+}
+
+/* The Studio's beta stamp (styles.css .studio-beta) beside the title; sized
+   against the title's larger type so it stays a small tag. */
+.ee-fast-compile-popup .ee-fast-compile-beta {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.4em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f78812;
+  color: #fff;
+  font-size: 0.38em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+.ee-fast-compile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
+}
+
+/* The seconds: the one thing that shows how fast this is. Large, tabular so
+   the digits do not jitter as they change, in the page's text color. */
+.ee-fast-compile-time {
+  font-size: 2.4em;
+  font-weight: 600;
+  line-height: 1.15;
+  color: #333;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  margin: 0.15em 0 0.05em;
+}
+
+/* Status line, in the dialog's text style. */
+.ee-fast-compile-phase {
+  min-height: 1.5em;
+}
+
+/* "Ready": the seconds turn EasyEyes green for the moment before it closes. */
+.ee-fast-compile.is-done .ee-fast-compile-time,
+.ee-fast-compile.is-done .ee-fast-compile-phase {
+  color: #019267;
+}
+.ee-fast-compile.is-done .ee-fast-compile-phase {
+  font-weight: 600;
+}

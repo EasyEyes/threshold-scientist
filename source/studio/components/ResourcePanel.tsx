@@ -11,7 +11,7 @@ interface Props {
   /**
    * The compiler's own missing-resource errors for this table (resources.ts
    * checkResources) — shown here as what a compile will report. They do not
-   * gate the Compile button.
+   * gate the Fast compile button.
    */
   compilerErrors: EasyEyesError[];
   onJump: (paramName: string) => void;

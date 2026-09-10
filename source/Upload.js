@@ -1,6 +1,7 @@
 import React, { Component, createRef } from "react";
 
 import { createPavloviaExperiment } from "../threshold/preprocess/gitlabUtils";
+import { markCompilePhase } from "../threshold/preprocess/compileTiming";
 import {
   finishCompilerOperation,
   getCurrentCompilerOperation,
@@ -25,6 +26,10 @@ export default class Upload extends Component {
     // }
     if (this.props.user.currentExperiment.pavloviaPreferRunningModeBool)
       this.upload();
+    // Otherwise the compile waits here for the scientist to name the project
+    // and click Upload. Recorded so a progress view following the compile
+    // (Studio's fastCompileProgress) steps aside until "upload-started".
+    else markCompilePhase("upload-awaiting-confirmation");
   }
 
   async upload(e = null) {

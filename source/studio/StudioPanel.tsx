@@ -24,6 +24,8 @@ import { ErrorPanel } from "./components/ErrorPanel";
 import { GlossaryPanel } from "./components/GlossaryPanel";
 import { ResourcePanel } from "./components/ResourcePanel";
 import { ExistingFilesModal } from "./components/ExistingFilesModal";
+import { PastExperimentsModal } from "./components/PastExperimentsModal";
+import type { PastExperimentsApi } from "./pastExperiments";
 import type { UserResources } from "./resources";
 import { ParamCatalog } from "./components/ParamCatalog";
 import { ParamAutocomplete } from "./components/ParamAutocomplete";
@@ -42,9 +44,12 @@ interface Props {
    */
   onClose?: () => void;
   /**
-   * Compile: hands the table (as csv) plus the resource files to the
-   * compiler's own drop handler — the same path as dropping the files on the
-   * compiler page. Resolves true once handed over.
+   * Studio compile: hands the table (as csv) plus the resource files to the
+   * compiler's own drop handler — the same checks and steps as dropping the
+   * files on the compiler page, run as a "studio" compile (compileMode.ts):
+   * the Studio-only optimizations and, when a runtime is published, the thin
+   * experiment repository. The button says "⚡ Fast compile" so nobody takes
+   * it for the Compiler tab's compile. Resolves true once handed over.
    */
   onCompile: (files: File[]) => Promise<boolean>;
   /**
@@ -53,6 +58,16 @@ interface Props {
    * from the browser — nothing is uploaded. Resolves true once handed over.
    */
   onPreview: (files: File[], placeholder: Window | null) => Promise<boolean>;
+  /**
+   * Download source, signed in: the same files, packaged by the compiler's
+   * own pre-compile export (exportStudyBeforeCompiling) together with every
+   * resource the table names from EasyEyesResources, into
+   * `<name>.raw.source.zip` — what the Compiler tab's "Select file to
+   * download raw source" produces. Resolves true once the download started.
+   * Signed out (or when absent) the Studio packages the table and the files
+   * dropped here itself.
+   */
+  onDownloadSource?: (files: File[]) => Promise<boolean>;
   /**
    * Reads a phrase file from the signed-in user's EasyEyesResources
    * `phrases/` folder (null when absent or signed out) — the compile's own
@@ -67,6 +82,12 @@ interface Props {
   userResources: UserResources | null;
   resourcesLoaded: boolean;
   signedIn: boolean;
+  /**
+   * The signed-in scientist's past compiled experiments (pastExperiments.ts):
+   * the "Open past experiment…" button reads one's table from its Pavlovia
+   * repository into the grid. Null when signed out (the button is hidden).
+   */
+  pastExperiments?: PastExperimentsApi | null;
 }
 
 /**
@@ -81,10 +102,12 @@ interface Props {
 export default function StudioPanel({
   onCompile,
   onPreview,
+  onDownloadSource,
   fetchUserPhraseFile,
   userResources,
   resourcesLoaded,
   signedIn,
+  pastExperiments = null,
 }: Props) {
   const [table, setTable] = useState<TableState>(() =>
     matrixToState(parseCsvString(EXAMPLES["Demo experiment"])),
@@ -101,8 +124,10 @@ export default function StudioPanel({
   const [validating, setValidating] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [existingOpen, setExistingOpen] = useState(false);
+  const [pastOpen, setPastOpen] = useState(false);
   const [compiling, setCompiling] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Have the preview's service worker active, and the hosted runtime (the
@@ -250,6 +275,14 @@ export default function StudioPanel({
     setName(file.name.replace(/\.(csv|xlsx)$/i, ""));
   };
 
+  // A past experiment's table, named after the experiment it came from. Its
+  // compile makes a new experiment: the compiler picks a free name, exactly as
+  // when the same table is dropped on the Compiler tab twice.
+  const openPastExperiment = (past: { name: string; matrix: string[][] }) => {
+    loadMatrix(past.matrix);
+    setName(past.name);
+  };
+
   const addParam = (rawName: string) =>
     setTable((t) => {
       // Super-matching params (questionAndAnswer@@) are added as the next
@@ -352,6 +385,15 @@ export default function StudioPanel({
               e.target.value = "";
             }}
           />
+          {pastExperiments && (
+            <button
+              className="button-easyeyes button-grey"
+              onClick={() => setPastOpen(true)}
+              title="Open the table of an experiment you compiled before"
+            >
+              Open past experiment…
+            </button>
+          )}
           <div className="toolbar-spacer" />
           <button
             className="button-easyeyes button-grey"
@@ -361,10 +403,30 @@ export default function StudioPanel({
           </button>
           <button
             className="button-easyeyes button-grey"
-            title="The exact zip today's compiler accepts: table + resources"
-            onClick={() => exportSourceZip(stateToMatrix(table), files, name)}
+            disabled={downloading || !name.trim()}
+            title={
+              !name.trim()
+                ? "Give the experiment a name"
+                : signedIn && onDownloadSource
+                ? `Download ${name.trim()}.raw.source.zip: the table plus every resource it names — the files uploaded here and those in your EasyEyesResources — ready to share or to drop on the Compiler tab`
+                : `Download ${name.trim()}.raw.source.zip: the table plus the files uploaded here. Sign in on the Compiler tab to include the resources from your EasyEyesResources too`
+            }
+            onClick={async () => {
+              setDownloading(true);
+              try {
+                const matrix = stateToMatrix(table);
+                if (signedIn && onDownloadSource)
+                  await onDownloadSource([
+                    tableToCsvFile(matrix, name.trim()),
+                    ...files,
+                  ]);
+                else await exportSourceZip(matrix, files, name.trim());
+              } finally {
+                setDownloading(false);
+              }
+            }}
           >
-            Download .source.zip
+            {downloading ? "Downloading…" : "Download source"}
           </button>
           <button
             className="button-easyeyes button-orange button-preview"
@@ -421,7 +483,7 @@ export default function StudioPanel({
                 ? "Fix the compiler errors first"
                 : !name.trim()
                 ? "Give the experiment a name"
-                : "Compile and upload to Pavlovia — the same steps as dropping the table on the Compiler tab"
+                : "Fast compile: the same checks as the Compiler tab, but the experiment is uploaded as a thin repository — the shared EasyEyes runtime is loaded from a published, versioned copy instead of being copied into it. Not the Compiler tab's compile."
             }
             onClick={async () => {
               setCompiling(true);
@@ -435,7 +497,21 @@ export default function StudioPanel({
               }
             }}
           >
-            {compiling ? "Compiling…" : "Compile"}
+            {compiling ? (
+              "Compiling…"
+            ) : (
+              <>
+                <svg
+                  className="button-bolt"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M13.5 2.5 5 13.5h6l-1.5 8 9-11.5h-6l1-7.5z" />
+                </svg>
+                Fast compile
+              </>
+            )}
           </button>
         </div>
 
@@ -564,6 +640,14 @@ export default function StudioPanel({
             loaded={resourcesLoaded}
             needed={needed}
             onClose={() => setExistingOpen(false)}
+          />
+        )}
+
+        {pastOpen && pastExperiments && (
+          <PastExperimentsModal
+            api={pastExperiments}
+            onOpen={openPastExperiment}
+            onClose={() => setPastOpen(false)}
           />
         )}
 

@@ -30,19 +30,69 @@ Once opened it stays mounted (hidden) while the compiler is showing, and the
 compiler stays mounted while the studio is showing, so switching back and
 forth loses nothing; Media and Studio close each other.
 
-**Compile** (signed in, no table errors) writes the table to a `<name>.csv`
-File and hands it — together with any resource files dropped in the studio —
-to the compiler's `Table.compileFiles(files, "studio")`, the same entry the
-Compiler tab's drop zone uses (`Table.onDrop` → `compileFiles(files,
+**⚡ Fast compile** (signed in, no table errors) writes the table to a
+`<name>.csv` File and hands it — together with any resource files dropped in
+the studio — to the compiler's `Table.compileFiles(files, "studio")`, the same
+entry the Compiler tab's drop zone uses (`Table.onDrop` → `compileFiles(files,
 "compiler")`): resources are saved to `EasyEyesResources`, the table is
-compiled, uploaded to Pavlovia and set to RUNNING. Nothing about compilation
-differs; the studio then shows the compiler view, where the progress dialog,
-any compile errors, and the upload/run steps appear. Whatever the compiler was
-showing — the Run page of an experiment just compiled, a previous experiment —
-a Studio compile or preview first resets it to a fresh table step
-(`App.resetCompilerForNewExperiment`). Missing resources do not disable
-Compile (see Resource awareness below); the compile reports them exactly as
+compiled, uploaded to Pavlovia and set to RUNNING. The checks and the steps are
+the compiler's own; what differs is the `"studio"` source, which turns on the
+Studio-only optimizations and, once a runtime is published, the thin experiment
+repository (both below). The button is deliberately labelled "⚡ Fast
+compile", not "Compile", so nobody takes it for the Compiler tab's compile:
+the repository it produces is different. The studio then shows the compiler view,
+where any compile errors and the upload/run steps appear. Whatever the
+compiler was showing — the Run page of an experiment just compiled, a previous
+experiment — a Studio compile or preview first resets it to a fresh table step
+(`App.resetCompilerForNewExperiment`). Missing resources do not disable Fast
+compile (see Resource awareness below); the compile reports them exactly as
 the Compiler tab would.
+
+**One progress dialog, not the step dialogs.** The Compiler tab shows a
+compile as a sequence of dialogs — "Compiling ...", "Preparing files ...",
+"Uploading ...", "Activating ..." — each with a spinner. A Fast compile shows
+one dialog for the whole compile — checks, upload, activation
+(`source/studio/fastCompileProgress.ts`, content styles in
+`fastCompileProgress.css`). It is a SweetAlert2 dialog like every other on the
+page — the same popup, fonts, radius, backdrop and green loader ring
+(`source/css/components.scss`) — so it looks native; the content is what
+differs: "⚡ Fast compile" with the Studio's beta stamp, the seconds counting
+up (large, the one thing that shows how fast this is) and a quiet one-line status
+("Checking the experiment", "Uploading", "Starting on Pavlovia"…). On "Ready"
+the loader stops, the seconds turn green, and after under a second the dialog
+closes on the Run page. It is driven by the phases the pipeline already
+records for Sentry and timing (`recordCompilerPhase`, `recordUploadPhase`,
+`markCompilePhase`), which `compileMode.onCompilePhase` now also delivers to
+listeners; no new reporting was added to the pipeline. The `singleProgressUi`
+optimization in `compileMode.ts` (Studio-only, like the others) makes the
+pipeline skip opening its dialogs (`dropzone.ts`, `Table.js`,
+`gitlabUtils._createExperimentTask_uploadFiles`, `Running.js`) and turns its
+retitles (`manuallySetSwalTitle`, the upload's step reports) into no-ops so
+they cannot overwrite the Studio's dialog. Error dialogs are untouched: they
+replace the progress dialog (SweetAlert2 shows one dialog at a time), and a
+failed phase (validation errors, an upload failure) ends the progress dialog
+without closing whatever error dialog took its place. If a passing notice
+(e.g. a discarded file) took the screen for a moment, the progress dialog
+returns with the next phase. If the experiment sets
+`_pavloviaPreferRunningModeBool` FALSE, the compile stops at the Upload step
+for the scientist to name the project and click Upload: the dialog steps aside
+(`Upload.js` records `upload-awaiting-confirmation`) and returns when the
+upload starts, and the paused time is not counted. A preview's compile uses
+the same dialog, titled "Preview", ending as the preview tab opens.
+
+**Download source** produces `<name>.raw.source.zip`, the uncompiled archive
+the compiler accepts like any `*.source.zip`. Signed in, the Studio's files
+(the csv plus the resources dropped there) go through the compiler's own
+pre-compile export, `exportStudyBeforeCompiling`
+(`threshold/preprocess/exportBeforeCompile.ts`, the Compiler tab's "Select file
+to download raw source"): every resource the table names is added from the
+scientist's EasyEyesResources — fonts, forms, texts, sounds, images, code,
+with `~tilde` values resolved through the phrases file — and files dropped in
+the Studio win over same-named repository copies. So the archive holds the
+table and all its resources, wherever they came from, like the source download
+after a compile. Export errors are shown in a dialog (`App.downloadSourceFromStudio`).
+Signed out, the Studio packages the table and the dropped files itself
+(`exporters.ts`), which is all it can reach.
 
 **Preview** (signed in, no errors) runs the experiment right away in a new
 tab, with nothing uploaded. The files go through the very same
@@ -73,7 +123,8 @@ during the preamble, the repo-name search started before validation, the
 phrases pin and project-list refresh together, the upload's files prepared
 while the repository is created, the data-folder count not delaying
 activation); the first Pavlovia readiness check after 1 s instead of 5 s and
-then every 0.4 s for a while. With those, what is uploaded does not change,
+then every 0.4 s for a while; and the single progress view in place of the
+step dialogs (above). With those, what is uploaded does not change,
 and every failure still stops the compile where it did. A compile started from
 the Compiler tab runs exactly as before. To give every compile an
 optimization, change its entry in `COMPILE_OPTIMIZATIONS_FOR` from `"studio"`
@@ -170,13 +221,32 @@ for like; it only records performance marks and adds `elapsedMs` to the Sentry
 compile breadcrumbs. Its console table is commented out in
 `printCompileTiming` for both paths — uncomment it there while measuring.
 
-Later phases (not yet done): open past experiments in the studio.
+### Open past experiment
+
+Signed in, the toolbar has "Open past experiment…": a picker of the
+scientist's compiled experiments — the same list as the Compiler tab's
+"Select compiled study" (`user.projectList`, page 1; further pages with "Show
+more", and a search that asks Pavlovia too, `gitlabSearch.ts`). Picking one
+reads the experiment table the compile committed to the root of its
+repository — `<name>.csv` as text, or an `.xlsx` upload stored under its own
+name as JSON rows (`readXLSXFile` in `fileUtils.ts`; `repoTableToMatrix` in
+`fileImport.ts` turns either back into the grid's matrix) — and names the
+Studio's table after the experiment. The Compiler tab only runs a past
+experiment; here it is opened for editing, and its Fast compile makes a new
+experiment (the compiler picks a free name, exactly as when the same table
+is dropped twice) — the past experiment is never changed. Repositories
+without a table in the root (not made by the compiler) are reported, not
+opened. Everything is in `pastExperiments.ts` and
+`components/PastExperimentsModal.tsx`; App builds the api once per signed-in
+User (`studioPastExperiments`). Resources are still checked against
+EasyEyesResources, not the past repository's copies.
 
 ## What it does
 
 - **Imports** any existing experiment `.csv` / `.xlsx` (identical parsing to
   the compiler: first sheet → CSV → PapaParse, with Excel's phantom empty
-  columns trimmed), or starts from the bundled example tables / templates.
+  columns trimmed), a past compiled experiment's table from Pavlovia (see
+  above), or starts from the bundled example tables / templates.
 - **Live validation** — every keystroke (debounced) runs the compiler's
   `TABLE_CHECKS` plus the block-presence check and `~tilde` resolution. Error
   and hint text is the compiler's own HTML, including "did you mean…" and
@@ -208,7 +278,7 @@ Later phases (not yet done): open past experiments in the studio.
   (`experimentFileChecks.ts`) run live against the pool a compile would have
   — the user's EasyEyesResources lists plus files dropped here. Their
   messages appear under the checklist as "what the compiler will report";
-  they never disable Compile, so a scientist can compile with resources still
+  they never disable Fast compile, so a scientist can compile with resources still
   missing and get the same errors the Compiler tab would give. (Image-folder
   contents and target sound lists need GitLab and are checked only at
   compile time; here their folders are checked by name.) Tilde values
@@ -220,23 +290,25 @@ Later phases (not yet done): open past experiments in the studio.
   the language chosen by `_language` (mirroring
   `convertLanguageToLanguageCode`). Live checks wait while that file is
   being read, so a slow read never shows up as tilde errors.
-- **Round-trip export** — `.xlsx`, or a `.source.zip` (table +
-  dropped resources) that the current upload step accepts unchanged.
+- **Round-trip export** — `.xlsx`, or Download source: a `.raw.source.zip`
+  with the table and all its resources (see above) that the current upload
+  step accepts unchanged.
 
 ## What it reuses (no forks, no mocks)
 
-| Piece                 | Source                                                                 |
-| --------------------- | ---------------------------------------------------------------------- |
-| Table model           | `threshold/preprocess/experimentTable.ts`                              |
-| All validation checks | `threshold/preprocess/validateExperimentTable.ts`                      |
-| Block check           | `threshold/preprocess/experimentFileChecks.ts`                         |
-| Tilde resolution      | `threshold/preprocess/resolveTildeValues.ts`                           |
-| Phrase-file parser    | `source/components/parsePhraseFile.ts`                                 |
-| Phrase file from repo | `threshold/preprocess/gitlabUtils.ts` (`fetchPhraseFileFromResources`) |
-| Resource discovery    | `threshold/preprocess/utils.ts` (get\*List/Names)                      |
-| Resource checks       | `threshold/preprocess/experimentFileChecks.ts`                         |
-| Language names        | `threshold/components/readPhrases.js` (`EE_LanguageEnglishName`)       |
-| Glossary              | `threshold/parameters/glossaryRegistry.ts` (live)                      |
+| Piece                 | Source                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Table model           | `threshold/preprocess/experimentTable.ts`                                                                                 |
+| All validation checks | `threshold/preprocess/validateExperimentTable.ts`                                                                         |
+| Block check           | `threshold/preprocess/experimentFileChecks.ts`                                                                            |
+| Tilde resolution      | `threshold/preprocess/resolveTildeValues.ts`                                                                              |
+| Phrase-file parser    | `source/components/parsePhraseFile.ts`                                                                                    |
+| Phrase file from repo | `threshold/preprocess/gitlabUtils.ts` (`fetchPhraseFileFromResources`)                                                    |
+| Past experiments      | `gitlabUtils.ts` (`getProjectsPage`), `gitlabSearch.ts`, `fetchAllPages.ts`, `fileUtils.ts` (`getTextFileDataFromGitLab`) |
+| Resource discovery    | `threshold/preprocess/utils.ts` (get\*List/Names)                                                                         |
+| Resource checks       | `threshold/preprocess/experimentFileChecks.ts`                                                                            |
+| Language names        | `threshold/components/readPhrases.js` (`EE_LanguageEnglishName`)                                                          |
+| Glossary              | `threshold/parameters/glossaryRegistry.ts` (live)                                                                         |
 
 The glossary is the compiler page's own live registry (`glossaryApi.js`
 prefetch), not a snapshot. Because the registry can be re-initialized with a
@@ -253,7 +325,8 @@ newer version mid-session, every derived list (`suggestibleEntries`,
   (`syncStudioMenu`) adds `main.ee-studio-wide` while the Studio is showing
   to get full width for the grid.
 - Layout: title row, toolbar (experiment name · New/open… · Open existing
-  csv/xlsx · Export xlsx · Download .source.zip · Preview · Compile), then the
+  csv/xlsx · Open past experiment… when signed in · Export xlsx · Download
+  source · Preview · ⚡ Fast compile), then the
   workspace — the editor on the left (the add-parameter strip, then the grid)
   and the sidebar on the right (parameter definition when a row is selected,
   Compiler checks, Upload resources).
@@ -264,7 +337,7 @@ newer version mid-session, every derived list (`suggestibleEntries`,
   z-index). The sidebar is `position: sticky`, so the definition of the
   clicked parameter and the checks stay beside the grid however far the
   page is scrolled.
-- The Preview button is orange, Compile green (EasyEyes button idiom); the
+- The Preview button is orange, Fast compile green (EasyEyes button idiom); the
   preview's placeholder tab shows a centered italic "Preparing preview…".
 - The example tables are bundled as text via the `.csv` → `asset/source`
   rule in `webpack.config.js` (`modules.d.ts` types those imports).

@@ -184,13 +184,27 @@ main.ee-studio-wide {
   background: #f78812;
 }
 
-/* Compile — the one primary action in the toolbar */
+/* ⚡ Fast compile — the one primary action in the toolbar */
 
 .ee-studio .button-compile {
-  padding-left: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding-left: 1.05rem;
   padding-right: 1.4rem;
 }
 
+/* Inline SVG bolt: sized to the text (optically a little larger than the
+   cap height), drawn in the button's own color, vertically centered by the
+   flex row rather than sitting on the text baseline like a glyph would. */
+.ee-studio .button-bolt {
+  width: 1.25em;
+  height: 1.25em;
+  flex: none;
+  fill: currentColor;
+  /* Nudge to counter the glyph's visual lean; keeps it centered on the text. */
+  margin-top: -0.05em;
+}
 .ee-studio .button-easyeyes:disabled,
 .ee-studio .button-easyeyes:disabled:hover {
   background: #c5c5c5;
@@ -1315,4 +1329,36 @@ main.ee-studio-wide {
   font-size: 12.5px;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* ---------- past experiments modal ---------- */
+
+.ee-studio .catalog.past-experiments {
+  width: min(760px, 100%);
+}
+
+.ee-studio .past-experiment .catalog-entry-main:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.ee-studio .past-experiment .catalog-present {
+  opacity: 0;
+}
+
+.ee-studio .past-experiment:hover .catalog-present,
+.ee-studio .past-experiment:focus-within .catalog-present,
+.ee-studio .past-experiment.open .catalog-present {
+  opacity: 1;
+}
+
+.ee-studio .past-experiments-more {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
+}
+
+.ee-studio .panel-note.past-experiments-error {
+  color: var(--error);
 }

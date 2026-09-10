@@ -42,3 +42,25 @@ export async function fileToMatrix(file: File): Promise<string[][]> {
   }
   return parseCsvString(await file.text());
 }
+
+const cellToString = (cell: unknown): string =>
+  cell === null || cell === undefined ? "" : String(cell);
+
+/**
+ * The experiment table as a compile committed it to the root of the
+ * experiment repository. A `.csv` upload is stored as-is; an `.xlsx` upload
+ * keeps its name but is stored as the first sheet's rows in JSON
+ * (`JSON.stringify(sheet_to_json(sheet, { header: 1 }))` —
+ * threshold/preprocess/fileUtils.ts readXLSXFile), so its cells may be
+ * numbers or booleans and its rows ragged. Either way the result is the
+ * matrix the Studio's own import would produce for that table.
+ */
+export function repoTableToMatrix(fileName: string, text: string): string[][] {
+  if (/\.xlsx$/i.test(fileName) && text.trimStart().startsWith("[")) {
+    const rows = JSON.parse(text) as unknown[];
+    return trimPhantomCells(
+      rows.map((row) => (Array.isArray(row) ? row.map(cellToString) : [])),
+    );
+  }
+  return parseCsvString(text);
+}
