@@ -1,12 +1,12 @@
 /**
- * The Fast compile progress dialog: one dialog for the whole compile —
+ * The Studio compile's progress dialog: one dialog for the whole compile —
  * checks, upload, activation — in place of the pipeline's sequence of step
  * dialogs ("Compiling ...", "Preparing files ...", "Uploading ...",
  * "Activating ...").
  *
  * It is a SweetAlert2 dialog like every other dialog on the compiler page —
  * same popup, fonts, radius and green loader ring — so it looks native; what
- * differs is the content: "Fast compile", the seconds counting up, and one
+ * differs is the content: "Compile" with the beta stamp, the seconds counting up, and one
  * quiet status line that follows the compile through the
  * phases the pipeline already records (compileMode.onCompilePhase). When the
  * pipeline runs with the "singleProgressUi" optimization (compileMode.ts,
@@ -67,9 +67,9 @@ export const PREVIEW_STEPS: Record<string, PhaseStep> = {
   "phrases-ready": { target: 22 },
   "preamble-completed": { target: 28, label: "Checking the experiment" },
   "preprocessing-started": { target: 34, label: "Checking the experiment" },
-  "preprocessing-completed": { target: 68, label: "Preparing the preview" },
-  "preview-staged": { target: 100, label: "Opening the preview" },
-  completed: { target: 100, label: "Opening the preview" },
+  "preprocessing-completed": { target: 68, label: "Preparing the experiment" },
+  "preview-staged": { target: 100, label: "Opening the experiment" },
+  completed: { target: 100, label: "Opening the experiment" },
 };
 
 /**
@@ -147,8 +147,6 @@ export const formatElapsed = (ms: number): string =>
 /** Marks the dialog's content, so we can tell our dialog from any other. */
 export const CONTAINER_ID = "ee-fast-compile";
 
-const BOLT_PATH = "M13.5 2.5 5 13.5h6l-1.5 8 9-11.5h-6l1-7.5z";
-
 const now = (): number =>
   typeof performance !== "undefined" ? performance.now() : Date.now();
 
@@ -191,11 +189,11 @@ export const showFastCompileProgress = (
 
   const open = () => {
     Swal.fire({
+      // The button's own words ("Compile" / "Run locally") with the Studio's
+      // beta stamp (styles.css .studio-beta), which tells this dialog apart
+      // from the Compiler tab's step dialogs.
       title:
-        `<svg class="ee-fast-compile-bolt" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${BOLT_PATH}"/></svg>` +
-        (mode === "preview" ? "Preview" : "Fast compile") +
-        // The Studio's beta stamp (styles.css .studio-beta), so the dialog
-        // says what the button and the Studio title say.
+        (mode === "preview" ? "Run locally" : "Compile") +
         `<span class="ee-fast-compile-beta" title="The Studio is in beta — the Compiler tab is unchanged">beta</span>`,
       html:
         `<div id="${CONTAINER_ID}" class="ee-fast-compile" role="status" aria-live="polite">` +

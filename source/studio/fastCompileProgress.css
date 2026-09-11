@@ -1,19 +1,10 @@
-/* Fast compile progress dialog (fastCompileProgress.ts).
+/* Studio compile progress dialog (fastCompileProgress.ts).
 
    A SweetAlert2 dialog, so the popup, its fonts, sizes, radius, backdrop and
    the green loader ring are the compiler page's own (source/css/components.scss
    styles .swal2-popup). Only the content is ours: the seconds counting up and
    a one-line status. Imported by fastCompileProgress.ts so it is present
    whenever the dialog is. */
-
-/* Bolt in the title, drawn in EasyEyes green, sized to the title's text. */
-.ee-fast-compile-popup .ee-fast-compile-bolt {
-  width: 0.85em;
-  height: 0.85em;
-  vertical-align: -0.08em;
-  margin-right: 0.25em;
-  fill: #019267;
-}
 
 /* The Studio's beta stamp (styles.css .studio-beta) beside the title; sized
    against the title's larger type so it stays a small tag. */

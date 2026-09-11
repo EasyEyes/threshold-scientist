@@ -30,7 +30,7 @@ Once opened it stays mounted (hidden) while the compiler is showing, and the
 compiler stays mounted while the studio is showing, so switching back and
 forth loses nothing; Media and Studio close each other.
 
-**⚡ Fast compile** (signed in, no table errors) writes the table to a
+**Compile** (signed in, no table errors) writes the table to a
 `<name>.csv` File and hands it — together with any resource files dropped in
 the studio — to the compiler's `Table.compileFiles(files, "studio")`, the same
 entry the Compiler tab's drop zone uses (`Table.onDrop` → `compileFiles(files,
@@ -38,25 +38,25 @@ entry the Compiler tab's drop zone uses (`Table.onDrop` → `compileFiles(files,
 compiled, uploaded to Pavlovia and set to RUNNING. The checks and the steps are
 the compiler's own; what differs is the `"studio"` source, which turns on the
 Studio-only optimizations and, once a runtime is published, the thin experiment
-repository (both below). The button is deliberately labelled "⚡ Fast
-compile", not "Compile", so nobody takes it for the Compiler tab's compile:
-the repository it produces is different. The studio then shows the compiler view,
+repository (both below). The button is plainly "Compile" (no icon); the
+progress dialog it opens carries the Studio's beta stamp, which is what tells
+a Studio compile apart from the Compiler tab's. The studio then shows the compiler view,
 where any compile errors and the upload/run steps appear. Whatever the
 compiler was showing — the Run page of an experiment just compiled, a previous
-experiment — a Studio compile or preview first resets it to a fresh table step
-(`App.resetCompilerForNewExperiment`). Missing resources do not disable Fast
-compile (see Resource awareness below); the compile reports them exactly as
+experiment — a Studio compile or local run first resets it to a fresh table step
+(`App.resetCompilerForNewExperiment`). Missing resources do not disable
+Compile (see Resource awareness below); the compile reports them exactly as
 the Compiler tab would.
 
 **One progress dialog, not the step dialogs.** The Compiler tab shows a
 compile as a sequence of dialogs — "Compiling ...", "Preparing files ...",
-"Uploading ...", "Activating ..." — each with a spinner. A Fast compile shows
+"Uploading ...", "Activating ..." — each with a spinner. A Studio compile shows
 one dialog for the whole compile — checks, upload, activation
 (`source/studio/fastCompileProgress.ts`, content styles in
 `fastCompileProgress.css`). It is a SweetAlert2 dialog like every other on the
 page — the same popup, fonts, radius, backdrop and green loader ring
 (`source/css/components.scss`) — so it looks native; the content is what
-differs: "⚡ Fast compile" with the Studio's beta stamp, the seconds counting
+differs: "Compile" with the Studio's beta stamp, the seconds counting
 up (large, the one thing that shows how fast this is) and a quiet one-line status
 ("Checking the experiment", "Uploading", "Starting on Pavlovia"…). On "Ready"
 the loader stops, the seconds turn green, and after under a second the dialog
@@ -77,8 +77,8 @@ returns with the next phase. If the experiment sets
 `_pavloviaPreferRunningModeBool` FALSE, the compile stops at the Upload step
 for the scientist to name the project and click Upload: the dialog steps aside
 (`Upload.js` records `upload-awaiting-confirmation`) and returns when the
-upload starts, and the paused time is not counted. A preview's compile uses
-the same dialog, titled "Preview", ending as the preview tab opens.
+upload starts, and the paused time is not counted. A local run's compile uses
+the same dialog, titled "Run locally", ending as the experiment's tab opens.
 
 **Download source** produces `<name>.raw.source.zip`, the uncompiled archive
 the compiler accepts like any `*.source.zip`. Signed in, the Studio's files
@@ -94,8 +94,8 @@ after a compile. Export errors are shown in a dialog (`App.downloadSourceFromStu
 Signed out, the Studio packages the table and the dropped files itself
 (`exporters.ts`), which is all it can reach.
 
-**Preview** (signed in, no errors) runs the experiment right away in a new
-tab, with nothing uploaded. The files go through the very same
+**Run locally** (the preview; signed in, no errors) runs the experiment right
+away in a new tab, with nothing uploaded. The files go through the very same
 `Table.compileFiles` → `handleDrop` → `handleTable` → `preprocessExperimentFile`
 as a compile, so validation is identical; the compile then stops before
 `setRepoName`/upload. The files a compile would commit — minus the runtime —
@@ -232,7 +232,7 @@ repository — `<name>.csv` as text, or an `.xlsx` upload stored under its own
 name as JSON rows (`readXLSXFile` in `fileUtils.ts`; `repoTableToMatrix` in
 `fileImport.ts` turns either back into the grid's matrix) — and names the
 Studio's table after the experiment. The Compiler tab only runs a past
-experiment; here it is opened for editing, and its Fast compile makes a new
+experiment; here it is opened for editing, and compiling it makes a new
 experiment (the compiler picks a free name, exactly as when the same table
 is dropped twice) — the past experiment is never changed. Repositories
 without a table in the root (not made by the compiler) are reported, not
@@ -263,6 +263,24 @@ EasyEyesResources, not the past repository's copies.
   dropdowns populated from the glossary; defaults show as placeholders;
   underscore parameters are editable only in column B; `%`-commented rows are
   skipped, not flagged.
+- **Columns by letter, and a "%" for columns** — value columns are headed
+  "Column C", "Column D", … (the compiler's error messages name cells the same
+  way; "condition" means something else in EasyEyes). Each header has a `%`
+  like the rows' comment toggle: it sets `conditionEnabledBool` FALSE in that
+  column (adding the row, alphabetically, if the table has none; clearing the
+  cell and removing an all-blank row when re-enabled), which is the compiler's
+  own way of dropping a column before validation and compile
+  (`filterDisabledConditionsFromParsed` in `main.ts`). The live checks apply
+  the same filter, with the compiler's column mapping so messages still name
+  the spreadsheet's letters. Skipped rows and columns (commented rows,
+  disabled columns — also those with `conditionTrials` 0) are tinted a very
+  light pastel red across their whole length (`--off-bg`), and **Export xlsx**
+  writes the same fill and muted italic text into the workbook (`buildXlsx` in
+  `exporters.ts`, via ExcelJS — the compiler's own styled-xlsx writer — loaded
+  as a separate chunk on first use by `excel.js`, since SheetJS's community
+  build cannot write fills). The colour is presentation only: the `%` and the
+  `conditionEnabledBool` cells carry the state, so re-importing the file
+  restores the tint.
 - **Parameter autocomplete and catalog** — the strip above the grid: type a
   name for glossary suggestions (super-matching parameters such as
   `questionAndAnswer@@` are added as the next free numbered instance), or
@@ -278,7 +296,7 @@ EasyEyesResources, not the past repository's copies.
   (`experimentFileChecks.ts`) run live against the pool a compile would have
   — the user's EasyEyesResources lists plus files dropped here. Their
   messages appear under the checklist as "what the compiler will report";
-  they never disable Fast compile, so a scientist can compile with resources still
+  they never disable Compile, so a scientist can compile with resources still
   missing and get the same errors the Compiler tab would give. (Image-folder
   contents and target sound lists need GitLab and are checked only at
   compile time; here their folders are checked by name.) Tilde values
@@ -326,7 +344,7 @@ newer version mid-session, every derived list (`suggestibleEntries`,
   to get full width for the grid.
 - Layout: title row, toolbar (experiment name · New/open… · Open existing
   csv/xlsx · Open past experiment… when signed in · Export xlsx · Download
-  source · Preview · ⚡ Fast compile), then the
+  source · Run locally · Compile), then the
   workspace — the editor on the left (the add-parameter strip, then the grid)
   and the sidebar on the right (parameter definition when a row is selected,
   Compiler checks, Upload resources).
@@ -337,8 +355,8 @@ newer version mid-session, every derived list (`suggestibleEntries`,
   z-index). The sidebar is `position: sticky`, so the definition of the
   clicked parameter and the checks stay beside the grid however far the
   page is scrolled.
-- The Preview button is orange, Fast compile green (EasyEyes button idiom); the
-  preview's placeholder tab shows a centered italic "Preparing preview…".
+- The Run locally button is orange, Compile green (EasyEyes button idiom); the
+  local run's placeholder tab shows a centered italic "Preparing preview…".
 - The example tables are bundled as text via the `.csv` → `asset/source`
   rule in `webpack.config.js` (`modules.d.ts` types those imports).
 

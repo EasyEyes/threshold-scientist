@@ -9,7 +9,11 @@ import {
   resolveTildeValues,
   syncResolvedFontRows,
 } from "../../threshold/preprocess/resolveTildeValues";
-import { dataframeFromPapaParsed } from "../../threshold/preprocess/utils";
+import {
+  dataframeFromPapaParsed,
+  setConditionColumnMapping,
+} from "../../threshold/preprocess/utils";
+import { filterDisabledConditionsFromParsed } from "../../threshold/preprocess/main";
 import type { EasyEyesError } from "../../threshold/preprocess/errorMessages";
 import type { PhraseTable } from "../components/parsePhraseFile";
 import { readi18nPhrases } from "../../threshold/components/readPhrases";
@@ -92,6 +96,15 @@ export function runValidation(
     errors.push(
       ...isBlockPresentAndProper(dataframeFromPapaParsed({ data } as any)),
     );
+    // As main.ts: after the block check, columns the scientist disabled
+    // (conditionEnabledBool FALSE, conditionTrials 0) are dropped, and the
+    // column letters in messages keep referring to the spreadsheet's columns.
+    // The mapping is a module global the compile resets when it starts; this
+    // function is synchronous, so the compile can never see ours — it is
+    // cleared again below regardless.
+    const filtered = filterDisabledConditionsFromParsed(data);
+    data = filtered.data;
+    setConditionColumnMapping(filtered.conditionColumnMapping);
     let table = new ExperimentTable(data);
 
     // Mirror main.ts: resolve ~tilde phrase references before validation.
@@ -136,5 +149,7 @@ export function runValidation(
       table: null,
       data: null,
     };
+  } finally {
+    setConditionColumnMapping(undefined);
   }
 }

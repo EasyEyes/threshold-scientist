@@ -700,7 +700,7 @@ export default class Table extends Component {
             // A Studio preview ends here: the validated experiment is served
             // from the browser instead of being uploaded.
             if (preview) {
-              await this.openPreview(user, operation, preview, warningList);
+              await this.openPreview(user, operation, preview);
               return;
             }
 
@@ -817,7 +817,7 @@ export default class Table extends Component {
    * current versions (as a compile pins them for its project), and the
    * placeholder tab is sent to the preview. Nothing is uploaded.
    */
-  async openPreview(user, operation, preview, warningList) {
+  async openPreview(user, operation, preview) {
     try {
       manuallySetSwalTitle("Preparing preview ...");
       const [generated, uploaded, resources] = await Promise.all([
@@ -852,17 +852,11 @@ export default class Table extends Component {
       });
       Swal.close();
       showPreview(url, preview.placeholder);
-      this.setState({
-        showDropZone: true,
-        errors: [
-          ...warningList,
-          {
-            context: "preprocessor",
-            kind: "correct",
-            name: "Preview opened in a new tab. Nothing was uploaded; compile when the experiment is ready.",
-          },
-        ],
-      });
+      // The preview belongs to the Studio: leave the Compiler tab's Table
+      // step exactly as it was before (no table name, no messages), as
+      // reset() leaves it. Warnings were the Studio's to show; nothing about
+      // the preview appears on the compiler page.
+      this.setState({ showDropZone: true, tableName: null, errors: [] });
       finishCompilerOperation(operation, "completed", { preview: true });
     } catch (error) {
       preview.placeholder?.close?.();

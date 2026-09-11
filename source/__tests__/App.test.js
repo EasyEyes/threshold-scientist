@@ -450,7 +450,7 @@ describe("App - compileFromStudio after a classic compile", () => {
     expect(table.compileFiles).toHaveBeenCalledWith(files, "studio");
   });
 
-  it("opens the Fast compile progress dialog before handing the files over", async () => {
+  it("opens the Studio's progress dialog before handing the files over", async () => {
     const Swal = require("sweetalert2");
     const { app, table } = fakeApp({});
     table.compileFiles.mockImplementation(() => {
@@ -460,17 +460,16 @@ describe("App - compileFromStudio after a classic compile", () => {
     expect(await App.prototype.compileFromStudio.call(app, files)).toBe(true);
     expect(table.compileFiles).toHaveBeenCalledTimes(1);
     const options = Swal.fire.mock.calls[0][0];
-    expect(options.title).toContain("Fast compile");
+    expect(options.title).toMatch(/^Compile/);
     expect(options.html).toContain("ee-fast-compile-time");
     expect(options.showConfirmButton).toBe(false);
   });
 
-  it("a preview opens the dialog labelled Preview", async () => {
+  it("a local run (preview) opens the dialog labelled Run locally", async () => {
     const Swal = require("sweetalert2");
     const { app } = fakeApp({});
     await App.prototype.previewFromStudio.call(app, files, null);
-    expect(Swal.fire.mock.calls[0][0].title).toContain("Preview");
-    expect(Swal.fire.mock.calls[0][0].title).not.toContain("Fast compile");
+    expect(Swal.fire.mock.calls[0][0].title).toMatch(/^Run locally/);
   });
 
   it("still rethrows if handing the files over throws", async () => {

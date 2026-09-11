@@ -16,6 +16,11 @@
   --warning: #b45309;
   --warning-bg: #fdf6ec;
   --step-bg: #eee;
+  /* Rows/columns the compiler skips (%-commented, disabled): a very light
+     pastel red. The xlsx export fills them with the same colour (exporters.ts
+     SKIPPED_FILL_ARGB). */
+  --off-bg: #fde8e8;
+  --off-head-bg: #f6d3d3;
   --ink: #333;
   --ink-soft: #666;
   --line: #e2e2e2;
@@ -184,27 +189,13 @@ main.ee-studio-wide {
   background: #f78812;
 }
 
-/* ⚡ Fast compile — the one primary action in the toolbar */
+/* Compile — the one primary action in the toolbar */
 
 .ee-studio .button-compile {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  padding-left: 1.05rem;
+  padding-left: 1.4rem;
   padding-right: 1.4rem;
 }
 
-/* Inline SVG bolt: sized to the text (optically a little larger than the
-   cap height), drawn in the button's own color, vertically centered by the
-   flex row rather than sitting on the text baseline like a glyph would. */
-.ee-studio .button-bolt {
-  width: 1.25em;
-  height: 1.25em;
-  flex: none;
-  fill: currentColor;
-  /* Nudge to counter the glyph's visual lean; keeps it centered on the text. */
-  margin-top: -0.05em;
-}
 .ee-studio .button-easyeyes:disabled,
 .ee-studio .button-easyeyes:disabled:hover {
   background: #c5c5c5;
@@ -308,7 +299,37 @@ main.ee-studio-wide {
 .ee-studio .cond-head {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 4px;
+}
+
+.ee-studio .cond-head .cond-label {
+  margin-right: 3px;
+}
+
+/* Delete sits at the far right of the header, after the "%" toggle. */
+.ee-studio .cond-head .col-delete {
+  margin-left: auto;
+}
+
+/* Disabled columns (conditionEnabledBool FALSE / conditionTrials 0): the
+   compiler drops them, so they read like %-commented rows — the whole column
+   tinted pale red, its text muted, everything still editable. */
+.ee-studio .grid th.col-disabled {
+  background: var(--off-head-bg);
+}
+
+.ee-studio .grid th.col-disabled .cond-label {
+  color: #999;
+  font-style: italic;
+}
+
+.ee-studio .grid td.col-disabled {
+  background: var(--off-bg);
+}
+
+.ee-studio .grid td.col-disabled .cell-input {
+  color: #aaa;
+  font-style: italic;
 }
 
 .ee-studio .col-letter {
@@ -474,6 +495,13 @@ main.ee-studio-wide {
   font-style: italic;
 }
 
+/* The whole commented row is tinted, including the sticky name cell (whose
+   own white background this outranks) — the same red as a disabled column. */
+.ee-studio .grid tr.row-comment td,
+.ee-studio .grid tr.row-comment td.col-param {
+  background: var(--off-bg);
+}
+
 .ee-studio .icon-btn.comment-btn:hover {
   color: var(--green);
   background: var(--pale-green);
@@ -525,10 +553,12 @@ main.ee-studio-wide {
 }
 
 /* off-convention cell that is empty: locked per the spreadsheet convention,
-   but visually clean — plain white, just not typable */
+   but visually clean — no hover shade, just not typable. Transparent rather
+   than white so the cell takes its row's/column's tint (skipped, selected)
+   instead of punching a white hole in it. */
 .ee-studio .cell-input.locked,
 .ee-studio .cell-input.locked:hover {
-  background: #fff;
+  background: transparent;
   cursor: not-allowed;
   opacity: 1;
 }
@@ -905,6 +935,14 @@ main.ee-studio-wide {
 .ee-studio .glossary-facts dd {
   margin: 0;
   font-size: 12.5px;
+  /* The value column takes what is left of the panel and never widens it:
+     many allowed values wrap onto further lines, and a long default or
+     example breaks inside the code rather than running out of the panel. */
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .ee-studio .glossary-facts code,
@@ -915,7 +953,8 @@ main.ee-studio-wide {
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 1px 5px;
-  margin-right: 4px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .ee-studio .glossary-explanation {

@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  columnDisabledBy,
   isCommentName,
   stripCommentPrefix,
   type TableState,
 } from "../tableModel";
 import { resolveEntry } from "../glossary";
 import { EditableCell } from "./EditableCell";
-import { conditionIndexToColumnName } from "../../../threshold/preprocess/utils";
+import { toColumnName } from "../../../threshold/preprocess/utils";
+
+/** Spreadsheet letter of value column `ci` (0 = C): A is the parameter, B experiment-wide. */
+const columnLetter = (ci: number): string => toColumnName(ci + 3);
 
 interface Props {
   table: TableState;
@@ -19,6 +23,8 @@ interface Props {
   onDeleteRow: (rowId: number) => void;
   onAddCondition: () => void;
   onDeleteCondition: (conditionIndex: number) => void;
+  /** The column's "%": flips its conditionEnabledBool (tableModel.ts). */
+  onToggleCondition: (conditionIndex: number) => void;
 }
 
 export function Grid({
@@ -32,9 +38,15 @@ export function Grid({
   onDeleteRow,
   onAddCondition,
   onDeleteCondition,
+  onToggleCondition,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
+  // Columns the compiler will drop (conditionEnabledBool FALSE or
+  // conditionTrials 0), shown muted like %-commented rows.
+  const disabledBy = Array.from({ length: table.conditionCount }, (_, ci) =>
+    columnDisabledBy(table, ci),
+  );
 
   useEffect(() => {
     if (!flashParam || !containerRef.current) return;
@@ -52,36 +64,73 @@ export function Grid({
             <th className="col-param">Parameter</th>
             <th className="col-value">
               <div className="cond-head">
-                <span>Experiment</span>
-                <span className="col-letter">B</span>
+                <span>Column B</span>
+                <span
+                  className="col-letter"
+                  title="Experiment-wide (underscore) parameters take their single value here"
+                >
+                  experiment
+                </span>
               </div>
             </th>
-            {Array.from({ length: table.conditionCount }, (_, ci) => (
-              <th key={ci} className="col-value">
-                <div className="cond-head">
-                  <span>Condition {ci + 1}</span>
-                  <span className="col-letter">
-                    {conditionIndexToColumnName(ci)}
-                  </span>
-                  {table.conditionCount > 1 && (
-                    <button
-                      className="icon-btn"
-                      title={`Delete condition ${ci + 1}`}
-                      onClick={() => onDeleteCondition(ci)}
+            {/* Named by their spreadsheet column letter, as the compiler's
+                error messages name them — "condition" means something else
+                in EasyEyes (conditionName, the block/condition structure). */}
+            {Array.from({ length: table.conditionCount }, (_, ci) => {
+              const letter = columnLetter(ci);
+              const disabled = disabledBy[ci];
+              const byToggle = disabled === "conditionEnabledBool";
+              return (
+                <th
+                  key={ci}
+                  className={`col-value${disabled ? " col-disabled" : ""}`}
+                >
+                  <div className="cond-head">
+                    <span
+                      className="cond-label"
+                      title={
+                        disabled === "conditionTrials"
+                          ? `Disabled: conditionTrials is 0 in column ${letter}, so the compiler drops it`
+                          : byToggle
+                          ? `Disabled: conditionEnabledBool is FALSE in column ${letter}, so the compiler drops it`
+                          : undefined
+                      }
                     >
-                      ✕
+                      Column {letter}
+                    </span>
+                    {/* The column's "%": like commenting out a row, but with
+                        the compiler's own switch for columns. */}
+                    <button
+                      className={`icon-btn comment-btn${byToggle ? " on" : ""}`}
+                      title={
+                        byToggle
+                          ? `Enable column ${letter} again (clears conditionEnabledBool)`
+                          : `Disable column ${letter} — sets conditionEnabledBool FALSE, so the compiler skips it`
+                      }
+                      onClick={() => onToggleCondition(ci)}
+                    >
+                      %
                     </button>
-                  )}
-                </div>
-              </th>
-            ))}
+                    {table.conditionCount > 1 && (
+                      <button
+                        className="icon-btn col-delete"
+                        title={`Delete column ${letter}`}
+                        onClick={() => onDeleteCondition(ci)}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </th>
+              );
+            })}
             <th className="col-add">
               <button
                 className="add-cond-btn"
                 onClick={onAddCondition}
-                title="Add a condition column"
+                title="Add a column"
               >
-                + condition
+                + column
               </button>
             </th>
           </tr>
@@ -180,12 +229,17 @@ export function Grid({
                     offConvention={!isComment && !isUnderscore}
                     offConventionHint={`Column B is reserved for experiment-wide (underscore) parameters; ${
                       row.name || "this parameter"
-                    } takes its values in the condition columns (C on).`}
+                    } takes its values in columns C on.`}
                     onChange={(v) => onCellChange(row.id, 0, v)}
                   />
                 </td>
                 {Array.from({ length: table.conditionCount }, (_, ci) => (
-                  <td key={ci} className="col-value">
+                  <td
+                    key={ci}
+                    className={`col-value${
+                      disabledBy[ci] ? " col-disabled" : ""
+                    }`}
+                  >
                     <EditableCell
                       entry={entry}
                       value={row.values[ci + 1] ?? ""}
@@ -195,7 +249,7 @@ export function Grid({
                       offConvention={
                         !isComment && isUnderscore && row.name !== "_about"
                       }
-                      offConventionHint={`${row.name} is experiment-wide: its single value in column B applies to every condition, so this cell must stay blank.`}
+                      offConventionHint={`${row.name} is experiment-wide: its single value in column B applies to the whole experiment, so this cell must stay blank.`}
                       onChange={(v) => onCellChange(row.id, ci + 1, v)}
                     />
                   </td>

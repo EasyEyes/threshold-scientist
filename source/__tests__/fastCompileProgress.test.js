@@ -184,7 +184,9 @@ describe("showFastCompileProgress (dialog)", () => {
   it("is a SweetAlert2 dialog with the loader, the seconds and a status line", () => {
     showFastCompileProgress({ mode: "compile" });
     expect(container()).not.toBeNull();
-    expect(title()).toContain("Fast compile");
+    // The button's word, no icon.
+    expect(title()).toMatch(/^Compile/);
+    expect(document.querySelector("#swal2-title svg")).toBeNull();
     // The Studio's beta stamp, as on the Studio title.
     expect(
       document.querySelector("#swal2-title .ee-fast-compile-beta")?.textContent,
@@ -269,17 +271,17 @@ describe("showFastCompileProgress (dialog)", () => {
     expect(text("ee-fast-compile-phase")).toBe("Reading the table");
   });
 
-  it("labels a preview as such", () => {
+  it("labels a local run (preview) as such", () => {
     showFastCompileProgress({ mode: "preview" });
-    expect(title()).toContain("Preview");
+    expect(title()).toMatch(/^Run locally/);
     markCompilePhase("preview-staged");
-    expect(text("ee-fast-compile-phase")).toBe("Opening the preview");
+    expect(text("ee-fast-compile-phase")).toBe("Opening the experiment");
   });
 
   it("showing again replaces the dialog that is up", () => {
     showFastCompileProgress({ mode: "compile" });
     showFastCompileProgress({ mode: "preview" });
     expect(document.querySelectorAll(`#${CONTAINER_ID}`)).toHaveLength(1);
-    expect(title()).toContain("Preview");
+    expect(title()).toMatch(/^Run locally/);
   });
 });

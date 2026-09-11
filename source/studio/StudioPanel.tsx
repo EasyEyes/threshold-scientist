@@ -3,7 +3,9 @@ import {
   alphabeticalInsertIndex,
   matrixToState,
   newId,
+  skippedCells,
   stateToMatrix,
+  toggleConditionEnabled,
   type TableState,
 } from "./tableModel";
 import {
@@ -48,14 +50,15 @@ interface Props {
    * compiler's own drop handler — the same checks and steps as dropping the
    * files on the compiler page, run as a "studio" compile (compileMode.ts):
    * the Studio-only optimizations and, when a runtime is published, the thin
-   * experiment repository. The button says "⚡ Fast compile" so nobody takes
-   * it for the Compiler tab's compile. Resolves true once handed over.
+   * experiment repository. The "Compile" button. Resolves true once handed
+   * over.
    */
   onCompile: (files: File[]) => Promise<boolean>;
   /**
-   * Preview: the same files and the same compile up to validation, then the
-   * experiment opens in `placeholder` (a tab opened on the click) served
-   * from the browser — nothing is uploaded. Resolves true once handed over.
+   * "Run locally" (the preview): the same files and the same compile up to
+   * validation, then the experiment opens in `placeholder` (a tab opened on
+   * the click) served from the browser — nothing is uploaded. Resolves true
+   * once handed over.
    */
   onPreview: (files: File[], placeholder: Window | null) => Promise<boolean>;
   /**
@@ -397,7 +400,10 @@ export default function StudioPanel({
           <div className="toolbar-spacer" />
           <button
             className="button-easyeyes button-grey"
-            onClick={() => exportXlsx(stateToMatrix(table), name)}
+            onClick={() =>
+              void exportXlsx(stateToMatrix(table), name, skippedCells(table))
+            }
+            title="Save the table as xlsx; skipped rows and columns keep their tint"
           >
             Export xlsx
           </button>
@@ -441,9 +447,9 @@ export default function StudioPanel({
             }
             title={
               !previewSupported()
-                ? "Preview needs a browser with service workers"
+                ? "Running locally needs a browser with service workers"
                 : !signedIn
-                ? "Sign in on the Compiler tab to preview"
+                ? "Sign in on the Compiler tab to run locally"
                 : errorCount > 0
                 ? "Fix the compiler errors first"
                 : !name.trim()
@@ -464,7 +470,7 @@ export default function StudioPanel({
               }
             }}
           >
-            {previewing ? "Previewing…" : "Preview"}
+            {previewing ? "Starting…" : "Run locally"}
           </button>
           <button
             className="button-easyeyes button-green button-compile"
@@ -483,7 +489,7 @@ export default function StudioPanel({
                 ? "Fix the compiler errors first"
                 : !name.trim()
                 ? "Give the experiment a name"
-                : "Fast compile: the same checks as the Compiler tab, but the experiment is uploaded as a thin repository — the shared EasyEyes runtime is loaded from a published, versioned copy instead of being copied into it. Not the Compiler tab's compile."
+                : "Compile from the Studio: the same checks as the Compiler tab, but the experiment is uploaded as a thin repository — the shared EasyEyes runtime is loaded from a published, versioned copy instead of being copied into it."
             }
             onClick={async () => {
               setCompiling(true);
@@ -497,21 +503,7 @@ export default function StudioPanel({
               }
             }}
           >
-            {compiling ? (
-              "Compiling…"
-            ) : (
-              <>
-                <svg
-                  className="button-bolt"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path d="M13.5 2.5 5 13.5h6l-1.5 8 9-11.5h-6l1-7.5z" />
-                </svg>
-                Fast compile
-              </>
-            )}
+            {compiling ? "Compiling…" : "Compile"}
           </button>
         </div>
 
@@ -583,6 +575,9 @@ export default function StudioPanel({
                     values: r.values.filter((_, i) => i !== ci + 1),
                   })),
                 }))
+              }
+              onToggleCondition={(ci) =>
+                setTable((t) => toggleConditionEnabled(t, ci))
               }
             />
           </section>
