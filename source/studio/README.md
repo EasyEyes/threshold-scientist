@@ -241,6 +241,178 @@ opened. Everything is in `pastExperiments.ts` and
 User (`studioPastExperiments`). Resources are still checked against
 EasyEyesResources, not the past repository's copies.
 
+### EasyEyes Assistant (beta)
+
+Local run without the Netlify CLI: put `ANTHROPIC_API_KEY=…` in
+`website/.env`, then in one terminal
+`cd website/netlify/functions/studio-assistant && npm install && npm run dev`
+(`dev-server.ts` hosts just this function on :8888, the port
+`easyeyesBaseUrl.ts` probes) and in another the usual compiler dev server
+(`docs/experiment`: `FIREBASE_DATABASE_URL=… npm start`). Open
+`http://localhost:5500/?studio=1`, sign in on the Compiler tab, open the
+assistant. `netlify dev` from `website/` also works but boots every
+function and the webpack server together.
+
+Working name — Denis to pick the final one. It is a plain string in the
+pane header (`AssistantPanel.tsx`), the button's title/aria-label, and the
+first line of `prompt.ts` `INSTRUCTIONS`, so renaming is a three-place edit.
+
+A raised pill with the EasyEyes mark (`assistant/EasyEyesLogo.tsx`) and the
+word "Assistant" at the bottom right of the Studio opens a full-height chat
+pane along the right edge. A teaching callout above the pill (speech bubble
+"New — describe your study in plain English…" plus two bounces of the
+button) is built but switched off: `NUDGE_ENABLED` in `AssistantPanel.tsx`;
+the plan is to trigger it from state (first visit, table errors) rather than
+a timer. A strip under its header shows what was last clicked in the grid — a
+row (parameter name click) or a cell (`Column D · fontName`, with its value).
+The same selection travels to the model in each message's `studio_state`
+("selected in the grid: cell font in column D"), so "change this cell" has a
+referent. The scientist describes an experiment ("letter crowding, two
+eccentricities, 40 trials each") or a change ("make column D the mirror of
+C on the left"), and the assistant edits the grid. Everything is in
+`assistant/`; nothing in `threshold/` changes.
+
+The design is **interpret, don't type**: the model reads the scientist's
+ask and emits a compact specification; deterministic TypeScript in
+`builder/` turns it into the table. A full study used to be ~2 000 tokens of
+`edit_table` operations written by the model (30–40 s a round, timeouts); now
+it is a ~150-token spec and a build that takes milliseconds, so a study
+appears in a few seconds and an edit in one round.
+
+- **Recipes** (`builder/recipes/`): known-good study shapes —
+  `letter-crowding`, `letter-acuity`, `repeated-letters`, `reading`,
+  `rsvp-reading`, `color-management` (the display's color-management
+  parameters — `_screenColorSpace`, `_screenFloat16Bool`,
+  `_screenDitherBool`, `_screenMeasurePrecision`, `_screenColorCheckBool` —
+  on, with letter acuity at fixed low contrasts on mid gray; the spec's
+  `colorSpace` / `highPrecision` / `measurePrecision` / `colorimeter` /
+  `backgroundGray` also work on every other recipe), `sound-threshold`
+  (a target sound, alone or in a masker, QUEST on `targetSoundDBSPL`,
+  loudspeaker calibrated; modeled on InformationalMaskingMelody),
+  `questionnaire`. A recipe is one file: metadata and
+  keywords (so the model can pick it), default conditions, and two pure
+  functions, `experiment(spec)` for the experiment-wide rows and
+  `condition(c, spec)` for one condition's cells (positions, QUEST priors
+  such as the Bouma-based `crowdingGuessDeg`, flanker direction legal at that
+  position). House rule: a recipe is the ideal parameter set for its kind
+  of study — every value comes from a bundled example study
+  (`threshold/examples/tables`: RsvpAndCrowding, AcuityNearAndFar,
+  readingExperiment, InformationalMaskingMelody) or is a glossary default written out because a
+  scientist expects to see and tweak it there; values rarely touched (QUEST
+  beta/delta, response modes) are left to the glossary. Each recipe carries a
+  `rationale` — one clause per non-obvious choice ("DHKNORSVZ is the Sloan
+  letter set") — that the builder puts in its summary so the assistant can
+  explain the table, not just produce it. `_calibrateDistance` is always
+  written, `paper` unless the spec says otherwise. Adding a study type is
+  adding a recipe file and registering it in `recipes/index.ts`; the
+  prompt, the `build_study` tool and the tests that compile every recipe
+  pick it up automatically.
+- **Spec** (`builder/spec.ts`): `StudySpec` is what the model writes —
+  `recipe`, `conditions` (`eccentricityDeg` + `side`, or `xDeg`/`yDeg`,
+  `trials`, `font`, `durationSec`, `threshold`…), `blocks`
+  (`interleaved`/`separate`/explicit), `questionsBefore`/`questionsAfter`,
+  `calibration`, `forms`, `language`, `viewingDistanceCm`, and an escape
+  hatch `set` for any glossary parameter. The JSON schema is the tool's
+  input schema, so a malformed spec is refused before it reaches the builder.
+- **Builder** (`builder/build.ts`): `buildStudy(spec)` → `TableState`:
+  resolves positions, assigns blocks, appends question blocks, derives
+  condition names (`crowding 5deg left`), infers `fontSource` from the file
+  name, and writes only the parameters the recipe produced (experiment-wide
+  values collapse to one row). Its summary spells out the block structure so
+  the model does not "fix" what is already right.
+- **Knobs** (`builder/knobs.ts`): the deterministic skills behind
+  `apply_knobs` — one per kind of ask: `set_eccentricity`, `set_trials`,
+  `set_blocks`, `add_condition`, `remove_condition`, `mirror_conditions`,
+  `set_font`, `set_character_set`, `set_duration`, `set_threshold`,
+  `set_spacing_direction`, `set_viewing_distance`, `set_calibration`,
+  `set_display` (color management on any table; a precision test brings
+  `_screenFloat16Bool` with it, as the compiler requires), `set_sound`
+  (`needSoundOutput` is set in every condition because the compiler wants
+  one value per block), `add_questions`, `set_forms`, `set_participant_id`, `set_language`,
+  `set_recruitment`, `set_about`, `rename_condition`, and `set_for_all` for
+  anything else. Each knob owns the EasyEyes rules for its edit: moving a
+  target to the fovea switches `spacingDirection` from radial to horizontal
+  and re-derives the QUEST guess; switching a condition's threshold to
+  `spacingDeg` sets `spacingRelationToSize` to ratio; `set_blocks separate`
+  renumbers; columns are addressed by letter or condition name. Several
+  knobs go in one `apply_knobs` call, structural (add/remove/mirror) before
+  values, each seeing the table the previous left.
+- **The model never writes the grid.** Beyond `build_study` and
+  `apply_knobs` it has `lookup_parameters` / `search_parameters` over the
+  live glossary, `get_table`, `list_resources` (EasyEyesResources + dropped
+  files), `ask_user`, `set_experiment_name`, and — for the odd cell no knob
+  covers — `start_from` and a slimmed `edit_table` (`tools.ts`, Anthropic
+  tool-use format). A parameter name not in the glossary is refused with
+  near matches, so invented parameters cannot land.
+- **Every edit is validated before the model answers.** Every table-changing
+  tool returns the compiler's verdict on the resulting table —
+  `runValidation` + `checkResources`, the same checks the sidebar shows — and
+  the instructions require errors to be fixed before replying. In practice
+  the builder and knobs produce clean tables (`studioBuilder.test.js`
+  compiles every recipe, spec variant and knob under the real validator and
+  glossary), so the checks are a safety net rather than a repair loop.
+- **Build first, ask after.** A study is built with the recipe's defaults
+  (e.g. Roboto Mono from Google) and the question — a `.woff2` on file, a
+  consent form's exact name — comes after the table is on screen, only when
+  the answer cannot be inferred. `ask_user` ends the turn with a question
+  (and option buttons); the scientist's next message is the tool's result.
+- **Visible and reversible.** A built study reveals cell by cell down and
+  across the grid (`reveal` in `Grid.tsx`, staggered by row and column,
+  capped so a long table still finishes in about a second); an edit lights
+  the touched rows in a wave (`RowFlash`) and scrolls to the first. Each
+  reply that changed the table carries an "Undo these changes" button that
+  restores the table and name from before that turn, and the model is told
+  on the next message.
+- **Prompt** (`prompt.ts`): a short instructions block and a reference
+  block — the recipes with their fields and examples, the spec fields, the
+  knobs with their arguments, the template names, and every glossary
+  parameter on one line (type, default, allowed values, first sentence) —
+  marked for prompt caching since it is identical turn to turn. The Studio's
+  state (name, table as csv, current checks, what is selected in the grid)
+  travels with each of the scientist's messages in a `<studio_state>` block.
+- **Speed.** Because the model's output is now small, the server defaults
+  are `STUDIO_ASSISTANT_EFFORT=medium` and `STUDIO_ASSISTANT_THINKING=adaptive`
+  (`off` and `low`/`high`/`xhigh`/`max` remain available): a build round is
+  2–5 s including thinking, a full new study 8–12 s wall clock with its
+  summary, an edit 5–8 s. The dev server logs tokens in/out per call so slow
+  rounds can be diagnosed.
+- **Hedge against slow thinking** (`api.ts` `callAssistantHedged`). The
+  relay is a Netlify function with a hard 60 s wall (55 s upstream timeout),
+  and now and then the model decides to think for longer than that. Since
+  the tools are deterministic, a thought-free round gives an equally usable
+  answer in a few seconds, so if a round has not answered after 15 s
+  (`HEDGE_AFTER_MS`) the Studio starts a second request with `mode: "fast"`
+  (the function sends effort `low` and thinking `disabled` for that call —
+  a client can only ask for less than the site's setting, never more) and
+  takes whichever reply arrives first, aborting the other. The "Working"
+  row says "slow to think — trying a faster path too" while both run. Errors
+  before the hedge fires (sign-in, rate limit, Stop) stay final; a normal
+  round that hits the wall after it fired is covered by the fast one. Cost:
+  one extra cache-read call on slow rounds only.
+- **Loop** (`useAssistant.ts`): call → run tool_use blocks → append
+  tool_results → call again, up to 16 rounds a turn; thinking blocks are
+  passed back verbatim as the API requires. Cancel/error truncates the model
+  transcript back to the turn's start so it never holds a tool_use without
+  its result.
+- **Relay** (`netlify/functions/studio-assistant`): the browser composes the
+  whole request and sends it with the scientist's Pavlovia access token;
+  the function verifies the token against GitLab (`/api/v4/user`, cached
+  ten minutes), rate-limits per client and per account, caps payload,
+  messages, tools and `max_tokens`, adds the server-side key and relays to
+  the Anthropic Messages API (`claude-sonnet-5` by default). Environment:
+  `ANTHROPIC_API_KEY` (required — without it the drawer reports the
+  assistant as not configured), `STUDIO_ASSISTANT_MODEL` (optional),
+  `STUDIO_ASSISTANT_EFFORT` (optional: `medium` default, `low`, `high`,
+  `xhigh`, `max`, or `off` for models without the parameter),
+  `STUDIO_ASSISTANT_THINKING` (optional: `adaptive` default, or `off`). Signed
+  out, the drawer explains that signing in on the Compiler tab is needed.
+
+Known limits of this first version: replies are not streamed (a typing
+indicator shows while a round runs; a round is one model call, under the
+function's 60 s limit — the hedge above keeps slow rounds from surfacing as
+timeouts); the rate limiter is per function instance; resource files can be
+named but not uploaded from the chat.
+
 ## What it does
 
 - **Imports** any existing experiment `.csv` / `.xlsx` (identical parsing to

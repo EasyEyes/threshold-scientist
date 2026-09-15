@@ -1,0 +1,1353 @@
+/* EasyEyes Assistant: round button + a full-height side pane along the right
+   edge, inset a little from the top and bottom so its rounded left corners
+   read cleanly. Scoped under .ee-studio like the rest of the Studio
+   (styles.css holds the shared tokens). */
+
+.ee-studio {
+  --asst-width: 400px;
+  --asst-fab: 44px; /* trigger size */
+  --asst-radius: 16px;
+  --asst-soft-bg: #f5f7f6;
+  --asst-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ---------- trigger ---------- */
+
+/* Logo only, and unmistakably AI: a 44px squircle (corners rounded to
+   ~40% of the side, so it sits between a rounded square and a circle),
+   white face, and a thin ring drawn in a slowly turning green→teal→blue conic
+   gradient (the border is a gradient painted in the border box behind a
+   white padding box). A small sparkle badge sits on the corner. While the
+   assistant works, the ring turns faster. */
+@property --asst-ring {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.ee-studio .asst-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1200;
+  width: var(--asst-fab);
+  height: var(--asst-fab);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid transparent;
+  border-radius: 40%;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    conic-gradient(
+        from var(--asst-ring),
+        #019267,
+        #2fc39a,
+        #8ec5ff,
+        #b89cff,
+        #019267
+      )
+      border-box;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 4px 14px rgba(1, 146, 103, 0.16);
+  animation: asst-ring-turn 6s linear infinite;
+  transition:
+    right 0.22s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes asst-ring-turn {
+  to {
+    --asst-ring: 360deg;
+  }
+}
+
+/* The sparkle badge: a four-point star on green, at the top-right corner. */
+.ee-studio .asst-fab::before {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 2px #fff;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='white' d='M8 2.2c.5 2.6 1.6 3.7 4.2 4.2C9.6 6.9 8.5 8 8 10.6 7.5 8 6.4 6.9 3.8 6.4 6.4 5.9 7.5 4.8 8 2.2zM12.2 10.2c.2 1.1.7 1.6 1.8 1.8-1.1.2-1.6.7-1.8 1.8-.2-1.1-.7-1.6-1.8-1.8 1.1-.2 1.6-.7 1.8-1.8z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+}
+
+.ee-studio .asst-fab svg {
+  display: block;
+  flex: none;
+}
+
+.ee-studio .asst-fab:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 8px 20px rgba(1, 146, 103, 0.24);
+}
+
+.ee-studio .asst-fab:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.ee-studio .asst-fab:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px var(--green);
+}
+
+/* While the callout is up, the trigger gives two small bounces. */
+.ee-studio .asst-fab.nudging {
+  animation:
+    asst-ring-turn 6s linear infinite,
+    asst-bob 1.6s ease-in-out 2;
+}
+
+@keyframes asst-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-6px);
+  }
+  55% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(-3px);
+  }
+}
+
+/* The callout: a small speech bubble above the trigger, right-aligned to
+   it, with a tail pointing down at the button. */
+.ee-studio .asst-nudge {
+  position: fixed;
+  right: 20px;
+  bottom: calc(20px + var(--asst-fab) + 14px);
+  z-index: 1201;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 280px;
+  padding: 10px 8px 10px 12px;
+  background: #fff;
+  border: 1px solid #e1e5e3;
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.14);
+  animation: asst-nudge-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ee-studio .asst-nudge::after {
+  content: "";
+  position: absolute;
+  right: 26px;
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-right: 1px solid #e1e5e3;
+  border-bottom: 1px solid #e1e5e3;
+  transform: rotate(45deg);
+}
+
+@keyframes asst-nudge-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ee-studio .asst-nudge-body {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.ee-studio .asst-nudge-kicker {
+  display: inline-block;
+  margin-right: 7px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.ee-studio .asst-nudge-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: -4px -2px 0 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9aa3a0;
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ee-studio .asst-nudge-close:hover {
+  background: #f1f3f2;
+  color: var(--ink);
+}
+
+/* Slides left to sit beside the open pane. */
+.ee-studio .asst-fab.open {
+  right: calc(var(--asst-width) + 20px);
+}
+
+/* Working: the ring turns faster. */
+.ee-studio .asst-fab.busy {
+  animation-duration: 1.6s;
+}
+
+/* ---------- pane ---------- */
+
+.ee-studio .asst-drawer {
+  position: fixed;
+  top: 12px;
+  right: 0;
+  bottom: 12px;
+  z-index: 1190;
+  width: var(--asst-width);
+  max-width: 100vw;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-right: none;
+  border-radius: var(--asst-radius) 0 0 var(--asst-radius);
+  box-shadow: -16px 0 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transform: translateX(100%);
+  transition:
+    transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0.22s;
+  visibility: hidden;
+}
+
+.ee-studio .asst-drawer.open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+/* The pane's width (--asst-width) is set inline on .asst-root by the drag
+   handle / widen button. While dragging, nothing eases. */
+.ee-studio .asst-root.resizing .asst-drawer,
+.ee-studio .asst-root.resizing .asst-fab {
+  transition: none;
+}
+
+.ee-studio .asst-root.resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* Drag handle down the pane's left edge; shows a green line on hover/drag. */
+.ee-studio .asst-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.ee-studio .asst-resizer::after {
+  content: "";
+  position: absolute;
+  top: var(--asst-radius);
+  bottom: var(--asst-radius);
+  left: 0;
+  width: 2px;
+  background: var(--green);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ee-studio .asst-resizer:hover::after,
+.ee-studio .asst-root.resizing .asst-resizer::after {
+  opacity: 1;
+}
+
+/* header */
+
+.ee-studio .asst-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px 12px 18px;
+  background: #fff;
+  border-bottom: 1px solid #ececec;
+}
+
+/* A small live dot: breathes slowly at rest and sends out a faint ring;
+   both quicken while the model is working. */
+.ee-studio .asst-status-dot {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--green);
+  flex: none;
+  animation: asst-breathe 2.8s ease-in-out infinite;
+}
+
+.ee-studio .asst-status-dot::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1.5px solid var(--green);
+  opacity: 0;
+  animation: asst-ping 2.8s ease-out infinite;
+}
+
+.ee-studio .asst-status-dot.busy {
+  animation-duration: 1.1s;
+}
+
+.ee-studio .asst-status-dot.busy::after {
+  animation-duration: 1.1s;
+}
+
+@keyframes asst-breathe {
+  0%,
+  100% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes asst-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  70%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.ee-studio .asst-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14.5px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ee-studio .asst-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.ee-studio .asst-text-btn {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ee-studio .asst-text-btn:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--asst-soft-bg);
+}
+
+.ee-studio .asst-text-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ee-studio .asst-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ee-studio .asst-icon:hover {
+  background: var(--asst-soft-bg);
+  color: var(--ink);
+}
+
+/* context strip: what the assistant is looking at (only when something is
+   clicked; white, no rules — just the chips) */
+
+.ee-studio .asst-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 2px;
+  background: #fff;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.ee-studio .asst-chip {
+  flex: none;
+  max-width: 60%;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: #dff1e8;
+  color: var(--dark-green);
+  font-family: var(--asst-mono);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ee-studio .asst-chip-col {
+  color: var(--green);
+}
+
+/* The cell's current value, shown like a cell: mono on a light field. */
+.ee-studio .asst-value {
+  min-width: 0;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: #f4f5f4;
+  border: 1px solid #e6e8e7;
+  color: var(--ink);
+  font-family: var(--asst-mono);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* "row" / "empty": a quiet tag instead of a value. */
+.ee-studio .asst-context-note {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px dashed #d3d8d5;
+  color: #8f9694;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- transcript: a lab log, not a chat ----------
+   Full-width entries, left-aligned, each with a small mono label (REQUEST /
+   ASSISTANT) and a time; hairlines between turns; the assistant's steps as a
+   timeline, each opening to show what the tool answered. */
+
+.ee-studio .asst-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 20px 12px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  scrollbar-width: thin;
+  scrollbar-color: #d9dedb transparent;
+}
+
+/* Keep a readable measure when the pane is wide. */
+.ee-studio .asst-entry,
+.ee-studio .asst-steps {
+  max-width: 720px;
+}
+
+.ee-studio .asst-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 0 10px;
+  animation: asst-rise 0.16s ease-out;
+}
+
+/* Each new request opens a turn: a hairline above it. */
+.ee-studio .asst-entry-user {
+  border-top: 1px solid #edf0ee;
+  margin-top: 6px;
+  padding-top: 16px;
+}
+
+.ee-studio .asst-entry-user:first-child {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 12px;
+}
+
+.ee-studio .asst-entry-label {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--asst-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8a918e;
+}
+
+.ee-studio .asst-entry-assistant .asst-entry-label,
+.ee-studio .asst-entry-question .asst-entry-label {
+  color: var(--green);
+}
+
+.ee-studio .asst-entry-error .asst-entry-label {
+  color: var(--error);
+}
+
+.ee-studio .asst-time {
+  margin-left: auto;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #9aa3a0;
+  font-variant-numeric: tabular-nums;
+}
+
+.ee-studio .asst-entry-body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Parameter names and `code` inside prose: set as code so they do not read
+   as typos. Parameters are buttons that jump to the row in the grid. */
+.ee-studio .asst-inline-code,
+.ee-studio .asst-inline-param {
+  display: inline;
+  padding: 0.5px 5px;
+  border-radius: 4px;
+  font-family: var(--asst-mono);
+  font-size: 0.92em;
+  line-height: 1;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.ee-studio .asst-inline-code {
+  background: #f1f3f2;
+  border: 1px solid #e3e7e5;
+  color: var(--ink);
+}
+
+.ee-studio .asst-inline-param {
+  margin: 0;
+  border: 1px solid #cfe5db;
+  background: #eef7f2;
+  color: var(--dark-green);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.ee-studio .asst-inline-param:hover {
+  background: #dff1e8;
+  border-color: var(--green);
+}
+
+.ee-studio .asst-inline-param:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+
+/* The request reads as the heading of its turn. */
+.ee-studio .asst-entry-user .asst-entry-body {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.ee-studio .asst-entry-question {
+  border-left: 2px solid var(--green);
+  padding-left: 12px;
+}
+
+.ee-studio .asst-entry-error .asst-entry-body {
+  color: var(--error);
+}
+
+.ee-studio .asst-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ee-studio .asst-option {
+  border: 1px solid #cfd6d2;
+  background: #fff;
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 5px 11px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ee-studio .asst-option:hover {
+  border-color: var(--green);
+  background: #f3f9f6;
+}
+
+/* Under a reply that changed the table: a note and the revert control. */
+.ee-studio .asst-entry-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed #e6e9e7;
+}
+
+.ee-studio .asst-foot-note {
+  font-family: var(--asst-mono);
+  font-size: 11px;
+  color: #8a918e;
+  letter-spacing: 0.02em;
+}
+
+.ee-studio .asst-undo {
+  margin-left: auto;
+  border: 1px solid #cfd6d2;
+  background: #fff;
+  color: var(--ink-soft);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ee-studio .asst-undo:hover:not(:disabled) {
+  color: var(--error);
+  border-color: rgba(187, 44, 34, 0.4);
+  background: var(--error-bg);
+}
+
+.ee-studio .asst-undo:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ---------- result card ----------
+   Under a reply that changed the study: a report, not a paragraph. Verdict
+   on the first line (green rule when it compiles, red when it does not),
+   then the blocks, the edits, the errors verbatim, files still needed, and
+   a folded "Why these values". */
+
+.ee-studio .asst-result {
+  margin: 2px 0 6px;
+  padding: 10px 14px 10px 14px;
+  border: 1px solid #e3e7e5;
+  border-left: 3px solid var(--green);
+  border-radius: 8px;
+  background: #fbfcfb;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink);
+  animation: asst-rise 0.18s ease-out;
+}
+
+.ee-studio .asst-result.bad {
+  border-left-color: var(--error);
+  background: #fdfaf9;
+}
+
+.ee-studio .asst-result-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.ee-studio .asst-result-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--dark-green);
+  white-space: nowrap;
+}
+
+.ee-studio .asst-result.bad .asst-result-status {
+  color: var(--error);
+}
+
+.ee-studio .asst-result-mark {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ee-studio .asst-result.bad .asst-result-mark {
+  background: var(--error);
+}
+
+.ee-studio .asst-result-warn {
+  font-weight: 400;
+  color: var(--warning);
+}
+
+.ee-studio .asst-result-title {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ee-studio .asst-result-meta {
+  font-weight: 400;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Blocks: a numbered list, each block's conditions as small tags. */
+.ee-studio .asst-blocks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ee-studio .asst-block {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ee-studio .asst-block-num {
+  flex: none;
+  min-width: 56px;
+  font-family: var(--asst-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: #8a918e;
+  font-variant-numeric: tabular-nums;
+}
+
+.ee-studio .asst-block-conds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+  min-width: 0;
+}
+
+.ee-studio .asst-block-cond {
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: #fff;
+  border: 1px solid #dde2df;
+  color: var(--ink);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.ee-studio .asst-block-note {
+  font-size: 11px;
+  color: #9aa3a0;
+  font-style: italic;
+}
+
+/* Edits, one clause each. */
+.ee-studio .asst-result-steps {
+  margin: 0;
+  padding: 0 0 0 16px;
+  color: var(--ink);
+}
+
+.ee-studio .asst-result-steps li {
+  margin: 1px 0;
+}
+
+.ee-studio .asst-result-steps li::marker {
+  color: var(--green);
+}
+
+.ee-studio .asst-result-label {
+  flex: none;
+  min-width: 56px;
+  font-family: var(--asst-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a918e;
+  padding-top: 3px;
+}
+
+.ee-studio .asst-result-changed,
+.ee-studio .asst-result-files {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ee-studio .asst-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* A parameter, as it appears in the grid; click to go there. */
+.ee-studio .asst-param-chip {
+  padding: 2px 7px;
+  border: 1px solid #cfe5db;
+  border-radius: 5px;
+  background: #eef7f2;
+  color: var(--dark-green);
+  font: inherit;
+  font-family: var(--asst-mono);
+  font-size: 11.5px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.ee-studio .asst-param-chip:hover {
+  background: #dff1e8;
+  border-color: var(--green);
+}
+
+.ee-studio .asst-param-chip.more {
+  background: transparent;
+  border-style: dashed;
+  border-color: #cfd6d2;
+  color: var(--ink-soft);
+}
+
+/* The compiler's own messages, verbatim (its parameter markup included). */
+.ee-studio .asst-result-errors {
+  margin: 0;
+  padding: 8px 10px;
+  list-style: none;
+  border-radius: 6px;
+  background: var(--error-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ee-studio .asst-result-errors li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--ink);
+}
+
+.ee-studio .asst-result-error-msg .error-parameter {
+  font-family: var(--asst-mono);
+  font-size: 11.5px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: rgba(187, 44, 34, 0.1);
+  color: var(--error);
+}
+
+.ee-studio .asst-result-more {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.ee-studio .asst-file-chip {
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px dashed #cfd6d2;
+  background: #fff;
+  color: var(--ink-soft);
+  font-family: var(--asst-mono);
+  font-size: 11.5px;
+}
+
+.ee-studio .asst-file-chip.missing {
+  border-style: solid;
+  border-color: rgba(187, 44, 34, 0.35);
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* Folded by default; the reasoning behind the values, one clause each. */
+.ee-studio .asst-result-why {
+  border-top: 1px dashed #e3e7e5;
+  padding-top: 7px;
+}
+
+.ee-studio .asst-result-why > summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.ee-studio .asst-result-why > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ee-studio .asst-result-why > summary::before {
+  content: "▸";
+  margin-right: 6px;
+  color: #b3bab7;
+  font-size: 10px;
+}
+
+.ee-studio .asst-result-why[open] > summary::before {
+  content: "▾";
+}
+
+.ee-studio .asst-result-why > summary:hover {
+  color: var(--ink);
+}
+
+.ee-studio .asst-result-why ul {
+  margin: 6px 0 0;
+  padding: 0 0 0 16px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.ee-studio .asst-result-why li {
+  margin: 2px 0;
+}
+
+.ee-studio .asst-result-why li::marker {
+  color: #b3bab7;
+}
+
+/* The steps: a timeline down a thin rule, mono, one line each. */
+.ee-studio .asst-steps {
+  list-style: none;
+  margin: 2px 0 4px 5px;
+  padding: 2px 0 2px 0;
+  border-left: 1.5px solid #e1e5e3;
+}
+
+.ee-studio .asst-step {
+  position: relative;
+  padding: 4px 0 4px 16px;
+  font-family: var(--asst-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  animation: asst-rise 0.16s ease-out;
+}
+
+.ee-studio .asst-step::before {
+  content: "";
+  position: absolute;
+  left: -5.5px;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px solid var(--green);
+}
+
+.ee-studio .asst-step.done::before {
+  background: var(--green);
+}
+
+.ee-studio .asst-step.failed {
+  color: var(--warning);
+}
+
+.ee-studio .asst-step.failed::before {
+  border-color: var(--warning);
+  background: var(--warning);
+}
+
+/* In progress: the bullet becomes a small spinner; the time ticks. */
+.ee-studio .asst-step.working {
+  color: var(--ink);
+}
+
+.ee-studio .asst-step.working::before {
+  border-color: var(--green);
+  border-right-color: transparent;
+  background: #fff;
+  animation: asst-spin 0.8s linear infinite;
+}
+
+.ee-studio .asst-step-elapsed {
+  color: #9aa3a0;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes asst-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* A step opens to show the tool's answer (the compiler's verdict…). */
+.ee-studio .asst-step details > summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline;
+}
+
+.ee-studio .asst-step details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ee-studio .asst-step details > summary::after {
+  content: "▸";
+  margin-left: 7px;
+  color: #b3bab7;
+  font-size: 10px;
+}
+
+.ee-studio .asst-step details[open] > summary::after {
+  content: "▾";
+}
+
+.ee-studio .asst-step details > summary:hover {
+  color: var(--ink);
+}
+
+.ee-studio .asst-step-detail {
+  margin: 6px 0 4px;
+  padding: 8px 10px;
+  max-height: 240px;
+  overflow: auto;
+  background: #f7f8f8;
+  border: 1px solid #e6e9e7;
+  border-radius: 6px;
+  font-family: var(--asst-mono);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@keyframes asst-rise {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- empty state ---------- */
+
+/* Centred in the transcript area: mark, title, one-line subtitle. */
+.ee-studio .asst-hero {
+  margin: auto 0;
+  padding: 12px 12px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ee-studio .asst-hero-mark {
+  position: relative;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+
+.ee-studio .asst-hero-mark svg {
+  display: block;
+}
+
+.ee-studio .asst-hero-badge {
+  position: absolute;
+  right: 0;
+  bottom: -4px;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--ink);
+}
+
+.ee-studio .asst-hero-badge svg {
+  transform: translateY(1px);
+}
+
+.ee-studio .asst-hero h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.ee-studio .asst-hero p {
+  margin: 0;
+  max-width: 300px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.ee-studio .asst-signin {
+  margin-top: 14px;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-size: 12.5px;
+}
+
+/* Example requests, shown in full: stacked cards above the composer, gone
+   after the first message. */
+.ee-studio .asst-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 16px 0;
+  background: #fff;
+}
+
+.ee-studio .asst-suggestions-label {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9aa3a0;
+  margin-bottom: 2px;
+}
+
+.ee-studio .asst-suggestion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e3e6e4;
+  background: #fff;
+  color: var(--ink-soft);
+  border-radius: 10px;
+  padding: 8px 12px 8px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.45;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ee-studio .asst-suggestion-num {
+  flex: none;
+  font-family: var(--asst-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  padding-top: 1px;
+  color: var(--green);
+}
+
+.ee-studio .asst-suggestion-text {
+  flex: 1;
+}
+
+.ee-studio .asst-suggestion:hover {
+  border-color: var(--green);
+  color: var(--ink);
+  background: #f9fcfa;
+}
+
+/* ---------- composer ---------- */
+
+.ee-studio .asst-compose {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  padding: 10px 16px 14px;
+  border-top: 1px solid #ececec;
+  background: #fff;
+}
+
+/* With the example chips above it, the composer joins them as one block. */
+.ee-studio .asst-suggestions + .asst-compose {
+  border-top: none;
+}
+
+.ee-studio .asst-input {
+  flex: 1;
+  resize: none;
+  border: 1px solid #d6dad8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--ink);
+  background: #fff;
+  min-height: 40px;
+  max-height: 160px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ee-studio .asst-input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(1, 146, 103, 0.12);
+}
+
+.ee-studio .asst-input:disabled {
+  background: #f7f7f7;
+  color: var(--ink-soft);
+}
+
+.ee-studio .asst-input::placeholder {
+  color: #8f9694;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ee-studio .asst-send {
+  flex: none;
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--green);
+  color: #fff;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.ee-studio .asst-send:hover:not(:disabled) {
+  background: var(--dark-green);
+}
+
+.ee-studio .asst-send:disabled {
+  background: #d9dcda;
+  cursor: default;
+}
+
+.ee-studio .asst-stop {
+  background: #6b6b6b;
+}
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 520px) {
+  .ee-studio .asst-drawer {
+    width: 100vw;
+    border-radius: 0;
+    border: none;
+    top: 0;
+    bottom: 0;
+  }
+  .ee-studio .asst-resizer,
+  .ee-studio .asst-fab.open {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ee-studio .asst-fab,
+  .ee-studio .asst-fab.nudging,
+  .ee-studio .asst-nudge,
+  .ee-studio .asst-drawer,
+  .ee-studio .asst-entry,
+  .ee-studio .asst-step,
+  .ee-studio .asst-status-dot,
+  .ee-studio .asst-status-dot::after {
+    transition: none;
+    animation: none;
+  }
+  .ee-studio .asst-step.working::before {
+    animation: none;
+    border-right-color: var(--green);
+  }
+}

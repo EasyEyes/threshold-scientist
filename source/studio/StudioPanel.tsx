@@ -21,7 +21,15 @@ import { TEMPLATES } from "./templates";
 import { checkResources } from "./resources";
 import { exportSourceZip, exportXlsx, tableToCsvFile } from "./exporters";
 import { glossaryVersion, parameterCount } from "./glossary";
-import { Grid } from "./components/Grid";
+import {
+  FLASH_MS,
+  FLASH_STAGGER_CAP,
+  FLASH_STAGGER_MS,
+  Grid,
+  revealDurationMs,
+  type RowFlash,
+  type TableReveal,
+} from "./components/Grid";
 import { ErrorPanel } from "./components/ErrorPanel";
 import { GlossaryPanel } from "./components/GlossaryPanel";
 import { ResourcePanel } from "./components/ResourcePanel";
@@ -37,6 +45,12 @@ import {
   registerPreviewWorker,
 } from "./preview";
 import { warmHostedRuntime } from "../../threshold/preprocess/hostedRuntime";
+import { AssistantPanel } from "./assistant/AssistantPanel";
+import {
+  valueIndexToLetter,
+  type AssistantContext,
+  type GridFocus,
+} from "./assistant/tools";
 import "./styles.css";
 
 interface Props {
@@ -119,7 +133,17 @@ export default function StudioPanel({
   const [expTable, setExpTable] = useState<ExperimentTable | null>(null);
   const [checkedData, setCheckedData] = useState<string[][] | null>(null);
   const [selectedParam, setSelectedParam] = useState<string | null>(null);
-  const [flashParam, setFlashParam] = useState<string | null>(null);
+  // The last thing clicked in the grid — a row, or a cell with its column —
+  // shown in the assistant's context strip and sent to the model as "this
+  // cell". Dropped if the row has since gone.
+  const [gridFocus, setGridFocus] = useState<GridFocus | null>(null);
+  // Rows to light up (in order — the grid staggers them) and a generation
+  // counter so a second flash of the same rows restarts the animation.
+  const [flash, setFlash] = useState<RowFlash | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // A freshly built table: the grid writes it in cell by cell.
+  const [reveal, setReveal] = useState<TableReveal | null>(null);
+  const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [phrase, setPhrase] = useState<PhraseSource | null>(null);
   const [phraseLoading, setPhraseLoading] = useState(false);
@@ -173,8 +197,7 @@ export default function StudioPanel({
     else if (signedIn && fetchUserPhraseFile) {
       const cached = repoPhraseFiles.current.get(requestedPhraseFile);
       source =
-        cached ??
-        fetchUserPhraseFile(requestedPhraseFile).catch(() => null);
+        cached ?? fetchUserPhraseFile(requestedPhraseFile).catch(() => null);
       repoPhraseFiles.current.set(requestedPhraseFile, source);
     } else source = Promise.resolve(null);
 
@@ -204,7 +227,13 @@ export default function StudioPanel({
     return () => {
       stale = true;
     };
-  }, [requestedPhraseFile, files, signedIn, fetchUserPhraseFile, userResources]);
+  }, [
+    requestedPhraseFile,
+    files,
+    signedIn,
+    fetchUserPhraseFile,
+    userResources,
+  ]);
 
   // Live validation: the production compiler's checks, debounced per
   // keystroke. Waits while the phrase file is being read, so tilde values are
@@ -262,15 +291,25 @@ export default function StudioPanel({
   );
 
   const errorCount = errors.filter((e) => e.kind === "error").length;
+  const flashRows = (params: string[]) => {
+    if (!params.length) return;
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    setFlash((old) => ({ params, gen: (old?.gen ?? 0) + 1 }));
+    flashTimer.current = setTimeout(
+      () => setFlash(null),
+      FLASH_MS + Math.min(params.length, FLASH_STAGGER_CAP) * FLASH_STAGGER_MS,
+    );
+  };
   const jumpTo = (param: string) => {
     setSelectedParam(param);
-    setFlashParam(param);
-    setTimeout(() => setFlashParam(null), 1400);
+    flashRows([param]);
   };
 
   const loadMatrix = (matrix: string[][]) => {
-    setTable(matrixToState(matrix));
+    const t = matrixToState(matrix);
+    setTable(t);
     setSelectedParam(null);
+    revealTable(t);
   };
 
   const openFile = async (file: File) => {
@@ -321,6 +360,81 @@ export default function StudioPanel({
   const existingNames = new Set(
     table.rows.filter((r) => !r.name.startsWith("%")).map((r) => r.name),
   );
+
+  // The assistant (assistant/) reads the Studio through this: the live state
+  // (via a ref, so a tool loop mid-turn sees the latest table) and the same
+  // checks the sidebar shows — the compiler's validation plus the resource
+  // report — run on whatever table it proposes. Its edits land in the grid
+  // as they happen: every row touched lights up in a cascade and the grid
+  // scrolls to the first.
+  const focus =
+    gridFocus && table.rows.some((r) => r.name === gridFocus.parameter)
+      ? gridFocus
+      : null;
+  const latest = useRef({
+    table,
+    name,
+    phrase,
+    userResources,
+    files,
+    signedIn,
+    focus,
+  });
+  latest.current = {
+    table,
+    name,
+    phrase,
+    userResources,
+    files,
+    signedIn,
+    focus,
+  };
+  const assistantContext = (): AssistantContext => {
+    const s = latest.current;
+    return {
+      table: s.table,
+      name: s.name,
+      signedIn: s.signedIn,
+      userResources: s.userResources,
+      droppedFileNames: s.files.map((f) => f.name),
+      focus: s.focus,
+      check: (t) => {
+        const v = runValidation(stateToMatrix(t), s.phrase);
+        const r = checkResources(v.data, v.table, s.userResources, s.files);
+        return { errors: v.errors, resourceErrors: r.errors, needed: r.needed };
+      },
+    };
+  };
+  const revealTable = (t: TableState) => {
+    if (revealTimer.current) clearTimeout(revealTimer.current);
+    setFlash(null);
+    setReveal((old) => ({ gen: (old?.gen ?? 0) + 1 }));
+    revealTimer.current = setTimeout(
+      () => setReveal(null),
+      revealDurationMs(t.rows.length, t.conditionCount),
+    );
+  };
+  const applyAssistantTable = (
+    t: TableState,
+    changedParams: string[],
+    revealAll = false,
+  ) => {
+    setTable(t);
+    if (revealAll) {
+      setSelectedParam(t.rows[0]?.name ?? null);
+      revealTable(t);
+      return;
+    }
+    // In grid order, so the cascade runs down the table.
+    const order = new Map(t.rows.map((r, i) => [r.name, i]));
+    const rows = changedParams
+      .filter((p) => order.has(p))
+      .sort((a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0));
+    if (rows.length) {
+      setSelectedParam(rows[0]);
+      flashRows(rows);
+    }
+  };
 
   return (
     <div className="ee-studio">
@@ -527,8 +641,18 @@ export default function StudioPanel({
               table={table}
               problemParams={problemParams}
               selectedParam={selectedParam}
-              flashParam={flashParam}
-              onSelectParam={(n) => setSelectedParam(n)}
+              flash={flash}
+              reveal={reveal}
+              onSelectParam={(n) => {
+                setSelectedParam(n);
+                setGridFocus({ parameter: n, column: null });
+              }}
+              onFocusCell={(n, valueIndex) =>
+                setGridFocus({
+                  parameter: n,
+                  column: valueIndexToLetter(valueIndex),
+                })
+              }
               onRenameRow={(rowId, newName) =>
                 setTable((t) => ({
                   ...t,
@@ -652,6 +776,15 @@ export default function StudioPanel({
           byte-compatible with the current upload pipeline.
         </footer>
       </div>
+
+      <AssistantPanel
+        signedIn={signedIn}
+        focus={focus}
+        getContext={assistantContext}
+        applyTable={applyAssistantTable}
+        applyName={(n) => setName(n)}
+        focusParameter={jumpTo}
+      />
     </div>
   );
 }
