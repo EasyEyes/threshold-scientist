@@ -33,7 +33,6 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getOriginalFileNameForProject: jest.fn(),
   getRecruitmentServiceConfig: jest.fn(),
   getDurationForProject: jest.fn(),
-  getLanguageForProject: jest.fn(),
   getProlificStudyConfig: jest.fn(),
   getProlificStudyId: jest.fn(),
   getDataFolderCsvLength: jest.fn(),
@@ -105,13 +104,6 @@ jest.mock("../../threshold/parameters/phrasesRegistry", () => ({
   initPhrases: jest.fn(),
 }));
 
-const mockGetExperimentPin = jest.fn();
-jest.mock("../engine/releaseManifestClient", () => ({
-  createReleaseManifestClient: () => ({
-    getExperimentPin: mockGetExperimentPin,
-  }),
-}));
-
 global.fetch = jest.fn().mockResolvedValue({ ok: false });
 
 const mockPhrasesData = {
@@ -147,7 +139,6 @@ describe("normalizeRecruitmentInformation", () => {
 describe("App - handleSetActivateExperiment", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetExperimentPin.mockResolvedValue(null);
   });
 
   it("does not request repository files when a failed compilation left an empty repository", async () => {
@@ -203,7 +194,6 @@ describe("App - handleSetActivateExperiment", () => {
       previousExperimentDuration: null,
       previousExperimentLanguage: null,
       previousProlificConfig: null,
-      previousReleasePin: null,
     });
   });
 });
@@ -681,110 +671,5 @@ describe("App - footnote suppression while compiler errors show", () => {
         formatLocalDeploymentTime("2026-08-08T09:00:00.000Z"),
       ),
     );
-  });
-
-  it("defaults selectedRelease to the reopened experiment's pin (issue #178)", async () => {
-    const Swal = require("sweetalert2");
-    Swal.fire.mockImplementation(async ({ didOpen }) => {
-      await didOpen?.();
-    });
-
-    const user = { id: "42" };
-    const fakeThis = {
-      state: { user },
-      setState: jest.fn((update) => {
-        fakeThis.state = { ...fakeThis.state, ...update };
-      }),
-    };
-
-    await App.prototype.handleSetActivateExperiment.call(fakeThis, {
-      name: "myExp1",
-      id: 7,
-      releasePin: { releaseId: "2026.7.8" },
-    });
-
-    expect(fakeThis.state.selectedRelease).toBe("2026.7.8");
-  });
-
-  it("defaults selectedRelease to latest for a legacy experiment with no pin (issue #178)", async () => {
-    const Swal = require("sweetalert2");
-    Swal.fire.mockImplementation(async ({ didOpen }) => {
-      await didOpen?.();
-    });
-
-    const user = { id: "42" };
-    const fakeThis = {
-      state: { user },
-      setState: jest.fn((update) => {
-        fakeThis.state = { ...fakeThis.state, ...update };
-      }),
-    };
-
-    await App.prototype.handleSetActivateExperiment.call(fakeThis, {
-      name: "legacyExp",
-      id: 8,
-    });
-
-    expect(fakeThis.state.selectedRelease).toBe("latest");
-  });
-
-  it("loads the authoritative release pin when reopening an experiment", async () => {
-    const Swal = require("sweetalert2");
-    Swal.fire.mockImplementation(async ({ didOpen }) => didOpen?.());
-    mockGetExperimentPin.mockResolvedValue({ releaseId: "2026-09-09.1" });
-    const user = {
-      id: "42",
-      username: "alice",
-      accessToken: "gitlab-token",
-    };
-    const fakeThis = {
-      state: { user },
-      setState: jest.fn((update) => {
-        fakeThis.state = { ...fakeThis.state, ...update };
-      }),
-    };
-
-    await App.prototype.handleSetActivateExperiment.call(fakeThis, {
-      name: "study",
-      id: 9,
-    });
-
-    expect(mockGetExperimentPin).toHaveBeenCalledWith(
-      "alice",
-      "study",
-      "gitlab-token",
-    );
-    expect(fakeThis.state.selectedRelease).toBe("2026-09-09.1");
-  });
-
-  it("defaults selectedRelease to latest for a brand-new experiment (issue #178)", async () => {
-    const Swal = require("sweetalert2");
-    Swal.fire.mockImplementation(async ({ didOpen }) => {
-      didOpen?.();
-    });
-
-    const fakeThis = {
-      state: { user: { id: "42" } },
-      setState: jest.fn((update) => {
-        fakeThis.state = { ...fakeThis.state, ...update };
-      }),
-    };
-
-    await App.prototype.handleSetActivateExperiment.call(fakeThis, "new");
-
-    expect(fakeThis.state.selectedRelease).toBe("latest");
-  });
-
-  it("handleSetSelectedRelease updates state.selectedRelease (issue #178)", () => {
-    const fakeThis = {
-      state: {},
-      setState: jest.fn((update) => {
-        fakeThis.state = { ...fakeThis.state, ...update };
-      }),
-    };
-
-    App.prototype.handleSetSelectedRelease.call(fakeThis, "2026.3.1");
-
-    expect(fakeThis.state.selectedRelease).toBe("2026.3.1");
   });
 });

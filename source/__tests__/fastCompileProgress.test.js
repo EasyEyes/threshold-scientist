@@ -10,12 +10,12 @@ jest.mock("sweetalert2", () => {
     },
     fire: jest.fn((opts = {}) => {
       api._remove();
-      const popup = global.document.createElement("div");
+      const popup = document.createElement("div");
       popup.className = `swal2-popup ${opts.customClass?.popup ?? ""}`;
       popup.innerHTML =
         `<h2 id="swal2-title">${opts.title ?? ""}</h2>` +
         `<div id="swal2-html-container">${opts.html ?? ""}</div>`;
-      global.document.body.appendChild(popup);
+      document.body.appendChild(popup);
       api._popup = popup;
       opts.didOpen?.();
       return Promise.resolve({});
@@ -148,7 +148,7 @@ describe("FastCompileTracker", () => {
     ])
       t.advance(phase);
     expect(t.target).toBe(100);
-    expect(t.label).toBe("Opening the experiment");
+    expect(t.label).toBe("Opening the preview");
     // A preview never uploads; those phases mean nothing to it.
     expect(PREVIEW_STEPS["upload-started"]).toBeUndefined();
   });
