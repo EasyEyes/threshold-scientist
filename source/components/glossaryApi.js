@@ -36,15 +36,24 @@ export async function fetchGlossaryVersion() {
   );
 }
 
-export async function pinGlossaryVersion(username, experimentName) {
+export async function pinGlossaryVersion(username, experimentName, version) {
   return fetchJsonWithRetry(
     `${await getEasyEyesBaseUrl()}/.netlify/functions/glossary`,
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, experimentName }),
+      body: JSON.stringify({ username, experimentName, version }),
     },
-  );
+  ).then((result) => {
+    if (result.version !== version) {
+      const error = new Error(
+        `Pinned Glossary version does not match validated version ${version}`,
+      );
+      error.code = "CATALOG_PIN_VERSION_MISMATCH";
+      throw error;
+    }
+    return result;
+  });
 }
 
 let _prefetchPromise = null;
