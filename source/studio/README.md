@@ -243,6 +243,10 @@ EasyEyesResources, not the past repository's copies.
 
 ### EasyEyes Assistant (beta)
 
+Architecture, component map, turn sequence, and how to add a recipe or a
+knob: [`assistant/ARCHITECTURE.md`](assistant/ARCHITECTURE.md). What
+follows is the summary.
+
 Local run without the Netlify CLI: put `ANTHROPIC_API_KEY=…` in
 `website/.env`, then in one terminal
 `cd website/netlify/functions/studio-assistant && npm install && npm run dev`
@@ -257,9 +261,10 @@ Working name — Denis to pick the final one. It is a plain string in the
 pane header (`AssistantPanel.tsx`), the button's title/aria-label, and the
 first line of `prompt.ts` `INSTRUCTIONS`, so renaming is a three-place edit.
 
-A raised pill with the EasyEyes mark (`assistant/EasyEyesLogo.tsx`) and the
-word "Assistant" at the bottom right of the Studio opens a full-height chat
-pane along the right edge. A teaching callout above the pill (speech bubble
+A small icon-only squircle with the EasyEyes mark
+(`assistant/EasyEyesLogo.tsx`) and a thin turning gradient ring at the
+bottom right of the Studio opens a full-height chat pane along the right
+edge. A teaching callout above the button (speech bubble
 "New — describe your study in plain English…" plus two bounces of the
 button) is built but switched off: `NUDGE_ENABLED` in `AssistantPanel.tsx`;
 the plan is to trigger it from state (first visit, table errors) rather than
@@ -384,8 +389,8 @@ appears in a few seconds and an edit in one round.
   (`HEDGE_AFTER_MS`) the Studio starts a second request with `mode: "fast"`
   (the function sends effort `low` and thinking `disabled` for that call —
   a client can only ask for less than the site's setting, never more) and
-  takes whichever reply arrives first, aborting the other. The "Working"
-  row says "slow to think — trying a faster path too" while both run. Errors
+  takes whichever reply arrives first, aborting the other. The hedge is
+  silent: the scientist sees one "Working" row throughout. Errors
   before the hedge fires (sign-in, rate limit, Stop) stay final; a normal
   round that hits the wall after it fired is covered by the fast one. Cost:
   one extra cache-read call on slow rounds only.
