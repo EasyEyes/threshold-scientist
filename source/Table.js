@@ -25,6 +25,12 @@ import {
   gatherUserUploadedFileActions,
   gatherRequestedResourceActions,
 } from "../threshold/preprocess/gitlabUtils";
+import {
+  IllegalRepoNameError,
+  assertValidRepoBaseName,
+  illegalRepoNameToEasyEyesError,
+  repoBaseNameFromSpreadsheetFileName,
+} from "../threshold/preprocess/repoName";
 import { PREVIEW_PIN, stagePreview, showPreview } from "./studio/preview";
 import { buildArchiveResources } from "../threshold/preprocess/archiveResources";
 import { exportStudyBeforeCompiling } from "../threshold/preprocess/exportBeforeCompile";
@@ -461,7 +467,21 @@ export default class Table extends Component {
     const overlapMetadata =
       optimizationOn("overlapMetadataCalls") &&
       !this.props.isCompiledFromArchiveBool;
-    const baseName = file.name.split(".")[0];
+    const baseName = repoBaseNameFromSpreadsheetFileName(file.name);
+    const willCreateRepo = !preview && this.props.user?.id != undefined;
+    if (willCreateRepo) {
+      try {
+        assertValidRepoBaseName(baseName);
+      } catch (error) {
+        if (error instanceof IllegalRepoNameError) {
+          this.showIllegalRepoNameError(error, operation, file.name);
+          Swal.close();
+          closePlaceholder();
+          return;
+        }
+        throw error;
+      }
+    }
     let repoNameMatches;
     if (overlapMetadata) {
       repoNameMatches = searchRepoNameMatches(this.props.user, baseName);
@@ -709,11 +729,22 @@ export default class Table extends Component {
 
             if (user.id != undefined) {
               // user logged in
-              const resolvedProjectName = await setRepoName(
-                user,
-                baseName,
-                repoNameMatches,
-              );
+              let resolvedProjectName;
+              try {
+                resolvedProjectName = await setRepoName(
+                  user,
+                  baseName,
+                  repoNameMatches,
+                );
+              } catch (error) {
+                if (error instanceof IllegalRepoNameError) {
+                  this.showIllegalRepoNameError(error, operation, file.name);
+                  Swal.close();
+                  closePlaceholder();
+                  return;
+                }
+                throw error;
+              }
               this.props.functions.handleSetProjectName(resolvedProjectName);
               // The project-list refresh does not depend on the phrases pin;
               // with "overlapMetadataCalls" it runs alongside it. Its result
@@ -881,6 +912,25 @@ export default class Table extends Component {
       endCompileTiming();
       endCompile();
     }
+  }
+
+  showIllegalRepoNameError(error, operation, fileName) {
+    captureCompilerFailure(
+      error,
+      operation,
+      "repo-name",
+      { spreadsheetName: fileName },
+      "user-correctable",
+    );
+    finishCompilerOperation(operation, "failed", {
+      failedPhase: "repo-name",
+    });
+    this.setState({
+      errors: [illegalRepoNameToEasyEyesError(error)],
+      showDropZone: true,
+      tableName: fileName,
+    });
+    this.props.scrollToCurrentStep();
   }
 
   async reset() {
