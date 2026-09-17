@@ -4,6 +4,7 @@ jest.mock("firebase/database", () => ({
 }));
 
 jest.mock("../components/firebase", () => ({ db: {} }));
+jest.mock("../sentry", () => ({ captureError: jest.fn() }));
 
 jest.mock("../components/prolificIntegration", () => ({
   prolificCreateDraft: jest.fn(),
@@ -48,6 +49,7 @@ jest.mock("../../threshold/parameters/glossaryLink", () => ({
 }));
 
 import Running from "../Running";
+import Swal from "sweetalert2";
 import { render, screen } from "@testing-library/react";
 import { prolificCreateDraft } from "../components/prolificIntegration";
 import {
@@ -179,6 +181,11 @@ describe("Running compile warnings", () => {
 describe("Running Prolific study creation", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(Swal, "fire").mockResolvedValue({ isConfirmed: true });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("shows Run and Create Prolific study for a runnable previous study without recruitment metadata", () => {
@@ -367,6 +374,132 @@ describe("Running Prolific study creation", () => {
 
     expect(createProlificStudyIdFile).not.toHaveBeenCalled();
     expect(running.state.prolificStudyState).toBe("idle");
+    expect(Swal.fire).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Fatal error: Prolific study creation failed",
+        text: expect.stringContaining(
+          "did not confirm a valid unpublished study",
+        ),
+      }),
+    );
+    expect(Swal.fire.mock.calls[0][0]).not.toHaveProperty("icon");
+  });
+
+  it.each(["draft", "Pavlovia completion codes", "missing settings"])(
+    "shows an icon-free fatal error for %s failures",
+    async (stage) => {
+      const message =
+        stage === "draft"
+          ? "Prolific rejected _prolific3CustomBlockList in your spreadsheet. Filter custom_blocklist requires unique values."
+          : "Pavlovia rejected the completion-code upload: permission denied.";
+      const running = new Running({
+        user: {},
+        activeExperiment: { id: 42 },
+        projectName: "Study",
+        currentProlificConfig: stage === "missing settings" ? null : {},
+        functions: { handleUpdateUser: jest.fn() },
+      });
+      running.setState = (update) => {
+        running.state = { ...running.state, ...update };
+      };
+      getProlificStudyId.mockResolvedValue(null);
+      generateAndUploadCompletionURL.mockResolvedValue({ code: "complete" });
+      prolificCreateDraft.mockRejectedValue(new Error(message));
+      if (stage === "Pavlovia completion codes")
+        generateAndUploadCompletionURL.mockRejectedValue(new Error(message));
+      const popup = { close: jest.fn() };
+      window.open = jest.fn(() => popup);
+
+      await expect(
+        running.createOrOpenProlificStudy(),
+      ).resolves.toBeUndefined();
+
+      expect(popup.close).toHaveBeenCalledTimes(1);
+      expect(running.state.prolificStudyState).toBe("idle");
+      expect(createProlificStudyIdFile).not.toHaveBeenCalled();
+      const options = Swal.fire.mock.calls[0][0];
+      expect(options.title).toContain("Fatal error");
+      expect(options.text).toContain(
+        stage === "missing settings"
+          ? "Prolific study settings unavailable"
+          : message,
+      );
+      expect(options).not.toHaveProperty("icon");
+      expect(options).not.toHaveProperty("html");
+    },
+  );
+
+  it("keeps completion codes intact when retrying after a rejected draft", async () => {
+    const running = new Running({
+      user: {},
+      activeExperiment: { id: 42 },
+      currentProlificConfig: {},
+      functions: {},
+    });
+    running.setState = (update) => {
+      running.state = { ...running.state, ...update };
+    };
+    const codes = {
+      code: "complete",
+      incompatibleCompletionCode: "incompatible",
+      abortedCompletionCode: "aborted",
+    };
+    getProlificStudyId.mockResolvedValue(null);
+    generateAndUploadCompletionURL.mockResolvedValue(codes);
+    prolificCreateDraft
+      .mockRejectedValueOnce(new Error("Duplicate IDs"))
+      .mockResolvedValueOnce({ id: "study-123", status: "UNPUBLISHED" });
+    createProlificStudyIdFile.mockResolvedValue(undefined);
+    window.open = jest.fn(() => ({
+      close: jest.fn(),
+      focus: jest.fn(),
+      location: { replace: jest.fn() },
+    }));
+
+    await running.createOrOpenProlificStudy();
+    await running.createOrOpenProlificStudy();
+
+    expect(generateAndUploadCompletionURL).toHaveBeenCalledTimes(1);
+    expect(prolificCreateDraft.mock.calls[1].slice(2, 5)).toEqual([
+      "complete",
+      "incompatible",
+      "aborted",
+    ]);
+    expect(running.state.prolificStudyState).toBe("ready");
+  });
+
+  it("reports a Pavlovia save failure after creation without creating another draft on retry", async () => {
+    const running = new Running({
+      user: {},
+      activeExperiment: { id: 42 },
+      currentProlificConfig: {},
+      functions: {},
+    });
+    running.setState = (update) => {
+      running.state = { ...running.state, ...update };
+    };
+    getProlificStudyId.mockResolvedValue(null);
+    generateAndUploadCompletionURL.mockResolvedValue({ code: "complete" });
+    prolificCreateDraft.mockResolvedValue({
+      id: "created-123",
+      status: "UNPUBLISHED",
+    });
+    createProlificStudyIdFile.mockRejectedValue(
+      new Error("Pavlovia save failed"),
+    );
+    window.open = jest.fn(() => ({ close: jest.fn(), focus: jest.fn() }));
+
+    await running.createOrOpenProlificStudy();
+    expect(Swal.fire.mock.calls[0][0].text).toContain(
+      "Prolific created study created-123",
+    );
+    expect(Swal.fire.mock.calls[0][0].text).toContain("Pavlovia save failed");
+    await running.createOrOpenProlificStudy();
+    expect(prolificCreateDraft).toHaveBeenCalledTimes(1);
+    expect(window.open).toHaveBeenLastCalledWith(
+      "https://app.prolific.com/researcher/workspaces/studies/created-123",
+      "_blank",
+    );
   });
 
   it("clears prepared IDs and completion codes when switching studies", async () => {
