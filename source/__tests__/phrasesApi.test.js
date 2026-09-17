@@ -95,7 +95,7 @@ describe("phrasesApi", () => {
         json: jest.fn().mockResolvedValueOnce({ version: "1.2" }),
       });
 
-      const result = await pinPhrasesVersion("alice", "my-experiment");
+      const result = await pinPhrasesVersion("alice", "my-experiment", "1.2");
 
       expect(global.fetch).toHaveBeenCalledWith("/.netlify/functions/phrases", {
         method: "PUT",
@@ -103,6 +103,7 @@ describe("phrasesApi", () => {
         body: JSON.stringify({
           username: "alice",
           experimentName: "my-experiment",
+          version: "1.2",
         }),
       });
       expect(result).toEqual({ version: "1.2" });
