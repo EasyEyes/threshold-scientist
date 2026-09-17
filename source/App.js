@@ -92,6 +92,7 @@ import {
   createProlificExperimentUrl,
   createProlificStudyConfig,
 } from "./components/prolificStudyConfig";
+import { createReleaseManifestClient } from "./engine/releaseManifestClient";
 
 // Utility function to create empty resources object from constants
 const createEmptyResourcesObject = () => {
@@ -144,6 +145,7 @@ export default class App extends Component {
       phrasesError: false,
       /* -------------------------------------------------------------------------- */
       activeExperiment: "new",
+      selectedRelease: "latest",
       previousExperimentViewed: {
         originalFileName: null,
         previousExperimentStatus: null,
@@ -186,6 +188,7 @@ export default class App extends Component {
       handleSetCompatibilityRequirements:
         this.handleSetCompatibilityRequirements.bind(this),
       handleSetActivateExperiment: this.handleSetActivateExperiment.bind(this),
+      handleSetSelectedRelease: this.handleSetSelectedRelease.bind(this),
       handleReset: this.handleReset.bind(this),
       handleNextStep: this.handleNextStep.bind(this),
       handleReturnToStep: this.handleReturnToStep.bind(this),
@@ -342,9 +345,22 @@ export default class App extends Component {
     let previousExperimentDuration = null;
     let previousExperimentLanguage = null;
     let previousProlificConfig = null;
+    let previousReleasePin = null;
     if (activeExperiment !== "new") {
+      previousReleasePin =
+        activeExperiment.releasePin?.releaseId ??
+        activeExperiment.releasePin ??
+        null;
       // viewing a previous experiment
       const { user } = this.state;
+      if (!previousReleasePin && user?.username && user?.accessToken) {
+        const storedPin = await createReleaseManifestClient().getExperimentPin(
+          user.username,
+          activeExperiment.name,
+          user.accessToken,
+        );
+        previousReleasePin = storedPin?.releaseId ?? null;
+      }
       const repositoryIsEmpty = isEmptyRepository(activeExperiment);
       const retrieval = startCompilerOperation("experiment-retrieval", {
         projectId: activeExperiment.id,
@@ -431,6 +447,7 @@ export default class App extends Component {
       });
       this.setState({
         activeExperiment: activeExperiment,
+        selectedRelease: previousReleasePin || "latest",
         previousExperimentViewed: {
           originalFileName,
           previousExperimentStatus,
@@ -439,6 +456,7 @@ export default class App extends Component {
           previousExperimentDuration,
           previousExperimentLanguage,
           previousProlificConfig,
+          previousReleasePin,
         },
         compatibilityLanguage: "en",
       });
@@ -451,6 +469,7 @@ export default class App extends Component {
           Swal.showLoading(null);
           this.setState({
             activeExperiment: activeExperiment,
+            selectedRelease: "latest",
             previousExperimentViewed: {
               originalFileName,
               previousExperimentStatus,
@@ -460,6 +479,7 @@ export default class App extends Component {
               previousExperimentDuration,
               previousExperimentLanguage,
               previousProlificConfig,
+              previousReleasePin,
             },
             compatibilityLanguage: "en",
           });
@@ -468,6 +488,10 @@ export default class App extends Component {
         },
       });
     }
+  }
+
+  handleSetSelectedRelease(release) {
+    this.setState({ selectedRelease: release });
   }
 
   /* -------------------------------------------------------------------------- */
@@ -1185,6 +1209,7 @@ export default class App extends Component {
       studioMounted,
       phrasesError,
       activeExperiment,
+      selectedRelease,
       previousExperimentViewed,
       currentStep,
       completedSteps,
@@ -1233,6 +1258,7 @@ export default class App extends Component {
           projectName={activeExperiment.name}
           newRepo={null}
           activeExperiment={activeExperiment}
+          selectedRelease={selectedRelease}
           experimentStatus={
             experimentStatus ??
             previousExperimentViewed.previousExperimentStatus
@@ -1262,6 +1288,8 @@ export default class App extends Component {
           experimentStatus={experimentStatus}
           prolificStudyStatus={prolificStudyStatus}
           activeExperiment={activeExperiment}
+          selectedRelease={selectedRelease}
+          previousExperimentViewed={previousExperimentViewed}
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
           resourcesLoaded={resourcesLoaded}

@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 
 import { handleDrop } from "./components/dropzone";
 import ResourceButton from "./ResourceButton";
-import { preprocessExperimentFile } from "../threshold/preprocess/main";
+import { compileExperimentWithEngine } from "./engine/engineCompile";
 import {
   linkGlossaryParameters,
   loadGlossaryRows,
@@ -22,6 +22,8 @@ import {
   manuallySetSwalTitle,
   fetchPhraseFileFromResources,
   gatherGeneratedFileActions,
+  gatherReferencedCoreFileActions,
+  getDataFolderCsvLength,
   gatherUserUploadedFileActions,
   gatherRequestedResourceActions,
 } from "../threshold/preprocess/gitlabUtils";
@@ -41,6 +43,8 @@ import { getAuthConfig } from "../threshold/preprocess/auth/config";
 
 import "./css/Table.scss";
 import { Dropdown } from "./components/Dropdown";
+import { VersionDropdown } from "./components/VersionDropdown";
+import { createReleaseManifestClient } from "./engine/releaseManifestClient";
 import {
   fetchGlossaryData,
   fetchGlossaryVersion,
@@ -82,6 +86,7 @@ export default class Table extends Component {
       tableName: null,
       errors: [],
       showDropZone: true,
+      releases: [],
     };
 
     this.onDrop = this.onDrop.bind(this);
@@ -99,6 +104,10 @@ export default class Table extends Component {
     // compile's errors can already link to exact glossary rows. Non-blocking:
     // the page renders while this fetch runs.
     loadGlossaryRows();
+    createReleaseManifestClient()
+      .listReleases()
+      .then((releases) => this.setState({ releases }))
+      .catch((error) => console.warn("Release list unavailable:", error));
   }
 
   componentDidUpdate(_prevProps, prevState) {
@@ -418,6 +427,30 @@ export default class Table extends Component {
   }
 
   async handleTable(file) {
+    const currentRelease =
+      this.props.previousExperimentViewed?.previousReleasePin ?? null;
+    if (
+      this.props.activeExperiment !== "new" &&
+      currentRelease &&
+      this.props.selectedRelease !== currentRelease
+    ) {
+      const [resultFiles] = await getDataFolderCsvLength(
+        this.props.user,
+        this.props.activeExperiment,
+      );
+      if (resultFiles > 0) {
+        const warning = await Swal.fire({
+          icon: "warning",
+          title: "This experiment has collected data",
+          text: "Changing the release will make this dataset span two EasyEyes versions. Continue and recompile?",
+          showCancelButton: true,
+          confirmButtonText: "Continue",
+          cancelButtonText: "Cancel",
+          confirmButtonColor: "#d33",
+        });
+        if (!warning.isConfirmed) return;
+      }
+    }
     // Set by compileFiles for a Studio preview; consumed by this compile only.
     const preview = this.pendingPreview ?? null;
     this.pendingPreview = null;
@@ -604,222 +637,168 @@ export default class Table extends Component {
     // whole-glossary links (see loadGlossaryRows).
     loadGlossaryRows();
     try {
-      await preprocessExperimentFile(
+      const user = copyUser(this.props.user);
+      const outcome = await compileExperimentWithEngine({
         file,
-        copyUser(this.props.user),
-        errors,
-        resolvedResources,
-        this.props.isCompiledFromArchiveBool,
-        async (
-          user,
-          requestedForms, // : any,
-          requestedFontList, // : string[],
-          requestedTextList, // : string[],
-          requestedFolderList, // : string[],
-          requestedImageList,
-          requestedCodeList, // : string[],
-          fileList, // : File[],
-          errorList, // : any[]
-          requestedImpulseResponseList, // : string[]
-          requestedFrequencyResponseList, // : string[]
-          requestedTargetSoundListList, // : string[]
-          requestedPhraseFileName, // : string
-        ) => {
-          // Rows for parameter links were fetched in parallel with the
-          // compile (kicked off before preprocessing), so this is normally
-          // already resolved. If a slow retry just started, render after a
-          // short grace period instead of blocking on it — a later compile
-          // will have the rows.
-          if (errorList.length > 0)
-            await Promise.race([
-              loadGlossaryRows(),
-              new Promise((resolve) => setTimeout(resolve, 500)),
-            ]);
-          // scroll to the top of the step block
-          this.props.scrollToCurrentStep();
+        resources: resolvedResources,
+        user,
+        compiledFromArchive: this.props.isCompiledFromArchiveBool,
+        pinnedRelease: this.props.selectedRelease,
+      });
+      const errorList = outcome.diagnostics;
 
-          const formList = [];
+      // Rows for parameter links were fetched in parallel with the
+      // compile (kicked off before preprocessing), so this is normally
+      // already resolved. If a slow retry just started, render after a
+      // short grace period instead of blocking on it — a later compile
+      // will have the rows.
+      if (errorList.length > 0)
+        await Promise.race([
+          loadGlossaryRows(),
+          new Promise((resolve) => setTimeout(resolve, 500)),
+        ]);
+      // scroll to the top of the step block
+      this.props.scrollToCurrentStep();
 
-          if (requestedForms.debriefForm)
-            formList.push(requestedForms.debriefForm);
-          if (requestedForms.consentForm)
-            formList.push(requestedForms.consentForm);
+      userRepoFiles.requestedForms = outcome.requested.forms;
+      userRepoFiles.requestedFonts = outcome.requested.fonts;
+      userRepoFiles.requestedTexts = outcome.requested.texts;
+      userRepoFiles.requestedFolders = outcome.requested.folders;
+      userRepoFiles.requestedImages = outcome.requested.images;
+      userRepoFiles.requestedCode = outcome.requested.code;
+      userRepoFiles.requestedImpulseResponses =
+        outcome.requested.impulseResponses;
+      userRepoFiles.requestedFrequencyResponses =
+        outcome.requested.frequencyResponses;
+      userRepoFiles.requestedTargetSoundLists =
+        outcome.requested.targetSoundLists;
+      userRepoFiles.requestedPhrases = outcome.requested.phrases;
+      userRepoFiles.blockFiles = [];
+      userRepoFiles.compiledFiles = [
+        ...outcome.files,
+        {
+          path: ".easyeyes/release.json",
+          content: JSON.stringify({
+            schemaVersion: 1,
+            releaseId: outcome.release,
+            contractVersion: outcome.contractVersion,
+            engine: outcome.engine,
+            glossaryVersion: outcome.glossaryVersion,
+            phrasesVersion: outcome.phrasesVersion,
+            manifestDigest: outcome.manifestDigest,
+          }),
+        },
+      ];
+      userRepoFiles.releaseId = outcome.release;
 
-          userRepoFiles.requestedForms = formList;
-          userRepoFiles.requestedFonts = requestedFontList;
-          userRepoFiles.requestedTexts = requestedTextList;
-          userRepoFiles.requestedFolders = requestedFolderList;
-          userRepoFiles.requestedImages = requestedImageList;
-          userRepoFiles.requestedCode = requestedCodeList;
-          userRepoFiles.requestedImpulseResponses =
-            requestedImpulseResponseList;
-          userRepoFiles.requestedFrequencyResponses =
-            requestedFrequencyResponseList;
-          userRepoFiles.requestedTargetSoundLists =
-            requestedTargetSoundListList;
-          userRepoFiles.requestedPhrases = requestedPhraseFileName
-            ? [requestedPhraseFileName]
-            : [];
-          userRepoFiles.blockFiles = fileList;
+      // Warnings (kind === "warning") do not block compilation; only real
+      // errors do. They are shown alongside the success message below.
+      const hasBlockingError = errorList.some((err) => err.kind === "error");
+      const warningList = errorList.filter((err) => err.kind === "warning");
 
-          // Warnings (kind === "warning") do not block compilation; only real
-          // errors do. They are shown alongside the success message below.
-          const hasBlockingError = errorList.some(
-            (err) => err.kind === "error",
-          );
-          const warningList = errorList.filter((err) => err.kind === "warning");
+      if (hasBlockingError) {
+        finishCompilerOperation(operation, "failed", {
+          failedPhase: "validation",
+        });
+        // When compilation fails, show only the blocking errors (not the
+        // non-blocking warnings), so the experimenter focuses on what must be
+        // fixed.
+        const blockingErrors = errorList.filter((err) => err.kind === "error");
+        captureCompilerFailure(
+          new Error("Experiment validation failed"),
+          operation,
+          "validation",
+          {
+            errorCount: blockingErrors.length,
+            errorContexts: [
+              ...new Set(blockingErrors.map((error) => error.context)),
+            ],
+          },
+          "user-correctable",
+        );
 
-          if (hasBlockingError) {
-            finishCompilerOperation(operation, "failed", {
-              failedPhase: "validation",
-            });
-            // When compilation fails, show only the blocking errors (not the
-            // non-blocking warnings), so the experimenter focuses on what must be
-            // fixed.
-            const blockingErrors = errorList.filter(
-              (err) => err.kind === "error",
+        // Sort by parameter list (codepoint order, as before);
+        // Array.prototype.sort is stable, so errors listing the same
+        // parameters keep the compiler's emission order (e.g. font-by-font
+        // for corpus coverage errors).
+        blockingErrors.sort((errA, errB) => {
+          const a = (errA.parameters ?? []).join(",");
+          const b = (errB.parameters ?? []).join(",");
+          return a < b ? -1 : a > b ? 1 : 0;
+        });
+
+        // show errors
+        this.setState({
+          errors: [...blockingErrors],
+          showDropZone: true,
+        });
+
+        Swal.close();
+        closePlaceholder();
+
+        return;
+      } else {
+        recordCompilerPhase(operation, "preprocessing-completed", {
+          warningCount: warningList.length,
+        });
+        if (preview) {
+          await this.openPreview(user, operation, preview);
+          return;
+        }
+        // only accept the filename as official when there are no errors
+        this.props.functions.handleSetFilename(file.name);
+
+        if (user.id != undefined) {
+          // user logged in
+          let resolvedProjectName;
+          try {
+            resolvedProjectName = await setRepoName(
+              user,
+              baseName,
+              repoNameMatches,
             );
-            captureCompilerFailure(
-              new Error("Experiment validation failed"),
-              operation,
-              "validation",
-              {
-                errorCount: blockingErrors.length,
-                errorContexts: [
-                  ...new Set(blockingErrors.map((error) => error.context)),
-                ],
-              },
-              "user-correctable",
-            );
-
-            // Sort by parameter list (codepoint order, as before);
-            // Array.prototype.sort is stable, so errors listing the same
-            // parameters keep the compiler's emission order (e.g. font-by-font
-            // for corpus coverage errors).
-            blockingErrors.sort((errA, errB) => {
-              const a = (errA.parameters ?? []).join(",");
-              const b = (errB.parameters ?? []).join(",");
-              return a < b ? -1 : a > b ? 1 : 0;
-            });
-
-            // show errors
-            this.setState({
-              errors: [...blockingErrors],
-              showDropZone: true,
-            });
-
-            Swal.close();
-            closePlaceholder();
-
-            return;
-          } else {
-            recordCompilerPhase(operation, "preprocessing-completed", {
-              warningCount: warningList.length,
-            });
-
-            // A Studio preview ends here: the validated experiment is served
-            // from the browser instead of being uploaded.
-            if (preview) {
-              await this.openPreview(user, operation, preview);
+          } catch (error) {
+            if (error instanceof IllegalRepoNameError) {
+              this.showIllegalRepoNameError(error, operation, file.name);
+              Swal.close();
+              closePlaceholder();
               return;
             }
-
-            // only accept the filename as official when there are no errors
-            this.props.functions.handleSetFilename(file.name);
-
-            if (user.id != undefined) {
-              // user logged in
-              let resolvedProjectName;
-              try {
-                resolvedProjectName = await setRepoName(
-                  user,
-                  baseName,
-                  repoNameMatches,
-                );
-              } catch (error) {
-                if (error instanceof IllegalRepoNameError) {
-                  this.showIllegalRepoNameError(error, operation, file.name);
-                  Swal.close();
-                  closePlaceholder();
-                  return;
-                }
-                throw error;
-              }
-              this.props.functions.handleSetProjectName(resolvedProjectName);
-              // The project-list refresh does not depend on the phrases pin;
-              // with "overlapMetadataCalls" it runs alongside it. Its result
-              // is awaited (and any failure surfaces) below, where it was.
-              let projectsPromise;
-              if (overlapMetadata) {
-                projectsPromise = getAllProjects(user);
-                projectsPromise.catch(() => {});
-              }
-              pinGlossaryVersion(user.username, resolvedProjectName)
-                .then(({ version }) =>
-                  console.log("Glossary version pinned:", version),
-                )
-                .catch((error) => {
-                  console.warn("Failed to pin glossary version:", error);
-                  captureCompilerFailure(
-                    error,
-                    operation,
-                    "glossary-version-pin",
-                    {},
-                    "external-service",
-                  );
-                });
-
-              try {
-                await pinPhrasesVersion(user.username, resolvedProjectName);
-              } catch (error) {
-                console.error("Failed to pin phrases version:", error);
-                captureCompilerFailure(
-                  error,
-                  operation,
-                  "phrases-version-pin",
-                  {},
-                  "external-service",
-                );
-                finishCompilerOperation(operation, "failed", {
-                  failedPhase: "phrases-version-pin",
-                });
-                return;
-              }
-
-              const updatedProjects = await (projectsPromise ??
-                getAllProjects(user));
-              this.props.functions.handleSetProjectList(updatedProjects);
-              const newProj = updatedProjects.find((p) => p.name === baseName);
-              if (newProj) {
-                this.props.functions.handleSetActivateExperiment(newProj);
-              }
-              this.props.functions.handleNextStep("upload");
-            }
-
-            // Surface any non-blocking warnings (e.g. LOGGING CAUTION) so they are
-            // shown on the "Experiment ready to run" page, above the green banner.
-            if (this.props.functions.handleSetCompileWarnings) {
-              this.props.functions.handleSetCompileWarnings(warningList);
-            }
-
-            // show success log, preceded by any non-blocking warnings
-            this.props.functions.handleUpdateUser(user);
-            this.setState({
-              errors: [
-                ...warningList,
-                {
-                  context: "preprocessor",
-                  kind: "correct",
-                  name: this.finalSuccessMessage,
-                },
-              ],
-            });
+            throw error;
           }
-        },
+          this.props.functions.handleSetProjectName(resolvedProjectName);
+          const projectsPromise = getAllProjects(user);
+          const updatedProjects = await projectsPromise;
+          this.props.functions.handleSetProjectList(updatedProjects);
+          const baseName = file.name.split(".")[0];
+          const newProj = updatedProjects.find((p) => p.name === baseName);
+          if (newProj) {
+            this.props.functions.handleSetActivateExperiment(newProj);
+          }
+          this.props.functions.handleNextStep("upload");
+        }
 
-        // this.props.functions.handleSetExperiment
-      );
+        // Surface any non-blocking warnings (e.g. LOGGING CAUTION) so they are
+        // shown on the "Experiment ready to run" page, above the green banner.
+        if (this.props.functions.handleSetCompileWarnings) {
+          this.props.functions.handleSetCompileWarnings(warningList);
+        }
+
+        // show success log, preceded by any non-blocking warnings
+        this.props.functions.handleUpdateUser(user);
+        this.setState({
+          errors: [
+            ...warningList,
+            {
+              context: "preprocessor",
+              kind: "correct",
+              name: this.finalSuccessMessage,
+            },
+          ],
+        });
+      }
     } catch (error) {
+      closePlaceholder();
       captureCompilerFailure(error, operation, "preprocessing", {
         resourceTypesPresent: Object.keys(resolvedResources).filter(
           (key) =>
@@ -830,13 +809,8 @@ export default class Table extends Component {
       finishCompilerOperation(operation, "failed", {
         failedPhase: "preprocessing",
       });
-      closePlaceholder();
       throw error;
     }
-
-    // this.setState({
-    //   errors: [...errors],
-    // });
   }
 
   /**
@@ -852,8 +826,12 @@ export default class Table extends Component {
     try {
       manuallySetSwalTitle("Preparing preview ...");
       const [generated, uploaded, resources] = await Promise.all([
-        gatherGeneratedFileActions(user),
-        gatherUserUploadedFileActions(userRepoFiles),
+        userRepoFiles.compiledFiles?.length
+          ? gatherReferencedCoreFileActions(userRepoFiles.compiledFiles)
+          : gatherGeneratedFileActions(user),
+        userRepoFiles.compiledFiles?.length
+          ? Promise.resolve([])
+          : gatherUserUploadedFileActions(userRepoFiles),
         gatherRequestedResourceActions(
           user,
           this.props.isCompiledFromArchiveBool,
@@ -1042,6 +1020,11 @@ export default class Table extends Component {
               }}
               user={this.props.user}
               isFromStartTable={true}
+            />
+            <VersionDropdown
+              releases={this.state.releases}
+              selected={this.props.selectedRelease}
+              onSelect={this.props.functions.handleSetSelectedRelease}
             />
           </span>
         </div>
