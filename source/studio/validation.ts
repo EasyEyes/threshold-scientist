@@ -112,7 +112,7 @@ export function runValidation(
     // source language, then resolve everything else in that language.
     let rawLanguage = table.colBOrDefault("_language");
     if (rawLanguage?.startsWith("~") && phrase) {
-      const key = rawLanguage.slice(1).toLowerCase();
+      const key = rawLanguage.toLowerCase();
       const resolvedName = phrase.table
         .get(key)
         ?.get(phrase.sourceLanguageCode);

@@ -34,19 +34,19 @@ describe("parsePhraseFile — valid xlsx", () => {
     expect(result.sourceLanguageCode).toBe("en");
     expect(result.availableLanguageCodes).toEqual(["en", "ar"]);
 
-    expect(result.phraseTable.get("lettersandreading")).toEqual(
+    expect(result.phraseTable.get("~lettersandreading")).toEqual(
       new Map([
         ["en", "Letters and Reading"],
         ["ar", "الحروف والقراءة"],
       ]),
     );
-    expect(result.phraseTable.get("welcomemessage")).toEqual(
+    expect(result.phraseTable.get("~welcomemessage")).toEqual(
       new Map([
         ["en", "Welcome"],
         ["ar", "مرحبا"],
       ]),
     );
-    expect(result.phraseTable.get("languagecode")).toEqual(
+    expect(result.phraseTable.get("~languagecode")).toEqual(
       new Map([
         ["en", "en"],
         ["ar", "ar"],
@@ -63,8 +63,9 @@ describe("parsePhraseFile — valid xlsx", () => {
     const file = makePhraseFile();
     const result = await parsePhraseFile(file);
 
-    expect(result.phraseTable.has("mixedcasekey")).toBe(true);
-    expect(result.phraseTable.has("MixedCaseKey")).toBe(false);
+    expect(result.phraseTable.has("~mixedcasekey")).toBe(true);
+    expect(result.phraseTable.has("~MixedCaseKey")).toBe(false);
+    expect(result.phraseTable.has("mixedcasekey")).toBe(false);
   });
 });
 
@@ -78,6 +79,17 @@ describe("parsePhraseFile — missing ~LanguageCode row", () => {
 
     const file = makePhraseFile();
     await expect(parsePhraseFile(file)).rejects.toThrow("~LanguageCode");
+  });
+
+  it("does not accept an unprefixed LanguageCode row", async () => {
+    XLSX.utils.sheet_to_json.mockReturnValue([
+      ["LanguageCode", "en"],
+      ["~WelcomeMessage", "Hello"],
+    ]);
+
+    await expect(parsePhraseFile(makePhraseFile())).rejects.toThrow(
+      "~LanguageCode",
+    );
   });
 });
 

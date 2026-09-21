@@ -25,8 +25,7 @@ function buildPhraseTable(rows: string[][]): {
 } {
   const languageCodeRow = rows.find((row) => {
     if (row[0] == null) return false;
-    const normalized = String(row[0]).replace(/^~/, "").toLowerCase();
-    return normalized === "languagecode";
+    return String(row[0]).toLowerCase() === "~languagecode";
   });
 
   if (!languageCodeRow) {
@@ -49,7 +48,7 @@ function buildPhraseTable(rows: string[][]): {
   for (const row of rows) {
     const symbolicName = row[0];
     if (symbolicName == null || symbolicName === "") continue;
-    const normalizedKey = String(symbolicName).replace(/^~/, "").toLowerCase();
+    const normalizedKey = String(symbolicName).toLowerCase();
 
     const langMap = new Map<string, string>();
     for (let i = 0; i < langCodes.length; i++) {
