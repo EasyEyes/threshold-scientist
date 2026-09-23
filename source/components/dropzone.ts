@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import JSZip from "jszip";
+import * as XLSX from "xlsx";
 import Swal from "sweetalert2";
 
 import {
@@ -118,6 +119,31 @@ export const isPhraseFile = (file: File): boolean => {
   return file.name.match(/\.phrases\.xlsx$/i) !== null;
 };
 
+const isNamedPhraseFile = async (file: File): Promise<boolean> => {
+  if (!/\.xlsx$/i.test(file.name)) return false;
+  try {
+    const book = XLSX.read(new Uint8Array(await file.arrayBuffer()), {
+      type: "array",
+    });
+    const sheet = book.Sheets[book.SheetNames[0]];
+    return Array.from({ length: 20 }, (_, index) =>
+      String(sheet?.[`A${index + 2}`]?.v ?? ""),
+    ).some((value) => value.startsWith("Ⓝ"));
+  } catch {
+    return false;
+  }
+};
+
+const requestedLanguagePhraseFile = async (file: File): Promise<string> => {
+  const book = XLSX.read(new Uint8Array(await file.arrayBuffer()), {
+    type: "array",
+  });
+  const sheet = book.Sheets[book.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][];
+  const row = rows.find((cells) => cells[0] === "_languagePhrasesSpreadsheet");
+  return String(row?.[1] ?? "").trim();
+};
+
 export const handleDrop = async (
   user: User,
   files: File[],
@@ -136,6 +162,7 @@ export const handleDrop = async (
   const frequencyResponseList: File[] = [];
   const targetSoundListList: File[] = [];
   const phraseFileList: File[] = [];
+  const namedPhraseFileList: File[] = [];
   let experimentFile = null;
   let isCompiledFromArchiveBool = false;
   let archivedZip = null;
@@ -179,7 +206,9 @@ export const handleDrop = async (
       frequencyResponseList.push(file);
     } else if (isTargetSoundListFile(file)) {
       targetSoundListList.push(file);
-    } else if (await isPhraseFile(file)) {
+    } else if (await isNamedPhraseFile(file)) {
+      namedPhraseFileList.push(file);
+    } else if (isPhraseFile(file)) {
       phraseFileList.push(file);
     } else if (isExpTableFile(file)) {
       experimentFile = file;
@@ -203,7 +232,9 @@ export const handleDrop = async (
               frequencyResponseList.push(fileObject);
             } else if (isTargetSoundListFile(fileObject)) {
               targetSoundListList.push(fileObject);
-            } else if (await isPhraseFile(fileObject)) {
+            } else if (await isNamedPhraseFile(fileObject)) {
+              namedPhraseFileList.push(fileObject);
+            } else if (isPhraseFile(fileObject)) {
               phraseFileList.push(fileObject);
             } else if (isExpTableFile(fileObject)) {
               experimentFile = fileObject;
@@ -225,7 +256,7 @@ export const handleDrop = async (
       // Store phrase files bundled in the archive, verbatim — they are used
       // to build this study only, never translated or uploaded to the
       // receiving scientist's account.
-      userRepoFiles.phrases = phraseFileList;
+      userRepoFiles.phrases = [...phraseFileList, ...namedPhraseFileList];
       // Build an experiment
       userRepoFiles.experiment = experimentFile;
       handleExperimentFile(experimentFile);
@@ -233,15 +264,34 @@ export const handleDrop = async (
     return;
   }
 
-  // Translate, store, and upload phrase files before other uploads
-  if (phraseFileList.length > 0) {
+  // A study only needs its requested language phrase sheet translated.
+  // Standalone phrase uploads still translate the supplied files.
+  const requestedLanguageFile = experimentFile
+    ? await requestedLanguagePhraseFile(experimentFile)
+    : null;
+  const languagePhraseFiles =
+    requestedLanguageFile === null
+      ? phraseFileList
+      : phraseFileList.filter(
+          (file) =>
+            file.name.toLowerCase() === requestedLanguageFile.toLowerCase(),
+        );
+  if (languagePhraseFiles.length > 0) {
     await runStep("Translating …", "resources-translating", async () => {
       const translatedFiles = await Promise.all(
-        phraseFileList.map((f) => translatePhraseFileApi(f)),
+        languagePhraseFiles.map((f) => translatePhraseFileApi(f)),
       );
       userRepoFiles.phrases = translatedFiles;
       await createOrUpdateCommonResources(user, translatedFiles);
     });
+  }
+
+  if (namedPhraseFileList.length > 0) {
+    await createOrUpdateCommonResources(user, namedPhraseFileList);
+    userRepoFiles.phrases = [
+      ...(userRepoFiles.phrases || []),
+      ...namedPhraseFileList,
+    ];
   }
 
   // handle valid resource files

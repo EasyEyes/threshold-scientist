@@ -33,6 +33,10 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getOriginalFileNameForProject: jest.fn(),
   getRecruitmentServiceConfig: jest.fn(),
   getDurationForProject: jest.fn(),
+  getLanguageInfoForProject: jest.fn(async () => ({
+    language: "en",
+    phrasesColumnName: "",
+  })),
   getProlificStudyConfig: jest.fn(),
   getProlificStudyId: jest.fn(),
   getDataFolderCsvLength: jest.fn(),
@@ -193,6 +197,7 @@ describe("App - handleSetActivateExperiment", () => {
       previousCompatibilityRequirements: null,
       previousExperimentDuration: null,
       previousExperimentLanguage: null,
+      previousExperimentPhrasesColumnName: null,
       previousProlificConfig: null,
     });
   });

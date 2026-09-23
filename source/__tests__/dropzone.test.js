@@ -72,6 +72,9 @@ function makeHandleDropArgs(overrides = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   mockZipFiles = {};
+  require("../../threshold/preprocess/utils").isExpTableFile.mockReturnValue(
+    false,
+  );
 
   // Swal.fire must invoke didOpen so the async body runs in tests
   const Swal = require("sweetalert2").default;
@@ -92,6 +95,90 @@ beforeEach(() => {
 // ── Cycle 1: translatePhraseFileApi is called for a phrase file ───────────────
 
 describe("handleDrop — phrase file detected", () => {
+  it("uploads a named *.phrases.xlsx without translating it", async () => {
+    const XLSX = require("xlsx");
+    const { handleDrop } = require("../components/dropzone");
+    const { userRepoFiles } = require("../../threshold/preprocess/constants");
+    const { translatePhraseFileApi } = require("../components/phraseFileApi");
+    const {
+      createOrUpdateCommonResources,
+    } = require("../../threshold/preprocess/gitlabUtils");
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ["", "A'"],
+        ["ⓃfontFile1", "Omfug.woff"],
+      ]),
+      "Phrases",
+    );
+    const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+    const namedFile = new File([bytes], "Acuity24Fonts.phrases.xlsx");
+    namedFile.arrayBuffer = async () => bytes;
+
+    await handleDrop(
+      MOCK_USER,
+      [namedFile],
+      jest.fn(),
+      jest.fn(),
+      jest.fn(),
+      jest.fn(),
+    );
+
+    expect(translatePhraseFileApi).not.toHaveBeenCalled();
+    expect(createOrUpdateCommonResources).toHaveBeenCalledWith(MOCK_USER, [
+      namedFile,
+    ]);
+    expect(userRepoFiles.phrases).toEqual([namedFile]);
+  });
+
+  it("skips language translation when the study only requests named phrases", async () => {
+    const XLSX = require("xlsx");
+    const { handleDrop } = require("../components/dropzone");
+    const { userRepoFiles } = require("../../threshold/preprocess/constants");
+    const { isExpTableFile } = require("../../threshold/preprocess/utils");
+    const { translatePhraseFileApi } = require("../components/phraseFileApi");
+    const makeFile = (name, rows) => {
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(
+        workbook,
+        XLSX.utils.aoa_to_sheet(rows),
+        "Sheet1",
+      );
+      const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+      const file = new File([bytes], name);
+      file.arrayBuffer = async () => bytes;
+      return file;
+    };
+    const study = makeFile("Acuity24Fonts.xlsx", [
+      ["_phrasesColumnName", "A'"],
+      ["_phrasesSpreadsheet", "Acuity24Fonts.phrases.xlsx"],
+      ["font", "ⓃfontFile1"],
+    ]);
+    const named = makeFile("Acuity24Fonts.phrases.xlsx", [
+      ["", "A'"],
+      ["ⓃfontFile1", "Omfug.woff"],
+    ]);
+    const unrelatedLanguage = makeFile("Other.phrases.xlsx", [
+      ["ⓁLanguageCode", "en"],
+      ["ⓁTitle", "Title"],
+    ]);
+    isExpTableFile.mockImplementation((file) => file.name === study.name);
+
+    await handleDrop(
+      MOCK_USER,
+      [study, named, unrelatedLanguage],
+      jest.fn(),
+      jest.fn(),
+      jest.fn(),
+      jest.fn(),
+    );
+
+    expect(translatePhraseFileApi).not.toHaveBeenCalled();
+    expect(userRepoFiles.phrases).toEqual([named]);
+    expect(userRepoFiles.experiment).toBe(study);
+  });
+
   it("calls translatePhraseFileApi for a *.phrases.xlsx file", async () => {
     const { handleDrop } = require("../components/dropzone");
     const { translatePhraseFileApi } = require("../components/phraseFileApi");

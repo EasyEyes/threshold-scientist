@@ -198,6 +198,7 @@ export default class StatusLines extends Component {
         previousCompatibilityRequirements,
         previousExperimentDuration,
         previousExperimentLanguage,
+        previousExperimentPhrasesColumnName,
         previousRecruitmentInformation,
       },
       // currentStep,
@@ -236,6 +237,15 @@ export default class StatusLines extends Component {
       viewingPreviousExperiment && hasRecruitmentService
         ? previousRecruitmentInformation?.recruitmentProlificWorkspace
         : user?.currentExperiment?.prolificWorkspaceModeBool;
+
+    // Shown below _language only when the spreadsheet assigned it.
+    const phrasesColumnName = (
+      (viewingPreviousExperiment
+        ? previousExperimentPhrasesColumnName
+        : user?.currentExperiment?._phrasesColumnName) ?? ""
+    )
+      .toString()
+      .trim();
 
     return (
       <ul className="status-lines" style={{ marginBottom: "8px" }}>
@@ -413,6 +423,13 @@ export default class StatusLines extends Component {
                 DEFAULT_EXPERIMENT_LANGUAGE
           }
         />
+        {phrasesColumnName && (
+          <StatusLine
+            activated={!!filename || viewingPreviousExperiment}
+            title={"_phrasesColumnName"}
+            content={phrasesColumnName}
+          />
+        )}
 
         <StatusLine
           activated={

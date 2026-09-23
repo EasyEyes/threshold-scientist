@@ -88,6 +88,7 @@ export interface ValidationResult {
 export function runValidation(
   matrix: string[][],
   phrase?: PhraseSource | null,
+  namedPhrase?: PhraseSource | null,
 ): ValidationResult {
   let data = mirrorPreprocess(matrix);
   if (data.length === 0) return { errors: [], table: null, data: null };
@@ -107,25 +108,59 @@ export function runValidation(
     setConditionColumnMapping(filtered.conditionColumnMapping);
     let table = new ExperimentTable(data);
 
-    // Mirror main.ts: resolve ~tilde phrase references before validation.
+    const sourceTable = table;
+    const namedColumn = (
+      table.colBOrDefault("_phrasesColumnName") ?? ""
+    ).trim();
+    if (
+      namedPhrase &&
+      !namedPhrase.availableLanguageCodes.includes(namedColumn)
+    ) {
+      errors.push({
+        name: "Phrase column not found",
+        message: `Column ${namedColumn} is not in _phrasesSpreadsheet.`,
+        hint: "Set _phrasesColumnName to a column name in the first row.",
+        context: "studio",
+        kind: "error",
+        parameters: ["_phrasesColumnName"],
+      });
+    }
+    const namedResult = resolveTildeValues(
+      table,
+      namedPhrase?.table,
+      namedColumn,
+      "Ⓝ",
+      "_phrasesColumnName",
+    );
+    table = namedResult.resolved;
+    errors.push(...namedResult.errors);
+    // Resolve language phrase references before validation.
     // If _language is itself a tilde, pre-resolve it in the phrase file's
     // source language, then resolve everything else in that language.
     let rawLanguage = table.colBOrDefault("_language");
-    if (rawLanguage?.startsWith("~") && phrase) {
-      const key = rawLanguage.slice(1).toLowerCase();
+    if (
+      (rawLanguage?.startsWith("Ⓛ") || rawLanguage?.startsWith("~")) &&
+      phrase
+    ) {
+      const key = rawLanguage.toLowerCase();
       const resolvedName = phrase.table
         .get(key)
         ?.get(phrase.sourceLanguageCode);
       if (resolvedName) rawLanguage = resolvedName;
     }
-    const sourceTable = table;
     const { resolved, errors: tildeErrors } = resolveTildeValues(
       table,
       phrase?.table,
       toLanguageCode(rawLanguage),
+      "Ⓛ",
     );
-    table = resolved;
-    errors.push(...tildeErrors);
+    const legacyResult = resolveTildeValues(
+      resolved,
+      phrase?.table,
+      toLanguageCode(rawLanguage),
+    );
+    table = legacyResult.resolved;
+    errors.push(...tildeErrors, ...legacyResult.errors);
     // As main.ts does: the font rows of the row-major data follow the
     // resolved table, so font discovery never sees a ~symbol.
     data = syncResolvedFontRows(data, table);
