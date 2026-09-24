@@ -1046,20 +1046,24 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
     expect(userRepoFiles.requestedPhrases).toEqual(["myPhrases.xlsx"]);
   });
 
-  it("shows only blocking errors and reopens the dropzone when the compile fails", async () => {
+  it("does not upload or activate when the parameter catalog gate fails", async () => {
     const { compileExperimentWithEngine } = require("../engine/engineCompile");
     const blocking = {
       kind: "error",
-      name: "Missing font",
-      message: "Font not found",
-      parameters: ["font"],
+      code: "PARAMETER_DEFINITION_MISSING",
+      context: "catalog-validation",
+      name: "Parameter definition missing.",
+      message: "The selected Glossary release does not define: typoA, typoZ.",
+      parameters: ["typoA", "typoZ"],
     };
     const warning = { kind: "warning", name: "Caution", parameters: ["x"] };
     compileExperimentWithEngine.mockResolvedValueOnce(
       successOutcome({ diagnostics: [warning, blocking] }),
     );
 
-    const props = makeProps();
+    const props = makeProps({
+      user: { ...makeProps().user, id: 1, username: "alice" },
+    });
     const ref = React.createRef();
     render(<Table ref={ref} {...props} />);
 
@@ -1070,6 +1074,8 @@ describe("Table.handleTable — engine compile outcome handling (issue #174)", (
     expect(ref.current.state.errors).toEqual([blocking]);
     expect(ref.current.state.showDropZone).toBe(true);
     expect(props.functions.handleSetFilename).not.toHaveBeenCalled();
+    expect(props.functions.handleSetActivateExperiment).not.toHaveBeenCalled();
+    expect(props.functions.handleNextStep).not.toHaveBeenCalledWith("upload");
   });
 
   it("surfaces warnings above the success banner when the compile succeeds", async () => {
@@ -1251,7 +1257,7 @@ describe("Table.handleTable preamble and Studio preview", () => {
     expect(props.functions.handleNextStep).not.toHaveBeenCalledWith("upload");
   });
 
-  it("closes the preview tab when engine validation fails", async () => {
+  it("does not stage a Studio preview when the parameter catalog gate fails", async () => {
     beginCompile("studio");
     const { stagePreview } = require("../studio/preview");
     const previous = compileExperimentWithEngine.getMockImplementation();
@@ -1259,10 +1265,11 @@ describe("Table.handleTable preamble and Studio preview", () => {
       ...(await previous(...args)),
       diagnostics: [
         {
-          context: "preprocessor",
+          code: "PARAMETER_DEFINITION_MISSING",
+          context: "catalog-validation",
           kind: "error",
-          name: "Unbalanced commas",
-          parameters: [],
+          name: "Parameter definition missing.",
+          parameters: ["typoA", "typoZ"],
         },
       ],
     }));
@@ -1276,7 +1283,7 @@ describe("Table.handleTable preamble and Studio preview", () => {
     expect(placeholder.close).toHaveBeenCalledTimes(1);
     expect(stagePreview).not.toHaveBeenCalled();
     expect(ref.current.state.errors.map((e) => e.name)).toEqual([
-      "Unbalanced commas",
+      "Parameter definition missing.",
     ]);
   });
 
