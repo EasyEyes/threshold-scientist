@@ -33,6 +33,7 @@ const previousExperimentViewed = {
   previousCompatibilityRequirements: "",
   previousExperimentDuration: "EasyEyes=5, _online2Minutes=6",
   previousExperimentLanguage: null,
+  previousExperimentPhrasesColumnName: null,
   previousRecruitmentInformation: {},
 };
 
@@ -98,5 +99,65 @@ describe("StatusLines _language", () => {
     expect(screen.getByText("_language:")).toBeInTheDocument();
     expect(screen.getByText("zh-Hans")).toBeInTheDocument();
     expect(screen.queryByText("ar")).not.toBeInTheDocument();
+  });
+});
+
+describe("StatusLines _phrasesColumnName", () => {
+  it("is hidden when the spreadsheet did not assign _phrasesColumnName", () => {
+    render(<StatusLines {...baseProps} />);
+
+    expect(screen.queryByText("_phrasesColumnName:")).not.toBeInTheDocument();
+  });
+
+  it("is hidden when _phrasesColumnName is blank", () => {
+    render(
+      <StatusLines
+        {...baseProps}
+        user={{
+          ...baseProps.user,
+          currentExperiment: { _language: "ar", _phrasesColumnName: "  " },
+        }}
+      />,
+    );
+
+    expect(screen.queryByText("_phrasesColumnName:")).not.toBeInTheDocument();
+  });
+
+  it("shows _phrasesColumnName right below _language for the study just compiled", () => {
+    render(
+      <StatusLines
+        {...baseProps}
+        user={{
+          ...baseProps.user,
+          currentExperiment: { _language: "ar", _phrasesColumnName: "A'" },
+        }}
+      />,
+    );
+
+    const languageTitle = screen.getByText("_language:");
+    const phrasesTitle = screen.getByText("_phrasesColumnName:");
+    expect(phrasesTitle).toBeInTheDocument();
+    expect(screen.getByText("A'")).toBeInTheDocument();
+
+    const languageLine = languageTitle.closest("li");
+    const phrasesLine = phrasesTitle.closest("li");
+    expect(languageLine.nextElementSibling).toBe(phrasesLine);
+  });
+
+  it("shows the _phrasesColumnName stored with a previously compiled study", () => {
+    render(
+      <StatusLines
+        {...baseProps}
+        activeExperiment={{ id: 7, name: "old-study" }}
+        previousExperimentViewed={{
+          ...previousExperimentViewed,
+          previousExperimentLanguage: "it",
+          previousExperimentPhrasesColumnName: "Italian_v2",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("_phrasesColumnName:")).toBeInTheDocument();
+    expect(screen.getByText("Italian_v2")).toBeInTheDocument();
   });
 });

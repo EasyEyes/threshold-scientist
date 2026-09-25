@@ -226,6 +226,17 @@ export function checkResources(
     ).trim();
     if (phraseFile) add("phrases", phraseFile, "_languagePhrasesSpreadsheet");
     errors.push(...isPhraseFileMissing(phraseFile, pool("phrases")));
+    const namedPhraseFile = (
+      table.colBOrDefault("_phrasesSpreadsheet") ?? ""
+    ).trim();
+    if (namedPhraseFile) add("phrases", namedPhraseFile, "_phrasesSpreadsheet");
+    errors.push(
+      ...isPhraseFileMissing(
+        namedPhraseFile,
+        pool("phrases"),
+        "_phrasesSpreadsheet",
+      ),
+    );
 
     // Images.
     const images = getImageNames(parsed) as string[];

@@ -18,6 +18,7 @@ import {
   VR_HEADSET_USAGE_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 import { captureError } from "../sentry";
+import { prolificStudyCreationError } from "./prolificErrors";
 import { getGlossary } from "../../threshold/parameters/glossaryRegistry";
 
 const prolificStudySubmissionStatus = {
@@ -398,7 +399,7 @@ export const prolificCreateDraft = async (
 
   const blockList = prolificConfig._prolific3CustomBlockList;
   const blockListParticipants = blockList
-    ? blockList.split(",").map((item) => item.trim())
+    ? [...new Set(blockList.split(",").map((item) => item.trim()))]
     : [];
 
   // Fetch project studies if needed for name-to-ID resolution or AllowCompletedExperiment
@@ -603,23 +604,41 @@ export const prolificCreateDraft = async (
       : {}),
   };
 
-  const result = await fetch(prolificStudyDraftApiUrl, {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Token ${token}`,
-    },
-  })
-    .then((response) => {
-      return response.json();
-    })
-    .catch((error) =>
-      captureError(error, "Prolific Create Draft", { endpoint: "studies" }),
+  let response;
+  try {
+    response = await fetch(prolificStudyDraftApiUrl, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Token ${token}`,
+      },
+    });
+  } catch (error) {
+    throw new Error(
+      `Could not contact Prolific to create the study: ${
+        error.message || String(error)
+      }. Check your connection and your Prolific project before retrying; a draft may have been created even though its response was not received.`,
     );
+  }
 
-  if (result?.status !== "UNPUBLISHED") {
-    console.error(result);
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error(
+      `The Prolific study creation service returned an unreadable response (HTTP ${response.status}). Check your Prolific project before retrying; EasyEyes could not confirm whether a draft was created.`,
+    );
+  }
+
+  // Also recognize errors wrapped in HTTP 200 by older deployed proxies.
+  if (
+    response.ok === false ||
+    result?.error ||
+    result?.status !== "UNPUBLISHED" ||
+    !result?.id
+  ) {
+    throw prolificStudyCreationError(result, response.status, payload.project);
   }
 
   return result;

@@ -34,19 +34,19 @@ describe("parsePhraseFile — valid xlsx", () => {
     expect(result.sourceLanguageCode).toBe("en");
     expect(result.availableLanguageCodes).toEqual(["en", "ar"]);
 
-    expect(result.phraseTable.get("lettersandreading")).toEqual(
+    expect(result.phraseTable.get("~lettersandreading")).toEqual(
       new Map([
         ["en", "Letters and Reading"],
         ["ar", "الحروف والقراءة"],
       ]),
     );
-    expect(result.phraseTable.get("welcomemessage")).toEqual(
+    expect(result.phraseTable.get("~welcomemessage")).toEqual(
       new Map([
         ["en", "Welcome"],
         ["ar", "مرحبا"],
       ]),
     );
-    expect(result.phraseTable.get("languagecode")).toEqual(
+    expect(result.phraseTable.get("~languagecode")).toEqual(
       new Map([
         ["en", "en"],
         ["ar", "ar"],
@@ -63,8 +63,9 @@ describe("parsePhraseFile — valid xlsx", () => {
     const file = makePhraseFile();
     const result = await parsePhraseFile(file);
 
-    expect(result.phraseTable.has("mixedcasekey")).toBe(true);
-    expect(result.phraseTable.has("MixedCaseKey")).toBe(false);
+    expect(result.phraseTable.has("~mixedcasekey")).toBe(true);
+    expect(result.phraseTable.has("~MixedCaseKey")).toBe(false);
+    expect(result.phraseTable.has("mixedcasekey")).toBe(false);
   });
 });
 
@@ -79,6 +80,17 @@ describe("parsePhraseFile — missing ~LanguageCode row", () => {
     const file = makePhraseFile();
     await expect(parsePhraseFile(file)).rejects.toThrow("~LanguageCode");
   });
+
+  it("does not accept an unprefixed LanguageCode row", async () => {
+    XLSX.utils.sheet_to_json.mockReturnValue([
+      ["LanguageCode", "en"],
+      ["~WelcomeMessage", "Hello"],
+    ]);
+
+    await expect(parsePhraseFile(makePhraseFile())).rejects.toThrow(
+      "~LanguageCode",
+    );
+  });
 });
 
 // ── Cycle 3: single-column xlsx ───────────────────────────────────────────────
@@ -89,5 +101,45 @@ describe("parsePhraseFile — single-column xlsx", () => {
 
     const file = makePhraseFile();
     await expect(parsePhraseFile(file)).rejects.toThrow(/no language columns/i);
+  });
+});
+
+describe("new phrase formats", () => {
+  it("parses Ⓛ language rows", async () => {
+    XLSX.utils.sheet_to_json.mockReturnValue([
+      ["ⓁLanguageCode", "en", "fr"],
+      ["ⓁGreeting", "Hello", "Bonjour"],
+    ]);
+    const result = await parsePhraseFile(makePhraseFile());
+    expect(result.phraseTable.get("ⓛgreeting")?.get("fr")).toBe("Bonjour");
+  });
+
+  it("parses Ⓝ names using first-row column names and permits Ⓛ references", async () => {
+    XLSX.utils.sheet_to_json.mockReturnValue([
+      ["", "A", "B"],
+      ["ⓃGreeting", "Hello", "ⓁGreeting"],
+    ]);
+    const result = await parsePhraseFile(makePhraseFile(), "name");
+    expect(result.phraseTable.get("ⓝgreeting")?.get("B")).toBe("ⓁGreeting");
+  });
+
+  it("rejects recursive Ⓝ references", async () => {
+    XLSX.utils.sheet_to_json.mockReturnValue([
+      ["", "A"],
+      ["ⓃGreeting", "ⓃGreeting"],
+    ]);
+    await expect(parsePhraseFile(makePhraseFile(), "name")).rejects.toThrow(
+      /disallowed/,
+    );
+  });
+
+  it("rejects symbolic references in Ⓛ phrases", async () => {
+    XLSX.utils.sheet_to_json.mockReturnValue([
+      ["ⓁLanguageCode", "en"],
+      ["ⓁGreeting", "ⓃGreeting"],
+    ]);
+    await expect(parsePhraseFile(makePhraseFile())).rejects.toThrow(
+      /disallowed/,
+    );
   });
 });

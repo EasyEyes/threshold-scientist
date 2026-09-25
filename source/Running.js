@@ -34,6 +34,7 @@ import ParameterList from "./components/ParameterList";
 import { captureError } from "./sentry";
 import { isEmptyRepository } from "./repositoryState";
 import { deriveStudyActions } from "./studyActions";
+import { prolificStudyCreationError } from "./components/prolificErrors";
 
 import "./css/Running.scss";
 import { Dropdown } from "./components/Dropdown";
@@ -351,26 +352,21 @@ export default class Running extends Component {
     }
     if (prolificStudyState === "preparing") return;
 
-    // Reserve the tab during the click event so popup blockers allow it.
-    const studyWindow = window.open("about:blank", "_blank");
-    this.setState({ prolificStudyState: "preparing" });
-
+    let studyWindow;
+    let createdStudyId;
     try {
+      // Reserve the tab during the click event so popup blockers allow it.
+      studyWindow = window.open("about:blank", "_blank");
+      this.setState({ prolificStudyState: "preparing" });
       let studyId = await getProlificStudyId(user, activeExperiment?.id);
       if (!studyId) {
         const prolificConfig = this.props.viewingPreviousExperiment
           ? this.props.previousExperimentViewed.previousProlificConfig
           : this.props.currentProlificConfig;
         if (!prolificConfig) {
-          studyWindow?.close();
-          this.setState({ prolificStudyState: "idle" });
-          await Swal.fire({
-            icon: "error",
-            title: "Prolific study settings unavailable",
-            text: "This study was compiled before EasyEyes started saving Prolific settings. Compile it again before creating a Prolific study.",
-            confirmButtonColor: "#666",
-          });
-          return;
+          throw new Error(
+            "Prolific study settings unavailable. This study was compiled before EasyEyes started saving Prolific settings. Compile it again before creating a Prolific study.",
+          );
         }
         const hasCompletionCode = !!completionCode;
         const { code, incompatibleCompletionCode, abortedCompletionCode } =
@@ -380,7 +376,14 @@ export default class Running extends Component {
             activeExperiment,
             functions.handleUpdateUser,
           ));
-        if (!hasCompletionCode) this.setState({ completionCode: code });
+        if (!hasCompletionCode)
+          this.setState({
+            completionCode: {
+              code,
+              incompatibleCompletionCode,
+              abortedCompletionCode,
+            },
+          });
 
         const result = await prolificCreateDraft(
           prolificConfig,
@@ -391,12 +394,15 @@ export default class Running extends Component {
           prolificToken,
         );
         if (result?.status !== "UNPUBLISHED" || !result.id) {
-          studyWindow?.close();
-          this.setState({ prolificStudyState: "idle" });
-          return;
+          throw prolificStudyCreationError(
+            result,
+            undefined,
+            prolificConfig.prolificWorkspaceProjectId,
+          );
         }
 
         studyId = result.id;
+        createdStudyId = studyId;
         await createProlificStudyIdFile(activeExperiment, user, studyId);
       }
 
@@ -412,8 +418,20 @@ export default class Running extends Component {
       }
     } catch (err) {
       studyWindow?.close();
-      this.setState({ prolificStudyState: "idle" });
-      throw err;
+      this.setState({
+        prolificStudyState: createdStudyId ? "ready" : "idle",
+        preparedProlificStudyId: createdStudyId || null,
+      });
+      captureError(err, "Prolific study creation");
+      await Swal.fire({
+        title: "Fatal error: Prolific study creation failed",
+        text: createdStudyId
+          ? `Prolific created study ${createdStudyId}, but EasyEyes could not finish preparing it. Check your Prolific project before retrying.\n\n${
+              err.message || String(err)
+            }`
+          : err.message || String(err),
+        confirmButtonColor: "#666",
+      });
     }
   };
 

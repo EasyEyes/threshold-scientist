@@ -146,7 +146,9 @@ export default function StudioPanel({
   const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [phrase, setPhrase] = useState<PhraseSource | null>(null);
+  const [namedPhrase, setNamedPhrase] = useState<PhraseSource | null>(null);
   const [phraseLoading, setPhraseLoading] = useState(false);
+  const [namedPhraseLoading, setNamedPhraseLoading] = useState(false);
   const [name, setName] = useState("myDemoExperiment");
   const [validating, setValidating] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -177,6 +179,13 @@ export default function StudioPanel({
     () =>
       table.rows
         .find((r) => r.name === "_languagePhrasesSpreadsheet")
+        ?.values[0]?.trim() ?? "",
+    [table],
+  );
+  const requestedNamedPhraseFile = useMemo(
+    () =>
+      table.rows
+        .find((r) => r.name === "_phrasesSpreadsheet")
         ?.values[0]?.trim() ?? "",
     [table],
   );
@@ -235,26 +244,75 @@ export default function StudioPanel({
     userResources,
   ]);
 
-  // Live validation: the production compiler's checks, debounced per
-  // keystroke. Waits while the phrase file is being read, so tilde values are
+  // Load the named phrase sheet used by the first replacement pass.
+  useEffect(() => {
+    if (!requestedNamedPhraseFile) {
+      setNamedPhrase(null);
+      setNamedPhraseLoading(false);
+      return;
+    }
+    let stale = false;
+    setNamedPhraseLoading(true);
+    const dropped = files.find((f) => f.name === requestedNamedPhraseFile);
+    const source = dropped
+      ? Promise.resolve(dropped)
+      : signedIn && fetchUserPhraseFile
+      ? fetchUserPhraseFile(requestedNamedPhraseFile).catch(() => null)
+      : Promise.resolve(null);
+    source
+      .then((file) => (file ? parsePhraseFile(file, "name") : null))
+      .then((parsed) => {
+        if (!stale) {
+          setNamedPhrase(
+            parsed
+              ? {
+                  fileName: requestedNamedPhraseFile,
+                  origin: dropped ? "dropped" : "resources",
+                  table: parsed.phraseTable,
+                  sourceLanguageCode: parsed.sourceLanguageCode,
+                  availableLanguageCodes: parsed.availableLanguageCodes,
+                }
+              : null,
+          );
+          setNamedPhraseLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!stale) {
+          setNamedPhrase(null);
+          setNamedPhraseLoading(false);
+        }
+      });
+    return () => {
+      stale = true;
+    };
+  }, [
+    requestedNamedPhraseFile,
+    files,
+    signedIn,
+    fetchUserPhraseFile,
+    userResources,
+  ]);
+
+  // Live validation waits while phrase files are read, so symbols are
   // never reported as unresolvable merely because the read is still in
   // flight.
   useEffect(() => {
     setValidating(true);
-    if (phraseLoading) return;
+    if (phraseLoading || namedPhraseLoading) return;
     const timer = setTimeout(() => {
       const {
         errors,
         table: t,
         data,
-      } = runValidation(stateToMatrix(table), phrase);
+      } = runValidation(stateToMatrix(table), phrase, namedPhrase);
       setErrors(errors);
       setExpTable(t);
       setCheckedData(data);
       setValidating(false);
     }, 250);
     return () => clearTimeout(timer);
-  }, [table, phrase, phraseLoading]);
+  }, [table, phrase, namedPhrase, phraseLoading, namedPhraseLoading]);
 
   const problemParams = useMemo(() => {
     const m = new Map<string, "error" | "warning">();
@@ -375,6 +433,7 @@ export default function StudioPanel({
     table,
     name,
     phrase,
+    namedPhrase,
     userResources,
     files,
     signedIn,
@@ -384,6 +443,7 @@ export default function StudioPanel({
     table,
     name,
     phrase,
+    namedPhrase,
     userResources,
     files,
     signedIn,
@@ -399,7 +459,7 @@ export default function StudioPanel({
       droppedFileNames: s.files.map((f) => f.name),
       focus: s.focus,
       check: (t) => {
-        const v = runValidation(stateToMatrix(t), s.phrase);
+        const v = runValidation(stateToMatrix(t), s.phrase, s.namedPhrase);
         const r = checkResources(v.data, v.table, s.userResources, s.files);
         return { errors: v.errors, resourceErrors: r.errors, needed: r.needed };
       },

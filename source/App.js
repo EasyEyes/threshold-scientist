@@ -37,7 +37,7 @@ import {
   getOriginalFileNameForProject,
   getRecruitmentServiceConfig,
   getDurationForProject,
-  getLanguageForProject,
+  getLanguageInfoForProject,
   getProlificStudyConfig,
   getProlificStudyId,
   copyUser,
@@ -153,6 +153,7 @@ export default class App extends Component {
         previousCompatibilityRequirements: null,
         previousExperimentDuration: null,
         previousExperimentLanguage: null,
+        previousExperimentPhrasesColumnName: null,
         previousProlificConfig: null,
       },
       /* -------------------------------------------------------------------------- */
@@ -344,6 +345,7 @@ export default class App extends Component {
     let previousCompatibilityRequirements = null;
     let previousExperimentDuration = null;
     let previousExperimentLanguage = null;
+    let previousExperimentPhrasesColumnName = null;
     let previousProlificConfig = null;
     let previousReleasePin = null;
     if (activeExperiment !== "new") {
@@ -401,10 +403,13 @@ export default class App extends Component {
               "duration-requested",
               () => getDurationForProject(user, activeExperiment.name),
             );
-            previousExperimentLanguage = await retrieveMetadata(
+            const languageInfo = await retrieveMetadata(
               "language-requested",
-              () => getLanguageForProject(user, activeExperiment.name),
+              () => getLanguageInfoForProject(user, activeExperiment.name),
             );
+            previousExperimentLanguage = languageInfo.language;
+            previousExperimentPhrasesColumnName =
+              languageInfo.phrasesColumnName;
             previousCompatibilityRequirements = await retrieveMetadata(
               "compatibility-requested",
               () =>
@@ -455,6 +460,7 @@ export default class App extends Component {
           previousCompatibilityRequirements: previousCompatibilityRequirements,
           previousExperimentDuration,
           previousExperimentLanguage,
+          previousExperimentPhrasesColumnName,
           previousProlificConfig,
           previousReleasePin,
         },
@@ -478,6 +484,7 @@ export default class App extends Component {
                 previousCompatibilityRequirements,
               previousExperimentDuration,
               previousExperimentLanguage,
+              previousExperimentPhrasesColumnName,
               previousProlificConfig,
               previousReleasePin,
             },

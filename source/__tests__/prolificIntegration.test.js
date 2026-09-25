@@ -84,6 +84,132 @@ describe("Prolific Integration - New Parameters", () => {
     return JSON.parse(postCall[1].body);
   };
 
+  describe("study creation errors", () => {
+    const createDraft = () =>
+      prolificCreateDraft(
+        mockUser,
+        mockInternalName,
+        mockCompletionCode,
+        mockIncompatibleCode,
+        mockAbortedCode,
+        mockToken,
+      );
+    const rejected = (status, detail) => ({
+      error: {
+        status,
+        title: "The data supplied is either incomplete or not valid.",
+        detail,
+      },
+    });
+    const respond = (status, body) =>
+      global.fetch.mockResolvedValue({
+        ok: status < 400,
+        status,
+        json: async () => body,
+      });
+
+    it.each([400, 200])(
+      "explains a nested duplicate-ID response (HTTP %s) while deduplicating the submitted blocklist",
+      async (httpStatus) => {
+        const id = "6980899c7847724b431b38ac";
+        mockUser.currentExperiment._prolific3CustomBlockList = `${id}, ${id}`;
+        respond(
+          httpStatus,
+          rejected(400, {
+            3: {
+              non_field_errors: [
+                "Filter custom_blocklist requires unique values.",
+              ],
+            },
+          }),
+        );
+
+        await expect(createDraft()).rejects.toThrow(
+          "Prolific rejected _prolific3CustomBlockList in your spreadsheet.",
+        );
+        await expect(createDraft()).rejects.toThrow(
+          "Filter custom_blocklist requires unique values.",
+        );
+        expect(getDraftRequestBody().filters).toContainEqual({
+          filter_id: "custom_blocklist",
+          selected_values: [id],
+        });
+      },
+    );
+
+    it("names the spreadsheet project parameter for an explicit field rejection", async () => {
+      respond(400, rejected(400, { project: ["Invalid project ID."] }));
+      await expect(createDraft()).rejects.toThrow(
+        "Prolific rejected _prolific1ProjectID in your spreadsheet.",
+      );
+    });
+
+    it("explains the reported permission error without claiming the API identified its field", async () => {
+      mockUser.currentExperiment.prolificWorkspaceProjectId = "project-123";
+      respond(404, {
+        error: {
+          status: 404,
+          title:
+            "The resource requested was not found or you do not have permissions.",
+          detail:
+            "The resource requested was not found or you do not have permissions.",
+          error_code: 140401,
+        },
+      });
+      await expect(createDraft()).rejects.toThrow(
+        "Check _prolific1ProjectID in your spreadsheet",
+      );
+      await expect(createDraft()).rejects.toThrow(
+        "The resource requested was not found or you do not have permissions.",
+      );
+    });
+
+    it("preserves other returned validation explanations", async () => {
+      respond(400, rejected(400, { reward: ["Reward is too low."] }));
+      await expect(createDraft()).rejects.toThrow("reward: Reward is too low.");
+    });
+
+    it("does not mislabel authentication errors as blocklist errors", async () => {
+      respond(401, { error: { status: 401, detail: "Invalid token." } });
+      await expect(createDraft()).rejects.toThrow("Invalid token.");
+    });
+
+    it("rejects a server error even if its body looks like a draft", async () => {
+      respond(500, { status: "UNPUBLISHED", id: "unexpected" });
+      await expect(createDraft()).rejects.toThrow();
+    });
+
+    it.each([null, {}, { status: "UNPUBLISHED" }])(
+      "rejects an incomplete successful response: %j",
+      async (body) => {
+        respond(200, body);
+        await expect(createDraft()).rejects.toThrow(
+          "did not confirm a valid unpublished study",
+        );
+      },
+    );
+
+    it("explains an unreadable server response", async () => {
+      global.fetch.mockResolvedValue({
+        status: 502,
+        ok: false,
+        json: async () => {
+          throw new SyntaxError("Unexpected token <");
+        },
+      });
+      await expect(createDraft()).rejects.toThrow(
+        "unreadable response (HTTP 502)",
+      );
+    });
+
+    it("reports network failures and warns that creation is uncertain", async () => {
+      global.fetch.mockRejectedValue(new TypeError("Failed to fetch"));
+      await expect(createDraft()).rejects.toThrow(
+        "a draft may have been created even though its response was not received",
+      );
+    });
+  });
+
   // Mock fetch so participant-group name->id resolution succeeds, while the
   // studies POST still resolves to a successful draft.
   const mockParticipantGroups = (groups) => {
