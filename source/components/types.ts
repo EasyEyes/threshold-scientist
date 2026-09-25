@@ -18,4 +18,5 @@ export interface GlossaryData {
   glossary: Record<string, GlossaryEntry>;
   glossaryFull: GlossaryEntry[];
   superMatchingParams: string[];
+  aliases?: Record<string, string>;
 }
