@@ -284,7 +284,14 @@ export const createFreshnessController = ({
       started = true;
       unsubscribeNotifications = subscribeToDeploymentNotifications?.(
         (notification) => {
-          void verify(Promise.resolve(notification));
+          // Content-version subscriptions emit undefined because their values
+          // are not deployment notifications. Re-read the deployment record so
+          // its publication date remains a candidate alongside content dates.
+          if (notification === undefined) {
+            void check();
+          } else {
+            void verify(Promise.resolve(notification));
+          }
         },
       );
       unsubscribeVisibility = subscribeToVisibility?.(() => {
