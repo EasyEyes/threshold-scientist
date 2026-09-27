@@ -88,6 +88,37 @@ describe("freshness controller", () => {
     });
   });
 
+  it("retains the compiler publication date when content changes", async () => {
+    let notify;
+    const loadDeploymentNotification = jest.fn().mockResolvedValue({
+      deploymentId: "deploy-123",
+      publishedAt: "2026-07-18T12:30:00.000Z",
+    });
+    const controller = makeProductionController({
+      loadDeploymentNotification,
+      loadContentPublicationDates: jest
+        .fn()
+        .mockResolvedValue([
+          "2026-07-16T12:30:00.000Z",
+          "2026-07-17T12:30:00.000Z",
+        ]),
+      subscribeToDeploymentNotifications: (listener) => {
+        notify = listener;
+        return jest.fn();
+      },
+    });
+
+    await controller.start();
+    notify(undefined);
+    await flushAsyncChecks();
+
+    expect(loadDeploymentNotification).toHaveBeenCalledTimes(2);
+    expect(controller.getState()).toEqual({
+      status: "fresh",
+      message: "Fresh. This page is up to date: Jul 18, 2026, 12:30 PM UTC+0.",
+    });
+  });
+
   it.each([
     ["missing", jest.fn().mockResolvedValue(null)],
     ["unavailable", jest.fn().mockRejectedValue(new Error("offline"))],
