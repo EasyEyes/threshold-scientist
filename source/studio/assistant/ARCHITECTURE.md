@@ -295,6 +295,105 @@ than a repair loop.
 questions come after the table is on screen, only when the answer cannot be
 inferred (a `.woff2` on file, a consent form's exact name).
 
+### 5.1 Skills (`assistant/skills.ts`)
+
+A skill is an optional capability that joins a conversation when the
+scientist runs it. Not run — the default — it contributes nothing: the
+request is the two system blocks and ten tools above, byte for byte. Once
+in, each model call also carries the skill's own system block (appended
+after the cached reference, so the cache stays valid) and its tools, which
+the skill executes itself (`Skill.run`, async). The Skills pill in the
+composer (or `/` typed in an empty box) lists the skills with a `prompt`
+(`MENU_SKILLS`); Run submits that prompt at once — or the scientist's draft,
+when the box has text — with the trigger in front (`runMessage`), so a
+skill runs without any typing. A message starting with the trigger
+(`/methods …`) runs it on the scientist's own words. Once a conversation has
+used a skill's tools, the skill stays in the request until Clear, so every
+`tool_use` in the transcript keeps a definition behind it and follow-ups
+("and at 70 cm?") keep the skill's context. `Skill.run` receives the
+`AssistantContext` (the table as the tools have left it, the name), so a
+skill can read the study without owning it. Adding a skill = one module
+exporting a `Skill` + one line in `SKILLS`; `menu: false` keeps it off the
+menu (trigger only). Three skills ship, two on the menu:
+
+**Feasibility check** (`assistant/feasibilitySkill.ts`): will the study
+work on a real screen? The runtime never refuses a level: `restrictLevel`
+(`threshold/components/bounding.js`) caps what QUEST asks for so the
+stimulus fits the screen and the font limits, so an unreachable threshold is
+silently measured as the cap. One read-only tool, `check_feasibility`,
+runs the same geometry ahead of time, for four typical screens or the one
+the scientist describes (`screen`), at the table's `viewingDistanceDesiredCm`
+or a trial value (`viewingDistanceCm`): px from fixation =
+px/cm × distance × tan(deg) (`utils.js xyPxOfDeg`), fixation at
+`fixationOriginXYScreen`, lower bound `targetMinPhysicalPx / devicePixelRatio`
+(`letter.js`), upper bound `fontMaxPhysicalPx / dpr / (1 + fontPadding)` and
+`fontMaxPx`, whole stimulus (target plus flankers per `spacingDirection`,
+scaled by `fontBoundingScalar`) inside the screen. For each letter condition
+and screen it bisects the testable range of the threshold parameter and
+compares it with the expected threshold (`thresholdGuess`, else the recipes'
+Bouma / acuity priors): OK, TIGHT (less than 4× room on a side), OUT OF
+RANGE, OFF SCREEN, NOT TESTABLE, SCREEN TOO SMALL (`needScreenWidthDeg`). It
+also reports the compiler's session estimate (`getDuration.ts`). Stated
+simplifications: letters square, `spacingSymmetry` as screen, nominal font
+size ≈ letter height. Non-letter conditions are listed as skipped.
+
+**Methods draft** (`assistant/methodsSkill.ts`): a first draft of a
+journal-style Methods section, delivered as a self-contained, print-ready
+HTML page. It is framed as a draft throughout — the menu entry, the page's
+kicker, note, closing check and colophon, the card's title and subtitle,
+and the model's reply — because it describes what the experiment file will
+run, and only the authors can say whether that is the study they intend.
+The model sees the csv already, but a csv shows only what was typed;
+Methods needs what will run — mostly glossary defaults. Two tools. `study_facts` (read-only) resolves every
+Methods-relevant parameter to its effective value (cell, else column B,
+else default, marked `*`) through `assistant/effective.ts`, groups
+conditions by block with trial counts, adds the questionnaire rows and the
+session estimate. `write_methods` takes only the prose of the five sections
+(participants, apparatus, stimuli, procedure, analysis, plus an optional
+title). `methodsDocument` turns them into a model of the page and
+`renderMethodsHtml` typesets it with the embedded `METHODS_CSS` (a serif
+page column, booktabs table, highlighted blanks, print rules for Letter
+with 1-inch margins), so every draft looks the same: title block
+(`_authors`, `_authorAffiliations`, `_about`), a provenance note, "Methods"
+with the five sections in order (stray headings the model adds are
+stripped), **Table 1** of the conditions generated from the table (block,
+condition, target, task, eccentricity, what QUEST varies, flankers,
+duration, trials, distance), a "To complete" list of every `[bracketed]`
+blank plus missing authors/affiliations and a reminder to read the draft
+against the file and the intended study, and a colophon. The page loads no
+external resources. The tool returns the document as `ToolOutcome.file`;
+the hook pushes a `file` item and the panel shows a card with Open (a new
+tab, from which the browser prints to PDF), Copy (`text/html` plus plain
+text, so it pastes into Word or Google Docs with formatting), Download (a
+Blob URL), and a folded preview in a sandboxed `iframe` laid out at a fixed
+width and scaled to the pane. The system block tells the model to write the
+sections in past-tense journal prose with units and no parameter names, to
+bracket every blank, and to answer in the chat with two or three sentences
+rather than the text.
+
+**Code lookup** (`assistant/codeSkill.ts`) lets the
+assistant read the EasyEyes implementation to answer how-it-works questions
+(what a parameter does at run time, how the compiler checks something,
+where a value is computed). Two read-only tools:
+
+| Tool          | Does                                                                                                                                                                       |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `search_code` | Matches file paths and top-level symbols from the index, then greps file contents (literal or regex), optionally within a `scope` path prefix; empty query lists the scope |
+| `read_code`   | A numbered line range (≤ 240 lines) of one file, or with `find` the matching lines with context                                                                            |
+
+The source is read from the site itself: Netlify publishes `docs/` as-is
+and the dev server serves the same tree, so every file under
+`docs/experiment` is at `/compiler/<path>`. What the browser lacks is a
+listing — `studio-code-index.json`, written by `server/writeCodeIndex.js`
+(`npm run code-index`, also run by `npm start` and `npm run netlify`; not
+committed). Per file it records path, size, lines, the first sentence of
+the leading comment and top-level symbol names (~440 files, ~140 KB). Files
+are fetched on first search and kept for the session. The skill's system
+block carries its instructions (answer from the code you read, cite
+`path:line`, say when you did not find it) and a directory map built from
+the index. Where the index is not served, the block and the tools say so
+and the model tells the scientist.
+
 ## 6. Prompt and context (`assistant/prompt.ts`)
 
 `systemBlocks()` returns two system blocks:
@@ -316,6 +415,25 @@ scientist message: experiment name, table as csv, current check results,
 and what is selected in the grid (`describeFocus`: "cell fontName in column
 D, value Roboto Mono"), which gives "change this cell" a referent.
 
+**Attachments** (`assistant/attachments.ts`). A scientist can attach files
+to a message — from the clip, a drop on the composer, or an image pasted
+into the text — and they become content blocks in that user turn, between
+the text and the studio_state: a csv or xlsx experiment (parsed by
+`fileImport.ts` exactly as the compiler would, sent as csv text), txt or md
+prose, and png/jpg/webp images (downscaled on a canvas to ≤ 1024 px and
+re-encoded as JPEG before they leave the browser). Each kind maps to what
+the model API takes directly — a `document` block with a text source and
+the filename as `title`, or a base64 `image` block — so no server is
+involved. A text block ahead of them names each file and says they are
+context the scientist supplied, not instructions, and that an attached
+experiment is not the open table unless they ask to load it. Because the
+whole transcript is resent on every call, attachments are budgeted: 200 KB
+per text file, 6 files per message, 1 MB per conversation (`attachedBytes`
+in the hook; the composer refuses to send past it and says what to do).
+PDF and docx are deliberately not accepted yet: a PDF would ride along as
+base64 on every later turn, and text extraction needs a library; paste the
+passage instead.
+
 ## 7. Client loop and UI state (`assistant/useAssistant.ts`)
 
 `useAssistant(host)` takes an `AssistantHost` — the Studio's callbacks:
@@ -323,12 +441,14 @@ D, value Roboto Mono"), which gives "change this cell" a referent.
 resources, grid focus, read at the start of each model call),
 `applyTable(table, changedParams, reveal?)`, `applyName`, and
 `focusParameter` (result-card chips select a row in the grid). It exposes
-`items`, `busy`, `pendingQuestion` (an open `ask_user`), `send`, `cancel`,
-`undoTurn`, `reset`.
+`items`, `busy`, `pendingQuestion` (an open `ask_user`), `send(text,
+attachments?)`, `attachedBytes`, `cancel`, `undoTurn`, `reset`.
 
 - **Items.** `ChatItem` is `user` | `assistant` | `question` | `working` |
-  `error`. An assistant item can carry `undo: UndoState` and
-  `result: TurnResult`.
+  `error` | `file`. A user item keeps a summary of its attachments (name,
+  kind, size). An assistant item can carry `undo: UndoState` and
+  `result: TurnResult`; a `file` item carries a `ToolFile` (name, mime,
+  content, title) that a tool produced, rendered as a download card.
 - **TurnResult.** Each tool's `ToolReport` is folded into the turn's
   running result (`foldReport`): what changed, check status (errors,
   warnings), resources needed — split into missing and unverifiable when
@@ -375,7 +495,8 @@ enforces:
 | Who may call   | A valid Pavlovia sign-in: the token is checked against `gitlab.pavlovia.org/api/v4/user` (5 s timeout, result cached 10 min)                                                                        |
 | Origin         | `../shared/cors` allow-list                                                                                                                                                                         |
 | Rate limit     | 40 requests / 60 s per client, 30 / 60 s per account (per function instance), plus an edge limit of 120 / 60 s                                                                                      |
-| Size           | body ≤ 2 MB, ≤ 200 messages, ≤ 24 tools, ≤ 8 system blocks, `max_tokens` 4096 default / 8192 max                                                                                                    |
+| Size           | body ≤ 4 MB (the transcript plus up to 1 MB of attachments), ≤ 200 messages, ≤ 24 tools, ≤ 8 system blocks, `max_tokens` 4096 default / 8192 max                                                    |
+| Shape          | every message's content is a string or an array of blocks whose `type` is one of `text`, `image`, `document`, `tool_use`, `tool_result`, `thinking`, `redacted_thinking`                            |
 | Time           | 55 s upstream timeout inside Netlify's 60 s function limit                                                                                                                                          |
 | Model settings | `STUDIO_ASSISTANT_MODEL` (default `claude-sonnet-5`), `_EFFORT` (`medium`; `low`/`high`/`xhigh`/`max`/`off`), `_THINKING` (`adaptive`/`off`). `mode: "fast"` can only lower these, never raise them |
 
@@ -403,6 +524,18 @@ site's Functions-scoped variables lean.
   Header with title; a focus strip showing the last grid click (row, or
   `Column D · fontName` with its value); the conversation; three example
   prompts for a new scientist, ordered short → detailed; the composer.
+- **Composer.** One bordered box: the text on top, a controls row under
+  it — the attach clip, a "Skills" pill, and Send. Attached files sit as
+  chips above the text (kind badge or thumbnail, name, size, remove); a
+  file that cannot be attached gets a one-line reason that clears itself;
+  the box dashes green while a file is dragged over it. A message can be
+  just files. Sent messages list their files under the text. The pill
+  opens a two-level menu: the list of skills, then a
+  secondary panel for the chosen one (what it does, its trigger, Run) —
+  beside the list as a flyout when the pane is ≥ 580 px, in its place with a
+  back button when narrower. Run submits immediately (the skill's prompt,
+  or the draft as the question). Typing `/` in an empty box opens the same
+  menu. Explanations live in tooltips and the panel, not in labels.
 - **Result cards.** An assistant turn that changed the table renders its
   `TurnResult` as a card: what was built or changed, checks status,
   resources needed, rationale, and Undo. `RichText.tsx` styles parameter
@@ -417,11 +550,14 @@ All styles are scoped under `.ee-studio`; the assistant's under
 
 ## 11. Tests
 
-| Suite                                           | Covers                                                                                                                                                                                                                                                                                     |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `source/__tests__/studioBuilder.test.js`        | Every recipe, spec variant and knob compiles clean under the real validator and glossary; knob rules (fovea → horizontal, precision → float16, `needSoundOutput` block-wide, renumbering, mirror)                                                                                          |
-| `source/__tests__/studioAssistant.test.js`      | Tool executors (`runTool`, `applyEdits`, `build_study`, `apply_knobs`, glossary refusal with near matches), prompt blocks and `studio_state`, `RichText`, `callAssistantHedged` (normal alone, slow → hedge, either side wins, timeout covered, errors before the hedge are final)         |
-| `netlify/functions/studio-assistant/__tests__/` | Relay with server-side key, effort/thinking settings, `mode: "fast"` never exceeding the site's setting, model and `max_tokens` caps, GitLab sign-in rejection, 503 without a key, CORS and method, malformed requests, account rate limit, upstream error mapping, edge rate-limit config |
+| Suite                                           | Covers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source/__tests__/studioBuilder.test.js`        | Every recipe, spec variant and knob compiles clean under the real validator and glossary; knob rules (fovea → horizontal, precision → float16, `needSoundOutput` block-wide, renumbering, mirror)                                                                                                                                                                                                                                                                                                                                         |
+| `source/__tests__/studioAssistant.test.js`      | Tool executors (`runTool`, `applyEdits`, `build_study`, `apply_knobs`, glossary refusal with near matches), prompt blocks and `studio_state`, `RichText`, `callAssistantHedged` (normal alone, slow → hedge, either side wins, timeout covered, errors before the hedge are final)                                                                                                                                                                                                                                                        |
+| `source/__tests__/studioCodeSkill.test.js`      | The code index generator on a temporary tree (what is indexed and skipped, heads, symbols); `search_code` / `read_code` over a fake fetch (hits, scope, listing, ranges, `find`, near paths, index missing); the skills registry (trigger parsing, which skills a transcript used)                                                                                                                                                                                                                                                        |
+| `source/__tests__/studioSkills.test.js`         | Feasibility and Methods skills on recipe-built tables under the real glossary: effective-value precedence and the session estimate; the runtime geometry (`xyPxOfDeg`, screen span, presets), testable ranges and every verdict, report inputs and errors; `study_facts` defaults, blocks, disabled columns, reading; the Methods document (model shape and order, HTML order with no external resources, escaping, Table 1 rows, stripped headings, blanks, `write_methods` file and refusals); registry, menu, Run message and triggers |
+| `source/__tests__/studioAttachments.test.js`    | Attachments: kinds by name or type and the picker's accept list; csv → text document titled with the file name; text as is and the size refusal; unsupported types; images → downscaled base64 JPEG with a preview URL; the turn's preamble and blocks; sizes and the budget                                                                                                                                                                                                                                                              |
+| `netlify/functions/studio-assistant/__tests__/` | Relay with server-side key, effort/thinking settings, `mode: "fast"` never exceeding the site's setting, model and `max_tokens` caps, GitLab sign-in rejection, 503 without a key, CORS and method, malformed requests, block-type allow-list, account rate limit, upstream error mapping, edge rate-limit config                                                                                                                                                                                                                         |
 
 Run from `docs/experiment`: `npx jest source/__tests__/studio`; from the
 function folder: `npm test`. `npm run check:ts` in each type-checks.
@@ -455,6 +591,13 @@ calls `[fast]`. A production page never probes localhost: the base URL is
   60 s limit, with the hedge bounding slow rounds.
 - The rate limiter is per function instance.
 - Resource files can be named but not uploaded from the chat.
+- The feasibility check is a model of the runtime, not the runtime: it
+  assumes square letters and screen-symmetric spacing, and its screen
+  presets are typical, not the participant's. It reads the table and never
+  changes it.
+- Code lookup reads only what the site serves (`docs/experiment`); the
+  Netlify functions and anything outside `docs/` are not indexed. The first
+  content search downloads the indexed source (~5 MB) once per session.
 - The knob set covers the common asks; a cell no knob owns is set through
   `set_for_all` or `edit_table`. An ask that recurs belongs in a knob.
 - Recipes derive from the example tables in `threshold/examples/tables`; a

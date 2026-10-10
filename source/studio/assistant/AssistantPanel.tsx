@@ -26,7 +26,19 @@ import {
 } from "./useAssistant";
 import { EasyEyesLogo } from "./EasyEyesLogo";
 import { RichText } from "./RichText";
-import { letterToValueIndex, type GridFocus } from "./tools";
+import { letterToValueIndex, type GridFocus, type ToolFile } from "./tools";
+import { MENU_SKILLS, runMessage, skillById } from "./skills";
+import {
+  ACCEPT,
+  ACCEPTED_DESCRIPTION,
+  MAX_CONVERSATION_BYTES,
+  MAX_FILES_PER_MESSAGE,
+  attachFile,
+  formatBytes,
+  releaseAttachment,
+  totalBytes,
+  type Attachment,
+} from "./attachments";
 import "./assistant.css";
 
 /**
@@ -147,6 +159,156 @@ function WidthIcon({ wide }: { wide: boolean }) {
   );
 }
 
+/** Skills pill: a slash, as in the "/code" trigger. */
+function SkillsIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <path
+        d="M10.2 2.5 5.8 13.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** Attach files (the clip in the composer). */
+function AttachIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} aria-hidden="true">
+      <path
+        d="M10.8 5.2 6.3 9.7a1.4 1.4 0 0 0 2 2l5-5a2.9 2.9 0 0 0-4.1-4.1L3.9 7.9a4.3 4.3 0 0 0 6.1 6.1l3.6-3.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** The small clip before an attached file's name in a sent message. */
+const PaperclipIcon = () => <AttachIcon size={12} />;
+
+function Chevron({ dir }: { dir: "down" | "right" | "left" }) {
+  const d =
+    dir === "down"
+      ? "M4 6.5 8 10.5l4-4"
+      : dir === "right"
+      ? "M6.5 4 10.5 8l-4 4"
+      : "M9.5 4 5.5 8l4 4";
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <path
+        d={d}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * The skills menu, from the composer's Skills pill (or a "/" typed in an
+ * empty box). Two levels: the list of skills, and a secondary panel for the
+ * chosen one — what it does, its trigger, and Run, which submits the skill's
+ * prompt (or the draft) at once. With room (a wide pane) the panel opens
+ * beside the list as a flyout, following the pointer; in a narrow pane it
+ * takes the list's place, with a way back.
+ */
+function SkillsMenu({
+  flyout,
+  onRun,
+  onClose,
+}: {
+  flyout: boolean;
+  onRun: (id: string) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState<string | null>(
+    flyout ? MENU_SKILLS[0]?.id ?? null : null,
+  );
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const el = ref.current;
+      if (el && !el.parentElement?.contains(e.target as Node)) onClose();
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [onClose]);
+
+  const skill = selected ? skillById(selected) : undefined;
+  const list = (
+    <div className="asst-menu-list" role="menu" aria-label="Skills">
+      <div className="asst-menu-head">Skills</div>
+      {MENU_SKILLS.map((s) => (
+        <button
+          key={s.id}
+          type="button"
+          role="menuitem"
+          aria-haspopup="true"
+          aria-expanded={selected === s.id}
+          className={`asst-menu-item${selected === s.id ? " selected" : ""}`}
+          onMouseEnter={() => flyout && setSelected(s.id)}
+          onFocus={() => flyout && setSelected(s.id)}
+          onClick={() => setSelected(s.id)}
+        >
+          <span className="asst-menu-item-title">{s.title}</span>
+          <Chevron dir="right" />
+        </button>
+      ))}
+    </div>
+  );
+  const detail = skill && (
+    <div className="asst-menu-detail" role="group" aria-label={skill.title}>
+      {!flyout && (
+        <button
+          type="button"
+          className="asst-menu-back"
+          onClick={() => setSelected(null)}
+        >
+          <Chevron dir="left" />
+          Skills
+        </button>
+      )}
+      <div className="asst-menu-detail-title">{skill.title}</div>
+      <p className="asst-menu-detail-text">{skill.summary}</p>
+      <div className="asst-menu-detail-foot">
+        <code
+          className="asst-menu-trigger"
+          title="Type this at the start of a message to run the skill on your own question"
+        >
+          {skill.trigger}
+        </code>
+        <button
+          type="button"
+          className="asst-menu-run"
+          title="Runs now; anything in the box goes along as your question"
+          onClick={() => {
+            onClose();
+            onRun(skill.id);
+          }}
+        >
+          Run
+        </button>
+      </div>
+    </div>
+  );
+  return (
+    <div className={`asst-menu${flyout ? " flyout" : ""}`} ref={ref}>
+      {(flyout || !skill) && list}
+      {detail}
+    </div>
+  );
+}
+
 const clock = (at: number): string =>
   new Date(at).toLocaleTimeString([], {
     hour: "2-digit",
@@ -226,9 +388,7 @@ function ResultCard({
           <span className="asst-result-mark" aria-hidden="true">
             {ok ? "✓" : "!"}
           </span>
-          {ok
-            ? "Compiles"
-            : plural(result.errors.length, "compiler error")}
+          {ok ? "Compiles" : plural(result.errors.length, "compiler error")}
           {result.warnings.length > 0 && (
             <span className="asst-result-warn">
               · {plural(result.warnings.length, "warning")}
@@ -397,6 +557,16 @@ function Entry({
             <span className="asst-time">{clock(item.at)}</span>
           </div>
           <div className="asst-entry-body">{item.text}</div>
+          {item.attachments && item.attachments.length > 0 && (
+            <ul className="asst-entry-attachments">
+              {item.attachments.map((a, i) => (
+                <li key={i} title={`${a.kind} · ${formatBytes(a.bytes)}`}>
+                  <PaperclipIcon />
+                  {a.name}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       );
     case "assistant":
@@ -410,9 +580,7 @@ function Entry({
               </span>
             )}
           </div>
-          {item.result && (
-            <ResultCard result={item.result} onFocus={onFocus} />
-          )}
+          {item.result && <ResultCard result={item.result} onFocus={onFocus} />}
           {(item.text || !item.result) && (
             <div className="asst-entry-body">
               {item.text ? (
@@ -474,9 +642,199 @@ function Entry({
           <div className="asst-entry-body">{item.text}</div>
         </div>
       );
+    case "file":
+      return (
+        <div className="asst-entry asst-entry-file">
+          <div className="asst-entry-label">
+            <span>Document</span>
+            <span className="asst-time">{clock(item.at)}</span>
+          </div>
+          <FileCard file={item.file} />
+        </div>
+      );
     default:
       return null;
   }
+}
+
+const DocIcon = () => (
+  <svg width="22" height="26" viewBox="0 0 22 26" aria-hidden="true">
+    <path
+      d="M3 1.5h10l6 6V23a1.5 1.5 0 0 1-1.5 1.5h-14.5A1.5 1.5 0 0 1 1.5 23V3A1.5 1.5 0 0 1 3 1.5z"
+      fill="#fff"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    />
+    <path d="M13 1.5v6h6" fill="none" stroke="currentColor" strokeWidth="1.4" />
+    <path
+      d="M5.5 12.5h11M5.5 16h11M5.5 19.5h7"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const kb = (s: string): string => {
+  const bytes = new TextEncoder().encode(s).length;
+  return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+};
+
+/** The text of an HTML document's body, for a plain-text clipboard fallback. */
+const plainTextOf = (html: string): string => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return (doc.body?.innerText ?? doc.body?.textContent ?? "").trim();
+};
+
+/**
+ * A document a tool produced: its title and size, Open (a new tab, from
+ * which the browser prints to PDF), Copy (with formatting, for Word or
+ * Google Docs) and Download; the page itself rendered behind a disclosure
+ * so the chat stays short.
+ */
+export function FileCard({ file }: { file: ToolFile }) {
+  const [copied, setCopied] = useState(false);
+  const isHtml = file.mime === "text/html";
+  const blobUrl = () =>
+    URL.createObjectURL(
+      new Blob([file.content], { type: `${file.mime};charset=utf-8` }),
+    );
+  const download = () => {
+    const url = blobUrl();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const open = () => {
+    const url = blobUrl();
+    window.open(url, "_blank", "noopener");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+  const copy = async () => {
+    try {
+      if (isHtml && typeof ClipboardItem !== "undefined") {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([file.content], { type: "text/html" }),
+            "text/plain": new Blob([plainTextOf(file.content)], {
+              type: "text/plain",
+            }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(
+          isHtml ? plainTextOf(file.content) : file.content,
+        );
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard unavailable: Open the page and copy from there.
+    }
+  };
+  return (
+    <div className="asst-doc">
+      <div className="asst-doc-head">
+        <span className="asst-doc-icon">
+          <DocIcon />
+        </span>
+        <span className="asst-doc-text">
+          <span className="asst-doc-title">{file.title}</span>
+          <span className="asst-doc-meta">
+            {file.name} · {kb(file.content)}
+            {file.subtitle ? ` · ${file.subtitle}` : ""}
+          </span>
+        </span>
+        <span className="asst-doc-actions">
+          {isHtml && (
+            <button
+              type="button"
+              className="asst-doc-btn"
+              onClick={open}
+              title="Open in a new tab; print from there to save a PDF"
+            >
+              Open
+            </button>
+          )}
+          <button
+            type="button"
+            className="asst-doc-btn"
+            onClick={copy}
+            title={
+              isHtml
+                ? "Copy with formatting, ready to paste into Word or Google Docs"
+                : "Copy the text"
+            }
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+          <button
+            type="button"
+            className="asst-doc-btn primary"
+            onClick={download}
+            title={`Download ${file.name}`}
+          >
+            Download
+          </button>
+        </span>
+      </div>
+      <details className="asst-doc-preview">
+        <summary>Preview</summary>
+        {isHtml ? (
+          <PageFrame title={file.title} html={file.content} />
+        ) : (
+          <pre>{file.content}</pre>
+        )}
+      </details>
+    </div>
+  );
+}
+
+/** Width at which the page is laid out before scaling to fit the pane. */
+const PAGE_LAYOUT_PX = 800;
+const PAGE_STAGE_PX = 520;
+
+/**
+ * The page in a sandboxed frame, laid out at a fixed width and scaled down
+ * to fit, so a narrow pane shows a small page rather than a reflowed one.
+ */
+function PageFrame({ title, html }: { title: string; html: string }) {
+  const stage = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    const fit = () =>
+      setScale(Math.min(1, el.clientWidth / PAGE_LAYOUT_PX) || 1);
+    fit();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div
+      ref={stage}
+      className="asst-doc-stage"
+      style={{ height: PAGE_STAGE_PX }}
+    >
+      <iframe
+        className="asst-doc-frame"
+        title={title}
+        sandbox=""
+        srcDoc={html}
+        style={{
+          width: PAGE_LAYOUT_PX,
+          height: PAGE_STAGE_PX / scale,
+          transform: `scale(${scale})`,
+        }}
+      />
+    </div>
+  );
 }
 
 /** Ticks while the assistant works: "Working · 4.2 s". */
@@ -517,13 +875,68 @@ export function AssistantPanel({
     busy,
     pendingQuestion,
     send,
+    attachedBytes,
     cancel,
     undoTurn,
     reset,
     focusParameter,
-  } = useAssistant({ getContext, applyTable, applyName, focusParameter: focusParam });
+  } = useAssistant({
+    getContext,
+    applyTable,
+    applyName,
+    focusParameter: focusParam,
+  });
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Files waiting in the composer, and the last problem adding one.
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  const [dropping, setDropping] = useState(false);
+  const attachmentsRef = useRef(attachments);
+  attachmentsRef.current = attachments;
+  useEffect(() => {
+    if (!attachError) return;
+    const t = setTimeout(() => setAttachError(null), 6000);
+    return () => clearTimeout(t);
+  }, [attachError]);
+  const addFiles = useCallback(
+    async (list: ArrayLike<File> | null | undefined) => {
+      const files = Array.from(list ?? []);
+      if (!files.length) return;
+      const room = MAX_FILES_PER_MESSAGE - attachmentsRef.current.length;
+      if (room <= 0) {
+        setAttachError(`At most ${MAX_FILES_PER_MESSAGE} files per message.`);
+        return;
+      }
+      const errors: string[] = [];
+      for (const f of files.slice(0, room)) {
+        try {
+          const a = await attachFile(f);
+          setAttachments((old) =>
+            old.length < MAX_FILES_PER_MESSAGE ? [...old, a] : old,
+          );
+        } catch (e) {
+          errors.push(e instanceof Error ? e.message : String(e));
+        }
+      }
+      if (files.length > room)
+        errors.push(`At most ${MAX_FILES_PER_MESSAGE} files per message.`);
+      if (errors.length) setAttachError(errors.join(" "));
+    },
+    [],
+  );
+  const removeAttachment = (id: string) =>
+    setAttachments((old) => {
+      const gone = old.find((a) => a.id === id);
+      if (gone) releaseAttachment(gone);
+      return old.filter((a) => a.id !== id);
+    });
+  const pendingBytes = totalBytes(attachments);
+  const overBudget = attachedBytes + pendingBytes > MAX_CONVERSATION_BYTES;
+  // The skills menu, from the slash button or a "/" typed in an empty box.
+  const [skillsOpen, setSkillsOpen] = useState(false);
+  const closeSkills = useCallback(() => setSkillsOpen(false), []);
 
   // Pane width: dragged from the left edge, or toggled wide from the header.
   const [width, setWidth] = useState<number>(loadWidth);
@@ -571,16 +984,41 @@ export function AssistantPanel({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key !== "Escape") return;
+      // Escape closes the skills menu first, then the pane.
+      if (skillsOpen) setSkillsOpen(false);
+      else setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, skillsOpen]);
 
   const submit = (text: string) => {
     if (!signedIn || busy) return;
+    if (!text.trim() && !attachmentsRef.current.length) return;
+    if (overBudget) {
+      setAttachError(
+        `Attachments in this conversation would total ${formatBytes(
+          attachedBytes + pendingBytes,
+        )}; the limit is ${formatBytes(
+          MAX_CONVERSATION_BYTES,
+        )}. Clear the chat to attach more, or remove a file.`,
+      );
+      return;
+    }
+    const atts = attachmentsRef.current;
     setDraft("");
-    void send(text);
+    setAttachments([]);
+    setAttachError(null);
+    void send(text, atts).finally(() => atts.forEach(releaseAttachment));
+  };
+  // Run from the menu: the skill's trigger plus the draft (the scientist's
+  // own question) or, with an empty box, the skill's standing prompt.
+  const runSkill = (id: string) => {
+    const skill = skillById(id);
+    if (!skill) return;
+    submit(runMessage(skill, draft));
+    inputRef.current?.focus();
   };
 
   // The strip under the header: the row or cell the scientist last clicked,
@@ -784,46 +1222,174 @@ export function AssistantPanel({
             submit(draft);
           }}
         >
-          <textarea
-            ref={inputRef}
-            className="asst-input"
-            rows={1}
-            value={draft}
-            placeholder={
-              !signedIn
-                ? "Sign in on the Compiler tab to use the assistant"
-                : pendingQuestion
-                ? "Your answer…"
-                : "Describe a study or a change…"
-            }
-            disabled={!signedIn}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                submit(draft);
-              }
+          {/* The input box: the text on top; under it the controls row —
+              attach, the Skills pill, and Send. Files arrive from the clip,
+              a drop on the box, or an image pasted into the text. */}
+          <div
+            className={`asst-box${signedIn ? "" : " disabled"}${
+              dropping ? " dropping" : ""
+            }`}
+            onDragOver={(e) => {
+              if (!signedIn || busy) return;
+              if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "copy";
+              if (!dropping) setDropping(true);
             }}
-          />
-          {busy ? (
-            <button
-              type="button"
-              className="asst-send asst-stop"
-              onClick={cancel}
-              title="Stop"
-            >
-              Stop
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="asst-send"
-              disabled={!signedIn || !draft.trim()}
-              title="Send (Enter)"
-            >
-              Send
-            </button>
-          )}
+            onDragLeave={(e) => {
+              if (e.currentTarget.contains(e.relatedTarget as Node | null))
+                return;
+              setDropping(false);
+            }}
+            onDrop={(e) => {
+              if (!signedIn || busy) return;
+              e.preventDefault();
+              setDropping(false);
+              void addFiles(e.dataTransfer.files);
+            }}
+          >
+            {attachments.length > 0 && (
+              <ul className="asst-attachments" aria-label="Attached files">
+                {attachments.map((a) => (
+                  <li key={a.id} className={`asst-attachment ${a.kind}`}>
+                    {a.kind === "image" && a.previewUrl ? (
+                      <img
+                        className="asst-attachment-thumb"
+                        src={a.previewUrl}
+                        alt=""
+                      />
+                    ) : (
+                      <span className="asst-attachment-kind">
+                        {a.kind === "table" ? "CSV" : "TXT"}
+                      </span>
+                    )}
+                    <span className="asst-attachment-name" title={a.name}>
+                      {a.name}
+                    </span>
+                    <span className="asst-attachment-size">
+                      {formatBytes(a.bytes)}
+                    </span>
+                    <button
+                      type="button"
+                      className="asst-attachment-remove"
+                      onClick={() => removeAttachment(a.id)}
+                      aria-label={`Remove ${a.name}`}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {attachError && (
+              <div className="asst-attach-error" role="alert">
+                {attachError}
+              </div>
+            )}
+            <textarea
+              ref={inputRef}
+              className="asst-input"
+              rows={1}
+              value={draft}
+              placeholder={
+                !signedIn
+                  ? "Sign in on the Compiler tab to use the assistant"
+                  : pendingQuestion
+                  ? "Your answer…"
+                  : "Describe a study or a change…"
+              }
+              disabled={!signedIn}
+              onChange={(e) => {
+                const v = e.target.value;
+                setDraft(v);
+                // A lone "/" opens the skills menu, like the trigger would.
+                if (v === "/" && !busy) setSkillsOpen(true);
+                else if (skillsOpen && !v.startsWith("/")) setSkillsOpen(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (skillsOpen && draft.trim() === "/") return;
+                  submit(draft);
+                }
+              }}
+              onPaste={(e) => {
+                // A pasted image (a screenshot) attaches; text pastes as usual.
+                const files = Array.from(e.clipboardData.files).filter((f) =>
+                  f.type.startsWith("image/"),
+                );
+                if (!files.length || busy) return;
+                e.preventDefault();
+                void addFiles(files);
+              }}
+            />
+            <div className="asst-box-row">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPT}
+                multiple
+                hidden
+                onChange={(e) => {
+                  void addFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                className="asst-attach"
+                disabled={!signedIn || busy}
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Attach files"
+                title={`Attach files: ${ACCEPTED_DESCRIPTION}. Or drop them here, or paste an image.`}
+              >
+                <AttachIcon />
+              </button>
+              <div className="asst-skills">
+                <button
+                  type="button"
+                  className={`asst-skills-pill${skillsOpen ? " open" : ""}`}
+                  onClick={() => setSkillsOpen((o) => !o)}
+                  disabled={!signedIn || busy}
+                  aria-haspopup="menu"
+                  aria-expanded={skillsOpen}
+                  title="Skills"
+                >
+                  <SkillsIcon />
+                  Skills
+                  <Chevron dir="down" />
+                </button>
+                {skillsOpen && (
+                  <SkillsMenu
+                    flyout={width >= 580}
+                    onRun={runSkill}
+                    onClose={closeSkills}
+                  />
+                )}
+              </div>
+              <span className="asst-box-spacer" />
+              {busy ? (
+                <button
+                  type="button"
+                  className="asst-send asst-stop"
+                  onClick={cancel}
+                  title="Stop"
+                >
+                  Stop
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="asst-send"
+                  disabled={!signedIn || (!draft.trim() && !attachments.length)}
+                  title="Send"
+                >
+                  Send
+                </button>
+              )}
+            </div>
+          </div>
         </form>
       </aside>
     </div>

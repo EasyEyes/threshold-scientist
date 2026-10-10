@@ -30,10 +30,27 @@ import {
   runTool,
   tableOutline,
   type AssistantContext,
+  type ToolFile,
   type ToolReport,
 } from "./tools";
+import {
+  SKILLS,
+  parseSkillTrigger,
+  skillForTool,
+  skillsUsedIn,
+  type Skill,
+} from "./skills";
 import { existsInUserResources } from "../resources";
 import type { EasyEyesError } from "../validation";
+import {
+  MAX_CONVERSATION_BYTES,
+  attachmentBlocks,
+  formatBytes,
+  summarize,
+  totalBytes,
+  type Attachment,
+  type AttachmentSummary,
+} from "./attachments";
 
 export const MAX_TOOL_ROUNDS = 16;
 
@@ -106,7 +123,7 @@ interface ItemBase {
 
 export type ChatItem = ItemBase &
   (
-    | { kind: "user"; text: string }
+    | { kind: "user"; text: string; attachments?: AttachmentSummary[] }
     | {
         kind: "assistant";
         text: string;
@@ -128,6 +145,8 @@ export type ChatItem = ItemBase &
         answered: boolean;
       }
     | { kind: "error"; text: string }
+    /** A document a tool produced (a Methods draft): shown as a file card. */
+    | { kind: "file"; file: ToolFile }
   );
 
 /** Omit that keeps a union a union (a plain Omit collapses it). */
@@ -178,7 +197,23 @@ export function useAssistant(host: AssistantHost) {
   itemsRef.current = items;
   const [busy, setBusy] = useState(false);
   const [pendingAsk, setPendingAsk] = useState<PendingAsk | null>(null);
+  /**
+   * Skills switched on for this conversation (skills.ts). None by default,
+   * so the request is exactly the usual one. Each active skill adds its
+   * system block and tools to every model call. A skill whose tools the
+   * transcript has already used stays in the request until Clear, even if
+   * switched off, so every tool_use block keeps a definition behind it.
+   */
+  const [activeSkills, setActiveSkillsState] = useState<string[]>([]);
+  const activeSkillsRef = useRef(activeSkills);
+  activeSkillsRef.current = activeSkills;
   const apiMessages = useRef<ApiMessage[]>([]);
+  /**
+   * Bytes of attachments in the transcript so far. Each later call resends
+   * them, so the conversation has a budget (attachments.ts).
+   */
+  const [attachedBytes, setAttachedBytes] = useState(0);
+  const attachedBytesRef = useRef(0);
   const abort = useRef<AbortController | null>(null);
   /** Notes for the model about things done outside the chat (reverts). */
   const notes = useRef<string[]>([]);
@@ -211,11 +246,21 @@ export function useAssistant(host: AssistantHost) {
       let table = hostRef.current.getContext().table;
 
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+        const used = skillsUsedIn(apiMessages.current);
+        const skills: Skill[] = SKILLS.filter(
+          (s) => activeSkillsRef.current.includes(s.id) || used.has(s.id),
+        );
         const reply = await callAssistantHedged(
           {
-            system: systemBlocks(),
+            system: [
+              ...systemBlocks(),
+              ...(await Promise.all(skills.map((s) => s.systemBlock()))),
+            ],
             messages: apiMessages.current,
-            tools: ASSISTANT_TOOLS as unknown as unknown[],
+            tools: [
+              ...(ASSISTANT_TOOLS as unknown as unknown[]),
+              ...skills.flatMap((s) => s.tools),
+            ],
             // Room for the model's (adaptive) thinking plus a full reply.
             maxTokens: 8192,
           },
@@ -254,7 +299,13 @@ export function useAssistant(host: AssistantHost) {
             continue;
           }
           const ctx = { ...hostRef.current.getContext(), table };
-          const outcome = runTool(use.name, use.input ?? {}, ctx);
+          // A skill's tools may do I/O, so they are async; the table tools
+          // stay synchronous and untouched.
+          const skill = skillForTool(use.name);
+          const outcome = skill
+            ? await skill.run(use.name, use.input ?? {}, ctx)
+            : runTool(use.name, use.input ?? {}, ctx);
+          if (signal.aborted) throw new DOMException("Stopped", "AbortError");
           if (outcome.table) {
             table = outcome.table;
             changed = true;
@@ -278,6 +329,7 @@ export function useAssistant(host: AssistantHost) {
             detail: outcome.result,
             failed: outcome.isError,
           });
+          if (outcome.file) push({ kind: "file", file: outcome.file });
           results.push({
             type: "tool_result",
             tool_use_id: use.id,
@@ -324,9 +376,37 @@ export function useAssistant(host: AssistantHost) {
   );
 
   const send = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
+    async (text: string, attachments: readonly Attachment[] = []) => {
+      // "/code …" switches that skill on for the conversation; the model
+      // sees the message without the trigger.
+      const trigger = parseSkillTrigger(text);
+      if (
+        trigger.skill &&
+        !activeSkillsRef.current.includes(trigger.skill.id)
+      ) {
+        const next = [...activeSkillsRef.current, trigger.skill.id];
+        activeSkillsRef.current = next;
+        setActiveSkillsState(next);
+      }
+      // A message may be just a file; the model then gets a stand-in line.
+      const trimmed =
+        trigger.text.trim() ||
+        (attachments.length
+          ? `See the attached file${attachments.length === 1 ? "" : "s"}.`
+          : "");
       if (!trimmed || busy) return;
+      const addedBytes = totalBytes(attachments);
+      if (attachedBytesRef.current + addedBytes > MAX_CONVERSATION_BYTES) {
+        push({
+          kind: "error",
+          text: `Attachments in this conversation would total ${formatBytes(
+            attachedBytesRef.current + addedBytes,
+          )}; the limit is ${formatBytes(
+            MAX_CONVERSATION_BYTES,
+          )}. Clear the chat to attach more, or attach less.`,
+        });
+        return;
+      }
       const ctx = hostRef.current.getContext();
       const undo: UndoState = {
         before: ctx.table,
@@ -334,12 +414,21 @@ export function useAssistant(host: AssistantHost) {
         done: false,
       };
       const startLength = apiMessages.current.length;
+      const bytesBefore = attachedBytesRef.current;
+      const extra = attachmentBlocks(attachments);
 
-      push({ kind: "user", text: trimmed });
+      push({
+        kind: "user",
+        text: trimmed,
+        ...(attachments.length
+          ? { attachments: attachments.map(summarize) }
+          : {}),
+      });
       if (pendingAsk) {
         patch(pendingAsk.questionItemId, (it) =>
           it.kind === "question" ? { ...it, answered: true } : it,
         );
+        // tool_result blocks must lead the message; attachments follow.
         apiMessages.current.push({
           role: "user",
           content: [
@@ -349,6 +438,7 @@ export function useAssistant(host: AssistantHost) {
               tool_use_id: pendingAsk.toolUseId,
               content: trimmed,
             },
+            ...extra,
           ],
         });
         setPendingAsk(null);
@@ -361,10 +451,13 @@ export function useAssistant(host: AssistantHost) {
           role: "user",
           content: [
             { type: "text", text: trimmed + noteText },
+            ...extra,
             { type: "text", text: studioStateBlock(ctx) },
           ],
         });
       }
+      attachedBytesRef.current = bytesBefore + addedBytes;
+      setAttachedBytes(attachedBytesRef.current);
 
       const controller = new AbortController();
       abort.current = controller;
@@ -374,6 +467,8 @@ export function useAssistant(host: AssistantHost) {
       } catch (e) {
         // Leave the transcript consistent: nothing from this turn survives.
         apiMessages.current.length = startLength;
+        attachedBytesRef.current = bytesBefore;
+        setAttachedBytes(bytesBefore);
         setPendingAsk(null);
         if (!controller.signal.aborted)
           push({
@@ -413,13 +508,29 @@ export function useAssistant(host: AssistantHost) {
     abort.current?.abort();
     apiMessages.current = [];
     notes.current = [];
+    attachedBytesRef.current = 0;
+    setAttachedBytes(0);
     setPendingAsk(null);
     setItems([]);
+  }, []);
+
+  const setSkill = useCallback((id: string, on: boolean) => {
+    const current = activeSkillsRef.current;
+    const next = on
+      ? current.includes(id)
+        ? current
+        : [...current, id]
+      : current.filter((s) => s !== id);
+    activeSkillsRef.current = next;
+    setActiveSkillsState(next);
   }, []);
 
   return {
     items,
     busy,
+    /** Ids of the skills switched on for this conversation. */
+    activeSkills,
+    setSkill,
     /** The open question, if the assistant is waiting for an answer. */
     pendingQuestion: pendingAsk
       ? (items.find((it) => it.id === pendingAsk.questionItemId) as
@@ -427,6 +538,8 @@ export function useAssistant(host: AssistantHost) {
           | undefined) ?? null
       : null,
     send,
+    /** Attachment bytes already in the transcript (budget in attachments.ts). */
+    attachedBytes,
     cancel,
     undoTurn,
     reset,

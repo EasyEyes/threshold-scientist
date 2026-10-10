@@ -120,6 +120,19 @@ export interface ToolOutcome {
   activity: string;
   /** For the result card, when the table changed. */
   report?: ToolReport;
+  /** A document the tool produced; the chat shows it as a downloadable file. */
+  file?: ToolFile;
+}
+
+export interface ToolFile {
+  /** Download name, e.g. "crowding-methods.md". */
+  name: string;
+  mime: string;
+  content: string;
+  /** Card heading, e.g. "Methods draft — crowding". */
+  title: string;
+  /** One line under the heading. */
+  subtitle?: string;
 }
 
 /** Block → condition names, in table order — the study's shape at a glance. */

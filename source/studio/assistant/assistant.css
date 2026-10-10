@@ -691,6 +691,151 @@
   opacity: 0.5;
 }
 
+/* ---------- document card ----------
+   A file a tool produced (the Methods draft): title and size, Download and
+   Copy, and the text behind a disclosure. */
+
+.ee-studio .asst-entry-file .asst-entry-label {
+  color: var(--green);
+}
+
+.ee-studio .asst-doc {
+  margin: 2px 0 6px;
+  border: 1px solid #e3e7e5;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  animation: asst-rise 0.18s ease-out;
+}
+
+/* Wraps in a narrow pane: the buttons drop under the title, right-aligned. */
+.ee-studio .asst-doc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 14px;
+}
+
+.ee-studio .asst-doc-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 44px;
+  border-radius: 8px;
+  color: var(--dark-green);
+  background: rgba(1, 146, 103, 0.08);
+}
+
+.ee-studio .asst-doc-text {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ee-studio .asst-doc-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ee-studio .asst-doc-meta {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.ee-studio .asst-doc-actions {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.ee-studio .asst-doc-btn {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #cfd6d2;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ee-studio .asst-doc-btn:hover {
+  background: #f3f5f4;
+}
+
+.ee-studio .asst-doc-btn.primary {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+  font-weight: 600;
+}
+
+.ee-studio .asst-doc-btn.primary:hover {
+  border-color: var(--dark-green);
+  background: var(--dark-green);
+}
+
+.ee-studio .asst-doc-preview {
+  border-top: 1px solid #eceeed;
+}
+
+.ee-studio .asst-doc-preview > summary {
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ee-studio .asst-doc-preview > summary:hover {
+  color: var(--ink);
+  background: #fafbfa;
+}
+
+/* The page itself, in a sandboxed frame laid out at a fixed width and
+   scaled to fit the pane; it scrolls on its own. */
+.ee-studio .asst-doc-stage {
+  overflow: hidden;
+  border-top: 1px solid #eceeed;
+  background: #e9eaec;
+}
+
+.ee-studio .asst-doc-frame {
+  display: block;
+  border: none;
+  background: #e9eaec;
+  transform-origin: top left;
+}
+
+.ee-studio .asst-doc-preview > pre {
+  margin: 0;
+  padding: 12px 14px 14px;
+  max-height: 420px;
+  overflow: auto;
+  border-top: 1px solid #eceeed;
+  background: #fbfcfb;
+  font-family: var(--asst-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* ---------- result card ----------
    Under a reply that changed the study: a report, not a paragraph. Verdict
    on the first line (green rule when it compiles, red when it does not),
@@ -1239,9 +1384,6 @@
 /* ---------- composer ---------- */
 
 .ee-studio .asst-compose {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
   padding: 10px 16px 14px;
   border-top: 1px solid #ececec;
   background: #fff;
@@ -1252,32 +1394,48 @@
   border-top: none;
 }
 
-.ee-studio .asst-input {
-  flex: 1;
-  resize: none;
+/* The input box: the text on top, a controls row under it (attach, the
+   Skills pill, the skills that are on, Send). One border around it all;
+   the row's controls share a 30 px height. */
+.ee-studio .asst-box {
+  display: flex;
+  flex-direction: column;
   border: 1px solid #d6dad8;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font: inherit;
-  font-size: 13.5px;
-  line-height: 1.4;
-  color: var(--ink);
+  border-radius: 14px;
   background: #fff;
-  min-height: 40px;
-  max-height: 160px;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
 }
 
-.ee-studio .asst-input:focus {
-  outline: none;
+.ee-studio .asst-box:focus-within {
   border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(1, 146, 103, 0.12);
 }
 
-.ee-studio .asst-input:disabled {
+.ee-studio .asst-box.disabled {
   background: #f7f7f7;
+}
+
+.ee-studio .asst-input {
+  resize: none;
+  border: none;
+  border-radius: 14px 14px 0 0;
+  padding: 12px 14px 6px;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 18px;
+  color: var(--ink);
+  background: transparent;
+  min-height: 36px;
+  max-height: 160px;
+}
+
+.ee-studio .asst-input:focus {
+  outline: none;
+}
+
+.ee-studio .asst-input:disabled {
   color: var(--ink-soft);
 }
 
@@ -1288,16 +1446,367 @@
   text-overflow: ellipsis;
 }
 
-.ee-studio .asst-send {
+.ee-studio .asst-box-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 8px;
+  flex-wrap: wrap;
+}
+
+.ee-studio .asst-box-spacer {
+  flex: 1;
+}
+
+/* A file being dragged over the box. */
+.ee-studio .asst-box.dropping {
+  border-color: var(--green);
+  border-style: dashed;
+  background: #f3faf7;
+}
+
+/* Files waiting to go with the message: a chip each, above the text. */
+.ee-studio .asst-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 10px 0;
+  list-style: none;
+}
+
+.ee-studio .asst-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 4px 0 4px;
+  border: 1px solid #dfe3e1;
+  border-radius: 8px;
+  background: #f7f8f8;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.ee-studio .asst-attachment-kind {
   flex: none;
-  height: 40px;
-  padding: 0 16px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #e4ebe8;
+  font-family: var(--asst-mono, ui-monospace, Menlo, monospace);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--dark-green);
+}
+
+.ee-studio .asst-attachment-thumb {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: #fff;
+}
+
+.ee-studio .asst-attachment-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ee-studio .asst-attachment-size {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.ee-studio .asst-attachment-remove {
+  flex: none;
+  width: 20px;
+  height: 20px;
   border: none;
-  border-radius: 10px;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ee-studio .asst-attachment-remove:hover {
+  color: var(--ink);
+  background: #e6e9e8;
+}
+
+/* Why a file was not attached; clears itself. */
+.ee-studio .asst-attach-error {
+  margin: 8px 10px 0;
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: #fff4f2;
+  color: #9a3c2e;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* Attached files, under a sent message. */
+.ee-studio .asst-entry-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.ee-studio .asst-entry-attachments li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Attach: the clip. */
+.ee-studio .asst-attach {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.ee-studio .asst-attach:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--asst-soft-bg);
+}
+
+.ee-studio .asst-attach:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Skills: the pill and its two-level menu. */
+.ee-studio .asst-skills {
+  position: relative;
+  flex: none;
+}
+
+.ee-studio .asst-skills-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 8px 0 9px;
+  border: 1px solid #e1e5e3;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.ee-studio .asst-skills-pill:hover:not(:disabled),
+.ee-studio .asst-skills-pill.open {
+  color: var(--ink);
+  border-color: #cfd5d2;
+  background: var(--asst-soft-bg);
+}
+
+.ee-studio .asst-skills-pill:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ee-studio .asst-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  display: flex;
+  align-items: flex-start;
+  border: 1px solid #e3e6e4;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.06);
+  z-index: 3;
+  width: min(320px, calc(var(--asst-width) - 48px));
+}
+
+/* Wide pane: list and detail side by side; the detail follows the pointer. */
+.ee-studio .asst-menu.flyout {
+  width: auto;
+}
+
+.ee-studio .asst-menu.flyout .asst-menu-list {
+  width: 200px;
+}
+
+.ee-studio .asst-menu.flyout .asst-menu-detail {
+  width: 280px;
+  border-left: 1px solid #eef0ef;
+  align-self: stretch;
+}
+
+.ee-studio .asst-menu-list {
+  flex: 1;
+  min-width: 0;
+  padding: 6px;
+}
+
+.ee-studio .asst-menu-head {
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.ee-studio .asst-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 34px;
+  padding: 0 8px 0 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.ee-studio .asst-menu-item:hover,
+.ee-studio .asst-menu-item.selected {
+  background: var(--asst-soft-bg);
+}
+
+.ee-studio .asst-menu-item-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ee-studio .asst-menu-item > svg {
+  flex: none;
+  color: var(--ink-soft);
+}
+
+/* Secondary panel: what the skill does, its trigger, Run. */
+.ee-studio .asst-menu-detail {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 12px;
+}
+
+.ee-studio .asst-menu-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  align-self: flex-start;
+  margin: -4px 0 0 -6px;
+  padding: 2px 8px 2px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.ee-studio .asst-menu-back:hover {
+  color: var(--ink);
+  background: var(--asst-soft-bg);
+}
+
+.ee-studio .asst-menu-detail-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ee-studio .asst-menu-detail-text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.ee-studio .asst-menu-detail-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.ee-studio .asst-menu-trigger {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: #f3f5f4;
+}
+
+.ee-studio .asst-menu-run {
+  height: 28px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 7px;
   background: var(--green);
   color: #fff;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ee-studio .asst-menu-run:hover {
+  background: var(--dark-green);
+}
+
+.ee-studio .asst-send {
+  flex: none;
+  height: 30px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition:
