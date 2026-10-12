@@ -49,3 +49,22 @@ it("blocks compilation when the audit service fails", async () => {
   expect(errors[0].name).toBe("International Phrases audit unavailable");
   expect(errors[0].kind).toBe("error");
 });
+
+it("links an unaudited key to its exact sheet cell when its row is known", () => {
+  const errors = validateInternationalPhraseAudit(
+    [{ key: "EE_old", parameter: "instruction", column: 2 }],
+    { id: "audit", generatedAt: "2026-10-12", usedKeys: [] },
+    new Map([["EE_old", 42]]),
+  );
+  expect(errors[0].message).toContain("&range=A42");
+  expect(errors[0].message).toContain('target="_blank"');
+  expect(errors[0].message).toContain('rel="noopener noreferrer"');
+});
+it("falls back to the sheet when the phrase row is unavailable", () => {
+  const errors = validateInternationalPhraseAudit(
+    [{ key: "EE_old", parameter: "instruction", column: 2 }],
+    { id: "audit", generatedAt: "2026-10-12", usedKeys: [] },
+  );
+  expect(errors[0].message).toContain("/edit#gid=0");
+  expect(errors[0].message).not.toContain("&range=");
+});
