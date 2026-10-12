@@ -26,6 +26,9 @@ jest.mock("../repositoryState", () => ({
 import React from "react";
 import StatusLines from "../StatusLines";
 import { render, screen } from "@testing-library/react";
+import { fireEvent } from "@testing-library/react";
+import { saveAs } from "file-saver";
+jest.mock("file-saver", () => ({ saveAs: jest.fn() }));
 
 const previousExperimentViewed = {
   originalFileName: "study.csv",
@@ -60,6 +63,29 @@ const baseProps = {
   newRepo: { name: "study" },
   completedSteps: [],
 };
+
+it("offers the current analysis as JSON without claiming complete runtime coverage", () => {
+  const phraseAnalysis = {
+    schemaVersion: 1,
+    fullRuntimeAnswerAvailable: false,
+    candidateKeys: ["EE_test"],
+  };
+  render(
+    <StatusLines
+      {...baseProps}
+      user={{ ...baseProps.user, currentExperiment: { phraseAnalysis } }}
+    />,
+  );
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Download phrase report (some paths unverified)",
+    }),
+  );
+  expect(saveAs).toHaveBeenCalledWith(
+    expect.any(Blob),
+    "study-phrase-analysis.json",
+  );
+});
 
 describe("StatusLines _language", () => {
   it("shows the spreadsheet _language for the study just compiled", () => {
