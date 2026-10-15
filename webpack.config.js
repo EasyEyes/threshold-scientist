@@ -6,6 +6,35 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const fs = require("fs");
 const path = require("path");
 
+// The API and compiler are pinned to the index produced by the same build.
+const readPhraseAnalysisFingerprint = () => {
+  const filename = path.resolve(
+    __dirname,
+    "../../netlify/functions/study-phrase-analysis/source-index.json",
+  );
+  if (!fs.existsSync(filename)) return "";
+  return JSON.parse(fs.readFileSync(filename, "utf8")).fingerprint;
+};
+
+const readPhraseAnalysisParameters = () => {
+  const filename = path.resolve(
+    __dirname,
+    "../../netlify/functions/study-phrase-analysis/source-index.json",
+  );
+  if (!fs.existsSync(filename)) return [];
+  const parameters = new Set();
+  const visit = (expression) => {
+    if (!expression) return;
+    if (expression.kind === "parameter") parameters.add(expression.name);
+    visit(expression.left);
+    visit(expression.right);
+    visit(expression.argument);
+  };
+  for (const site of JSON.parse(fs.readFileSync(filename, "utf8")).sites)
+    for (const guard of site.guards) visit(guard.expression);
+  return [...parameters].sort();
+};
+
 const DEPLOYMENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
 const requireFirebaseDatabaseUrl = () => {
@@ -182,6 +211,12 @@ module.exports = (env) => {
         ...plugins,
         new webpack.ProgressPlugin(),
         new webpack.DefinePlugin({
+          "process.env.PHRASE_ANALYSIS_PARAMETERS": JSON.stringify(
+            JSON.stringify(readPhraseAnalysisParameters()),
+          ),
+          "process.env.PHRASE_ANALYSIS_FINGERPRINT": JSON.stringify(
+            readPhraseAnalysisFingerprint(),
+          ),
           "process.env.debug": true,
           "process.env.REDIRECT_URL": JSON.stringify(
             redirect_uri("http%3A%2F%2Flocalhost%3A5500%2Fredirect"),
@@ -292,6 +327,12 @@ module.exports = (env) => {
         ...plugins,
         new CompilerDeploymentAssetsPlugin(deploymentId),
         new webpack.DefinePlugin({
+          "process.env.PHRASE_ANALYSIS_PARAMETERS": JSON.stringify(
+            JSON.stringify(readPhraseAnalysisParameters()),
+          ),
+          "process.env.PHRASE_ANALYSIS_FINGERPRINT": JSON.stringify(
+            readPhraseAnalysisFingerprint(),
+          ),
           "process.env.debug": false,
           "process.env.REDIRECT_URL": JSON.stringify(
             redirect_uri("https%3A%2F%2Feasyeyes.app%2Fredirect"),
