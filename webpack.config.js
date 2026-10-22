@@ -30,7 +30,8 @@ const readPhraseAnalysisParameters = () => {
     visit(expression.right);
     visit(expression.argument);
   };
-  for (const site of JSON.parse(fs.readFileSync(filename, "utf8")).sites)
+  const index = JSON.parse(fs.readFileSync(filename, "utf8"));
+  for (const site of [...index.sites, ...(index.glossarySites ?? [])])
     for (const guard of site.guards) visit(guard.expression);
   return [...parameters].sort();
 };
