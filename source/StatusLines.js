@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
-import { saveAs } from "file-saver";
 
 import {
   createOrUpdateProlificToken,
@@ -431,37 +430,6 @@ export default class StatusLines extends Component {
             content={phrasesColumnName}
           />
         )}
-
-        {!viewingPreviousExperiment &&
-          user?.currentExperiment?.phraseAnalysis && (
-            <StatusLine
-              activated={true}
-              title="Phrase analysis"
-              content={
-                <button
-                  type="button"
-                  className="btn btn-link p-0"
-                  onClick={() => {
-                    saveAs(
-                      new Blob(
-                        [
-                          JSON.stringify(
-                            user.currentExperiment.phraseAnalysis,
-                            null,
-                            2,
-                          ),
-                        ],
-                        { type: "application/json" },
-                      ),
-                      "study-phrase-analysis.json",
-                    );
-                  }}
-                >
-                  Download phrase report (some paths unverified)
-                </button>
-              }
-            />
-          )}
 
         <StatusLine
           activated={

@@ -80,6 +80,32 @@ describe("Running compile warnings", () => {
     },
   };
 
+  it("keeps phrase warnings below all study controls and clears them on the next result", () => {
+    const warning = {
+      context: "preprocessor",
+      kind: "warning",
+      name: "Potential runtime phrase errors require review",
+      message: "Missing translation: EE_ID_invalidFile.",
+      hint: "Runtime entry is unverified.",
+      parameters: [],
+    };
+    const renderResult = (warnings) =>
+      new Running({ ...baseProps, compileWarnings: warnings }).render();
+    const { container, rerender } = render(renderResult([warning]));
+    const warnings = container.querySelector(".compile-warnings");
+    for (const button of screen.getAllByRole("button")) {
+      expect(
+        button.compareDocumentPosition(warnings) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+    expect(screen.getByText(warning.message)).toBeInTheDocument();
+    expect(screen.getByText(warning.hint)).toBeInTheDocument();
+    rerender(renderResult([]));
+    expect(container.querySelector(".compile-warnings")).toBeNull();
+    expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument();
+  });
+
   it("shows each parameter once even when the warning lists it twice", () => {
     mockGlossaryRows.font = 288;
     const running = new Running({

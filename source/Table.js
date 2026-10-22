@@ -797,7 +797,7 @@ export default class Table extends Component {
             }
 
             // Surface any non-blocking warnings (e.g. LOGGING CAUTION) so they are
-            // shown on the "Experiment ready to run" page, above the green banner.
+            // shown on the "Experiment ready to run" page, below the controls.
             if (this.props.functions.handleSetCompileWarnings) {
               this.props.functions.handleSetCompileWarnings(warningList);
             }

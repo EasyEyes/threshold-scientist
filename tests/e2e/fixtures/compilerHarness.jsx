@@ -137,7 +137,20 @@ function CompilerHarness() {
             previousProlificConfig: study.config,
           }}
           functions={functions}
-          compileWarnings={[]}
+          compileWarnings={
+            study.id === "newlyCompiled" &&
+            new URLSearchParams(window.location.search).has("warnings")
+              ? [
+                  {
+                    kind: "warning",
+                    name: "Potential runtime phrase errors require review",
+                    message: "Missing translation: EE_ID_invalidFile.",
+                    hint: "Runtime entry is unverified.",
+                    parameters: [],
+                  },
+                ]
+              : []
+          }
           scrollToCurrentStep={noOp}
         />
       </section>
