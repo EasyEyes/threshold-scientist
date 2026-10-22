@@ -508,42 +508,6 @@ export default class Running extends Component {
 
     return (
       <>
-        {Array.isArray(this.props.compileWarnings) &&
-          this.props.compileWarnings.length > 0 && (
-            <div className="compile-warnings">
-              {this.props.compileWarnings.map((w, index) => (
-                <div
-                  className="compile-warning-item"
-                  key={`compile-warning-${index}`}
-                >
-                  <div className="compile-warning-name">{w.name}</div>
-                  {w.message && (
-                    <p
-                      className="compile-warning-message"
-                      dangerouslySetInnerHTML={{
-                        __html: linkGlossaryParameters(w.message),
-                      }}
-                    ></p>
-                  )}
-                  {w.hint && (
-                    <p className="compile-warning-hint">
-                      <span className="compile-warning-hint-prefix">
-                        HINT:{" "}
-                      </span>
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html: linkGlossaryParameters(w.hint),
-                        }}
-                      ></span>
-                    </p>
-                  )}
-                  {w.parameters && w.parameters.length ? (
-                    <ParameterList parameters={w.parameters} />
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          )}
         <div className="green-status-banner">
           {repositoryIsEmpty
             ? "Compilation did not produce any experiment files. Select New to compile the experiment again."
@@ -894,6 +858,42 @@ export default class Running extends Component {
             </div>
           </>
         )}
+        {Array.isArray(this.props.compileWarnings) &&
+          this.props.compileWarnings.length > 0 && (
+            <div className="compile-warnings">
+              {this.props.compileWarnings.map((w, index) => (
+                <div
+                  className="compile-warning-item"
+                  key={`compile-warning-${index}`}
+                >
+                  <div className="compile-warning-name">{w.name}</div>
+                  {w.message && (
+                    <p
+                      className="compile-warning-message"
+                      dangerouslySetInnerHTML={{
+                        __html: linkGlossaryParameters(w.message),
+                      }}
+                    ></p>
+                  )}
+                  {w.hint && (
+                    <p className="compile-warning-hint">
+                      <span className="compile-warning-hint-prefix">
+                        HINT:{" "}
+                      </span>
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: linkGlossaryParameters(w.hint),
+                        }}
+                      ></span>
+                    </p>
+                  )}
+                  {w.parameters && w.parameters.length ? (
+                    <ParameterList parameters={w.parameters} />
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
       </>
     );
   }

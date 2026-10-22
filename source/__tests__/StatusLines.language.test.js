@@ -26,9 +26,6 @@ jest.mock("../repositoryState", () => ({
 import React from "react";
 import StatusLines from "../StatusLines";
 import { render, screen } from "@testing-library/react";
-import { fireEvent } from "@testing-library/react";
-import { saveAs } from "file-saver";
-jest.mock("file-saver", () => ({ saveAs: jest.fn() }));
 
 const previousExperimentViewed = {
   originalFileName: "study.csv",
@@ -64,7 +61,7 @@ const baseProps = {
   completedSteps: [],
 };
 
-it("offers the current analysis as JSON without claiming complete runtime coverage", () => {
+it("omits the phrase-analysis status row and download button even when a report exists", () => {
   const phraseAnalysis = {
     schemaVersion: 1,
     fullRuntimeAnswerAvailable: false,
@@ -76,15 +73,11 @@ it("offers the current analysis as JSON without claiming complete runtime covera
       user={{ ...baseProps.user, currentExperiment: { phraseAnalysis } }}
     />,
   );
-  fireEvent.click(
-    screen.getByRole("button", {
-      name: "Download phrase report (some paths unverified)",
-    }),
-  );
-  expect(saveAs).toHaveBeenCalledWith(
-    expect.any(Blob),
-    "study-phrase-analysis.json",
-  );
+  expect(screen.queryByText("Phrase analysis:")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Phrase analysis/i)).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /Download phrase report/i }),
+  ).not.toBeInTheDocument();
 });
 
 describe("StatusLines _language", () => {
