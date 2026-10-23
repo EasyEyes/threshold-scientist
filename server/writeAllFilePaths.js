@@ -8,6 +8,10 @@ const fetchDir = "threshold/";
 const ignorePattern = [
   // System/editor files
   ".DS_Store",
+  ".nvmrc",
+  "CONTEXT.md",
+  "threshold-engine/",
+  "tools/",
   ".git",
   ".husky",
   ".prettierignore",
