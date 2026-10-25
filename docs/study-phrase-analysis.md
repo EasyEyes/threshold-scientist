@@ -7,6 +7,12 @@ The compiler combines phrase definition checks with source analysis:
 
 Custom symbols and their replacement text remain outside the explicit-reference check. Custom values can still resolve parameters used by the source guard analysis. The study and stored audit formats are unchanged.
 
+## Compiler validation order
+
+The compiler first checks spreadsheet structure, resolves custom values, and validates parameter names, column placement, value types, allowed categories (including `_language`), and cross-parameter rules. A blocking error in those stages skips the glossary usage audit, so an audit outage cannot obscure an input error.
+
+Once those checks pass, the glossary audit runs against the original enabled parameter rows. A missing, stale, or failed audit still blocks an otherwise valid study. Resource and font checks follow. International Phrase key checks and phrase/glossary source analysis run only if no earlier blocking errors remain. Warnings alone do not skip the glossary audit or block compilation.
+
 ## Source index and API
 
 Run `npm run phrase-analysis:build` from the website repository. The Netlify build runs this command before building the compiler. It generates `netlify/functions/study-phrase-analysis/source-index.json`, which is ignored by Git and bundled into the function. Existing build artifacts are reused only when their source fingerprint and content checksum match. The index is not rebuilt for each study.
