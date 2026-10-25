@@ -1,10 +1,9 @@
 # Study phrase analysis during compilation
 
-The compiler combines three separate checks:
+The compiler combines phrase definition checks with source analysis:
 
-1. Explicit `EE_`, `RC_`, and `T_` references in enabled original study cells must belong to the latest completed audit's `used` keys. The existing `phrases-audit-compiler` adapter remains unchanged.
-2. Those references must exist in the phrase data loaded by the compiler. A missing key blocks compilation; translation columns are not checked. Empty or absent translations are allowed.
-3. The final normalized condition parameters are evaluated against a source index built for the compiler deployment. An unavailable, malformed, or mismatched analysis blocks compilation. Source candidate keys absent from column A of International Phrases produce a warning with instructions for scientists. Translation values and the selected language do not affect this check. Invalid `_language` values are independently blocked by glossary category validation.
+1. Explicit `EE_`, `RC_`, and `T_` references in enabled original study cells must exist in the phrase data loaded by the compiler (column A of International Phrases). A missing key blocks compilation; translation columns are not checked. Empty or absent translations are allowed. The compiler does not require membership in a source-usage audit, so a defined key such as `EE_Translator` is accepted even if that audit omits it.
+2. The final normalized condition parameters are evaluated against a source index built for the compiler deployment. An unavailable, malformed, or mismatched analysis blocks compilation. Source candidate keys absent from column A of International Phrases produce a warning with instructions for scientists. Translation values and the selected language do not affect this check. Invalid `_language` values are independently blocked by glossary category validation.
 
 Custom symbols and their replacement text remain outside the explicit-reference check. Custom values can still resolve parameters used by the source guard analysis. The study and stored audit formats are unchanged.
 
@@ -35,7 +34,7 @@ Successful responses include the fingerprint, candidate keys, source sites, cond
 
 The compiler validates the response and adds phrase-data version, study language, original explicit references, definition errors, and uncertain candidate-definition issues. The current report can be downloaded from the **Phrase analysis** status line. The fingerprint prevents an old compiler tab from accepting an analysis for a newer source build; reload the compiler after a deployment mismatch.
 
-Local Node compilation uses the same evaluator with the build-generated index, without browser APIs or a network request for path analysis. `LocalCompileOptions.phraseAnalysisIndex` can supply an explicit trusted index. The existing audit requirement for explicit references still applies.
+Local Node compilation uses the same evaluator with the build-generated index, without browser APIs or a network request for path analysis. `LocalCompileOptions.phraseAnalysisIndex` can supply an explicit trusted index. Explicit phrase references are checked against the loaded phrase catalog, without requesting a phrase-usage audit. The separate glossary-usage audit remains required.
 
 ## Blocking policy and limits
 
