@@ -69,24 +69,21 @@ it("blocks a study key even when used in the audit but absent from phrase data",
   const errors = validateStudyPhraseDefinitions(
     [{ key: "EE_test", parameter: "instruction", column: 2 }],
     {},
-    "en",
   );
   expect(errors[0].name).toBe("International phrase not defined");
   expect(errors[0].message).toContain("EE_test");
 });
-it("blocks missing translations without accepting inherited keys", () => {
+it("accepts keys without a selected-language translation but rejects inherited keys", () => {
   expect(
     validateStudyPhraseDefinitions(
       [{ key: "EE_test", parameter: "instruction", column: 2 }],
       { EE_test: { fr: "Bonjour" } },
-      "en",
-    )[0].name,
-  ).toBe("International phrase translation not defined");
+    ),
+  ).toEqual([]);
   expect(
     validateStudyPhraseDefinitions(
       [{ key: "EE_test", parameter: "instruction", column: 2 }],
       Object.create({ EE_test: { en: "Hello" } }),
-      "en",
     ),
   ).toHaveLength(1);
 });
@@ -95,7 +92,6 @@ it("accepts defined translations including intentionally empty strings", () => {
     validateStudyPhraseDefinitions(
       [{ key: "EE_test", parameter: "instruction", column: 2 }],
       { EE_test: { en: "" } },
-      "en",
     ),
   ).toEqual([]);
 });
@@ -183,4 +179,46 @@ it("uses a supplied local source index without needing a browser or network", as
   expect(result.errors).toEqual([]);
   expect(result.report.fingerprint).toBe(index.fingerprint);
   expect(global.fetch).not.toHaveBeenCalled();
+});
+
+it("does not warn for source keys defined without translations", async () => {
+  const table = setupStudy();
+  initPhrases({ version: "test", phrases: { EE_test: {} } });
+  const result = await checkStudyPhraseAnalysis(table, [], undefined, index);
+  expect(result.errors).toEqual([]);
+  expect(result.report.candidateDefinitionIssues).toEqual([]);
+});
+it("shows scientists the missing keys and what to do next", async () => {
+  const table = setupStudy();
+  initPhrases({ version: "test", phrases: {} });
+  const result = await checkStudyPhraseAnalysis(table, [], undefined, index);
+  expect(result.errors[0].name).toBe("⚠️ WARNING: 1 missing phrase");
+  expect(result.errors[0].message).toContain(
+    "not defined in International Phrases",
+  );
+  expect(result.errors[0].message).toContain("EE_test");
+  expect(result.errors[0].message).toContain("CAN I RUN THE STUDY? Yes");
+  expect(result.errors[0].message).toContain("Report bug");
+});
+
+it("lists each missing source key and uses the plural count", async () => {
+  const table = setupStudy();
+  initPhrases({ version: "test", phrases: {} });
+  const missingKeys = ["EE_missing", "RC_missing", "T_missing"];
+  const sourceIndex = {
+    ...index,
+    sites: [{ ...index.sites[0], keys: missingKeys }],
+  };
+  const result = await checkStudyPhraseAnalysis(
+    table,
+    [],
+    undefined,
+    sourceIndex,
+  );
+  expect(result.errors).toHaveLength(1);
+  expect(result.errors[0].name).toBe("⚠️ WARNING: 3 missing phrases");
+  expect(result.errors[0].message).toContain("3 keys that are not defined");
+  for (const key of missingKeys)
+    expect(result.errors[0].message).toContain(`>${key}</a>`);
+  expect(result.report.candidateDefinitionIssues).toEqual(missingKeys);
 });
