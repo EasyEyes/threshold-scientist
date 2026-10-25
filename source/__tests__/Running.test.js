@@ -84,9 +84,10 @@ describe("Running compile warnings", () => {
     const warning = {
       context: "preprocessor",
       kind: "warning",
-      name: "Potential runtime phrase errors require review",
-      message: "Missing translation: EE_ID_invalidFile.",
-      hint: "Runtime entry is unverified.",
+      name: "⚠️ WARNING: 1 missing phrase",
+      message:
+        "This study’s source references 1 key that is not defined in International Phrases:<br>EE_ID_invalidFile",
+      hint: "CAN I RUN THE STUDY? Yes, if the missing phrases are not essential.<br><br>REPORT THE PROBLEM. Please select “Report bug” at the top of this page to notify the developers.",
       parameters: [],
     };
     const renderResult = (warnings) =>
@@ -99,8 +100,12 @@ describe("Running compile warnings", () => {
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
     }
-    expect(screen.getByText(warning.message)).toBeInTheDocument();
-    expect(screen.getByText(warning.hint)).toBeInTheDocument();
+    expect(
+      container.querySelector(".compile-warning-message"),
+    ).toHaveTextContent("EE_ID_invalidFile");
+    expect(container.querySelector(".compile-warning-hint")).toHaveTextContent(
+      "Report bug",
+    );
     rerender(renderResult([]));
     expect(container.querySelector(".compile-warnings")).toBeNull();
     expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument();

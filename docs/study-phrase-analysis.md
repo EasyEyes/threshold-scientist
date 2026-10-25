@@ -3,8 +3,8 @@
 The compiler combines three separate checks:
 
 1. Explicit `EE_`, `RC_`, and `T_` references in enabled original study cells must belong to the latest completed audit's `used` keys. The existing `phrases-audit-compiler` adapter remains unchanged.
-2. Those references must exist in the phrase data loaded by the compiler and have a string translation in the resolved study language. Intentionally empty strings remain valid, matching the runtime reader. A missing key or translation blocks compilation.
-3. The final normalized condition parameters are evaluated against a source index built for the compiler deployment. An unavailable, malformed, or mismatched analysis blocks compilation. Source candidates without a translation produce a warning when runtime entry is unproven.
+2. Those references must exist in the phrase data loaded by the compiler. A missing key blocks compilation; translation columns are not checked. Empty or absent translations are allowed.
+3. The final normalized condition parameters are evaluated against a source index built for the compiler deployment. An unavailable, malformed, or mismatched analysis blocks compilation. Source candidate keys absent from column A of International Phrases produce a warning with instructions for scientists. Translation values and the selected language do not affect this check. Invalid `_language` values are independently blocked by glossary category validation.
 
 Custom symbols and their replacement text remain outside the explicit-reference check. Custom values can still resolve parameters used by the source guard analysis. The study and stored audit formats are unchanged.
 
@@ -52,3 +52,11 @@ npx tsx --test netlify/functions/study-phrase-analysis/handler.test.ts
 npm test -- --runInBand --runTestsByPath source/__tests__/studyPhraseAnalysis.test.js source/__tests__/internationalPhraseAudit.test.js source/__tests__/StatusLines.language.test.js
 npm run check:ts
 ```
+
+## Scientist warning preview
+
+Missing source keys appear one per line below `⚠️ WARNING: N missing phrases`, followed by the “CAN I RUN THE STUDY?” and “REPORT THE PROBLEM.” instructions. The count uses the singular form for one key. The unused `simulateRuntimeError.js` helper was removed, so its intentionally absent `T_thisPhraseDoesNotExist` key no longer enters the source index.
+
+These screenshots use the compiler UI test harness with one missing key:
+
+[Desktop preview](screenshots/compiler-missing-phrases-desktop.png) · [Mobile preview](screenshots/compiler-missing-phrases-mobile.png)

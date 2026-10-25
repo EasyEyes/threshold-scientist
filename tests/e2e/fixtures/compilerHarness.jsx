@@ -143,9 +143,10 @@ function CompilerHarness() {
               ? [
                   {
                     kind: "warning",
-                    name: "Potential runtime phrase errors require review",
-                    message: "Missing translation: EE_ID_invalidFile.",
-                    hint: "Runtime entry is unverified.",
+                    name: "⚠️ WARNING: 1 missing phrase",
+                    message:
+                      "This study’s source references 1 key that is not defined in International Phrases:<br>EE_ID_invalidFile<br><br>CAN I RUN THE STUDY? Yes, if the missing phrases are not essential. If the study tries to display one, it will show a missing-phrase error instead.<br><br>REPORT THE PROBLEM. Please select “Report bug” at the top of this page to notify the developers. To fix the problem, they will either remove unused keys from the source or add missing keys and their translations to International Phrases.",
+                    hint: "",
                     parameters: [],
                   },
                 ]
