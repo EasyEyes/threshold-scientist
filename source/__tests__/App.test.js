@@ -10,9 +10,8 @@ jest.mock("firebase/database", () => ({
   get: jest.fn().mockResolvedValue({ val: () => ({ count: 0 }) }),
 }));
 
-jest.mock("@firebase/util", () => ({
-  uuidv4: jest.fn(() => "test-uuid"),
-}));
+// Firebase 13 does not export uuidv4. Do not invent it in the test boundary.
+jest.mock("@firebase/util", () => ({}));
 
 jest.mock("sweetalert2", () => ({
   fire: jest.fn(),
@@ -114,6 +113,31 @@ const mockPhrasesData = {
   version: "1.0",
   phrases: { greeting: { en: "Hello", fr: "Bonjour" } },
 };
+
+it("records a compile using the browser UUID API with Firebase 13", async () => {
+  const { get, set, ref } = require("firebase/database");
+  ref.mockImplementation((_db, path) => path);
+  const originalCrypto = Object.getOwnPropertyDescriptor(globalThis, "crypto");
+  Object.defineProperty(globalThis, "crypto", {
+    configurable: true,
+    value: { randomUUID: jest.fn(() => "compile-uuid") },
+  });
+  get.mockResolvedValueOnce({ exists: () => false });
+  try {
+    const app = new App({});
+    app.state.user = { username: "test.scientist" };
+    app.handleUpdateCompileCount();
+    await Promise.resolve();
+    expect(set).toHaveBeenCalledWith(
+      "compiles/compile-uuid",
+      expect.objectContaining({ id: "compile-uuid", user: "test.scientist" }),
+    );
+  } finally {
+    if (originalCrypto)
+      Object.defineProperty(globalThis, "crypto", originalCrypto);
+    else delete globalThis.crypto;
+  }
+});
 
 describe("normalizeRecruitmentInformation", () => {
   it("uses empty recruitment metadata when an experiment repository has no files", () => {
@@ -540,6 +564,25 @@ describe("App - studioPastExperiments", () => {
 });
 
 describe("App - handleUpdateCompileCount", () => {
+  const originalRandomUUID = Object.getOwnPropertyDescriptor(
+    globalThis.crypto,
+    "randomUUID",
+  );
+  beforeAll(() => {
+    Object.defineProperty(globalThis.crypto, "randomUUID", {
+      configurable: true,
+      value: jest.fn(() => "test-uuid"),
+    });
+  });
+  afterAll(() => {
+    if (originalRandomUUID)
+      Object.defineProperty(
+        globalThis.crypto,
+        "randomUUID",
+        originalRandomUUID,
+      );
+    else delete globalThis.crypto.randomUUID;
+  });
   beforeEach(() => {
     jest.clearAllMocks();
   });

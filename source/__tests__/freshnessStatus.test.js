@@ -3,6 +3,14 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import FreshnessStatus from "../components/FreshnessStatus";
 import { createFreshnessController } from "../freshness/freshnessController";
 
+jest.mock("../freshness/formatLocalDeploymentTime", () => {
+  const actual = jest.requireActual("../freshness/formatLocalDeploymentTime");
+  return {
+    formatLocalDeploymentTime: (value) =>
+      actual.formatLocalDeploymentTime(value, "UTC"),
+  };
+});
+
 const makeController = (mode = "production", overrides = {}) =>
   createFreshnessController({
     mode,

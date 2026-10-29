@@ -7,6 +7,7 @@ import { buildStudy, isBuildFailure } from "../studio/builder";
 import { matrixToState } from "../studio/tableModel";
 import {
   effective,
+  effectiveNum,
   effectiveWide,
   enabledConditions,
   estimateDurationSec,
@@ -129,6 +130,18 @@ describe("effective", () => {
 /* ------------------------------------------------------------------ */
 
 describe("feasibility geometry", () => {
+  test("missing and invalid numeric values use fallbacks while explicit zero survives", () => {
+    const t = matrixToState([
+      ["block", "", "1"],
+      ["targetKind", "", "letter"],
+      ["fontPadding", "", "not-a-number"],
+      ["targetEccentricityYDeg", "", "0"],
+    ]);
+    expect(effectiveNum(t, "fontMaxPx", 0)).toBeUndefined();
+    expect(effectiveNum(t, "fontPadding", 0)).toBeUndefined();
+    expect(effectiveNum(t, "targetEccentricityYDeg", 0)).toBe(0);
+    expect(conditionGeometry(t, 0).fontPadding).toBe(0.2);
+  });
   test("xyPxOfDeg matches the runtime formula", () => {
     const pxPerCm = 50;
     const d = 50;

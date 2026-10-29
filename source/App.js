@@ -1,6 +1,5 @@
 import React, { Component, Suspense } from "react";
 import { set, ref, get } from "firebase/database";
-import { uuidv4 } from "@firebase/util";
 import Swal from "sweetalert2";
 import { formatLocalDeploymentTime } from "./freshness/formatLocalDeploymentTime";
 import { latestPublicationDate } from "./freshness/latestPublicationDate";
@@ -866,7 +865,7 @@ export default class App extends Component {
   /* -------------------------------------------------------------------------- */
 
   handleUpdateCompileCount() {
-    const compileId = uuidv4();
+    const compileId = globalThis.crypto.randomUUID();
     const { username } = this.state.user;
     const compileCountKey = username.replaceAll(".", "_");
 
