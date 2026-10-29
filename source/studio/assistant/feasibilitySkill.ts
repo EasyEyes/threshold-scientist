@@ -17,7 +17,7 @@
  *   fixationOriginXYScreen 0.5, 0.5; both honored when set).
  * - lower bound (letter.js:36): target px ≥ targetMinPhysicalPx / dpr.
  * - upper bound (fontMaxPhysicalPx.js getMaxNominalFontSizePx): height px ≤
- *   fontMaxPhysicalPx / dpr / (1 + fontPadding), and ≤ fontMaxPx.
+ *   fontMaxPhysicalPx / dpr / (1 + fontPadding).
  * - fit: the stimulus rect, scaled by fontBoundingScalar, inside the screen
  *   (restrictSizeDeg / restrictSpacingDeg; isRectInRect).
  * Simplifications, stated to the model: letters are assumed square (the
@@ -203,7 +203,6 @@ export interface ConditionGeometry {
   sizeIsHeight: boolean;
   targetMinPhysicalPx: number;
   fontMaxPhysicalPx: number;
-  fontMaxPx: number;
   fontPadding: number;
   fontBoundingScalar: number;
   fixationOrigin: XY;
@@ -282,7 +281,6 @@ export function conditionGeometry(
     sizeIsHeight: effectiveBool(t, "targetSizeIsHeightBool", ci),
     targetMinPhysicalPx: effectiveNum(t, "targetMinPhysicalPx", ci) ?? 8,
     fontMaxPhysicalPx: effectiveNum(t, "fontMaxPhysicalPx", ci) ?? 2000,
-    fontMaxPx: effectiveNum(t, "fontMaxPx", ci) ?? 1000,
     fontPadding: effectiveNum(t, "fontPadding", ci) ?? 0.2,
     fontBoundingScalar: effectiveNum(t, "fontBoundingScalar", ci) ?? 1,
     fixationOrigin: parsePair(
@@ -399,10 +397,7 @@ export function screenRectPx(g: ConditionGeometry, s: Screen): Rect {
 }
 
 const maxHeightPx = (g: ConditionGeometry, s: Screen): number =>
-  Math.min(
-    g.fontMaxPx,
-    g.fontMaxPhysicalPx / s.devicePixelRatio / (1 + g.fontPadding),
-  );
+  g.fontMaxPhysicalPx / s.devicePixelRatio / (1 + g.fontPadding);
 
 const minTargetPx = (g: ConditionGeometry, s: Screen): number =>
   g.targetMinPhysicalPx / s.devicePixelRatio;
@@ -763,7 +758,7 @@ export function feasibilityReport(
   const title = name ? `FEASIBILITY — ${name}` : "FEASIBILITY";
   lines.push(title);
   lines.push(
-    "Assumptions: fixation at the screen point fixationOriginXYScreen names (default center); letters square (the runtime measures the font); spacingSymmetry as screen; nominal font size ≈ letter height. Bounds are the runtime's: target ≥ targetMinPhysicalPx/devicePixelRatio, height ≤ fontMaxPhysicalPx/devicePixelRatio/(1+fontPadding) and ≤ fontMaxPx, whole stimulus on screen (bounding.js restrictLevel caps QUEST silently otherwise). Expected thresholds are priors, not data.",
+    "Assumptions: fixation at the screen point fixationOriginXYScreen names (default center); letters square (the runtime measures the font); spacingSymmetry as screen; nominal font size ≈ letter height. Bounds are the runtime's: target ≥ targetMinPhysicalPx/devicePixelRatio, height ≤ fontMaxPhysicalPx/devicePixelRatio/(1+fontPadding), whole stimulus on screen (bounding.js restrictLevel caps QUEST silently otherwise). Expected thresholds are priors, not data.",
   );
   if (problems.length) lines.push(`Ignored: ${problems.join("; ")}`);
   lines.push("Screens:");
@@ -884,7 +879,7 @@ export const FEASIBILITY_TOOL_NAMES: ReadonlySet<string> = new Set(
 );
 
 export const FEASIBILITY_INSTRUCTIONS = `FEASIBILITY CHECK (on)
-The scientist wants to know whether this study will work on real screens: does each stimulus fit, can QUEST reach the threshold, how long is a session. Call check_feasibility first and answer from its report, not from intuition. It runs the runtime's own geometry (px per deg = px/cm × viewing distance × tan deg; fixation at screen center; bounds targetMinPhysicalPx, fontMaxPhysicalPx, fontMaxPx, the screen edge) for four typical screens, or the one the scientist describes (pass screen when they name a monitor or give dimensions; pass viewingDistanceCm to try a different distance).
+The scientist wants to know whether this study will work on real screens: does each stimulus fit, can QUEST reach the threshold, how long is a session. Call check_feasibility first and answer from its report, not from intuition. It runs the runtime's own geometry (px per deg = px/cm × viewing distance × tan deg; fixation at screen center; bounds targetMinPhysicalPx, fontMaxPhysicalPx, the screen edge) for four typical screens, or the one the scientist describes (pass screen when they name a monitor or give dimensions; pass viewingDistanceCm to try a different distance).
 - Report the verdicts in plain words: which conditions are fine, which are tight, and why in one clause each (e.g. "at 10 deg right the outer flanker leaves a 13-inch laptop once spacing passes 3.9 deg, and the expected crowding distance is 3 deg, so QUEST has almost no room above"). Quote the testable range and the expected threshold with units.
 - The runtime never refuses: when a level does not fit it shrinks the stimulus (bounding.js restrictLevel), so an out-of-range threshold is measured as the cap and the data look clean. Say this once when it matters.
 - Remedies are table changes, name them as such: a shorter viewingDistanceDesiredCm (more deg per screen), a smaller eccentricity, flankers tangential instead of radial, a larger screen via needScreenWidthDeg (the compatibility page then rejects small screens), fixationRequestedOffscreenBool for the far periphery, a larger targetMinPhysicalPx only if the scientist wants more pixels per letter. Offer them; apply with the table tools only when the scientist asks.

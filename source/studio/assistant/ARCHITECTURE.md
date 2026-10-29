@@ -326,8 +326,8 @@ the scientist describes (`screen`), at the table's `viewingDistanceDesiredCm`
 or a trial value (`viewingDistanceCm`): px from fixation =
 px/cm × distance × tan(deg) (`utils.js xyPxOfDeg`), fixation at
 `fixationOriginXYScreen`, lower bound `targetMinPhysicalPx / devicePixelRatio`
-(`letter.js`), upper bound `fontMaxPhysicalPx / dpr / (1 + fontPadding)` and
-`fontMaxPx`, whole stimulus (target plus flankers per `spacingDirection`,
+(`letter.js`), upper bound `fontMaxPhysicalPx / dpr / (1 + fontPadding)`,
+whole stimulus (target plus flankers per `spacingDirection`,
 scaled by `fontBoundingScalar`) inside the screen. For each letter condition
 and screen it bisects the testable range of the threshold parameter and
 compares it with the expected threshold (`thresholdGuess`, else the recipes'
