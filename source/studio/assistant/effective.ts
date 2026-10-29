@@ -49,7 +49,9 @@ export const effectiveNum = (
   name: string,
   ci: number,
 ): number | undefined => {
-  const v = Number(effective(t, name, ci).value);
+  const raw = effective(t, name, ci).value;
+  if (raw === "") return undefined;
+  const v = Number(raw);
   return Number.isFinite(v) ? v : undefined;
 };
 

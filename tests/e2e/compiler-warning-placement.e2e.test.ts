@@ -9,9 +9,10 @@ test("compile warnings appear below the study controls on desktop and mobile", a
   const warning = page.locator(".compile-warnings");
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    await expect(warning).toContainText(
-      "Potential runtime phrase errors require review",
-    );
+    await expect(warning).toContainText("⚠️ WARNING: 1 missing phrase");
+    await expect(warning).toContainText("CAN I RUN THE STUDY? Yes");
+    await expect(warning).toContainText("REPORT THE PROBLEM.");
+    await expect(warning).not.toContainText("HINT:");
     const warningBox = await warning.boundingBox();
     expect(warningBox).not.toBeNull();
     for (const button of await page

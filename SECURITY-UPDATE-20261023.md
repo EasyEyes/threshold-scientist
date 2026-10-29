@@ -6,7 +6,11 @@ Source: [Node.js October security releases](https://nodejs.org/en/blog/vulnerabi
 
 ## Verification and limitations
 
-Production build passes with demo Firebase metadata. Chromium compiler warning-placement test passes at desktop and mobile sizes. Full Jest: 530 passed, 9 failed in freshnessStatus, studioSkills and fastCompileProgress. The same 9 failures reproduce on baseline source using the updated dependency installation. Manifest generator regression: passes; verified failure without exclusions.
+Revalidated on 2026-10-29 with Node 24.22.1 / npm 11.19.1 after integrating current new-main and the participant security branch. Full Jest: 561 passed, 0 failed in 40 suites. Production TypeScript and webpack build pass with a local DEPLOY_ID and demo Firebase database metadata. Chromium warning-placement integration passes at desktop/mobile sizes; Firebase and GitLab are test boundaries, not live provider authentication. The manifest-generator regression passes.
+
+Fixed a real Firebase 13 incompatibility: compile logging uses the browser crypto.randomUUID API rather than a removed @firebase/util export. A regression runs with that Firebase export absent. Missing numeric table values now preserve geometry fallbacks while explicit zero remains zero. Freshness rendering tests pin the presentation timezone; the SweetAlert mock and preview-label assertion match the current interface. No tests were disabled.
+
+Native npm audit refreshed on 2026-10-29: 0 critical, 11 high, 3 moderate, 8 low. The table below is the historical October 23 snapshot.
 
 Native npm audit: 0 critical, 45 high, 3 moderate, 0 low findings. Counts represent affected dependency packages, not unique CVEs.
 
