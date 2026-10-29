@@ -122,7 +122,7 @@ const READING: readonly string[] = [
   "readingNumberOfPossibleAnswers",
   "readingTargetMaxWordFrequency",
   "readingCorpusShuffleBool",
-  "fontLeftToRightBool",
+  "fontDirection",
 ];
 
 const RSVP: readonly string[] = [
