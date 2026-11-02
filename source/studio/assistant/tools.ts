@@ -29,10 +29,12 @@ import {
   isBuildFailure,
   isKnobFailure,
   knobById,
+  knobCallSchema,
   KNOBS,
   RECIPES,
   STUDY_SCHEMA,
 } from "../builder";
+import { pairsToMap, strictTool } from "./strictSchema";
 import {
   alphabeticalInsertIndex,
   columnDisabledBy,
@@ -181,7 +183,12 @@ export interface EditOperation {
   copy_of?: string;
 }
 
-export const ASSISTANT_TOOLS = [
+/**
+ * The tools as written here, in plain JSON Schema. What the model gets is
+ * ASSISTANT_TOOLS below: the same definitions made strict (strictSchema.ts),
+ * so the API rejects a malformed call instead of runTool having to.
+ */
+const TOOL_DEFINITIONS = [
   {
     name: "build_study",
     description:
@@ -203,14 +210,8 @@ export const ASSISTANT_TOOLS = [
       properties: {
         knobs: {
           type: "array",
-          items: {
-            type: "object",
-            properties: {
-              knob: { type: "string", enum: KNOBS.map((k) => k.id) },
-              args: { type: "object" },
-            },
-            required: ["knob"],
-          },
+          // One typed branch per knob: its args, the required ones required.
+          items: knobCallSchema(),
         },
       },
       required: ["knobs"],
@@ -353,6 +354,9 @@ export const ASSISTANT_TOOLS = [
   },
 ] as const;
 
+/** The tools the model is given: every definition above, strict. */
+export const ASSISTANT_TOOLS = TOOL_DEFINITIONS.map(strictTool);
+
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
@@ -437,7 +441,7 @@ export function similarParameterNames(name: string, limit = 5): string[] {
     .map((x) => x.name);
 }
 
-const describeEntry = (e: GlossaryEntry): string => {
+const describeEntry = (e: GlossaryEntry, maxExplanation = 1500): string => {
   const lines = [`${e.name} — type ${e.type}; category ${categoryOf(e.name)}`];
   if (e.default !== "") lines.push(`  default: ${e.default}`);
   if (e.categories?.length)
@@ -446,10 +450,38 @@ const describeEntry = (e: GlossaryEntry): string => {
   const explanation = stripHtml(e.explanation);
   lines.push(
     `  ${
-      explanation.length > 1500 ? explanation.slice(0, 1499) + "…" : explanation
+      explanation.length > maxExplanation
+        ? explanation.slice(0, maxExplanation - 1) + "…"
+        : explanation
     }`,
   );
   return lines.join("\n");
+};
+
+/**
+ * A build_study spec with its `{parameter: value}` maps — set, setAll, and
+ * each condition's set — restored from the pairs the strict schema carries.
+ * A map given as an object (older transcripts, tests) passes through.
+ */
+const withSpecMaps = (spec: unknown): unknown => {
+  if (!spec || typeof spec !== "object" || Array.isArray(spec)) return spec;
+  const s = { ...(spec as Record<string, unknown>) };
+  for (const key of ["set", "setAll"] as const)
+    if (key in s) {
+      const map = pairsToMap(s[key]);
+      if (map) s[key] = map;
+      else delete s[key];
+    }
+  if (Array.isArray(s.conditions))
+    s.conditions = s.conditions.map((c) => {
+      if (!c || typeof c !== "object" || !("set" in c)) return c;
+      const cond = { ...(c as Record<string, unknown>) };
+      const map = pairsToMap(cond.set);
+      if (map) cond.set = map;
+      else delete cond.set;
+      return cond;
+    });
+  return s;
 };
 
 export const tableToCsv = (t: TableState): string =>
@@ -755,7 +787,7 @@ export function runTool(
 ): ToolOutcome {
   switch (name) {
     case "build_study": {
-      const spec = (input.spec ?? input) as unknown;
+      const spec = withSpecMaps((input.spec ?? input) as unknown);
       const built = buildStudy(spec);
       if (isBuildFailure(built))
         return {
@@ -820,8 +852,14 @@ export function runTool(
         }
         const args =
           item?.args && typeof item.args === "object"
-            ? (item.args as Record<string, unknown>)
+            ? { ...(item.args as Record<string, unknown>) }
             : {};
+        // Strict schemas carry {parameter: value} maps as pairs; knobs take maps.
+        if ("set" in args) {
+          const map = pairsToMap(args.set);
+          if (map) args.set = map;
+          else delete args.set;
+        }
         // Parameter names the knob would write must be glossary names.
         const named: string[] = [];
         if (id === "set_for_all") named.push(String(args.parameter ?? ""));
@@ -1004,6 +1042,18 @@ export function runTool(
       for (const why of r.refused) lines.push(`- refused ${why}`);
       const report = ctx.check(r.table);
       lines.push("", describeChecks(report, ctx));
+      // The model set these cells from the index's one-line gist; now that
+      // it is editing them, give it each parameter's full entry — type,
+      // allowed values, example, explanation — so a wrong format or value
+      // is fixed in the next round with the facts in view.
+      const touched = r.changed.filter((n) => !isCommentName(n)).slice(0, 8);
+      if (touched.length) {
+        lines.push("", "Glossary entries for the parameters you set:");
+        for (const name of touched) {
+          const e = resolveEntry(name);
+          if (e) lines.push(describeEntry(e, 700));
+        }
+      }
       const errors = report.errors.filter((e) => e.kind === "error").length;
       return {
         result: lines.join("\n"),

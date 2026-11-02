@@ -61,7 +61,7 @@ flowchart LR
   subgraph Netlify["Netlify function · studio-assistant"]
     Relay[index.ts<br/>auth · rate limit · caps · key]
   end
-  Anthropic[(Anthropic Messages API<br/>claude-sonnet-5)]
+  Anthropic[(Anthropic Messages API<br/>claude-opus-5-5)]
   GitLab[(Pavlovia GitLab<br/>/api/v4/user)]
 
   UI --> Hook --> Api --> Relay --> Anthropic
@@ -126,7 +126,9 @@ Steps in prose:
    while the model is still composing its reply.
 4. **Loop.** Tool results are appended and the model is called again, up to
    `MAX_TOOL_ROUNDS = 16` rounds per turn. Thinking blocks are passed back
-   verbatim as the API requires.
+   verbatim as the API requires. A reply that stops with `refusal` or
+   `max_tokens` ends the turn with a message to the scientist; any
+   `tool_use` in it is dropped, not run.
 5. **Finish.** The final text and the accumulated `TurnResult` (every tool's
    report, merged) become one assistant item, rendered as a result card with
    an "Undo these changes" button.
@@ -283,6 +285,21 @@ resources, grid focus) and returns a `ToolOutcome`.
 | `lookup_parameters` / `search_parameters` | Exact / fuzzy lookup over the live glossary                                                                                                                                  | no            |
 | `list_resources`                          | EasyEyesResources + files dropped in the Studio                                                                                                                              | no            |
 | `ask_user`                                | Ends the turn with a question and option buttons; the scientist's next message is the tool result                                                                            | no            |
+
+**Every tool is strict.** The definitions are written in plain JSON Schema
+and go to the model through `strictTool` (`assistant/strictSchema.ts`),
+which closes every object, lists `required`, turns `type` arrays into
+`anyOf`, and sets `strict: true`; the model API then guarantees that each
+`tool_use.input` matches, so a malformed call is refused upstream instead of
+costing a round. `apply_knobs` gets one typed branch per knob
+(`knobCallSchema`, from each `KnobArg`'s `schema`), with the knob's required
+args required. Strict mode cannot express a free-form `{parameter: value}`
+map, so the spec's `set`/`setAll`, a condition's `set` and `add_condition`'s
+`set` travel as `[{parameter, value}]` pairs and are folded back into maps
+(`pairsToMap`) before the builder or knob sees them; a map is still accepted.
+After every `edit_table`, the result also carries the full glossary entry of
+each parameter it set, so a wrong value is corrected with the definition in
+view rather than from the index's one-line gist.
 
 **Every table-changing tool validates.** The outcome carries the compiler's
 verdict on the resulting table — `runValidation` + `checkResources`, the
@@ -477,8 +494,9 @@ Where the seconds go, and what keeps them few:
   occasionally exceeds the function's 60 s wall on an ordinary ask.
   `callAssistantHedged` (`api.ts`) bounds it: if a round has not answered
   after `HEDGE_AFTER_MS = 15 000`, a second request goes out with
-  `mode: "fast"` (the function sends effort `low`, thinking `disabled` for
-  that call) and whichever reply arrives first is used; the other is
+  `mode: "fast"` (the function sends effort `low` for that call; thinking
+  stays adaptive, since disabling it is not portable across current
+  models) and whichever reply arrives first is used; the other is
   aborted. Because the tools are deterministic, a thought-free round gives
   an equally usable answer. The hedge is silent in the UI. Errors before it
   fires (sign-in, rate limit, Stop) stay final. Cost: one extra cache-read
@@ -490,15 +508,15 @@ A credentialed relay to the Anthropic Messages API. The browser composes
 the whole request (system, messages, tools); the function adds the key and
 enforces:
 
-| Guard          | Value                                                                                                                                                                                               |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Who may call   | A valid Pavlovia sign-in: the token is checked against `gitlab.pavlovia.org/api/v4/user` (5 s timeout, result cached 10 min)                                                                        |
-| Origin         | `../shared/cors` allow-list                                                                                                                                                                         |
-| Rate limit     | 40 requests / 60 s per client, 30 / 60 s per account (per function instance), plus an edge limit of 120 / 60 s                                                                                      |
-| Size           | body ≤ 4 MB (the transcript plus up to 1 MB of attachments), ≤ 200 messages, ≤ 24 tools, ≤ 8 system blocks, `max_tokens` 4096 default / 8192 max                                                    |
-| Shape          | every message's content is a string or an array of blocks whose `type` is one of `text`, `image`, `document`, `tool_use`, `tool_result`, `thinking`, `redacted_thinking`                            |
-| Time           | 55 s upstream timeout inside Netlify's 60 s function limit                                                                                                                                          |
-| Model settings | `STUDIO_ASSISTANT_MODEL` (default `claude-sonnet-5`), `_EFFORT` (`medium`; `low`/`high`/`xhigh`/`max`/`off`), `_THINKING` (`adaptive`/`off`). `mode: "fast"` can only lower these, never raise them |
+| Guard          | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Who may call   | A valid Pavlovia sign-in: the token is checked against `gitlab.pavlovia.org/api/v4/user` (5 s timeout, result cached 10 min)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Origin         | `../shared/cors` allow-list                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Rate limit     | 40 requests / 60 s per client, 30 / 60 s per account (per function instance), plus an edge limit of 120 / 60 s                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Size           | body ≤ 4 MB (the transcript plus up to 1 MB of attachments), ≤ 200 messages, ≤ 24 tools, ≤ 8 system blocks, `max_tokens` 4096 default / 8192 max                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Shape          | every message's content is a string or an array of blocks whose `type` is one of `text`, `image`, `document`, `tool_use`, `tool_result`, `thinking`, `redacted_thinking`                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Time           | 55 s upstream timeout inside Netlify's 60 s function limit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Model settings | `STUDIO_ASSISTANT_MODEL` (default `claude-opus-5-5`; the request also carries `fallbacks: "default"` under beta `server-side-fallback-2026-07-01`, so a request the model's safety classifiers decline is re-run server-side on the recommended substitute), `_EFFORT` (`medium`; `low`/`high`/`xhigh`/`max`/`off`), `_THINKING` (`adaptive`/`off`). The request never carries a `thinking` parameter — `{type: "disabled"}` is a 400 on Sonnet 5.5 and Opus 5.5 — so `_THINKING=off` and `mode: "fast"` both mean the lowest effort the site allows. `mode: "fast"` can only lower these, never raise them |
 
 Request: `{ protocolVersion: 1, pavloviaToken, system, messages, tools,
 maxTokens?, mode? }`. Response: the upstream message's `content`,

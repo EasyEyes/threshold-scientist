@@ -25,6 +25,7 @@ import {
   type ToolUseBlock,
 } from "./api";
 import { studioStateBlock, systemBlocks } from "./prompt";
+import { strictTool, type ToolDefinition } from "./strictSchema";
 import {
   ASSISTANT_TOOLS,
   runTool,
@@ -257,9 +258,13 @@ export function useAssistant(host: AssistantHost) {
               ...(await Promise.all(skills.map((s) => s.systemBlock()))),
             ],
             messages: apiMessages.current,
+            // Every tool goes out strict: the API rejects a call that does
+            // not match its schema, so a bad call never costs a round.
             tools: [
               ...(ASSISTANT_TOOLS as unknown as unknown[]),
-              ...skills.flatMap((s) => s.tools),
+              ...skills.flatMap((s) =>
+                (s.tools as readonly ToolDefinition[]).map(strictTool),
+              ),
             ],
             // Room for the model's (adaptive) thinking plus a full reply.
             maxTokens: 8192,
@@ -268,6 +273,21 @@ export function useAssistant(host: AssistantHost) {
         );
         const text = textOf(reply.content);
         if (text) lastAssistantItem = push({ kind: "assistant", text });
+
+        // Stops that are not an answer. A refusal (the model's safety
+        // classifiers declined) and a reply cut off by max_tokens both end
+        // the turn; any tool_use in them is dropped below, since a cut-off
+        // call may be incomplete and a refused one must not run.
+        if (reply.stop_reason === "refusal")
+          push({
+            kind: "error",
+            text: "The assistant declined to act on that request. Rephrase it, or ask for the change in smaller pieces.",
+          });
+        else if (reply.stop_reason === "max_tokens")
+          push({
+            kind: "error",
+            text: "The reply was cut off before it finished. Ask for the change in smaller pieces.",
+          });
 
         const uses = toolUsesOf(reply.content);
         const continuing = uses.length > 0 && reply.stop_reason === "tool_use";

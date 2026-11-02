@@ -27,7 +27,12 @@ import {
 import { EasyEyesLogo } from "./EasyEyesLogo";
 import { RichText } from "./RichText";
 import { letterToValueIndex, type GridFocus, type ToolFile } from "./tools";
-import { MENU_SKILLS, runMessage, skillById } from "./skills";
+import {
+  MENU_SKILLS,
+  SKILLS_MENU_ENABLED,
+  runMessage,
+  skillById,
+} from "./skills";
 import {
   ACCEPT,
   ACCEPTED_DESCRIPTION,
@@ -1304,7 +1309,8 @@ export function AssistantPanel({
                 const v = e.target.value;
                 setDraft(v);
                 // A lone "/" opens the skills menu, like the trigger would.
-                if (v === "/" && !busy) setSkillsOpen(true);
+                if (v === "/" && !busy && SKILLS_MENU_ENABLED)
+                  setSkillsOpen(true);
                 else if (skillsOpen && !v.startsWith("/")) setSkillsOpen(false);
               }}
               onKeyDown={(e) => {
@@ -1346,28 +1352,30 @@ export function AssistantPanel({
               >
                 <AttachIcon />
               </button>
-              <div className="asst-skills">
-                <button
-                  type="button"
-                  className={`asst-skills-pill${skillsOpen ? " open" : ""}`}
-                  onClick={() => setSkillsOpen((o) => !o)}
-                  disabled={!signedIn || busy}
-                  aria-haspopup="menu"
-                  aria-expanded={skillsOpen}
-                  title="Skills"
-                >
-                  <SkillsIcon />
-                  Skills
-                  <Chevron dir="down" />
-                </button>
-                {skillsOpen && (
-                  <SkillsMenu
-                    flyout={width >= 580}
-                    onRun={runSkill}
-                    onClose={closeSkills}
-                  />
-                )}
-              </div>
+              {SKILLS_MENU_ENABLED && (
+                <div className="asst-skills">
+                  <button
+                    type="button"
+                    className={`asst-skills-pill${skillsOpen ? " open" : ""}`}
+                    onClick={() => setSkillsOpen((o) => !o)}
+                    disabled={!signedIn || busy}
+                    aria-haspopup="menu"
+                    aria-expanded={skillsOpen}
+                    title="Skills"
+                  >
+                    <SkillsIcon />
+                    Skills
+                    <Chevron dir="down" />
+                  </button>
+                  {skillsOpen && (
+                    <SkillsMenu
+                      flyout={width >= 580}
+                      onRun={runSkill}
+                      onClose={closeSkills}
+                    />
+                  )}
+                </div>
+              )}
               <span className="asst-box-spacer" />
               {busy ? (
                 <button

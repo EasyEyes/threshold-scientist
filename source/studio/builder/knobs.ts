@@ -32,6 +32,7 @@ import {
   questionParam,
   resolvePosition,
   sideOf,
+  QUESTION_SCHEMA,
   type QuestionSpec,
   type Side,
   type SpacingDirection,
@@ -49,6 +50,12 @@ export interface KnobArg {
   /** For the model: what to pass. */
   description: string;
   required?: boolean;
+  /**
+   * JSON schema for the value, for the strict tool schema (knobCallSchema).
+   * Omitted = a scalar: string, number or boolean. Structured args
+   * (columns, questions, set) say what they take.
+   */
+  schema?: Record<string, unknown>;
 }
 
 export type KnobArgs = Record<string, unknown>;
@@ -85,6 +92,28 @@ const COLUMNS_ARG: KnobArg = {
   name: "columns",
   description:
     "Which conditions: spreadsheet letters ('C','D'), conditionName values, or omit for all conditions.",
+  schema: {
+    anyOf: [{ type: "string" }, { type: "array", items: { type: "string" } }],
+  },
+};
+
+/** A scalar argument, when a knob's arg declares no schema of its own. */
+const SCALAR_SCHEMA: Record<string, unknown> = {
+  anyOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }],
+};
+
+/** Parameter/value pairs — how strict mode carries a {parameter: value} map. */
+const PAIRS_ARG_SCHEMA: Record<string, unknown> = {
+  type: "array",
+  items: {
+    type: "object",
+    properties: {
+      parameter: { type: "string" },
+      value: { type: "string" },
+    },
+    required: ["parameter", "value"],
+    additionalProperties: false,
+  },
 };
 
 const clone = (t: TableState): TableState => ({
@@ -533,7 +562,8 @@ export const KNOBS: readonly Knob[] = [
       {
         name: "set",
         description:
-          "Object of parameter → value applied to the new condition.",
+          "Parameter/value pairs applied to the new condition: [{parameter, value}, …].",
+        schema: PAIRS_ARG_SCHEMA,
       },
     ],
     apply: (table, a) => {
@@ -1121,6 +1151,7 @@ export const KNOBS: readonly Knob[] = [
         name: "questions",
         description: "Array of {nickname, question, answers, correct}.",
         required: true,
+        schema: { type: "array", items: QUESTION_SCHEMA },
       },
       { name: "position", description: "before | after (default before)." },
     ],
@@ -1352,6 +1383,39 @@ export const knobById = (id: string): Knob | undefined =>
   KNOBS.find((k) => k.id === (id ?? "").trim());
 
 /** The knob reference the model reads: id, when, arguments. */
+/**
+ * The strict schema of one `{knob, args}` item for apply_knobs: one branch
+ * per knob, keyed by `knob`, with that knob's args typed and its required
+ * ones required — so a call with a misspelt knob, an unknown arg or a
+ * missing required one is rejected by the model API before it costs a
+ * round. Args that declare no schema are scalars.
+ */
+export const knobCallSchema = (): Record<string, unknown> => ({
+  anyOf: KNOBS.map((k) => {
+    const required = k.args.filter((a) => a.required).map((a) => a.name);
+    return {
+      type: "object",
+      properties: {
+        knob: { const: k.id },
+        args: {
+          type: "object",
+          description: k.summary,
+          properties: Object.fromEntries(
+            k.args.map((a) => [
+              a.name,
+              { ...(a.schema ?? SCALAR_SCHEMA), description: a.description },
+            ]),
+          ),
+          required,
+          additionalProperties: false,
+        },
+      },
+      required: required.length ? ["knob", "args"] : ["knob"],
+      additionalProperties: false,
+    };
+  }),
+});
+
 export const describeKnobs = (): string =>
   KNOBS.map(
     (k) =>

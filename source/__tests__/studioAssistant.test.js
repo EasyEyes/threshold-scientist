@@ -133,12 +133,22 @@ jest.mock("../studio/resources", () => ({
 const { matrixToState, stateToMatrix } = require("../studio/tableModel");
 const {
   applyEdits,
+  ASSISTANT_TOOLS,
   describeChecks,
   letterToValueIndex,
   runTool,
   similarParameterNames,
   valueIndexToLetter,
 } = require("../studio/assistant/tools");
+const {
+  pairsToMap,
+  strictSchema,
+  strictTool,
+} = require("../studio/assistant/strictSchema");
+const { KNOBS, knobCallSchema } = require("../studio/builder");
+const { FEASIBILITY_TOOLS } = require("../studio/assistant/feasibilitySkill");
+const { METHODS_TOOLS } = require("../studio/assistant/methodsSkill");
+const { CODE_TOOLS } = require("../studio/assistant/codeSkill");
 const {
   studioStateBlock,
   systemBlocks,
@@ -420,6 +430,10 @@ describe("runTool", () => {
     expect(out.result).toMatch(
       /form consent.pdf \(_consentForm\): MISSING from EasyEyesResources/,
     );
+    // The full glossary entry of what was set rides along, so a wrong
+    // value is fixed next round with the definition in view.
+    expect(out.result).toMatch(/Glossary entries for the parameters you set:/);
+    expect(out.result).toMatch(/_consentForm — type /);
     expect(out.activity).toBe("Edited the table (1 change) · 1 error");
   });
 
@@ -572,6 +586,79 @@ describe("build_study and apply_knobs", () => {
       ]),
     );
     expect(out.activity).toMatch(/50 trials/);
+  });
+
+  it("build_study takes set / setAll / condition set as pairs (the strict form) or maps", () => {
+    const out = runTool(
+      "build_study",
+      {
+        spec: {
+          recipe: "letter-crowding",
+          conditions: [
+            {
+              eccentricityDeg: 5,
+              set: [{ parameter: "conditionTrials", value: "12" }],
+            },
+            { eccentricityDeg: 10 },
+          ],
+          setAll: [{ parameter: "conditionTrials", value: "66" }],
+          set: [{ parameter: "_about", value: "from pairs" }],
+        },
+      },
+      ctxFor(base()),
+    );
+    expect(out.isError).toBeFalsy();
+    // The condition's own set wins over setAll; the other gets setAll.
+    expect(cell(out.table, "conditionTrials", 0)).toBe("12");
+    expect(cell(out.table, "conditionTrials", 1)).toBe("66");
+    expect(out.table.rows.find((r) => r.name === "_about").values[0]).toBe(
+      "from pairs",
+    );
+    // A map still works (older transcripts).
+    const asMap = runTool(
+      "build_study",
+      {
+        spec: {
+          recipe: "letter-crowding",
+          conditions: [{ eccentricityDeg: 5 }],
+          setAll: { conditionTrials: "41" },
+        },
+      },
+      ctxFor(base()),
+    );
+    expect(cell(asMap.table, "conditionTrials", 0)).toBe("41");
+  });
+
+  it("add_condition takes its set as pairs", () => {
+    const built = runTool(
+      "build_study",
+      {
+        spec: {
+          recipe: "letter-crowding",
+          conditions: [{ eccentricityDeg: 5 }],
+        },
+      },
+      ctxFor(base()),
+    ).table;
+    const out = runTool(
+      "apply_knobs",
+      {
+        knobs: [
+          {
+            knob: "add_condition",
+            args: {
+              eccentricityDeg: 8,
+              set: [{ parameter: "conditionTrials", value: "77" }],
+            },
+          },
+        ],
+      },
+      ctxFor(built),
+    );
+    expect(out.isError).toBeFalsy();
+    expect(out.table.conditionCount).toBe(2);
+    expect(cell(out.table, "conditionTrials", 1)).toBe("77");
+    expect(cell(out.table, "targetEccentricityXDeg", 1)).toBe("8");
   });
 
   it("apply_knobs with nothing applicable is an error and leaves the table", () => {
@@ -770,5 +857,121 @@ describe("callAssistantHedged", () => {
     controller.abort();
     await expect(p).rejects.toMatchObject({ name: "AbortError" });
     expect(calls.every((c) => c.aborted)).toBe(true);
+  });
+});
+
+describe("strict tool schemas", () => {
+  // Strict mode's subset of JSON Schema: closed objects with `required`,
+  // no `type` arrays, no free-form maps, no numeric/string constraints.
+  const UNSUPPORTED = [
+    "minimum",
+    "maximum",
+    "minLength",
+    "maxLength",
+    "minItems",
+    "maxItems",
+    "pattern",
+    "default",
+  ];
+  const walk = (schema, path, problems) => {
+    if (!schema || typeof schema !== "object") return;
+    if (Array.isArray(schema)) {
+      schema.forEach((s, i) => walk(s, `${path}[${i}]`, problems));
+      return;
+    }
+    if (Array.isArray(schema.type)) problems.push(`${path}: type array`);
+    for (const k of UNSUPPORTED)
+      if (k in schema) problems.push(`${path}: ${k}`);
+    if (schema.type === "object" || schema.properties) {
+      if (schema.additionalProperties !== false)
+        problems.push(`${path}: object not closed`);
+      if (!Array.isArray(schema.required))
+        problems.push(`${path}: no required list`);
+    }
+    if (
+      "additionalProperties" in schema &&
+      schema.additionalProperties !== false
+    )
+      problems.push(`${path}: additionalProperties is a schema`);
+    for (const [k, v] of Object.entries(schema))
+      if (k === "properties")
+        for (const [name, sub] of Object.entries(v))
+          walk(sub, `${path}.${name}`, problems);
+      else if (["items", "anyOf", "allOf", "oneOf"].includes(k))
+        walk(v, `${path}.${k}`, problems);
+  };
+
+  it("every tool the model gets is strict and strict-mode valid", () => {
+    const skillTools = [
+      ...FEASIBILITY_TOOLS,
+      ...METHODS_TOOLS,
+      ...CODE_TOOLS,
+    ].map(strictTool);
+    const all = [...ASSISTANT_TOOLS, ...skillTools];
+    expect(all.length).toBeGreaterThanOrEqual(15);
+    for (const tool of all) {
+      expect(tool.strict).toBe(true);
+      const problems = [];
+      walk(tool.input_schema, tool.name, problems);
+      expect(problems).toEqual([]);
+    }
+  });
+
+  it("apply_knobs has one typed branch per knob, with its required args", () => {
+    const items = ASSISTANT_TOOLS.find((t) => t.name === "apply_knobs")
+      .input_schema.properties.knobs.items;
+    expect(items.anyOf).toHaveLength(KNOBS.length);
+    for (const knob of KNOBS) {
+      const branch = items.anyOf.find(
+        (b) => b.properties.knob.const === knob.id,
+      );
+      expect(branch).toBeDefined();
+      const args = branch.properties.args;
+      expect(Object.keys(args.properties).sort()).toEqual(
+        knob.args.map((a) => a.name).sort(),
+      );
+      expect(args.required).toEqual(
+        knob.args.filter((a) => a.required).map((a) => a.name),
+      );
+      if (args.required.length) expect(branch.required).toContain("args");
+    }
+    expect(knobCallSchema().anyOf.length).toBe(KNOBS.length);
+  });
+
+  it("strictSchema closes objects, turns type arrays into anyOf, and maps into pairs", () => {
+    const out = strictSchema({
+      type: "object",
+      properties: {
+        n: { type: ["number", "string"], minimum: 0 },
+        map: { type: "object", additionalProperties: { type: "string" } },
+        list: {
+          type: "array",
+          items: { type: "object", properties: { a: { type: "string" } } },
+        },
+      },
+    });
+    expect(out.additionalProperties).toBe(false);
+    expect(out.required).toEqual([]);
+    expect(out.properties.n).toEqual({
+      anyOf: [{ type: "number" }, { type: "string" }],
+    });
+    expect(out.properties.map.type).toBe("array");
+    expect(out.properties.map.items.required).toEqual(["parameter", "value"]);
+    expect(out.properties.list.items.additionalProperties).toBe(false);
+    // Idempotent.
+    expect(strictSchema(out)).toEqual(out);
+  });
+
+  it("pairsToMap folds pairs or a map into a map, dropping empty names", () => {
+    expect(
+      pairsToMap([
+        { parameter: " a ", value: "1" },
+        { parameter: "", value: "x" },
+        { parameter: "b", value: 2 },
+      ]),
+    ).toEqual({ a: "1", b: "2" });
+    expect(pairsToMap({ c: "3" })).toEqual({ c: "3" });
+    expect(pairsToMap([])).toBeUndefined();
+    expect(pairsToMap("nope")).toBeUndefined();
   });
 });

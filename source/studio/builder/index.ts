@@ -17,6 +17,7 @@ export {
   KNOBS,
   knobById,
   describeKnobs,
+  knobCallSchema,
   isKnobFailure,
   ciToLetter,
 } from "./knobs";

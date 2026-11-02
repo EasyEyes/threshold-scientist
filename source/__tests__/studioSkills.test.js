@@ -37,6 +37,8 @@ import {
 import {
   SKILLS,
   MENU_SKILLS,
+  MENU_CANDIDATES,
+  SKILLS_MENU_ENABLED,
   parseSkillTrigger,
   runMessage,
 } from "../studio/assistant/skills";
@@ -694,9 +696,18 @@ describe("skills registry", () => {
   });
 
   test("the menu lists the runnable skills; code lookup stays trigger-only", () => {
-    expect(MENU_SKILLS.map((s) => s.id)).toEqual(["feasibility", "methods"]);
-    for (const s of MENU_SKILLS) expect(s.prompt).toBeTruthy();
+    expect(MENU_CANDIDATES.map((s) => s.id)).toEqual([
+      "feasibility",
+      "methods",
+    ]);
+    for (const s of MENU_CANDIDATES) expect(s.prompt).toBeTruthy();
     expect(SKILLS.find((s) => s.id === "code").menu).toBe(false);
+  });
+
+  test("the menu list follows the UI flag; triggers are unaffected", () => {
+    expect(MENU_SKILLS).toEqual(SKILLS_MENU_ENABLED ? MENU_CANDIDATES : []);
+    expect(parseSkillTrigger("/methods").skill).toBe(methodsSkill);
+    expect(parseSkillTrigger("/code where is foo?").skill.id).toBe("code");
   });
 
   test("Run sends the trigger with the prompt, or with the draft", () => {

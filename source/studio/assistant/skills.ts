@@ -55,10 +55,25 @@ export const SKILLS: readonly Skill[] = [
   codeLookupSkill,
 ];
 
-/** The skills the composer's menu lists. */
-export const MENU_SKILLS: readonly Skill[] = SKILLS.filter(
+/**
+ * Skills are withheld from the UI for now. Nothing about them is removed:
+ * the triggers ("/methods …"), the tool definitions, and the skills'
+ * execution all still work, and a conversation that uses one behaves
+ * exactly as before. Only the two ways to reach the menu by hand — the
+ * composer's Skills pill and the lone "/" shortcut — are hidden. Set this
+ * back to true to restore them.
+ */
+export const SKILLS_MENU_ENABLED = false;
+
+/** The skills that qualify for the menu, whatever the UI flag says. */
+export const MENU_CANDIDATES: readonly Skill[] = SKILLS.filter(
   (s) => s.menu !== false && s.prompt,
 );
+
+/** The skills the composer's menu lists. Empty while the menu is hidden. */
+export const MENU_SKILLS: readonly Skill[] = SKILLS_MENU_ENABLED
+  ? MENU_CANDIDATES
+  : [];
 
 export const skillById = (id: string): Skill | undefined =>
   SKILLS.find((s) => s.id === id);
