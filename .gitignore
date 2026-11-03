@@ -133,3 +133,6 @@ studio-code-index.json
 # Playwright runtime artifacts (visual baselines remain tracked)
 playwright-report/
 test-results/
+
+# Local agent plans and task notes
+/tasks/
