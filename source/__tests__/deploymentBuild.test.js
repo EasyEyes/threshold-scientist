@@ -34,6 +34,14 @@ describe("compiler deployment build", () => {
   const originalContext = process.env.CONTEXT;
   const originalFirebaseDatabaseUrl = process.env.FIREBASE_DATABASE_URL;
 
+  it("ensures the source index before local compiler start and build", () => {
+    const scripts = require("../../package.json").scripts;
+    const ensure = "npm --prefix ../.. run phrase-analysis:build";
+
+    expect(scripts.prestart).toBe(ensure);
+    expect(scripts.prebuild).toBe(ensure);
+  });
+
   it("declares dependencies imported from threshold compiler sources", () => {
     const compilerPackage = require("../../package.json");
     const declaredDependencies = {
