@@ -38,8 +38,13 @@ const readPhraseAnalysisParameters = () => {
 
 const DEPLOYMENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
-const requireFirebaseDatabaseUrl = () => {
-  const value = process.env.FIREBASE_DATABASE_URL;
+const DEVELOPMENT_FIREBASE_DATABASE_URL =
+  "https://easyeyes-compiler-default-rtdb.firebaseio.com";
+
+const requireFirebaseDatabaseUrl = (useDevelopmentDefault = false) => {
+  const value =
+    process.env.FIREBASE_DATABASE_URL ||
+    (useDevelopmentDefault ? DEVELOPMENT_FIREBASE_DATABASE_URL : undefined);
   if (!value) {
     throw new Error("FIREBASE_DATABASE_URL is required for compiler builds");
   }
@@ -105,6 +110,24 @@ class CompilerDeploymentAssetsPlugin {
     );
   }
 }
+
+// Match threshold's Vite dev proxy: audit/analysis APIs come from the
+// deployed backend, so the compiler needs no local admin credentials.
+const netlifyFunctionsProxy = [
+  {
+    // The analysis must use this checkout's source-index fingerprint.
+    context: ["/.netlify/functions/study-phrase-analysis"],
+    target: process.env.STUDY_ANALYSIS_PROXY_TARGET || "http://localhost:8888",
+    changeOrigin: true,
+    secure: true,
+  },
+  {
+    context: ["/.netlify/functions"],
+    target: process.env.NETLIFY_PROXY_TARGET || "https://easyeyes.app",
+    changeOrigin: true,
+    secure: true,
+  },
+];
 
 const config = {
   entry: path.resolve(__dirname, "source/index.js"),
@@ -230,7 +253,7 @@ module.exports = (env) => {
             process.env.FIREBASE_API_KEY_SOUND || "",
           ),
           "process.env.FIREBASE_DATABASE_URL": JSON.stringify(
-            requireFirebaseDatabaseUrl(),
+            requireFirebaseDatabaseUrl(true),
           ),
           "process.env.SENTRY_DSN": JSON.stringify(
             process.env.SENTRY_DSN || "",
@@ -287,6 +310,7 @@ module.exports = (env) => {
           "Access-Control-Allow-Headers": "*",
           "Access-Control-Allow-Methods": "*",
         },
+        proxy: netlifyFunctionsProxy,
       },
       output: {
         filename: "main.js",

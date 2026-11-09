@@ -252,7 +252,8 @@ Local run without the Netlify CLI: put `ANTHROPIC_API_KEY=…` in
 `cd website/netlify/functions/studio-assistant && npm install && npm run dev`
 (`dev-server.ts` hosts just this function on :8888, the port
 `easyeyesBaseUrl.ts` probes) and in another the usual compiler dev server
-(`docs/experiment`: `FIREBASE_DATABASE_URL=… npm start`). Open
+(`docs/experiment`: `npm start`). Development defaults to the public compiler RTDB,
+so no environment override is needed. Open
 `http://localhost:5500/?studio=1`, sign in on the Compiler tab, open the
 assistant. `netlify dev` from `website/` also works but boots every
 function and the webpack server together.
