@@ -1376,7 +1376,7 @@ describe("Error label prefixes", () => {
             name: "Unbalanced commas",
           },
           { context: "export", kind: "error", name: "Export failed" },
-          { context: "preprocessor", kind: "warning", name: "LOGGING CAUTION" },
+          { context: "preprocessor", kind: "warning", name: "Logging caution" },
           {
             context: "preprocessor",
             kind: "correct",
@@ -1392,7 +1392,7 @@ describe("Error label prefixes", () => {
     expect(names).toEqual([
       "Compiler error: Unbalanced commas",
       "Download source error: Export failed",
-      "LOGGING CAUTION",
+      "⚠️ Logging caution",
       "Compiled successfully.",
     ]);
   });
@@ -1430,7 +1430,7 @@ describe("Parameter(s) row", () => {
     const row = container.querySelector(".error-relevant-parameters");
     expect(row).not.toBeNull();
     expect(row.textContent).toBe(
-      "Parameters: font, readingCorpus, fontTolerateFaults",
+      "PARAMETERS: font, readingCorpus, fontTolerateFaults",
     );
   });
 
@@ -1445,7 +1445,7 @@ describe("Parameter(s) row", () => {
       },
     ]);
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("Parameter: font");
+    expect(row.textContent).toBe("PARAMETER: font");
   });
 
   it("links each parameter in the row to its glossary entry", () => {
@@ -1488,7 +1488,7 @@ describe("Parameter(s) row", () => {
     const row = container.querySelector(".error-relevant-parameters");
     const links = [...row.querySelectorAll("a")];
     expect(links).toHaveLength(1);
-    expect(row.textContent).toBe("Parameters: font, notAParameter");
+    expect(row.textContent).toBe("PARAMETERS: font, notAParameter");
   });
 
   it("links parameter mentions inside message and hint", () => {
@@ -1522,7 +1522,7 @@ describe("Parameter(s) row", () => {
       },
     ]);
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("Parameters: block, font");
+    expect(row.textContent).toBe("PARAMETERS: block, font");
     expect(row.querySelectorAll("a")).toHaveLength(2);
   });
 
@@ -1542,7 +1542,7 @@ describe("Parameter(s) row", () => {
     ).toContain("<img src=x");
   });
 
-  it("places the Parameter(s) line first in the error box", () => {
+  it("places the Parameter(s) line last in the error box", () => {
     withGlossaryRows({});
     const container = renderTableWithErrors([
       {
@@ -1554,16 +1554,10 @@ describe("Parameter(s) row", () => {
         parameters: ["font"],
       },
     ]);
-    const item = container.querySelector(".error-item");
+    const item = container.querySelector(".compiler-diagnostic");
     expect(
-      item.firstElementChild.classList.contains("error-relevant-parameters"),
+      item.lastElementChild.classList.contains("error-relevant-parameters"),
     ).toBe(true);
-    expect([...item.children].map((child) => child.textContent)).toEqual([
-      "Parameter: font",
-      "Compiler error: E1",
-      "M",
-      "Hint: H",
-    ]);
   });
 
   it("warms the glossary-row map at mount, before any compile", () => {
@@ -1826,6 +1820,20 @@ describe("Table compile-error visibility reporting", () => {
       });
     });
     expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(false);
+  });
+
+  it("moves focus to the diagnostic summary when a result appears", () => {
+    const { act } = require("@testing-library/react");
+    const { ref, container } = renderTableWithReporter();
+    act(() => {
+      ref.current.setState({
+        errors: [{ context: "preprocessor", kind: "error", name: "E" }],
+      });
+    });
+    const summary = container.querySelector(".compiler-diagnostics");
+    expect(summary).toHaveAttribute("role", "group");
+    expect(summary).toHaveAttribute("aria-label", "Compiler diagnostics");
+    expect(summary).toHaveFocus();
   });
 
   it("reports false when unmounted with errors still showing", () => {

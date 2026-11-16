@@ -192,13 +192,17 @@ it("shows scientists the missing keys and what to do next", async () => {
   const table = setupStudy();
   initPhrases({ version: "test", phrases: {} });
   const result = await checkStudyPhraseAnalysis(table, [], undefined, index);
-  expect(result.errors[0].name).toBe("⚠️ WARNING: 1 missing phrase");
+  expect(result.errors[0].name).toBe("Warning: 1 missing phrase");
   expect(result.errors[0].message).toContain(
     "not defined in International Phrases",
   );
   expect(result.errors[0].message).toContain("EE_test");
-  expect(result.errors[0].message).toContain("CAN I RUN THE STUDY? Yes");
-  expect(result.errors[0].message).toContain("Report bug");
+  expect(result.errors[0].message).toContain(
+    "<strong>Can I run the study?</strong> Yes",
+  );
+  expect(result.errors[0].message).toContain("Report the problem");
+  expect(result.errors[0].message).toContain('class="diagnostic-section"');
+  expect(result.errors[0].message).not.toContain("<br><br>");
 });
 
 it("lists each missing source key and uses the plural count", async () => {
@@ -216,7 +220,7 @@ it("lists each missing source key and uses the plural count", async () => {
     sourceIndex,
   );
   expect(result.errors).toHaveLength(1);
-  expect(result.errors[0].name).toBe("⚠️ WARNING: 3 missing phrases");
+  expect(result.errors[0].name).toBe("Warning: 3 missing phrases");
   expect(result.errors[0].message).toContain("3 keys that are not defined");
   for (const key of missingKeys)
     expect(result.errors[0].message).toContain(`>${key}</a>`);

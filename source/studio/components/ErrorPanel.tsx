@@ -1,4 +1,6 @@
+import React from "react";
 import type { EasyEyesError } from "../validation";
+import CompilerDiagnostic from "../../components/CompilerDiagnostic";
 
 interface Props {
   errors: EasyEyesError[];
@@ -42,30 +44,18 @@ export function ErrorPanel({ errors, onJump }: Props) {
           </span>
         )}
       </div>
-      <ul className="error-list">
+      <ul className="error-list compiler-diagnostics">
         {errors.map((e, i) => (
-          <li
+          <CompilerDiagnostic
             key={i}
-            className={`error-card ${e.kind}`}
-            onClick={() => e.parameters[0] && onJump(e.parameters[0])}
-            title={
-              e.parameters[0] ? "Click to jump to the parameter" : undefined
+            as="li"
+            headingLevel={3}
+            diagnostic={e}
+            onClick={
+              e.parameters[0] ? () => onJump(e.parameters[0]) : undefined
             }
-          >
-            <div className="error-name">
-              {e.kind === "error" ? "⛔" : "⚠️"} {e.name}
-            </div>
-            <div
-              className="error-message"
-              dangerouslySetInnerHTML={{ __html: e.message }}
-            />
-            {e.hint && (
-              <div className="error-hint">
-                <span className="hint-label">HINT</span>
-                <span dangerouslySetInnerHTML={{ __html: e.hint }} />
-              </div>
-            )}
-          </li>
+            title={e.parameters[0] ? "Jump to the parameter" : undefined}
+          />
         ))}
       </ul>
     </div>

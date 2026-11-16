@@ -29,8 +29,7 @@ import {
   endCompile,
   optimizationOn,
 } from "../threshold/preprocess/compileMode";
-import { linkGlossaryParameters } from "../threshold/parameters/glossaryLink";
-import ParameterList from "./components/ParameterList";
+import CompilerDiagnostic from "./components/CompilerDiagnostic";
 import { captureError } from "./sentry";
 import { isEmptyRepository } from "./repositoryState";
 import { deriveStudyActions } from "./studyActions";
@@ -57,10 +56,12 @@ export default class Running extends Component {
 
     this._isActivating = false;
     this.setModeToRun = this.setModeToRun.bind(this);
+    this.diagnosticsRef = React.createRef();
   }
 
   async componentDidMount() {
     this.props.scrollToCurrentStep();
+    this.focusDiagnostics?.();
 
     if (!isEmptyRepository(this.props.activeExperiment)) {
       const dataFolderCounted = getDataFolderCsvLength(
@@ -95,6 +96,8 @@ export default class Running extends Component {
   }
 
   async componentDidUpdate(prevProps) {
+    if (prevProps.compileWarnings !== this.props.compileWarnings)
+      this.focusDiagnostics();
     const repositoryIsEmpty = isEmptyRepository(this.props.activeExperiment);
     if (this.props.activeExperiment !== prevProps.activeExperiment) {
       let dataFolderLength = 0;
@@ -125,6 +128,11 @@ export default class Running extends Component {
     if (needSetModeToRun) {
       await this.setModeToRun();
     }
+  }
+
+  focusDiagnostics() {
+    if (this.props.compileWarnings?.length)
+      this.diagnosticsRef.current?.focus();
   }
 
   async setModeToRun(e = null) {
@@ -860,37 +868,18 @@ export default class Running extends Component {
         )}
         {Array.isArray(this.props.compileWarnings) &&
           this.props.compileWarnings.length > 0 && (
-            <div className="compile-warnings">
-              {this.props.compileWarnings.map((w, index) => (
-                <div
-                  className="compile-warning-item"
+            <div
+              className="compiler-diagnostics"
+              ref={this.diagnosticsRef}
+              role="group"
+              aria-label="Compiler warnings"
+              tabIndex={-1}
+            >
+              {this.props.compileWarnings.map((warning, index) => (
+                <CompilerDiagnostic
                   key={`compile-warning-${index}`}
-                >
-                  {w.parameters && w.parameters.length ? (
-                    <ParameterList parameters={w.parameters} />
-                  ) : null}
-                  <div className="compile-warning-name">{w.name}</div>
-                  {w.message && (
-                    <p
-                      className="compile-warning-message"
-                      dangerouslySetInnerHTML={{
-                        __html: linkGlossaryParameters(w.message),
-                      }}
-                    ></p>
-                  )}
-                  {w.hint && (
-                    <p className="compile-warning-hint">
-                      <span className="compile-warning-hint-prefix">
-                        Hint:{" "}
-                      </span>
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html: linkGlossaryParameters(w.hint),
-                        }}
-                      ></span>
-                    </p>
-                  )}
-                </div>
+                  diagnostic={warning}
+                />
               ))}
             </div>
           )}

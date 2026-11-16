@@ -5,11 +5,8 @@ import Swal from "sweetalert2";
 import { handleDrop } from "./components/dropzone";
 import ResourceButton from "./ResourceButton";
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
-import {
-  linkGlossaryParameters,
-  loadGlossaryRows,
-} from "../threshold/parameters/glossaryLink";
-import ParameterList from "./components/ParameterList";
+import { loadGlossaryRows } from "../threshold/parameters/glossaryLink";
+import CompilerDiagnostic from "./components/CompilerDiagnostic";
 import {
   userRepoFiles,
   resourcesRepoName,
@@ -89,6 +86,7 @@ export default class Table extends Component {
 
     this.ref = createRef();
     this.dropZoneRef = createRef();
+    this.diagnosticsRef = createRef();
 
     this.finalSuccessMessage =
       "Compiled successfully. Compile a new experiment, anytime, by submitting it above.";
@@ -106,6 +104,7 @@ export default class Table extends Component {
       this.props.functions.handleSetCompileErrorsVisible?.(
         this.state.errors.some((err) => err.kind === "error"),
       );
+      if (this.state.errors.length) this.diagnosticsRef.current?.focus();
     }
   }
 
@@ -1095,63 +1094,28 @@ export default class Table extends Component {
         ) : null}
 
         {this.state.errors.length !== 0 && (
-          <div className="errors">
+          <div
+            className="compiler-diagnostics"
+            ref={this.diagnosticsRef}
+            role="group"
+            aria-label="Compiler diagnostics"
+            tabIndex={-1}
+          >
             {this.state.errors.map((error, index) => (
-              <div
-                className={`error-item error-${error.kind}`}
+              <CompilerDiagnostic
                 key={`error-${index}`}
-              >
-                {error.parameters && error.parameters.length ? (
-                  <ParameterList parameters={error.parameters} />
-                ) : null}
-                <div className="error-flex">
-                  <p>
-                    <span className={`error-name error-name-${error.kind}`}>
-                      {/* Compiler and export errors share this display, so the
-                          red sentence states which one it is. */}
-                      {error.kind === "error"
-                        ? `${
-                            error.context === "export"
-                              ? "Download source"
-                              : "Compiler"
-                          } error: ${error.name}`
-                        : error.name}
-                    </span>
-                  </p>
-                  <i
-                    className="bi bi-x error-close"
-                    onClick={() => {
-                      const newErrors = this.state.errors.filter(
-                        (err, i) => i !== index,
-                      );
-                      const newName = newErrors.length ? this.state.name : null;
-                      this.setState({
-                        errors: newErrors,
-                        tableName: newName,
-                      });
-                    }}
-                  ></i>
-                </div>
-
-                {error.message && (
-                  <p
-                    className="error-message"
-                    dangerouslySetInnerHTML={{
-                      __html: linkGlossaryParameters(error.message),
-                    }}
-                  ></p>
-                )}
-                {error.hint && (
-                  <p className="error-hint">
-                    <span className="error-hint-prefix">Hint: </span>
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: linkGlossaryParameters(error.hint),
-                      }}
-                    ></span>
-                  </p>
-                )}
-              </div>
+                diagnostic={error}
+                onClose={() => {
+                  const newErrors = this.state.errors.filter(
+                    (err, i) => i !== index,
+                  );
+                  const newName = newErrors.length ? this.state.name : null;
+                  this.setState({
+                    errors: newErrors,
+                    tableName: newName,
+                  });
+                }}
+              />
             ))}
           </div>
         )}
