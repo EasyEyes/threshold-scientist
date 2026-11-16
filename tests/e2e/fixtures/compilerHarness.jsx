@@ -159,4 +159,12 @@ function CompilerHarness() {
   );
 }
 
-createRoot(document.getElementById("root")).render(<CompilerHarness />);
+const root = createRoot(document.getElementById("root"));
+if (new URLSearchParams(window.location.search).has("glossaryDiagnostics")) {
+  // Keep Table's styles isolated from the existing Running fixtures.
+  import("./glossaryDiagnostics.jsx").then(({ default: GlossaryDiagnostics }) =>
+    root.render(<GlossaryDiagnostics />),
+  );
+} else {
+  root.render(<CompilerHarness />);
+}
