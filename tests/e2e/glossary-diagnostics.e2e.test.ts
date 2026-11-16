@@ -15,6 +15,15 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
   const errors = page.locator(".error-item");
   await expect(errors).toHaveCount(4);
   await expect(errors.first()).toHaveCSS("border-top-style", "solid");
+  for (const error of await errors.all()) {
+    await expect(error.locator(":scope > :first-child")).toHaveClass(
+      "error-relevant-parameters",
+    );
+    await expect(error.locator(".error-relevant-parameters-prefix")).toHaveText(
+      "Parameter:",
+    );
+    await expect(error.locator(".error-hint-prefix")).toHaveText("Hint:");
+  }
   for (const replacement of ["_online2PayCurrencyCode", "fontDirection"]) {
     const error = errors.filter({
       has: page.locator(".error-hint", {

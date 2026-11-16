@@ -1430,7 +1430,7 @@ describe("Parameter(s) row", () => {
     const row = container.querySelector(".error-relevant-parameters");
     expect(row).not.toBeNull();
     expect(row.textContent).toBe(
-      "PARAMETERS: font, readingCorpus, fontTolerateFaults",
+      "Parameters: font, readingCorpus, fontTolerateFaults",
     );
   });
 
@@ -1445,7 +1445,7 @@ describe("Parameter(s) row", () => {
       },
     ]);
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("PARAMETER: font");
+    expect(row.textContent).toBe("Parameter: font");
   });
 
   it("links each parameter in the row to its glossary entry", () => {
@@ -1488,7 +1488,7 @@ describe("Parameter(s) row", () => {
     const row = container.querySelector(".error-relevant-parameters");
     const links = [...row.querySelectorAll("a")];
     expect(links).toHaveLength(1);
-    expect(row.textContent).toBe("PARAMETERS: font, notAParameter");
+    expect(row.textContent).toBe("Parameters: font, notAParameter");
   });
 
   it("links parameter mentions inside message and hint", () => {
@@ -1522,7 +1522,7 @@ describe("Parameter(s) row", () => {
       },
     ]);
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("PARAMETERS: block, font");
+    expect(row.textContent).toBe("Parameters: block, font");
     expect(row.querySelectorAll("a")).toHaveLength(2);
   });
 
@@ -1542,7 +1542,7 @@ describe("Parameter(s) row", () => {
     ).toContain("<img src=x");
   });
 
-  it("places the Parameter(s) line last in the error box", () => {
+  it("places the Parameter(s) line first in the error box", () => {
     withGlossaryRows({});
     const container = renderTableWithErrors([
       {
@@ -1556,8 +1556,14 @@ describe("Parameter(s) row", () => {
     ]);
     const item = container.querySelector(".error-item");
     expect(
-      item.lastElementChild.classList.contains("error-relevant-parameters"),
+      item.firstElementChild.classList.contains("error-relevant-parameters"),
     ).toBe(true);
+    expect([...item.children].map((child) => child.textContent)).toEqual([
+      "Parameter: font",
+      "Compiler error: E1",
+      "M",
+      "Hint: H",
+    ]);
   });
 
   it("warms the glossary-row map at mount, before any compile", () => {

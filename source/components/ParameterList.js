@@ -20,17 +20,17 @@ const parameterLink = (name) => {
 };
 
 /**
- * The "PARAMETER(S): …" line in each compiler error and warning: every
+ * The "Parameter(s): …" line in each compiler error and warning: every
  * involved parameter, deduplicated with order preserved, each linking to its
- * glossary entry when known. Rendered as the last line of the error box;
- * the prefix is styled like the HINT prefix (bold, all caps, context color).
+ * glossary entry when known. Rendered as the first line of the error box;
+ * the prefix is styled like the Hint prefix (bold, sentence case, context color).
  */
 export default function ParameterList({ parameters }) {
   const names = [...new Set(parameters)];
   return (
     <div className="error-relevant-parameters">
       <span className="error-relevant-parameters-prefix">
-        {names.length > 1 ? "PARAMETERS: " : "PARAMETER: "}
+        {names.length > 1 ? "Parameters: " : "Parameter: "}
       </span>
       {names.map((name, index) => (
         <Fragment key={name}>

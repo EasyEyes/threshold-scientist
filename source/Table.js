@@ -1101,6 +1101,9 @@ export default class Table extends Component {
                 className={`error-item error-${error.kind}`}
                 key={`error-${index}`}
               >
+                {error.parameters && error.parameters.length ? (
+                  <ParameterList parameters={error.parameters} />
+                ) : null}
                 <div className="error-flex">
                   <p>
                     <span className={`error-name error-name-${error.kind}`}>
@@ -1140,7 +1143,7 @@ export default class Table extends Component {
                 )}
                 {error.hint && (
                   <p className="error-hint">
-                    <span className="error-hint-prefix">HINT: </span>
+                    <span className="error-hint-prefix">Hint: </span>
                     <span
                       dangerouslySetInnerHTML={{
                         __html: linkGlossaryParameters(error.hint),
@@ -1148,9 +1151,6 @@ export default class Table extends Component {
                     ></span>
                   </p>
                 )}
-                {error.parameters && error.parameters.length ? (
-                  <ParameterList parameters={error.parameters} />
-                ) : null}
               </div>
             ))}
           </div>

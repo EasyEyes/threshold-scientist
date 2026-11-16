@@ -140,11 +140,11 @@ describe("Running compile warnings", () => {
     });
     const { container } = render(running.render());
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("PARAMETER: font");
+    expect(row.textContent).toBe("Parameter: font");
     expect(row.querySelectorAll("a")).toHaveLength(1);
   });
 
-  it("places the Parameter(s) line last in the warning box", () => {
+  it("places the Parameter(s) line first in the warning box", () => {
     mockGlossaryRows.font = 288;
     const running = new Running({
       user: {
@@ -176,8 +176,14 @@ describe("Running compile warnings", () => {
     const { container } = render(running.render());
     const item = container.querySelector(".compile-warning-item");
     expect(
-      item.lastElementChild.classList.contains("error-relevant-parameters"),
+      item.firstElementChild.classList.contains("error-relevant-parameters"),
     ).toBe(true);
+    expect([...item.children].map((child) => child.textContent)).toEqual([
+      "Parameter: font",
+      "W",
+      "M",
+      "Hint: H",
+    ]);
   });
 
   it("labels and links the parameters of each warning", () => {
@@ -197,7 +203,7 @@ describe("Running compile warnings", () => {
     const { container } = render(running.render());
 
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("PARAMETER: font");
+    expect(row.textContent).toBe("Parameter: font");
     const links = [...row.querySelectorAll("a")];
     expect(links).toHaveLength(1);
     expect(links[0].href).toContain("range=A288");

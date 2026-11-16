@@ -866,6 +866,9 @@ export default class Running extends Component {
                   className="compile-warning-item"
                   key={`compile-warning-${index}`}
                 >
+                  {w.parameters && w.parameters.length ? (
+                    <ParameterList parameters={w.parameters} />
+                  ) : null}
                   <div className="compile-warning-name">{w.name}</div>
                   {w.message && (
                     <p
@@ -878,7 +881,7 @@ export default class Running extends Component {
                   {w.hint && (
                     <p className="compile-warning-hint">
                       <span className="compile-warning-hint-prefix">
-                        HINT:{" "}
+                        Hint:{" "}
                       </span>
                       <span
                         dangerouslySetInnerHTML={{
@@ -887,9 +890,6 @@ export default class Running extends Component {
                       ></span>
                     </p>
                   )}
-                  {w.parameters && w.parameters.length ? (
-                    <ParameterList parameters={w.parameters} />
-                  ) : null}
                 </div>
               ))}
             </div>
