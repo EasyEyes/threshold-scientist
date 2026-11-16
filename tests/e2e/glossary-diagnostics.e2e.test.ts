@@ -12,7 +12,7 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
     }),
   );
   await page.goto("/compiler/?glossaryDiagnostics=1");
-  const errors = page.locator(".error-item");
+  const errors = page.locator(".compiler-diagnostic");
   await expect(errors).toHaveCount(4);
   await expect(errors.first()).toHaveCSS("border-top-style", "solid");
   for (const replacement of ["_online2PayCurrencyCode", "fontDirection"]) {
@@ -51,4 +51,18 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
     path: testInfo.outputPath("glossary-diagnostics.png"),
     fullPage: true,
   });
+});
+
+test("compiler diagnostics can be dismissed from the keyboard", async ({
+  page,
+}) => {
+  await page.goto("/compiler/?glossaryDiagnostics=1");
+  const errors = page.locator(".compiler-diagnostic");
+  await expect(errors).toHaveCount(4);
+  const dismiss = page
+    .getByRole("button", { name: "Dismiss error message" })
+    .first();
+  await dismiss.focus();
+  await page.keyboard.press("Enter");
+  await expect(errors).toHaveCount(3);
 });

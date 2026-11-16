@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   existsInUserResources,
   type NeededResource,
   type UserResources,
 } from "../resources";
 import type { EasyEyesError, PhraseSource } from "../validation";
+import CompilerDiagnostic from "../../components/CompilerDiagnostic";
 
 interface Props {
   needed: NeededResource[];
@@ -115,28 +116,18 @@ export function ResourcePanel({
             What the compiler will report ({compilerErrors.length}) — you can
             still compile; drop the files to clear these
           </summary>
-          <ul className="error-list">
+          <ul className="error-list compiler-diagnostics">
             {compilerErrors.map((e, i) => (
-              <li
+              <CompilerDiagnostic
                 key={i}
-                className="error-card warning"
-                onClick={() => e.parameters[0] && onJump(e.parameters[0])}
-                title={
-                  e.parameters[0] ? "Click to jump to the parameter" : undefined
+                as="li"
+                headingLevel={3}
+                diagnostic={e}
+                onClick={
+                  e.parameters[0] ? () => onJump(e.parameters[0]) : undefined
                 }
-              >
-                <div className="error-name">⚠️ {e.name}</div>
-                <div
-                  className="error-message"
-                  dangerouslySetInnerHTML={{ __html: e.message }}
-                />
-                {e.hint && (
-                  <div className="error-hint">
-                    <span className="hint-label">HINT</span>
-                    <span dangerouslySetInnerHTML={{ __html: e.hint }} />
-                  </div>
-                )}
-              </li>
+                title={e.parameters[0] ? "Jump to the parameter" : undefined}
+              />
             ))}
           </ul>
         </details>
@@ -153,8 +144,8 @@ export function ResourcePanel({
           {phrase.origin === "resources"
             ? "read from your EasyEyesResources"
             : "loaded"}{" "}
-          — ~tilde values resolve in{" "}
-          {phrase.availableLanguageCodes.length} language
+          — ~tilde values resolve in {phrase.availableLanguageCodes.length}{" "}
+          language
           {phrase.availableLanguageCodes.length !== 1 ? "s" : ""} (
           {phrase.availableLanguageCodes.join(", ")}).
         </p>

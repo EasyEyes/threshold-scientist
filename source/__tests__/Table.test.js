@@ -1376,7 +1376,7 @@ describe("Error label prefixes", () => {
             name: "Unbalanced commas",
           },
           { context: "export", kind: "error", name: "Export failed" },
-          { context: "preprocessor", kind: "warning", name: "LOGGING CAUTION" },
+          { context: "preprocessor", kind: "warning", name: "Logging caution" },
           {
             context: "preprocessor",
             kind: "correct",
@@ -1392,7 +1392,7 @@ describe("Error label prefixes", () => {
     expect(names).toEqual([
       "Compiler error: Unbalanced commas",
       "Download source error: Export failed",
-      "LOGGING CAUTION",
+      "⚠️ Logging caution",
       "Compiled successfully.",
     ]);
   });
@@ -1554,7 +1554,7 @@ describe("Parameter(s) row", () => {
         parameters: ["font"],
       },
     ]);
-    const item = container.querySelector(".error-item");
+    const item = container.querySelector(".compiler-diagnostic");
     expect(
       item.lastElementChild.classList.contains("error-relevant-parameters"),
     ).toBe(true);
@@ -1820,6 +1820,20 @@ describe("Table compile-error visibility reporting", () => {
       });
     });
     expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(false);
+  });
+
+  it("moves focus to the diagnostic summary when a result appears", () => {
+    const { act } = require("@testing-library/react");
+    const { ref, container } = renderTableWithReporter();
+    act(() => {
+      ref.current.setState({
+        errors: [{ context: "preprocessor", kind: "error", name: "E" }],
+      });
+    });
+    const summary = container.querySelector(".compiler-diagnostics");
+    expect(summary).toHaveAttribute("role", "group");
+    expect(summary).toHaveAttribute("aria-label", "Compiler diagnostics");
+    expect(summary).toHaveFocus();
   });
 
   it("reports false when unmounted with errors still showing", () => {

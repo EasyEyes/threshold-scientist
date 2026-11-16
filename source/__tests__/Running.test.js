@@ -84,30 +84,33 @@ describe("Running compile warnings", () => {
     const warning = {
       context: "preprocessor",
       kind: "warning",
-      name: "⚠️ WARNING: 1 missing phrase",
+      name: "Warning: 1 missing phrase",
       message:
-        "This study’s source references 1 key that is not defined in International Phrases:<br>EE_ID_invalidFile",
-      hint: "CAN I RUN THE STUDY? Yes, if the missing phrases are not essential.<br><br>REPORT THE PROBLEM. Please select “Report bug” at the top of this page to notify the developers.",
+        "This study’s source references 1 key that is not defined in International Phrases:<br>EE_exampleMissingPhrase",
+      hint: "Can I run the study? Yes, if the missing phrases are not essential.<br><br>Report the problem. Please select “Report bug” at the top of this page to notify the developers.",
       parameters: [],
     };
     const renderResult = (warnings) =>
       new Running({ ...baseProps, compileWarnings: warnings }).render();
     const { container, rerender } = render(renderResult([warning]));
-    const warnings = container.querySelector(".compile-warnings");
+    const warnings = container.querySelector(".compiler-diagnostics");
     for (const button of screen.getAllByRole("button")) {
       expect(
         button.compareDocumentPosition(warnings) &
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
     }
-    expect(
-      container.querySelector(".compile-warning-message"),
-    ).toHaveTextContent("EE_ID_invalidFile");
-    expect(container.querySelector(".compile-warning-hint")).toHaveTextContent(
+    expect(container.querySelector(".error-message")).toHaveTextContent(
+      "EE_exampleMissingPhrase",
+    );
+    expect(container.querySelector(".error-hint")).toHaveTextContent(
       "Report bug",
     );
+    expect(container.querySelector(".error-name")).toHaveTextContent(
+      "⚠️ Warning: 1 missing phrase",
+    );
     rerender(renderResult([]));
-    expect(container.querySelector(".compile-warnings")).toBeNull();
+    expect(container.querySelector(".compiler-diagnostics")).toBeNull();
     expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument();
   });
 
@@ -174,7 +177,7 @@ describe("Running compile warnings", () => {
       ],
     });
     const { container } = render(running.render());
-    const item = container.querySelector(".compile-warning-item");
+    const item = container.querySelector(".compiler-diagnostic-warning");
     expect(
       item.lastElementChild.classList.contains("error-relevant-parameters"),
     ).toBe(true);
@@ -203,7 +206,7 @@ describe("Running compile warnings", () => {
     expect(links[0].href).toContain("range=A288");
     expect(links[0].target).toBe("_blank");
 
-    const messageLink = container.querySelector(".compile-warning-message a");
+    const messageLink = container.querySelector(".error-message a");
     expect(messageLink).not.toBeNull();
     expect(messageLink.href).toContain("range=A288");
   });
