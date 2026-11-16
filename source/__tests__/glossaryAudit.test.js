@@ -108,11 +108,24 @@ it("does not fetch reports for empty or unknown-only explicit input", async () =
   ).toEqual([]);
   expect(global.fetch).not.toHaveBeenCalled();
 });
-it("escapes parameter and audit metadata in compiler error HTML", () => {
+it("escapes parameter HTML and omits internal audit metadata and removal history", () => {
   const errors = validateGlossaryAudit(
     [{ parameter: "<img src=x onerror=alert(1)>", key: "oldFont" }],
-    { ...audit, id: "<script>" },
+    {
+      ...audit,
+      id: "<script>",
+      findings: [
+        {
+          key: "oldFont",
+          removals: [{ repository: "threshold", removedAt: "2026-07-02" }],
+        },
+      ],
+    },
   );
   expect(errors[0].message).not.toContain("<img");
-  expect(errors[0].message).toContain("&lt;script&gt;");
+  expect(errors[0].message).toContain("&lt;img");
+  expect(errors[0].message + errors[0].hint).not.toMatch(
+    /script|2026-|Removed from/,
+  );
+  expect(errors[0].hint).toContain("No source usage was detected");
 });
