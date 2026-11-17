@@ -99,3 +99,21 @@ describe("CompilerDiagnostic", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
+
+it("renders rich message and hint content in valid flow containers", () => {
+  const { container } = render(
+    <CompilerDiagnostic
+      diagnostic={{
+        ...warning,
+        message: "Missing files:<ul><li>font.woff</li></ul>",
+        hint: "<div>Upload the files.</div>",
+      }}
+    />,
+  );
+  expect(container.querySelector(".error-message").tagName).toBe("DIV");
+  expect(container.querySelector(".error-hint").tagName).toBe("DIV");
+  expect(container.querySelector(".error-hint-prefix + div")).toHaveTextContent(
+    "Upload the files.",
+  );
+  expect(container.querySelector("p ul, p div")).toBeNull();
+});

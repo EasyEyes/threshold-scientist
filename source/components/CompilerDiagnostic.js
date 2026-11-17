@@ -95,22 +95,23 @@ export default function CompilerDiagnostic({
         )}
       </div>
       {message && (
-        <p
+        <div
           className="error-message"
           dangerouslySetInnerHTML={{
             __html: linkGlossaryParameters(message),
           }}
-        ></p>
+        ></div>
       )}
       {hint && (
-        <p className="error-hint">
+        <div className="error-hint">
           <span className="error-hint-prefix">HINT: </span>
-          <span
+          <div
+            className="error-hint-content"
             dangerouslySetInnerHTML={{
               __html: linkGlossaryParameters(hint),
             }}
-          ></span>
-        </p>
+          ></div>
+        </div>
       )}
       {parameters.length ? <ParameterList parameters={parameters} /> : null}
     </Tag>
