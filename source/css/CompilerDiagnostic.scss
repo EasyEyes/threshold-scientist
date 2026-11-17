@@ -92,6 +92,21 @@
     text-decoration: underline;
   }
 
+  .diagnostic-invalid,
+  .diagnostic-deleted {
+    color: #bb2c22;
+    font-weight: 700;
+  }
+
+  .diagnostic-deleted {
+    text-decoration: line-through;
+  }
+
+  .diagnostic-inserted {
+    color: #147133;
+    font-weight: 700;
+  }
+
   .error-parameter {
     font-weight: 700;
   }
