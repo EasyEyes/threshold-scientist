@@ -21,6 +21,12 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
         hasText: `Use ${replacement} instead.`,
       }),
     });
+    await expect(error.locator(".error-message")).toHaveText(
+      "This parameter is obsolete and must be replaced or removed.",
+    );
+    await expect(error.locator(".error-hint")).toHaveText(
+      `HINT: Use ${replacement} instead.`,
+    );
     await expect(error.locator(".error-name")).toHaveText(
       "Compiler error: Parameter is obsolete",
     );

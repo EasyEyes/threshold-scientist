@@ -10,9 +10,13 @@ import { validateGlossaryAudit } from "../../../threshold/preprocess/glossaryAud
 // Offline catalog and completed-audit boundaries; validators and Table are real.
 const glossary = Object.fromEntries(
   [
-    ["_online2PayCurrency", "obsolete", "Use _online2PayCurrencyCode instead."],
+    [
+      "_online2PayCurrency",
+      "obsolete",
+      "❌ Use _online2PayCurrencyCode instead.",
+    ],
     ["_online2PayCurrencyCode", "text", ""],
-    ["fontLeftToRightBool", "obsolete", "Use fontDirection instead."],
+    ["fontLeftToRightBool", "obsolete", "❌ Use fontDirection instead."],
     ["fontDirection", "text", ""],
     ["font", "text", ""],
   ].map(([name, type, explanation]) => [
