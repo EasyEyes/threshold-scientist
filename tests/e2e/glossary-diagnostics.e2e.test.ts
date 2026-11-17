@@ -13,7 +13,7 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
   );
   await page.goto("/compiler/?glossaryDiagnostics=1");
   const errors = page.locator(".compiler-diagnostic");
-  await expect(errors).toHaveCount(4);
+  await expect(errors).toHaveCount(5);
   await expect(errors.first()).toHaveCSS("border-top-style", "solid");
   for (const replacement of ["_online2PayCurrencyCode", "fontDirection"]) {
     const error = errors.filter({
@@ -46,6 +46,23 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
       expect.stringMatching(/internal-audit-id|2026-11-12|Removed from/),
     ]),
   );
+  const glossaryAudit = errors.filter({
+    hasText: "Glossary parameter not audited as used",
+  });
+  await expect(glossaryAudit.locator(".diagnostic-section strong")).toHaveText([
+    "Can I run the study?",
+    "Report the problem.",
+  ]);
+  const phraseAudit = errors.filter({
+    hasText: "International phrase not audited as used",
+  });
+  await expect(phraseAudit.locator(".diagnostic-section strong")).toHaveText([
+    "Can I run the study?",
+    "Audit evidence.",
+  ]);
+  await expect(phraseAudit.locator(".error-hint")).toHaveText(
+    "HINT: Check the phrase name and the latest International Phrases audit.",
+  );
   expect(pageErrors).toEqual([]);
   await page.screenshot({
     path: testInfo.outputPath("glossary-diagnostics.png"),
@@ -58,11 +75,11 @@ test("compiler diagnostics can be dismissed from the keyboard", async ({
 }) => {
   await page.goto("/compiler/?glossaryDiagnostics=1");
   const errors = page.locator(".compiler-diagnostic");
-  await expect(errors).toHaveCount(4);
+  await expect(errors).toHaveCount(5);
   const dismiss = page
     .getByRole("button", { name: "Dismiss error message" })
     .first();
   await dismiss.focus();
   await page.keyboard.press("Enter");
-  await expect(errors).toHaveCount(3);
+  await expect(errors).toHaveCount(4);
 });

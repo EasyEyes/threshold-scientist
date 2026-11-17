@@ -4,6 +4,7 @@ import { initGlossary } from "../../../threshold/parameters/glossaryRegistry";
 import { loadGlossaryRows } from "../../../threshold/parameters/glossaryLink";
 import { ExperimentTable } from "../../../threshold/preprocess/experimentTable";
 import { validateExperimentTable } from "../../../threshold/preprocess/validateExperimentTable";
+import { validateInternationalPhraseAudit } from "../../../threshold/preprocess/internationalPhraseAudit";
 import { validateGlossaryAudit } from "../../../threshold/preprocess/glossaryAudit";
 
 // Offline catalog and completed-audit boundaries; validators and Table are real.
@@ -42,6 +43,10 @@ class DiagnosticTable extends Table {
           ["Parameter is obsolete", "Parameter is unrecognized"].includes(
             e.name,
           ),
+        ),
+        ...validateInternationalPhraseAudit(
+          [{ key: "EE_auditMissing", parameter: "font", column: 2 }],
+          { id: "test-phrase-audit", generatedAt: "2026-11-17", usedKeys: [] },
         ),
         ...validateGlossaryAudit([{ parameter: "font", key: "font" }], {
           id: "internal-audit-id",
