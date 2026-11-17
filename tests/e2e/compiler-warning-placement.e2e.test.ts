@@ -60,6 +60,12 @@ test("compile warnings appear below the study controls on desktop and mobile", a
       .getByTestId("running-actions")
       .getByRole("button")
       .all()) {
+      // The dismiss x lives inside the warnings box itself; every study
+      // control must still precede the box.
+      const insideWarnings = await button.evaluate(
+        (element) => element.closest(".compiler-diagnostics") !== null,
+      );
+      if (insideWarnings) continue;
       const box = await button.boundingBox();
       if (box) expect(warningBox!.y).toBeGreaterThanOrEqual(box.y + box.height);
     }
@@ -113,4 +119,18 @@ test("warning text reflows at 320px, 200% text size, and WCAG spacing overrides"
     await expect(warning.locator(".error-name")).toBeVisible();
     await expect(warning.locator(".error-message")).toBeVisible();
   }
+});
+
+test("warning cards dismiss with the shared x, like error and success cards", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/compiler/?warnings=1");
+  const warning = page.locator(".compiler-diagnostic-warning");
+  await expect(warning).toHaveCount(1);
+  await page.getByRole("button", { name: "Dismiss warning message" }).click();
+  await expect(warning).toHaveCount(0);
+  await expect(page.locator(".compiler-diagnostics")).toHaveCount(0);
+  expect(errors).toEqual([]);
 });

@@ -25,7 +25,7 @@ describe("CompilerDiagnostic", () => {
       "Review the keys.",
     );
     expect(item.querySelector(".error-hint").textContent).toBe(
-      "HINT: Remove stale references.",
+      "HINT Remove stale references.",
     );
     expect(item.querySelector(".compile-warning-item")).toBeNull();
   });
@@ -41,7 +41,7 @@ describe("CompilerDiagnostic", () => {
     );
   });
 
-  it("retains compiler/export error labels and success titles", () => {
+  it("shows the diagnostic's own name; no generic error prefix", () => {
     const { container } = render(
       <>
         <CompilerDiagnostic
@@ -57,11 +57,7 @@ describe("CompilerDiagnostic", () => {
     expect(container.querySelector("[role='status']")).not.toBeNull();
     expect(
       [...container.querySelectorAll(".error-name")].map((e) => e.textContent),
-    ).toEqual([
-      "Compiler error: Bad",
-      "Download source error: Bad export",
-      "Ready",
-    ]);
+    ).toEqual(["Bad", "Bad export", "Ready"]);
   });
 
   it("supports Studio's clickable list-item and Table's dismiss action", () => {

@@ -14,6 +14,7 @@ const glossary = Object.fromEntries(
     ["fontLeftToRightBool", "obsolete", "Use fontDirection instead."],
     ["fontDirection", "text", ""],
     ["font", "text", ""],
+    ["_needBrowser", "multicategorical", ""],
   ].map(([name, type, explanation]) => [
     name,
     { name, type, explanation, default: "", categories: [] },
@@ -23,6 +24,14 @@ const glossary = Object.fromEntries(
 class DiagnosticTable extends Table {
   constructor(props) {
     super(props);
+    glossary._needBrowser.categories = [
+      "all",
+      "Chrome",
+      "Chrome Mobile",
+      "Safari",
+      "Firefox",
+      "Edge",
+    ];
     initGlossary({
       version: "test",
       glossary,
@@ -33,15 +42,18 @@ class DiagnosticTable extends Table {
       ["_online2PayCurrency", "USD"],
       ["fontLeftToRightBool", "", "TRUE"],
       ["fontDirectionz", "", "ltr"],
+      ["_needBrowser", "Cgrome, Firefox, Edge"],
     ];
     this.state = {
       ...this.state,
       tableName: "glossary-diagnostics.csv",
       errors: [
         ...validateExperimentTable(new ExperimentTable(rows)).filter((e) =>
-          ["Parameter is obsolete", "Parameter is unrecognized"].includes(
-            e.name,
-          ),
+          [
+            "Parameter is obsolete",
+            "Parameter is unrecognized",
+            "Parameter contains values of the wrong type",
+          ].includes(e.name),
         ),
         ...validateGlossaryAudit([{ parameter: "font", key: "font" }], {
           id: "internal-audit-id",

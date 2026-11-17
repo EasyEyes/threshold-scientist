@@ -222,7 +222,11 @@ it("lists each missing source key and uses the plural count", async () => {
   expect(result.errors).toHaveLength(1);
   expect(result.errors[0].name).toBe("Warning: 3 missing phrases");
   expect(result.errors[0].message).toContain("3 keys that are not defined");
-  for (const key of missingKeys)
-    expect(result.errors[0].message).toContain(`>${key}</a>`);
+  for (const key of missingKeys) {
+    expect(result.errors[0].message).toContain(
+      '<code class="error-value"><a href=',
+    );
+    expect(result.errors[0].message).toContain(`${key}</a></code>`);
+  }
   expect(result.report.candidateDefinitionIssues).toEqual(missingKeys);
 });

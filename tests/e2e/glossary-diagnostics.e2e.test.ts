@@ -13,8 +13,17 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
   );
   await page.goto("/compiler/?glossaryDiagnostics=1");
   const errors = page.locator(".compiler-diagnostic");
-  await expect(errors).toHaveCount(4);
+  await expect(errors).toHaveCount(5);
   await expect(errors.first()).toHaveCSS("border-top-style", "solid");
+  // Bootstrap's `.table > :not(caption) > * > *` cell rule must not add
+  // vertical padding to the diagnostic sections.
+  for (const section of await errors
+    .locator(
+      ".error-flex, .error-message, .error-hint, .error-relevant-parameters",
+    )
+    .all()) {
+    await expect(section).toHaveCSS("padding", "0px");
+  }
   for (const replacement of ["_online2PayCurrencyCode", "fontDirection"]) {
     const error = errors.filter({
       has: page.locator(".error-hint", {
@@ -22,7 +31,7 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
       }),
     });
     await expect(error.locator(".error-name")).toHaveText(
-      "Compiler error: Parameter is obsolete",
+      "Parameter is obsolete",
     );
     await expect(
       error.getByRole("link", { name: replacement, exact: true }),
@@ -58,11 +67,113 @@ test("compiler diagnostics can be dismissed from the keyboard", async ({
 }) => {
   await page.goto("/compiler/?glossaryDiagnostics=1");
   const errors = page.locator(".compiler-diagnostic");
-  await expect(errors).toHaveCount(4);
+  await expect(errors).toHaveCount(5);
   const dismiss = page
     .getByRole("button", { name: "Dismiss error message" })
     .first();
   await dismiss.focus();
   await page.keyboard.press("Enter");
-  await expect(errors).toHaveCount(3);
+  await expect(errors).toHaveCount(4);
+});
+
+test("diagnostic values are legible and reflow without horizontal overflow", async ({
+  page,
+}) => {
+  await page.route("**/.netlify/functions/**", (route) =>
+    route.fulfill({ contentType: "application/json", body: "{}" }),
+  );
+  for (const mode of ["default", "320px", "200%", "spacing"]) {
+    await page.setViewportSize({
+      width: mode === "320px" ? 320 : 1280,
+      height: 900,
+    });
+    await page.goto("/compiler/?glossaryDiagnostics=1");
+    if (mode === "200%")
+      await page.addStyleTag({
+        content: "html { font-size: 200% !important; }",
+      });
+    if (mode === "spacing")
+      await page.addStyleTag({
+        content: `
+          * {
+            line-height: 1.5em !important;
+            letter-spacing: 0.12em !important;
+            word-spacing: 0.16em !important;
+          }
+          p + p { margin-top: 2em !important; }
+        `,
+      });
+    const error = page
+      .locator(".compiler-diagnostic")
+      .filter({ hasText: "Parameter contains values of the wrong type" });
+    await expect(error).toHaveCount(1);
+    await expect(error).toHaveAttribute("role", "alert");
+    const hint = error.locator(".error-hint");
+    await expect(hint).toContainText("HINT The erroneous value is:");
+    await expect(hint).not.toContainText("HINT:");
+    // One multicategorical cell remains one semantic/highlighted value.
+    const supplied = hint.locator(".error-value");
+    await expect(supplied).toHaveCount(1);
+    await expect(supplied).toHaveText("Cgrome, Firefox, Edge");
+    expect(await supplied.evaluate((el) => el.tagName)).toBe("CODE");
+    const accessibleText = await error.ariaSnapshot();
+    expect(accessibleText).toContain("HINT The erroneous value is:");
+    expect(accessibleText).toContain("Cgrome, Firefox, Edge");
+    if (mode === "default") {
+      const css = await supplied.evaluate((el) => {
+        const s = getComputedStyle(el);
+        return {
+          fontSize: s.fontSize,
+          fontFamily: s.fontFamily,
+          fontWeight: s.fontWeight,
+          whiteSpace: s.whiteSpace,
+          overflowWrap: s.overflowWrap,
+        };
+      });
+      expect(css).toEqual({
+        fontSize: "15px",
+        fontFamily:
+          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
+        fontWeight: "600",
+        whiteSpace: "pre-wrap",
+        overflowWrap: "anywhere",
+      });
+      const link = error
+        .getByRole("link", { name: "_needBrowser", exact: true })
+        .first();
+      await link.focus();
+      await expect(link).toHaveCSS("outline-style", "solid");
+      await expect(link).toHaveCSS("outline-width", "3px");
+    }
+    const noOverflow = await error.evaluate((card) => {
+      const cardRect = card.getBoundingClientRect();
+      const values = [...card.querySelectorAll(".error-value")].map((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          text: el.textContent,
+          left: r.left,
+          right: r.right,
+          inside: r.left >= cardRect.left - 1 && r.right <= cardRect.right + 1,
+        };
+      });
+      const result =
+        card.scrollWidth <= card.clientWidth + 1 &&
+        values.every((v) => v.inside);
+      return {
+        result,
+        cardWidth: card.clientWidth,
+        cardScrollWidth: card.scrollWidth,
+        cardLeft: cardRect.left,
+        cardRight: cardRect.right,
+        viewportWidth: window.innerWidth,
+        documentWidth: document.documentElement.scrollWidth,
+        values,
+      };
+    });
+    if (!noOverflow.result) console.log(mode, noOverflow);
+    expect({ mode, noOverflow: noOverflow.result }).toEqual({
+      mode,
+      noOverflow: true,
+    });
+  }
 });

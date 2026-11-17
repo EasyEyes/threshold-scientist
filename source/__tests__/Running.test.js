@@ -95,6 +95,9 @@ describe("Running compile warnings", () => {
     const { container, rerender } = render(renderResult([warning]));
     const warnings = container.querySelector(".compiler-diagnostics");
     for (const button of screen.getAllByRole("button")) {
+      // The dismiss x lives inside the warnings box itself; every study
+      // control must still precede the box.
+      if (warnings.contains(button)) continue;
       expect(
         button.compareDocumentPosition(warnings) &
           Node.DOCUMENT_POSITION_FOLLOWING,
@@ -143,7 +146,7 @@ describe("Running compile warnings", () => {
     });
     const { container } = render(running.render());
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("PARAMETER: font");
+    expect(row.textContent).toBe("PARAMETER font");
     expect(row.querySelectorAll("a")).toHaveLength(1);
   });
 
@@ -200,7 +203,7 @@ describe("Running compile warnings", () => {
     const { container } = render(running.render());
 
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("PARAMETER: font");
+    expect(row.textContent).toBe("PARAMETER font");
     const links = [...row.querySelectorAll("a")];
     expect(links).toHaveLength(1);
     expect(links[0].href).toContain("range=A288");
@@ -555,5 +558,91 @@ describe("Running Prolific study creation", () => {
 
     expect(running.state.completionCode).toBeUndefined();
     expect(running.state.preparedProlificStudyId).toBeNull();
+  });
+});
+
+describe("Running warning dismissal", () => {
+  const baseProps = {
+    user: {
+      username: "scientist",
+      currentExperiment: {},
+      projectList: Promise.resolve([]),
+    },
+    activeExperiment: { id: 42, name: "compiled-study" },
+    projectName: "compiled-study",
+    experimentStatus: "RUNNING",
+    viewingPreviousExperiment: false,
+    previousExperimentViewed: {
+      previousExperimentStatus: "RUNNING",
+      previousRecruitmentInformation: null,
+      previousProlificConfig: null,
+    },
+    functions: {
+      handleSetActivateExperiment: jest.fn(),
+    },
+  };
+  const warning = (n) => ({
+    context: "preprocessor",
+    kind: "warning",
+    name: `Warning ${n}`,
+    message: `message ${n}`,
+    hint: "",
+    parameters: [],
+  });
+
+  it("warning cards carry the shared dismiss x, like error and success cards", () => {
+    const instance = new Running({
+      ...baseProps,
+      compileWarnings: [warning(1), warning(2)],
+    });
+    const { container } = render(instance.render());
+    expect(container.querySelectorAll(".compiler-diagnostic")).toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", { name: "Dismiss warning message" }),
+    ).toHaveLength(2);
+  });
+
+  it("a dismissed warning drops its card but keeps the others", () => {
+    const compileWarnings = [warning(1), warning(2)];
+    const instance = new Running({ ...baseProps, compileWarnings });
+    instance.state = {
+      ...instance.state,
+      dismissedCompileWarnings: [compileWarnings[0]],
+    };
+    const { container } = render(instance.render());
+    expect(container.querySelectorAll(".compiler-diagnostic")).toHaveLength(1);
+    expect(container.querySelector(".error-name").textContent).toContain(
+      "Warning 2",
+    );
+    // Last card dismissed → the whole (empty) box disappears.
+    instance.state = {
+      ...instance.state,
+      dismissedCompileWarnings: compileWarnings,
+    };
+    const cleared = render(instance.render());
+    expect(cleared.container.querySelector(".compiler-diagnostics")).toBeNull();
+  });
+
+  it("a new compile's warnings are all shown, ignoring stale dismissals", () => {
+    const oldWarnings = [warning(1), warning(2)];
+    const previous = new Running({
+      ...baseProps,
+      compileWarnings: oldWarnings,
+    });
+    previous.state = {
+      ...previous.state,
+      dismissedCompileWarnings: oldWarnings,
+    };
+    // Same component state, fresh compileWarnings array (new objects).
+    const fresh = new Running({
+      ...baseProps,
+      compileWarnings: [warning(3)],
+    });
+    fresh.state = previous.state;
+    const { container } = render(fresh.render());
+    expect(container.querySelectorAll(".compiler-diagnostic")).toHaveLength(1);
+    expect(container.querySelector(".error-name").textContent).toContain(
+      "Warning 3",
+    );
   });
 });

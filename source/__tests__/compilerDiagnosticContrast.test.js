@@ -45,6 +45,18 @@ const contrast = (foreground, background) => {
   );
   return (lighter + 0.05) / (darker + 0.05);
 };
+const compositeBlack = (hex, alpha) => {
+  const channels = [1, 3, 5].map((start) =>
+    Math.round(parseInt(hex.slice(start, start + 2), 16) * (1 - alpha)),
+  );
+  return `#${channels.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+};
+const valueBackgroundAlpha = Number(
+  scss.match(
+    /\.error-value\s*\{[\s\S]*?background:\s*rgb\(0 0 0 \/ ([\d.]+)\)/,
+  )?.[1],
+);
+expect(valueBackgroundAlpha).toBeGreaterThan(0);
 
 const expected = {
   correct: {
@@ -87,6 +99,24 @@ describe.each(Object.entries(expected))(
         3,
       );
       expect(contrast(actual.border, "#ffffff")).toBeGreaterThanOrEqual(3);
+    });
+
+    it("keeps value text and focus outlines legible on value chips", () => {
+      const valueBackground = compositeBlack(
+        actual.background,
+        valueBackgroundAlpha,
+      );
+      // The subtle chip is decorative: monospace and weight also identify
+      // values, so its sub-3:1 boundary contrast is not the sole cue.
+      expect(contrast("#333333", valueBackground)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(actual.accent, valueBackground)).toBeGreaterThanOrEqual(
+        3,
+      );
+      if (kind === "error")
+        // Red U+XXXX invisible-character labels are normal-sized text too.
+        expect(contrast(actual.accent, valueBackground)).toBeGreaterThanOrEqual(
+          4.5,
+        );
     });
   },
 );

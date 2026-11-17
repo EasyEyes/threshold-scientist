@@ -35,6 +35,15 @@
     list-style: none;
   }
 
+  // Bootstrap's `.table > :not(caption) > * > *` cell rule reaches these
+  // sections through Table's root `.table`; diagnostics are not table cells.
+  .error-flex,
+  .error-message,
+  .error-hint,
+  .error-relevant-parameters {
+    padding: 0;
+  }
+
   .error-flex {
     display: flex;
     align-items: flex-start;
@@ -90,6 +99,22 @@
 
   .error-parameter {
     font-weight: 700;
+  }
+
+  // Literal values need visible boundaries without quotation marks.
+  .error-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", monospace;
+    font-size: 0.9375em;
+    font-weight: 600;
+    color: inherit;
+    background: rgb(0 0 0 / 0.06);
+    border-radius: 3px;
+    padding: 0.05em 0.25em;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
 
   .error-name-action {
