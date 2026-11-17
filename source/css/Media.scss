@@ -127,25 +127,6 @@
     color: #666;
   }
 
-  .errors {
-    margin-top: 0.7rem;
-
-    .error-item {
-      border-radius: $icon-radius;
-      padding: 0.4rem 1rem;
-      margin: 0.7rem 0;
-
-      * {
-        font-size: 1rem;
-      }
-    }
-
-    .error-error {
-      background-color: #fff3f3;
-      border: 2px solid $error;
-    }
-  }
-
   .media-table {
     width: 100%;
     border: none;

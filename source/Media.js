@@ -15,6 +15,8 @@ import {
 } from "./components/mediaCompression";
 import { VIEWER_ACCESS, fetchMediaAccess } from "./components/mediaAuthApi";
 
+import CompilerDiagnostic from "./components/CompilerDiagnostic";
+
 import "./css/Media.scss";
 
 const ACCEPTED_TYPES = ["image/", "audio/", "video/"];
@@ -287,11 +289,29 @@ export default class Media extends Component {
           {this.renderUploadAccess()}
 
           {errors.length > 0 && (
-            <div className="errors">
+            <div className="compiler-diagnostics">
               {errors.map((message, index) => (
-                <div className="error-item error-error" key={index}>
-                  <p className="error-hint">{message}</p>
-                </div>
+                <CompilerDiagnostic
+                  key={index}
+                  diagnostic={{
+                    kind: "error",
+                    context: "media",
+                    name: "Upload failed",
+                    message: String(message).replace(
+                      /[&<>"']/g,
+                      (character) =>
+                        ({
+                          "&": "&amp;",
+                          "<": "&lt;",
+                          ">": "&gt;",
+                          '"': "&quot;",
+                          "'": "&#39;",
+                        })[character],
+                    ),
+                    hint: "",
+                    parameters: [],
+                  }}
+                />
               ))}
             </div>
           )}

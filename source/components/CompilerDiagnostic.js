@@ -7,7 +7,11 @@ const displayName = ({ kind, context, name }) => {
   if (kind === "warning") return `⚠️ ${name.replace(/^(?:⚠️\s*)+/u, "")}`;
   if (kind === "error")
     return `${
-      context === "export" ? "Download source" : "Compiler"
+      context === "export"
+        ? "Download source"
+        : context === "media"
+        ? "Media"
+        : "Compiler"
     } error: ${name}`;
   return name;
 };
