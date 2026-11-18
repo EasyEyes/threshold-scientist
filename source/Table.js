@@ -1004,6 +1004,9 @@ export default class Table extends Component {
           <ul>
             <li>Click SELECT FILE.</li>
           </ul>
+          Resources uploaded individually are stored in your Pavlovia account
+          for future use. Resources in a source.zip are not.
+          <br />
           To download your study as a raw.source.zip archive, without compiling
           it, e.g. to share it or report a bug:
           <ul>
@@ -1012,8 +1015,6 @@ export default class Table extends Component {
               spreadsheet.
             </li>
           </ul>
-          Resources uploaded individually are stored in your Pavlovia account
-          for future use. Resources in a source.zip are not.
           <FreshnessStatus
             onPublicationDate={this.props.functions.updateLatestPublicationDate}
           />
