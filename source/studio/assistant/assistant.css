@@ -1037,34 +1037,6 @@
   color: var(--ink-soft);
 }
 
-/* The compiler's own messages, verbatim (its parameter markup included). */
-.ee-studio .asst-result-errors {
-  margin: 0;
-  padding: 8px 10px;
-  list-style: none;
-  border-radius: 6px;
-  background: var(--error-bg);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ee-studio .asst-result-errors li {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: var(--ink);
-}
-
-.ee-studio .asst-result-error-msg .error-parameter {
-  font-family: var(--asst-mono);
-  font-size: 11.5px;
-  padding: 0 3px;
-  border-radius: 3px;
-  background: rgba(187, 44, 34, 0.1);
-  color: var(--error);
-}
-
 .ee-studio .asst-result-more {
   color: var(--ink-soft);
   font-size: 12px;

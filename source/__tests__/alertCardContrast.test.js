@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 const scss = fs.readFileSync(
-  path.join(__dirname, "../css/CompilerDiagnostic.scss"),
+  path.join(__dirname, "../css/AlertCard.scss"),
   "utf8",
 );
 const scssVariables = {
@@ -17,7 +17,7 @@ const resolveColor = (value) => {
 };
 const tokens = (kind) => {
   const block = scss.match(
-    new RegExp(`\\.compiler-diagnostic-${kind}\\s*\\{([\\s\\S]*?)\\n\\}`),
+    new RegExp(`\\.alert-card-${kind}\\s*\\{([\\s\\S]*?)\\n\\}`),
   );
   if (!block) throw new Error(`Missing diagnostic style: ${kind}`);
   const token = (name) => {
@@ -26,9 +26,9 @@ const tokens = (kind) => {
     return resolveColor(match[1].trim());
   };
   return {
-    accent: token("--diagnostic-accent"),
-    background: token("--diagnostic-background"),
-    border: token("--diagnostic-border"),
+    accent: token("--alert-accent"),
+    background: token("--alert-background"),
+    border: token("--alert-border"),
   };
 };
 const luminance = (hex) => {
@@ -53,7 +53,7 @@ const compositeBlack = (hex, alpha) => {
 };
 const valueBackgroundAlpha = Number(
   scss.match(
-    /\.error-value\s*\{[\s\S]*?background:\s*rgb\(0 0 0 \/ ([\d.]+)\)/,
+    /\.alert-value\s*\{[\s\S]*?background:\s*rgb\(0 0 0 \/ ([\d.]+)\)/,
   )?.[1],
 );
 expect(valueBackgroundAlpha).toBeGreaterThan(0);

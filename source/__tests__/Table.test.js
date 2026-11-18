@@ -20,11 +20,11 @@ jest.mock("../../threshold/parameters/glossaryLink", () => ({
   glossaryParameterUrl: (name) => mockGlossaryUrl(name),
   linkGlossaryParameters: (html) =>
     html.replace(
-      /<span class="error-parameter">([^<]+)<\/span>/g,
+      /<span class="alert-parameter">([^<]+)<\/span>/g,
       (span, name) => {
         const href = mockGlossaryUrl(name);
         return href
-          ? `<a class="error-parameter-link" href="${href}" target="_blank" rel="noopener noreferrer">${span}</a>`
+          ? `<a class="alert-parameter-link" href="${href}" target="_blank" rel="noopener noreferrer">${span}</a>`
           : span;
       },
     ),
@@ -932,7 +932,7 @@ describe("Table.onDrop", () => {
 
     act(() => {
       ref.current.setState({
-        errors: [{ context: "preprocessor", kind: "error", name: "E" }],
+        alerts: [{ context: "preprocessor", kind: "error", name: "E" }],
       });
     });
     expect(queryByText("E")).toBeInTheDocument();
@@ -1226,7 +1226,7 @@ describe("Table.handleTable preamble — Studio-only optimization", () => {
     expect(placeholder.close).toHaveBeenCalledTimes(1);
     expect(stagePreview).not.toHaveBeenCalled();
     expect(showPreview).not.toHaveBeenCalled();
-    expect(ref.current.state.errors.map((e) => e.name)).toEqual([
+    expect(ref.current.state.alerts.map((e) => e.name)).toEqual([
       "Unbalanced commas",
     ]);
   });
@@ -1322,14 +1322,14 @@ describe("Table.onDropForExport", () => {
     const ref = React.createRef();
     render(<Table ref={ref} {...props} />);
     act(() => {
-      ref.current.setState({ errors: [compilerError, staleExportError] });
+      ref.current.setState({ alerts: [compilerError, staleExportError] });
     });
 
     await act(async () => {
       await ref.current.onDropForExport([new File(["a,b"], "exp.csv")]);
     });
 
-    expect(ref.current.state.errors).toEqual([compilerError, newExportError]);
+    expect(ref.current.state.alerts).toEqual([compilerError, newExportError]);
     expect(props.scrollToCurrentStep).toHaveBeenCalled();
   });
 
@@ -1349,14 +1349,14 @@ describe("Table.onDropForExport", () => {
     const ref = React.createRef();
     render(<Table ref={ref} {...props} />);
     act(() => {
-      ref.current.setState({ errors: [compilerError] });
+      ref.current.setState({ alerts: [compilerError] });
     });
 
     await act(async () => {
       await ref.current.onDropForExport([new File(["a,b"], "exp.csv")]);
     });
 
-    expect(ref.current.state.errors).toEqual([compilerError]);
+    expect(ref.current.state.alerts).toEqual([compilerError]);
     expect(props.scrollToCurrentStep).not.toHaveBeenCalled();
   });
 });
@@ -1369,7 +1369,7 @@ describe("Error titles", () => {
 
     act(() => {
       ref.current.setState({
-        errors: [
+        alerts: [
           {
             context: "preprocessor",
             kind: "error",
@@ -1386,7 +1386,7 @@ describe("Error titles", () => {
       });
     });
 
-    const names = [...container.querySelectorAll(".error-name")].map(
+    const names = [...container.querySelectorAll(".alert-name")].map(
       (element) => element.textContent,
     );
     expect(names).toEqual([
@@ -1399,12 +1399,12 @@ describe("Error titles", () => {
 });
 
 describe("Parameter(s) row", () => {
-  const renderTableWithErrors = (errors) => {
+  const renderTableWithAlerts = (alerts) => {
     const { act } = require("@testing-library/react");
     const ref = React.createRef();
     const { container } = render(<Table ref={ref} {...makeProps()} />);
     act(() => {
-      ref.current.setState({ errors });
+      ref.current.setState({ alerts });
     });
     return container;
   };
@@ -1419,7 +1419,7 @@ describe("Parameter(s) row", () => {
 
   it("labels the parameter list, comma-separated, so it is self-explanatory", () => {
     withGlossaryRows({});
-    const container = renderTableWithErrors([
+    const container = renderTableWithAlerts([
       {
         context: "preprocessor",
         kind: "error",
@@ -1427,7 +1427,7 @@ describe("Parameter(s) row", () => {
         parameters: ["font", "readingCorpus", "fontTolerateFaults"],
       },
     ]);
-    const row = container.querySelector(".error-relevant-parameters");
+    const row = container.querySelector(".alert-parameters");
     expect(row).not.toBeNull();
     expect(row.textContent).toBe(
       "PARAMETERS font, readingCorpus, fontTolerateFaults",
@@ -1436,7 +1436,7 @@ describe("Parameter(s) row", () => {
 
   it("uses the singular label for a single parameter", () => {
     withGlossaryRows({});
-    const container = renderTableWithErrors([
+    const container = renderTableWithAlerts([
       {
         context: "preprocessor",
         kind: "error",
@@ -1444,7 +1444,7 @@ describe("Parameter(s) row", () => {
         parameters: ["font"],
       },
     ]);
-    const row = container.querySelector(".error-relevant-parameters");
+    const row = container.querySelector(".alert-parameters");
     expect(row.textContent).toBe("PARAMETER font");
   });
 
@@ -1454,7 +1454,7 @@ describe("Parameter(s) row", () => {
       readingCorpus: 416,
       fontTolerateFaults: 320,
     });
-    const container = renderTableWithErrors([
+    const container = renderTableWithAlerts([
       {
         context: "preprocessor",
         kind: "error",
@@ -1462,9 +1462,7 @@ describe("Parameter(s) row", () => {
         parameters: ["font", "readingCorpus", "fontTolerateFaults"],
       },
     ]);
-    const links = [
-      ...container.querySelectorAll(".error-relevant-parameters a"),
-    ];
+    const links = [...container.querySelectorAll(".alert-parameters a")];
     expect(links.map((a) => a.textContent)).toEqual([
       "font",
       "readingCorpus",
@@ -1477,7 +1475,7 @@ describe("Parameter(s) row", () => {
 
   it("leaves row parameters unlinked when the glossary has no entry", () => {
     withGlossaryRows({ font: 288 });
-    const container = renderTableWithErrors([
+    const container = renderTableWithAlerts([
       {
         context: "preprocessor",
         kind: "error",
@@ -1485,7 +1483,7 @@ describe("Parameter(s) row", () => {
         parameters: ["font", "notAParameter"],
       },
     ]);
-    const row = container.querySelector(".error-relevant-parameters");
+    const row = container.querySelector(".alert-parameters");
     const links = [...row.querySelectorAll("a")];
     expect(links).toHaveLength(1);
     expect(row.textContent).toBe("PARAMETERS font, notAParameter");
@@ -1493,17 +1491,17 @@ describe("Parameter(s) row", () => {
 
   it("links parameter mentions inside message and hint", () => {
     withGlossaryRows({ font: 288 });
-    const container = renderTableWithErrors([
+    const container = renderTableWithAlerts([
       {
         context: "preprocessor",
         kind: "error",
         name: "E1",
-        message: 'Check <span class="error-parameter">font</span> in column C.',
-        hint: 'Set <span class="error-parameter">font</span> or pick another file.',
+        message: 'Check <span class="alert-parameter">font</span> in column C.',
+        hint: 'Set <span class="alert-parameter">font</span> or pick another file.',
       },
     ]);
-    const messageLink = container.querySelector(".error-message a");
-    const hintLink = container.querySelector(".error-hint a");
+    const messageLink = container.querySelector(".alert-message a");
+    const hintLink = container.querySelector(".alert-hint a");
     expect(messageLink).not.toBeNull();
     expect(messageLink.href).toContain("range=A288");
     expect(hintLink).not.toBeNull();
@@ -1513,7 +1511,7 @@ describe("Parameter(s) row", () => {
   it("shows each parameter once even when the error lists it twice", () => {
     // UNBALANCED_COMMAS can list the same parameter twice (duplicate rows).
     withGlossaryRows({ block: 10, font: 288 });
-    const container = renderTableWithErrors([
+    const container = renderTableWithAlerts([
       {
         context: "preprocessor",
         kind: "error",
@@ -1521,14 +1519,14 @@ describe("Parameter(s) row", () => {
         parameters: ["block", "block", "font"],
       },
     ]);
-    const row = container.querySelector(".error-relevant-parameters");
+    const row = container.querySelector(".alert-parameters");
     expect(row.textContent).toBe("PARAMETERS block, font");
     expect(row.querySelectorAll("a")).toHaveLength(2);
   });
 
   it("renders an unrecognized (possibly hostile) parameter name as inert text", () => {
     withGlossaryRows({});
-    const container = renderTableWithErrors([
+    const container = renderTableWithAlerts([
       {
         context: "preprocessor",
         kind: "error",
@@ -1537,14 +1535,14 @@ describe("Parameter(s) row", () => {
       },
     ]);
     expect(container.querySelector("img")).toBeNull();
-    expect(
-      container.querySelector(".error-relevant-parameters").textContent,
-    ).toContain("<img src=x");
+    expect(container.querySelector(".alert-parameters").textContent).toContain(
+      "<img src=x",
+    );
   });
 
   it("places the Parameter(s) line last in the error box", () => {
     withGlossaryRows({});
-    const container = renderTableWithErrors([
+    const container = renderTableWithAlerts([
       {
         context: "preprocessor",
         kind: "error",
@@ -1554,10 +1552,10 @@ describe("Parameter(s) row", () => {
         parameters: ["font"],
       },
     ]);
-    const item = container.querySelector(".compiler-diagnostic");
-    expect(
-      item.lastElementChild.classList.contains("error-relevant-parameters"),
-    ).toBe(true);
+    const item = container.querySelector(".alert-card");
+    expect(item.lastElementChild.classList.contains("alert-parameters")).toBe(
+      true,
+    );
   });
 
   it("warms the glossary-row map at mount, before any compile", () => {
@@ -1568,10 +1566,10 @@ describe("Parameter(s) row", () => {
 
   it("omits the row when the error has no parameters", () => {
     withGlossaryRows({});
-    const container = renderTableWithErrors([
+    const container = renderTableWithAlerts([
       { context: "preprocessor", kind: "error", name: "E", parameters: [] },
     ]);
-    expect(container.querySelector(".error-relevant-parameters")).toBeNull();
+    expect(container.querySelector(".alert-parameters")).toBeNull();
   });
 });
 
@@ -1600,7 +1598,7 @@ describe("Error ordering", () => {
     await act(async () => {
       await ref.current.handleTable(new File(["a,b"], "exp.csv"));
     });
-    return [...container.querySelectorAll(".error-name")].map(
+    return [...container.querySelectorAll(".alert-name")].map(
       (element) => element.textContent,
     );
   };
@@ -1705,7 +1703,7 @@ describe("Error ordering", () => {
     });
 
     expect(rowsLoadedWhenPreprocessRan).toBe(true);
-    const link = container.querySelector(".error-relevant-parameters a");
+    const link = container.querySelector(".alert-parameters a");
     expect(link).not.toBeNull();
     expect(link.href).toContain("range=A288");
   });
@@ -1762,7 +1760,7 @@ describe("Error ordering", () => {
     // if the callback awaited the hung fetch unbounded.
     await waitFor(
       () =>
-        expect(container.querySelector(".error-name").textContent).toBe("E"),
+        expect(container.querySelector(".alert-name").textContent).toBe("E"),
       { timeout: 3000 },
     );
   });
@@ -1787,13 +1785,13 @@ describe("Table compile-error visibility reporting", () => {
 
     act(() => {
       ref.current.setState({
-        errors: [{ context: "preprocessor", kind: "error", name: "E" }],
+        alerts: [{ context: "preprocessor", kind: "error", name: "E" }],
       });
     });
     expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(true);
 
     act(() => {
-      ref.current.setState({ errors: [] });
+      ref.current.setState({ alerts: [] });
     });
     expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(false);
   });
@@ -1804,14 +1802,14 @@ describe("Table compile-error visibility reporting", () => {
 
     act(() => {
       ref.current.setState({
-        errors: [{ context: "preprocessor", kind: "warning", name: "W" }],
+        alerts: [{ context: "preprocessor", kind: "warning", name: "W" }],
       });
     });
     expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(false);
 
     act(() => {
       ref.current.setState({
-        errors: [
+        alerts: [
           { context: "preprocessor", kind: "warning", name: "W" },
           { context: "preprocessor", kind: "correct", name: "OK" },
         ],
@@ -1825,12 +1823,12 @@ describe("Table compile-error visibility reporting", () => {
     const { ref, container } = renderTableWithReporter();
     act(() => {
       ref.current.setState({
-        errors: [{ context: "preprocessor", kind: "error", name: "E" }],
+        alerts: [{ context: "preprocessor", kind: "error", name: "E" }],
       });
     });
-    const summary = container.querySelector(".compiler-diagnostics");
+    const summary = container.querySelector(".alert-list");
     expect(summary).toHaveAttribute("role", "group");
-    expect(summary).toHaveAttribute("aria-label", "Compiler diagnostics");
+    expect(summary).toHaveAttribute("aria-label", "Compiler alerts");
     expect(summary).toHaveFocus();
   });
 
@@ -1841,7 +1839,7 @@ describe("Table compile-error visibility reporting", () => {
 
     act(() => {
       ref.current.setState({
-        errors: [{ context: "preprocessor", kind: "error", name: "E" }],
+        alerts: [{ context: "preprocessor", kind: "error", name: "E" }],
       });
     });
     expect(handleSetCompileErrorsVisible).toHaveBeenLastCalledWith(true);

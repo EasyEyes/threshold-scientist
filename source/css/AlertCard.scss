@@ -1,20 +1,20 @@
 @import "root.scss";
 
-.compiler-diagnostics {
+.alert-list {
   margin: 0.7rem 0;
 }
 
-.compiler-diagnostic {
-  --diagnostic-accent: #333;
-  --diagnostic-background: #fff;
-  --diagnostic-border: #999;
+.alert-card {
+  --alert-accent: #333;
+  --alert-background: #fff;
+  --alert-border: #999;
 
   position: relative;
-  border: 2px solid var(--diagnostic-border);
+  border: 2px solid var(--alert-border);
   border-radius: $icon-radius;
   padding: 0.6rem 1rem;
   margin: 0.5rem 0;
-  background: var(--diagnostic-background);
+  background: var(--alert-background);
   color: #333;
   overflow-wrap: break-word;
   text-align: left;
@@ -36,35 +36,36 @@
   }
 
   // Bootstrap's `.table > :not(caption) > * > *` cell rule reaches these
-  // sections through Table's root `.table`; diagnostics are not table cells.
-  .error-flex,
-  .error-message,
-  .error-hint,
-  .error-relevant-parameters {
+  // sections through Table's root `.table`; alerts are not table cells.
+  .alert-flex,
+  .alert-message,
+  .alert-hint,
+  .alert-hint-content,
+  .alert-parameters {
     padding: 0;
   }
 
-  .error-flex {
+  .alert-flex {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.5rem;
   }
 
-  .error-heading {
+  .alert-heading {
     margin: 0;
     font-size: 1.125rem;
     line-height: 1.4;
     min-width: 0;
   }
 
-  .error-name {
-    color: var(--diagnostic-accent);
+  .alert-name {
+    color: var(--alert-accent);
     font-weight: 700;
   }
 
-  .error-message,
-  .error-hint {
+  .alert-message,
+  .alert-hint {
     margin: 0.2rem 0;
     font-size: 1rem;
     line-height: 1.5;
@@ -72,18 +73,22 @@
     user-select: text;
   }
 
-  .diagnostic-section {
+  .alert-hint-content {
+    display: inline;
+  }
+
+  .alert-section {
     display: block;
     margin-top: 0.6rem;
   }
 
-  .error-hint-prefix,
-  .error-relevant-parameters-prefix {
-    color: var(--diagnostic-accent);
+  .alert-hint-prefix,
+  .alert-parameters-prefix {
+    color: var(--alert-accent);
     font-weight: 700;
   }
 
-  .error-relevant-parameters {
+  .alert-parameters {
     font-weight: 700;
     margin-top: 0.2rem;
     font-size: 1rem;
@@ -91,18 +96,33 @@
     max-width: 80ch;
   }
 
-  a.error-parameter-link,
-  a.error-parameter-link:visited {
+  a.alert-parameter-link,
+  a.alert-parameter-link:visited {
     color: inherit;
     text-decoration: underline;
   }
 
-  .error-parameter {
+  .alert-parameter {
+    font-weight: 700;
+  }
+
+  .alert-invalid,
+  .alert-deleted {
+    color: #bb2c22;
+    font-weight: 700;
+  }
+
+  .alert-deleted {
+    text-decoration: line-through;
+  }
+
+  .alert-inserted {
+    color: #147133;
     font-weight: 700;
   }
 
   // Literal values need visible boundaries without quotation marks.
-  .error-value {
+  .alert-value {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
       "Liberation Mono", monospace;
     font-size: 0.9375em;
@@ -117,7 +137,7 @@
     -webkit-box-decoration-break: clone;
   }
 
-  .error-name-action {
+  .alert-name-action {
     appearance: none;
     display: inline-flex;
     align-items: center;
@@ -133,7 +153,19 @@
     cursor: pointer;
   }
 
-  .error-close {
+  .alert-parameter-action {
+    appearance: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .alert-close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -152,14 +184,15 @@
   }
 
   a:focus-visible,
-  .error-close:focus-visible,
-  .error-name-action:focus-visible {
-    outline: 3px solid var(--diagnostic-accent);
+  .alert-close:focus-visible,
+  .alert-name-action:focus-visible,
+  .alert-parameter-action:focus-visible {
+    outline: 3px solid var(--alert-accent);
     outline-offset: 3px;
   }
 }
 
-.compiler-diagnostic-actionable {
+.alert-card-actionable {
   cursor: pointer;
 
   &:hover {
@@ -167,20 +200,20 @@
   }
 }
 
-.compiler-diagnostic-warning {
-  --diagnostic-accent: #b45309;
-  --diagnostic-background: #fffaf0;
-  --diagnostic-border: #ea580c;
+.alert-card-warning {
+  --alert-accent: #b45309;
+  --alert-background: #fffaf0;
+  --alert-border: #ea580c;
 }
 
-.compiler-diagnostic-error {
-  --diagnostic-accent: #{$error};
-  --diagnostic-background: #fff3f3;
-  --diagnostic-border: #{$error};
+.alert-card-error {
+  --alert-accent: #{$error};
+  --alert-background: #fff3f3;
+  --alert-border: #{$error};
 }
 
-.compiler-diagnostic-correct {
-  --diagnostic-accent: #{$dark-green};
-  --diagnostic-background: #f6fff2;
-  --diagnostic-border: #{$green};
+.alert-card-correct {
+  --alert-accent: #{$dark-green};
+  --alert-background: #f6fff2;
+  --alert-border: #{$green};
 }

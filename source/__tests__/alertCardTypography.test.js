@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 const css = fs.readFileSync(
-  path.join(__dirname, "../css/CompilerDiagnostic.scss"),
+  path.join(__dirname, "../css/AlertCard.scss"),
   "utf8",
 );
 
@@ -14,14 +14,14 @@ describe("compiler diagnostic typography and interaction styles", () => {
   });
 
   it("uses an 18px title with 1.4 line height", () => {
-    const heading = css.match(/\.error-heading\s*\{[^}]+/);
+    const heading = css.match(/\.alert-heading\s*\{[^}]+/);
     expect(heading).not.toBeNull();
     expect(heading[0]).toMatch(/font-size:\s*1\.125rem/);
     expect(heading[0]).toMatch(/line-height:\s*1\.4/);
   });
 
   it("uses consistent spacing between diagnostic sections", () => {
-    expect(css).toMatch(/\.diagnostic-section\s*\{[^}]*margin-top:\s*0\.6rem/);
+    expect(css).toMatch(/\.alert-section\s*\{[^}]*margin-top:\s*0\.6rem/);
   });
 
   it("provides visible keyboard focus and minimum target sizes", () => {
@@ -31,7 +31,7 @@ describe("compiler diagnostic typography and interaction styles", () => {
   });
 
   it("distinguishes values from prose and parameter names", () => {
-    const value = css.match(/\.error-value\s*\{[^}]+/);
+    const value = css.match(/\.alert-value\s*\{[^}]+/);
     expect(value).not.toBeNull();
     expect(value[0]).toMatch(/font-family:[^;]*monospace/);
     expect(value[0]).toMatch(/background:/);

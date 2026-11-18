@@ -20,8 +20,8 @@
  * panel as what the compiler will report, not as table errors.
  */
 import type { ExperimentTable } from "../../threshold/preprocess/experimentTable";
-import type { EasyEyesError } from "../../threshold/preprocess/errorMessages";
-import { IMAGE_FOLDER_MISSING } from "../../threshold/preprocess/errorMessages";
+import type { Alert } from "../../threshold/preprocess/alerts";
+import { IMAGE_FOLDER_MISSING } from "../../threshold/preprocess/alerts";
 import {
   getCodeList,
   getFolderNames,
@@ -131,7 +131,7 @@ export interface ResourceReport {
    * The compiler's own missing-resource errors for this table against the
    * available pool. Empty when everything is present.
    */
-  errors: EasyEyesError[];
+  errors: Alert[];
 }
 
 const EMPTY_REPORT: ResourceReport = { needed: [], errors: [] };
@@ -182,7 +182,7 @@ export function checkResources(
         if (!existing.params.includes(p)) existing.params.push(p);
     } else needed.set(key, { kind, filename, params: [...params] });
   };
-  const errors: EasyEyesError[] = [];
+  const errors: Alert[] = [];
 
   try {
     // Fonts with fontSource=file (font and instructionFont), as main.ts asks.

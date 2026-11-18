@@ -26,6 +26,7 @@ import {
 } from "./useAssistant";
 import { EasyEyesLogo } from "./EasyEyesLogo";
 import { RichText } from "./RichText";
+import AlertCard from "../../components/AlertCard";
 import { letterToValueIndex, type GridFocus, type ToolFile } from "./tools";
 import {
   MENU_SKILLS,
@@ -467,29 +468,15 @@ function ResultCard({
       )}
 
       {result.errors.length > 0 && (
-        <ul className="asst-result-errors">
-          {result.errors.slice(0, 8).map((e, i) => (
-            <li key={i}>
-              <span
-                className="asst-result-error-msg"
-                dangerouslySetInnerHTML={{ __html: e.message }}
-              />
-              {e.parameters?.length > 0 && (
-                <span className="asst-chips">
-                  {e.parameters.slice(0, 4).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      className="asst-param-chip"
-                      onClick={() => onFocus(p)}
-                      title={`Show ${p} in the grid`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </span>
-              )}
-            </li>
+        <ul className="alert-list">
+          {result.errors.slice(0, 8).map((alert, index) => (
+            <AlertCard
+              key={index}
+              as="li"
+              headingLevel={3}
+              alert={alert}
+              onParameter={onFocus}
+            />
           ))}
           {result.errors.length > 8 && (
             <li className="asst-result-more">

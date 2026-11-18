@@ -4,8 +4,8 @@ import {
   type NeededResource,
   type UserResources,
 } from "../resources";
-import type { EasyEyesError, PhraseSource } from "../validation";
-import CompilerDiagnostic from "../../components/CompilerDiagnostic";
+import type { Alert, PhraseSource } from "../validation";
+import AlertCard from "../../components/AlertCard";
 
 interface Props {
   needed: NeededResource[];
@@ -14,7 +14,7 @@ interface Props {
    * checkResources) — shown here as what a compile will report. They do not
    * gate the Fast compile button.
    */
-  compilerErrors: EasyEyesError[];
+  compilerErrors: Alert[];
   onJump: (paramName: string) => void;
   phrase: PhraseSource | null;
   files: File[];
@@ -116,17 +116,14 @@ export function ResourcePanel({
             What the compiler will report ({compilerErrors.length}) — you can
             still compile; drop the files to clear these
           </summary>
-          <ul className="error-list compiler-diagnostics">
+          <ul className="alert-list">
             {compilerErrors.map((e, i) => (
-              <CompilerDiagnostic
+              <AlertCard
                 key={i}
                 as="li"
                 headingLevel={3}
-                diagnostic={e}
-                onClick={
-                  e.parameters[0] ? () => onJump(e.parameters[0]) : undefined
-                }
-                title={e.parameters[0] ? "Jump to the parameter" : undefined}
+                alert={e}
+                onParameter={onJump}
               />
             ))}
           </ul>

@@ -14,12 +14,12 @@ import {
   setConditionColumnMapping,
 } from "../../threshold/preprocess/utils";
 import { filterDisabledConditionsFromParsed } from "../../threshold/preprocess/main";
-import type { EasyEyesError } from "../../threshold/preprocess/errorMessages";
+import type { Alert } from "../../threshold/preprocess/alerts";
 import type { PhraseTable } from "../components/parsePhraseFile";
 import { readi18nPhrases } from "../../threshold/components/readPhrases";
 import { getEntry } from "./glossary";
 
-export type { EasyEyesError };
+export type { Alert };
 
 /** A parsed `*.phrases.xlsx` spreadsheet (production parsePhraseFile output). */
 export interface PhraseSource {
@@ -75,7 +75,7 @@ export function mirrorPreprocess(matrix: string[][]): string[][] {
 }
 
 export interface ValidationResult {
-  errors: EasyEyesError[];
+  errors: Alert[];
   table: ExperimentTable | null;
   /**
    * The rows as the compiler's resource checks see them (pre-cleaned, font
@@ -93,7 +93,7 @@ export function runValidation(
   let data = mirrorPreprocess(matrix);
   if (data.length === 0) return { errors: [], table: null, data: null };
   try {
-    const errors: EasyEyesError[] = [];
+    const errors: Alert[] = [];
     errors.push(
       ...isBlockPresentAndProper(dataframeFromPapaParsed({ data } as any)),
     );
@@ -179,7 +179,7 @@ export function runValidation(
           context: "studio",
           kind: "error",
           parameters: [],
-        } as EasyEyesError,
+        } as Alert,
       ],
       table: null,
       data: null,
