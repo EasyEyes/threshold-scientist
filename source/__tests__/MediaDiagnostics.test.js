@@ -14,6 +14,6 @@ it("renders Media upload errors using the shared card and treats messages as tex
   );
   expect(card.querySelector("img")).toBeNull();
   expect(
-    screen.getByRole("heading", { name: "Media error: Upload failed" }),
+    screen.getByRole("heading", { name: "Upload failed" }),
   ).toBeInTheDocument();
 });

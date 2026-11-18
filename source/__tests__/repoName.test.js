@@ -1,10 +1,23 @@
 import {
   IllegalRepoNameError,
   MAX_REPO_BASE_NAME_LENGTH,
+  REPO_NAME_RULES_HTML,
   assertValidRepoBaseName,
   repoBaseNameFromSpreadsheetFileName,
   versionedRepoName,
 } from "../../threshold/preprocess/repoName";
+
+describe("repository naming diagnostics", () => {
+  it("uses the shared value class for literal examples", () => {
+    expect(REPO_NAME_RULES_HTML).toContain(
+      '<code class="error-value">--</code>',
+    );
+    expect(REPO_NAME_RULES_HTML).toContain(
+      '<code class="error-value">..</code>',
+    );
+    expect(REPO_NAME_RULES_HTML).not.toContain("<code>--</code>");
+  });
+});
 
 describe("repoBaseNameFromSpreadsheetFileName", () => {
   it("keeps a trailing dash from the spreadsheet name", () => {

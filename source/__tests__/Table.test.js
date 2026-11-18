@@ -935,13 +935,13 @@ describe("Table.onDrop", () => {
         errors: [{ context: "preprocessor", kind: "error", name: "E" }],
       });
     });
-    expect(queryByText("Compiler error: E")).toBeInTheDocument();
+    expect(queryByText("E")).toBeInTheDocument();
 
     act(() => {
       ref.current.onDrop([new File(["resource"], "phrases.phrases.xlsx")]);
     });
 
-    expect(queryByText("Compiler error: E")).not.toBeInTheDocument();
+    expect(queryByText("E")).not.toBeInTheDocument();
   });
 
   it("marks a dropped file as a classic compile, and a Studio hand-off as a Studio compile", () => {
@@ -1361,8 +1361,8 @@ describe("Table.onDropForExport", () => {
   });
 });
 
-describe("Error label prefixes", () => {
-  it("labels red errors as Compiler or Export errors; warnings and success stay unlabeled", () => {
+describe("Error titles", () => {
+  it("shows each diagnostic's own name; no generic Compiler/Export prefix", () => {
     const { act } = require("@testing-library/react");
     const ref = React.createRef();
     const { container } = render(<Table ref={ref} {...makeProps()} />);
@@ -1390,8 +1390,8 @@ describe("Error label prefixes", () => {
       (element) => element.textContent,
     );
     expect(names).toEqual([
-      "Compiler error: Unbalanced commas",
-      "Download source error: Export failed",
+      "Unbalanced commas",
+      "Export failed",
       "⚠️ Logging caution",
       "Compiled successfully.",
     ]);
@@ -1430,7 +1430,7 @@ describe("Parameter(s) row", () => {
     const row = container.querySelector(".error-relevant-parameters");
     expect(row).not.toBeNull();
     expect(row.textContent).toBe(
-      "PARAMETERS: font, readingCorpus, fontTolerateFaults",
+      "PARAMETERS font, readingCorpus, fontTolerateFaults",
     );
   });
 
@@ -1445,7 +1445,7 @@ describe("Parameter(s) row", () => {
       },
     ]);
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("PARAMETER: font");
+    expect(row.textContent).toBe("PARAMETER font");
   });
 
   it("links each parameter in the row to its glossary entry", () => {
@@ -1488,7 +1488,7 @@ describe("Parameter(s) row", () => {
     const row = container.querySelector(".error-relevant-parameters");
     const links = [...row.querySelectorAll("a")];
     expect(links).toHaveLength(1);
-    expect(row.textContent).toBe("PARAMETERS: font, notAParameter");
+    expect(row.textContent).toBe("PARAMETERS font, notAParameter");
   });
 
   it("links parameter mentions inside message and hint", () => {
@@ -1522,7 +1522,7 @@ describe("Parameter(s) row", () => {
       },
     ]);
     const row = container.querySelector(".error-relevant-parameters");
-    expect(row.textContent).toBe("PARAMETERS: block, font");
+    expect(row.textContent).toBe("PARAMETERS block, font");
     expect(row.querySelectorAll("a")).toHaveLength(2);
   });
 
@@ -1619,9 +1619,9 @@ describe("Error ordering", () => {
         corpusError("F3"),
       ]),
     ).toEqual([
-      "Compiler error: Font missing readingCorpus characters (F1)",
-      "Compiler error: Font missing readingCorpus characters (F2)",
-      "Compiler error: Font missing readingCorpus characters (F3)",
+      "Font missing readingCorpus characters (F1)",
+      "Font missing readingCorpus characters (F2)",
+      "Font missing readingCorpus characters (F3)",
     ]);
   });
 
@@ -1645,9 +1645,9 @@ describe("Error ordering", () => {
         corpusError("F2"),
       ]),
     ).toEqual([
-      "Compiler error: block value is empty",
-      "Compiler error: Font missing readingCorpus characters (F1)",
-      "Compiler error: Font missing readingCorpus characters (F2)",
+      "block value is empty",
+      "Font missing readingCorpus characters (F1)",
+      "Font missing readingCorpus characters (F2)",
     ]);
   });
   it("loads glossary rows during the compile and links rendered errors", async () => {
@@ -1762,9 +1762,7 @@ describe("Error ordering", () => {
     // if the callback awaited the hung fetch unbounded.
     await waitFor(
       () =>
-        expect(container.querySelector(".error-name").textContent).toBe(
-          "Compiler error: E",
-        ),
+        expect(container.querySelector(".error-name").textContent).toBe("E"),
       { timeout: 3000 },
     );
   });

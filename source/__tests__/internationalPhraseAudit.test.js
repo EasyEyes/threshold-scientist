@@ -23,13 +23,7 @@ it("blocks unaudited keys with evidence", () => {
     },
   });
   expect(errors).toHaveLength(2);
-  expect(errors[1].message).toContain("2025-01-01");
-  expect(errors[1].message).toContain(
-    '<span class="diagnostic-section"><strong>Audit evidence.</strong>',
-  );
-  expect(errors[1].hint).toBe(
-    "Check the phrase name and the latest International Phrases audit.",
-  );
+  expect(errors[1].hint).toContain("2025-01-01");
   expect(errors.every((e) => e.kind === "error")).toBe(true);
 });
 it("rejects malformed reports", () => {

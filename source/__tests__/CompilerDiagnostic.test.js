@@ -25,7 +25,7 @@ describe("CompilerDiagnostic", () => {
       "Review the keys.",
     );
     expect(item.querySelector(".error-hint").textContent).toBe(
-      "HINT: Remove stale references.",
+      "HINT Remove stale references.",
     );
     expect(item.querySelector(".compile-warning-item")).toBeNull();
   });
@@ -41,7 +41,7 @@ describe("CompilerDiagnostic", () => {
     );
   });
 
-  it("retains compiler/export error labels and success titles", () => {
+  it("shows the diagnostic's own name; no generic error prefix", () => {
     const { container } = render(
       <>
         <CompilerDiagnostic
@@ -57,11 +57,7 @@ describe("CompilerDiagnostic", () => {
     expect(container.querySelector("[role='status']")).not.toBeNull();
     expect(
       [...container.querySelectorAll(".error-name")].map((e) => e.textContent),
-    ).toEqual([
-      "Compiler error: Bad",
-      "Download source error: Bad export",
-      "Ready",
-    ]);
+    ).toEqual(["Bad", "Bad export", "Ready"]);
   });
 
   it("supports Studio's clickable list-item and Table's dismiss action", () => {
@@ -100,20 +96,28 @@ describe("CompilerDiagnostic", () => {
   });
 });
 
-it("renders rich message and hint content in valid flow containers", () => {
+it("retains production hint labels and value markup without adding an error prefix", () => {
   const { container } = render(
     <CompilerDiagnostic
       diagnostic={{
         ...warning,
-        message: "Missing files:<ul><li>font.woff</li></ul>",
-        hint: "<div>Upload the files.</div>",
+        kind: "error",
+        name: "Font missing",
+        message: 'Missing <code class="error-value">example.woff</code>.',
+        hint: "Upload the file.",
       }}
     />,
   );
-  expect(container.querySelector(".error-message").tagName).toBe("DIV");
-  expect(container.querySelector(".error-hint").tagName).toBe("DIV");
-  expect(container.querySelector(".error-hint-prefix + div")).toHaveTextContent(
-    "Upload the files.",
+  expect(container.querySelector(".error-name")).toHaveTextContent(
+    "Font missing",
   );
-  expect(container.querySelector("p ul, p div")).toBeNull();
+  expect(container.querySelector(".error-name")).not.toHaveTextContent(
+    "Compiler error:",
+  );
+  expect(
+    container.querySelector(".error-message code.error-value"),
+  ).toHaveTextContent("example.woff");
+  expect(container.querySelector(".error-hint")).toHaveTextContent(
+    "HINT Upload the file.",
+  );
 });

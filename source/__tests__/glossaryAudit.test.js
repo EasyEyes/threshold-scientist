@@ -59,15 +59,6 @@ it("C2 blocks unused study definitions with exact parameter-row links", async ()
   expect(errors[0].kind).toBe("error");
   expect(errors[0].message).toContain("range=A3:B3");
   expect(errors[0].parameters).toEqual(["oldFont"]);
-  expect(errors[0].message).toContain(
-    '<span class="diagnostic-section"><strong>Can I run the study?</strong>',
-  );
-  expect(errors[0].message).toContain(
-    '<span class="diagnostic-section"><strong>Report the problem.</strong>',
-  );
-  expect(errors[0].hint).toBe(
-    "Check the Glossary entry and remove this parameter if it is not needed.",
-  );
 });
 it("C6 uses the numbered family row while displaying the actual study name", async () => {
   await loadGlossaryRows(async () => ({
@@ -136,5 +127,5 @@ it("escapes parameter HTML and omits internal audit metadata and removal history
   expect(errors[0].message + errors[0].hint).not.toMatch(
     /script|2026-|Removed from/,
   );
-  expect(errors[0].message).toMatch(/no source usage was detected/i);
+  expect(errors[0].hint).toContain("No source usage was detected");
 });

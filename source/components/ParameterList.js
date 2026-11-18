@@ -30,7 +30,7 @@ export default function ParameterList({ parameters }) {
   return (
     <div className="error-relevant-parameters">
       <span className="error-relevant-parameters-prefix">
-        {names.length > 1 ? "PARAMETERS: " : "PARAMETER: "}
+        {names.length > 1 ? "PARAMETERS " : "PARAMETER "}
       </span>
       {names.map((name, index) => (
         <Fragment key={name}>

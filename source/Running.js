@@ -52,6 +52,10 @@ export default class Running extends Component {
       // "idle" | "preparing" | "ready"
       prolificStudyState: "idle",
       preparedProlificStudyId: null,
+      // Warning objects dismissed via the card x. Keyed by object identity:
+      // a new compile replaces the whole warnings array, so stale
+      // dismissals never apply to the new warnings.
+      dismissedCompileWarnings: [],
     };
 
     this._isActivating = false;
@@ -867,7 +871,9 @@ export default class Running extends Component {
           </>
         )}
         {Array.isArray(this.props.compileWarnings) &&
-          this.props.compileWarnings.length > 0 && (
+          this.props.compileWarnings.some(
+            (warning) => !this.state.dismissedCompileWarnings.includes(warning),
+          ) && (
             <div
               className="compiler-diagnostics"
               ref={this.diagnosticsRef}
@@ -875,12 +881,22 @@ export default class Running extends Component {
               aria-label="Compiler warnings"
               tabIndex={-1}
             >
-              {this.props.compileWarnings.map((warning, index) => (
-                <CompilerDiagnostic
-                  key={`compile-warning-${index}`}
-                  diagnostic={warning}
-                />
-              ))}
+              {this.props.compileWarnings.map((warning, index) =>
+                this.state.dismissedCompileWarnings.includes(warning) ? null : (
+                  <CompilerDiagnostic
+                    key={`compile-warning-${index}`}
+                    diagnostic={warning}
+                    onClose={() =>
+                      this.setState((prevState) => ({
+                        dismissedCompileWarnings: [
+                          ...prevState.dismissedCompileWarnings,
+                          warning,
+                        ],
+                      }))
+                    }
+                  />
+                ),
+              )}
             </div>
           )}
       </>

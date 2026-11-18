@@ -29,4 +29,13 @@ describe("compiler diagnostic typography and interaction styles", () => {
     expect(css).toMatch(/min-width:\s*24px/);
     expect(css).toMatch(/min-height:\s*24px/);
   });
+
+  it("distinguishes values from prose and parameter names", () => {
+    const value = css.match(/\.error-value\s*\{[^}]+/);
+    expect(value).not.toBeNull();
+    expect(value[0]).toMatch(/font-family:[^;]*monospace/);
+    expect(value[0]).toMatch(/background:/);
+    expect(value[0]).toMatch(/white-space:\s*pre-wrap/);
+    expect(value[0]).toMatch(/overflow-wrap:\s*anywhere/);
+  });
 });

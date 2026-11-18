@@ -3,16 +3,8 @@ import { linkGlossaryParameters } from "../../threshold/parameters/glossaryLink"
 import ParameterList from "./ParameterList";
 import "../css/CompilerDiagnostic.scss";
 
-const displayName = ({ kind, context, name }) => {
+const displayName = ({ kind, name }) => {
   if (kind === "warning") return `⚠️ ${name.replace(/^(?:⚠️\s*)+/u, "")}`;
-  if (kind === "error")
-    return `${
-      context === "export"
-        ? "Download source"
-        : context === "media"
-        ? "Media"
-        : "Compiler"
-    } error: ${name}`;
   return name;
 };
 
@@ -99,23 +91,22 @@ export default function CompilerDiagnostic({
         )}
       </div>
       {message && (
-        <div
+        <p
           className="error-message"
           dangerouslySetInnerHTML={{
             __html: linkGlossaryParameters(message),
           }}
-        ></div>
+        ></p>
       )}
       {hint && (
-        <div className="error-hint">
-          <span className="error-hint-prefix">HINT: </span>
-          <div
-            className="error-hint-content"
+        <p className="error-hint">
+          <span className="error-hint-prefix">HINT </span>
+          <span
             dangerouslySetInnerHTML={{
               __html: linkGlossaryParameters(hint),
             }}
-          ></div>
-        </div>
+          ></span>
+        </p>
       )}
       {parameters.length ? <ParameterList parameters={parameters} /> : null}
     </Tag>
