@@ -145,7 +145,7 @@ it.each(["error", "warning", "correct"])(
       "error-message",
       "error-hint",
     ]);
-    expect(fields[0]).toHaveTextContent("PARAMETER: font, readingCorpus");
+    expect(fields[0].textContent).toBe("font, readingCorpus");
     expect(fields[0].querySelectorAll("a")).toHaveLength(2);
     expect(fields[3]).toHaveTextContent("HINT: Remove stale references.");
   },

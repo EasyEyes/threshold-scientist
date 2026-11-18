@@ -21,14 +21,12 @@ const parameterLink = (name) => {
 
 /**
  * The first line of each diagnostic: involved parameters, deduplicated with
- * order preserved and linked to the glossary. The fixed PARAMETER: label
- * matches the HINT: label for every diagnostic kind.
+ * order preserved and linked to the glossary.
  */
 export default function ParameterList({ parameters }) {
   const names = [...new Set(parameters)];
   return (
     <div className="error-relevant-parameters">
-      <span className="error-relevant-parameters-prefix">{"PARAMETER: "}</span>
       {names.map((name, index) => (
         <Fragment key={name}>
           {index > 0 ? ", " : null}
