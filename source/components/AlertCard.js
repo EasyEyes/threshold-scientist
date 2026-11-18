@@ -56,6 +56,9 @@ export default function AlertCard({
       }}
       title={onClick ? "Jump to the parameter" : undefined}
     >
+      {parameters.length ? (
+        <ParameterList parameters={parameters} onParameter={onParameter} />
+      ) : null}
       <div className="alert-flex">
         <Heading className="alert-heading" id={headingId}>
           {onClick ? (
@@ -99,7 +102,7 @@ export default function AlertCard({
       )}
       {hint && (
         <div className="alert-hint">
-          <span className="alert-hint-prefix">HINT </span>
+          <span className="alert-hint-prefix">HINT: </span>
           <div
             className="alert-hint-content"
             dangerouslySetInnerHTML={{
@@ -108,9 +111,6 @@ export default function AlertCard({
           ></div>
         </div>
       )}
-      {parameters.length ? (
-        <ParameterList parameters={parameters} onParameter={onParameter} />
-      ) : null}
     </Tag>
   );
 }

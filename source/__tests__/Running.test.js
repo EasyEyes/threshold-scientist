@@ -146,11 +146,11 @@ describe("Running compile warnings", () => {
     });
     const { container } = render(running.render());
     const row = container.querySelector(".alert-parameters");
-    expect(row.textContent).toBe("PARAMETER font");
+    expect(row.textContent).toBe("font");
     expect(row.querySelectorAll("a")).toHaveLength(1);
   });
 
-  it("places the Parameter(s) line last in the warning box", () => {
+  it("places the parameter line first in the warning box", () => {
     mockGlossaryRows.font = 288;
     const running = new Running({
       user: {
@@ -181,7 +181,7 @@ describe("Running compile warnings", () => {
     });
     const { container } = render(running.render());
     const item = container.querySelector(".alert-card-warning");
-    expect(item.lastElementChild.classList.contains("alert-parameters")).toBe(
+    expect(item.firstElementChild.classList.contains("alert-parameters")).toBe(
       true,
     );
   });
@@ -203,7 +203,7 @@ describe("Running compile warnings", () => {
     const { container } = render(running.render());
 
     const row = container.querySelector(".alert-parameters");
-    expect(row.textContent).toBe("PARAMETER font");
+    expect(row.textContent).toBe("font");
     const links = [...row.querySelectorAll("a")];
     expect(links).toHaveLength(1);
     expect(links[0].href).toContain("range=A288");

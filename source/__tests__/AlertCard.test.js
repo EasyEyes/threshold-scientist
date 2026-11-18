@@ -25,7 +25,7 @@ describe("AlertCard", () => {
       "Review the keys.",
     );
     expect(item.querySelector(".alert-hint").textContent).toBe(
-      "HINT Remove stale references.",
+      "HINT: Remove stale references.",
     );
   });
 
@@ -105,4 +105,32 @@ describe("AlertCard", () => {
     ).toHaveTextContent("Upload the files.");
     expect(container.querySelector("p ul, p div")).toBeNull();
   });
+});
+
+it.each(["error", "warning", "correct"])(
+  "renders %s parameters first without a redundant label and hint last",
+  (kind) => {
+    const { container } = render(
+      <AlertCard
+        alert={{ ...warning, kind, parameters: ["font", "targetKind", "font"] }}
+      />,
+    );
+    const fields = [...container.querySelector(".alert-card").children];
+    expect(fields.map((field) => field.className)).toEqual([
+      "alert-parameters",
+      "alert-flex",
+      "alert-message",
+      "alert-hint",
+    ]);
+    expect(fields[0].textContent).toBe("font, targetKind");
+    expect(fields[3].textContent).toBe("HINT: Remove stale references.");
+  },
+);
+
+it("omits absent parameters and hints", () => {
+  const { container } = render(
+    <AlertCard alert={{ kind: "correct", name: "Ready" }} />,
+  );
+  expect(container.querySelector(".alert-parameters")).toBeNull();
+  expect(container.querySelector(".alert-hint")).toBeNull();
 });

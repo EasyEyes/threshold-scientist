@@ -14,6 +14,17 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
   await page.goto("/compiler/?glossaryDiagnostics=1");
   const errors = page.locator(".alert-card");
   await expect(errors).toHaveCount(5);
+  for (const card of await errors.all()) {
+    const fields = await card.evaluate((el) =>
+      [...el.children].map((child) => child.className),
+    );
+    expect(fields[0]).toBe("alert-parameters");
+    expect(fields[fields.length - 1]).toBe("alert-hint");
+    await expect(card.locator(".alert-parameters")).not.toContainText(
+      "PARAMETER",
+    );
+  }
+
   await expect(errors.first()).toHaveCSS("border-top-style", "solid");
   // Bootstrap's `.table > :not(caption) > * > *` cell rule must not add
   // vertical padding to the diagnostic sections.
@@ -107,15 +118,14 @@ test("diagnostic values are legible and reflow without horizontal overflow", asy
     await expect(error).toHaveCount(1);
     await expect(error).toHaveAttribute("role", "alert");
     const hint = error.locator(".alert-hint");
-    await expect(hint).toContainText("HINT The erroneous value is:");
-    await expect(hint).not.toContainText("HINT:");
+    await expect(hint).toContainText("HINT: The erroneous value is:");
     // One multicategorical cell remains one semantic/highlighted value.
     const supplied = hint.locator(".alert-value");
     await expect(supplied).toHaveCount(1);
     await expect(supplied).toHaveText("Cgrome, Firefox, Edge");
     expect(await supplied.evaluate((el) => el.tagName)).toBe("CODE");
     const accessibleText = await error.ariaSnapshot();
-    expect(accessibleText).toContain("HINT The erroneous value is:");
+    expect(accessibleText).toContain("HINT: The erroneous value is:");
     expect(accessibleText).toContain("Cgrome, Firefox, Edge");
     if (mode === "default") {
       const css = await supplied.evaluate((el) => {

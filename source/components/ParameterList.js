@@ -37,9 +37,6 @@ export default function ParameterList({ parameters, onParameter }) {
   const names = [...new Set(parameters)];
   return (
     <div className="alert-parameters">
-      <span className="alert-parameters-prefix">
-        {names.length > 1 ? "PARAMETERS " : "PARAMETER "}
-      </span>
       {names.map((name, index) => (
         <Fragment key={name}>
           {index > 0 ? ", " : null}

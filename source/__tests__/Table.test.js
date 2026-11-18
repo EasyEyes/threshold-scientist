@@ -1429,9 +1429,7 @@ describe("Parameter(s) row", () => {
     ]);
     const row = container.querySelector(".alert-parameters");
     expect(row).not.toBeNull();
-    expect(row.textContent).toBe(
-      "PARAMETERS font, readingCorpus, fontTolerateFaults",
-    );
+    expect(row.textContent).toBe("font, readingCorpus, fontTolerateFaults");
   });
 
   it("uses the singular label for a single parameter", () => {
@@ -1445,7 +1443,7 @@ describe("Parameter(s) row", () => {
       },
     ]);
     const row = container.querySelector(".alert-parameters");
-    expect(row.textContent).toBe("PARAMETER font");
+    expect(row.textContent).toBe("font");
   });
 
   it("links each parameter in the row to its glossary entry", () => {
@@ -1486,7 +1484,7 @@ describe("Parameter(s) row", () => {
     const row = container.querySelector(".alert-parameters");
     const links = [...row.querySelectorAll("a")];
     expect(links).toHaveLength(1);
-    expect(row.textContent).toBe("PARAMETERS font, notAParameter");
+    expect(row.textContent).toBe("font, notAParameter");
   });
 
   it("links parameter mentions inside message and hint", () => {
@@ -1520,7 +1518,7 @@ describe("Parameter(s) row", () => {
       },
     ]);
     const row = container.querySelector(".alert-parameters");
-    expect(row.textContent).toBe("PARAMETERS block, font");
+    expect(row.textContent).toBe("block, font");
     expect(row.querySelectorAll("a")).toHaveLength(2);
   });
 
@@ -1540,7 +1538,7 @@ describe("Parameter(s) row", () => {
     );
   });
 
-  it("places the Parameter(s) line last in the error box", () => {
+  it("places the parameter line first in the error box", () => {
     withGlossaryRows({});
     const container = renderTableWithAlerts([
       {
@@ -1553,7 +1551,7 @@ describe("Parameter(s) row", () => {
       },
     ]);
     const item = container.querySelector(".alert-card");
-    expect(item.lastElementChild.classList.contains("alert-parameters")).toBe(
+    expect(item.firstElementChild.classList.contains("alert-parameters")).toBe(
       true,
     );
   });
