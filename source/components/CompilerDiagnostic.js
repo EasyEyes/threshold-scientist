@@ -57,6 +57,7 @@ export default function CompilerDiagnostic({
       }}
       title={title}
     >
+      {parameters.length ? <ParameterList parameters={parameters} /> : null}
       <div className="error-flex">
         <Heading className="error-heading" id={headingId}>
           {onClick ? (
@@ -100,7 +101,7 @@ export default function CompilerDiagnostic({
       )}
       {hint && (
         <p className="error-hint">
-          <span className="error-hint-prefix">HINT </span>
+          <span className="error-hint-prefix">HINT: </span>
           <span
             dangerouslySetInnerHTML={{
               __html: linkGlossaryParameters(hint),
@@ -108,7 +109,6 @@ export default function CompilerDiagnostic({
           ></span>
         </p>
       )}
-      {parameters.length ? <ParameterList parameters={parameters} /> : null}
     </Tag>
   );
 }

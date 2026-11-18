@@ -6,6 +6,7 @@ const read = (...parts) => fs.readFileSync(source(...parts), "utf8");
 
 const diagnosticSurfaces = [
   "Table.js",
+  "Media.js",
   "Running.js",
   "studio/components/ErrorPanel.tsx",
   "studio/components/ResourcePanel.tsx",

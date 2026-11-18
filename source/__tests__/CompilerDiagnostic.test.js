@@ -1,5 +1,6 @@
 import React from "react";
 import { fireEvent, render } from "@testing-library/react";
+import { initGlossary } from "../../threshold/parameters/glossaryRegistry";
 import CompilerDiagnostic from "../components/CompilerDiagnostic";
 
 const warning = {
@@ -25,7 +26,7 @@ describe("CompilerDiagnostic", () => {
       "Review the keys.",
     );
     expect(item.querySelector(".error-hint").textContent).toBe(
-      "HINT Remove stale references.",
+      "HINT: Remove stale references.",
     );
     expect(item.querySelector(".compile-warning-item")).toBeNull();
   });
@@ -118,6 +119,43 @@ it("retains production hint labels and value markup without adding an error pref
     container.querySelector(".error-message code.error-value"),
   ).toHaveTextContent("example.woff");
   expect(container.querySelector(".error-hint")).toHaveTextContent(
-    "HINT Upload the file.",
+    "HINT: Upload the file.",
   );
+});
+
+it.each(["error", "warning", "correct"])(
+  "renders %s fields in parameter, diagnostic, hint order",
+  (kind) => {
+    initGlossary({ glossary: { font: {}, readingCorpus: {} } });
+    const { container } = render(
+      <CompilerDiagnostic
+        diagnostic={{
+          ...warning,
+          kind,
+          parameters: ["font", "readingCorpus", "font"],
+        }}
+      />,
+    );
+    const fields = [
+      ...container.querySelector(".compiler-diagnostic").children,
+    ];
+    expect(fields.map((field) => field.className)).toEqual([
+      "error-relevant-parameters",
+      "error-flex",
+      "error-message",
+      "error-hint",
+    ]);
+    expect(fields[0]).toHaveTextContent("PARAMETER: font, readingCorpus");
+    expect(fields[0].querySelectorAll("a")).toHaveLength(2);
+    expect(fields[3]).toHaveTextContent("HINT: Remove stale references.");
+  },
+);
+
+it("omits absent parameter and hint fields without empty labels", () => {
+  const { container } = render(
+    <CompilerDiagnostic diagnostic={{ kind: "correct", name: "Ready" }} />,
+  );
+  expect(container.querySelector(".error-relevant-parameters")).toBeNull();
+  expect(container.querySelector(".error-hint")).toBeNull();
+  expect(container.querySelector(".error-name")).toHaveTextContent("Ready");
 });
