@@ -6,7 +6,7 @@ import { handleDrop } from "./components/dropzone";
 import ResourceButton from "./ResourceButton";
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
 import { loadGlossaryRows } from "../threshold/parameters/glossaryLink";
-import CompilerDiagnostic from "./components/CompilerDiagnostic";
+import AlertCard from "./components/AlertCard";
 import {
   userRepoFiles,
   resourcesRepoName,
@@ -25,7 +25,7 @@ import {
 import {
   IllegalRepoNameError,
   assertValidRepoBaseName,
-  illegalRepoNameToEasyEyesError,
+  illegalRepoNameToAlert,
   repoBaseNameFromSpreadsheetFileName,
 } from "../threshold/preprocess/repoName";
 import { PREVIEW_PIN, stagePreview, showPreview } from "./studio/preview";
@@ -77,7 +77,7 @@ export default class Table extends Component {
 
     this.state = {
       tableName: null,
-      errors: [],
+      alerts: [],
       showDropZone: true,
     };
 
@@ -86,7 +86,7 @@ export default class Table extends Component {
 
     this.ref = createRef();
     this.dropZoneRef = createRef();
-    this.diagnosticsRef = createRef();
+    this.alertsRef = createRef();
 
     this.finalSuccessMessage =
       "Compiled successfully. Compile a new experiment, anytime, by submitting it above.";
@@ -100,11 +100,11 @@ export default class Table extends Component {
   }
 
   componentDidUpdate(_prevProps, prevState) {
-    if (prevState.errors !== this.state.errors) {
+    if (prevState.alerts !== this.state.alerts) {
       this.props.functions.handleSetCompileErrorsVisible?.(
-        this.state.errors.some((err) => err.kind === "error"),
+        this.state.alerts.some((err) => err.kind === "error"),
       );
-      if (this.state.errors.length) this.diagnosticsRef.current?.focus();
+      if (this.state.alerts.length) this.alertsRef.current?.focus();
     }
   }
 
@@ -129,7 +129,7 @@ export default class Table extends Component {
   compileFiles(files, source, preview = undefined) {
     beginCompile(source);
     this.pendingPreview = preview ?? null;
-    this.setState({ errors: [] });
+    this.setState({ alerts: [] });
     const { user, functions } = this.props;
     if (!user || !user.initProjectList)
       throw new Error(
@@ -161,8 +161,8 @@ export default class Table extends Component {
       this.setState((prevState) => ({
         // Keep any compiler errors on display (they are why the scientist is
         // exporting), but replace stale export errors from earlier attempts.
-        errors: [
-          ...prevState.errors.filter((err) => err.context !== "export"),
+        alerts: [
+          ...prevState.alerts.filter((err) => err.context !== "export"),
           ...exportErrors,
         ],
       }));
@@ -703,7 +703,7 @@ export default class Table extends Component {
 
             // show errors
             this.setState({
-              errors: [...blockingErrors],
+              alerts: [...blockingErrors],
               showDropZone: true,
             });
 
@@ -804,7 +804,7 @@ export default class Table extends Component {
             // show success log, preceded by any non-blocking warnings
             this.props.functions.handleUpdateUser(user);
             this.setState({
-              errors: [
+              alerts: [
                 ...warningList,
                 {
                   context: "preprocessor",
@@ -834,7 +834,7 @@ export default class Table extends Component {
     }
 
     // this.setState({
-    //   errors: [...errors],
+    //   alerts: [...errors],
     // });
   }
 
@@ -886,7 +886,7 @@ export default class Table extends Component {
       // step exactly as it was before (no table name, no messages), as
       // reset() leaves it. Warnings were the Studio's to show; nothing about
       // the preview appears on the compiler page.
-      this.setState({ showDropZone: true, tableName: null, errors: [] });
+      this.setState({ showDropZone: true, tableName: null, alerts: [] });
       finishCompilerOperation(operation, "completed", { preview: true });
     } catch (error) {
       preview.placeholder?.close?.();
@@ -925,7 +925,7 @@ export default class Table extends Component {
       failedPhase: "repo-name",
     });
     this.setState({
-      errors: [illegalRepoNameToEasyEyesError(error)],
+      alerts: [illegalRepoNameToAlert(error)],
       showDropZone: true,
       tableName: fileName,
     });
@@ -936,7 +936,7 @@ export default class Table extends Component {
     await this.props.functions.handleReturnToStep("table");
     this.setState({
       tableName: null,
-      errors: [],
+      alerts: [],
     });
   }
 
@@ -1004,6 +1004,9 @@ export default class Table extends Component {
           <ul>
             <li>Click SELECT FILE.</li>
           </ul>
+          Resources uploaded individually are stored in your Pavlovia account
+          for future use. Resources in a source.zip are not.
+          <br />
           To download your study as a raw.source.zip archive, without compiling
           it, e.g. to share it or report a bug:
           <ul>
@@ -1012,8 +1015,6 @@ export default class Table extends Component {
               spreadsheet.
             </li>
           </ul>
-          Resources uploaded individually are stored in your Pavlovia account
-          for future use. Resources in a source.zip are not.
           <FreshnessStatus
             onPublicationDate={this.props.functions.updateLatestPublicationDate}
           />
@@ -1082,7 +1083,7 @@ export default class Table extends Component {
         {this.state.tableName ? (
           <p
             className={`dropzone-around-text emphasize${
-              this.state.errors.filter(
+              this.state.alerts.filter(
                 (err) => err.context === "preprocessor" && err.kind === "error",
               ).length
                 ? " has-error"
@@ -1093,25 +1094,25 @@ export default class Table extends Component {
           </p>
         ) : null}
 
-        {this.state.errors.length !== 0 && (
+        {this.state.alerts.length !== 0 && (
           <div
-            className="compiler-diagnostics"
-            ref={this.diagnosticsRef}
+            className="alert-list"
+            ref={this.alertsRef}
             role="group"
-            aria-label="Compiler diagnostics"
+            aria-label="Compiler alerts"
             tabIndex={-1}
           >
-            {this.state.errors.map((error, index) => (
-              <CompilerDiagnostic
-                key={`error-${index}`}
-                diagnostic={error}
+            {this.state.alerts.map((alert, index) => (
+              <AlertCard
+                key={`alert-${index}`}
+                alert={alert}
                 onClose={() => {
-                  const newErrors = this.state.errors.filter(
-                    (err, i) => i !== index,
+                  const newAlerts = this.state.alerts.filter(
+                    (candidate, i) => i !== index,
                   );
-                  const newName = newErrors.length ? this.state.name : null;
+                  const newName = newAlerts.length ? this.state.name : null;
                   this.setState({
-                    errors: newErrors,
+                    alerts: newAlerts,
                     tableName: newName,
                   });
                 }}

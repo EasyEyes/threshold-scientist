@@ -8,11 +8,7 @@ import {
   toggleConditionEnabled,
   type TableState,
 } from "./tableModel";
-import {
-  runValidation,
-  type EasyEyesError,
-  type PhraseSource,
-} from "./validation";
+import { runValidation, type Alert, type PhraseSource } from "./validation";
 import { parsePhraseFile } from "../components/parsePhraseFile";
 import type { ExperimentTable } from "../../threshold/preprocess/experimentTable";
 import { fileToMatrix, parseCsvString } from "./fileImport";
@@ -30,7 +26,7 @@ import {
   type RowFlash,
   type TableReveal,
 } from "./components/Grid";
-import { ErrorPanel } from "./components/ErrorPanel";
+import { AlertPanel } from "./components/AlertPanel";
 import { GlossaryPanel } from "./components/GlossaryPanel";
 import { ResourcePanel } from "./components/ResourcePanel";
 import { ExistingFilesModal } from "./components/ExistingFilesModal";
@@ -129,7 +125,7 @@ export default function StudioPanel({
   const [table, setTable] = useState<TableState>(() =>
     matrixToState(parseCsvString(EXAMPLES["Demo experiment"])),
   );
-  const [errors, setErrors] = useState<EasyEyesError[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [expTable, setExpTable] = useState<ExperimentTable | null>(null);
   const [checkedData, setCheckedData] = useState<string[][] | null>(null);
   const [selectedParam, setSelectedParam] = useState<string | null>(null);
@@ -302,11 +298,11 @@ export default function StudioPanel({
     if (phraseLoading || namedPhraseLoading) return;
     const timer = setTimeout(() => {
       const {
-        errors,
+        errors: nextAlerts,
         table: t,
         data,
       } = runValidation(stateToMatrix(table), phrase, namedPhrase);
-      setErrors(errors);
+      setAlerts(nextAlerts);
       setExpTable(t);
       setCheckedData(data);
       setValidating(false);
@@ -316,13 +312,13 @@ export default function StudioPanel({
 
   const problemParams = useMemo(() => {
     const m = new Map<string, "error" | "warning">();
-    for (const e of errors)
+    for (const e of alerts)
       for (const p of e.parameters ?? []) {
         if (e.kind === "error") m.set(p, "error");
         else if (!m.has(p)) m.set(p, "warning");
       }
     return m;
-  }, [errors]);
+  }, [alerts]);
 
   // The compiler's own resource discovery and missing-file checks, against
   // the pool a compile would have (EasyEyesResources + files dropped here).
@@ -348,7 +344,7 @@ export default function StudioPanel({
     [expTable],
   );
 
-  const errorCount = errors.filter((e) => e.kind === "error").length;
+  const errorCount = alerts.filter((e) => e.kind === "error").length;
   const flashRows = (params: string[]) => {
     if (!params.length) return;
     if (flashTimer.current) clearTimeout(flashTimer.current);
@@ -775,7 +771,7 @@ export default function StudioPanel({
             )}
             <div className="problems">
               <div className="panel-title">Compiler checks</div>
-              <ErrorPanel errors={errors} onJump={jumpTo} />
+              <AlertPanel alerts={alerts} onJump={jumpTo} />
             </div>
             <ResourcePanel
               needed={needed}

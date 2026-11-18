@@ -233,7 +233,7 @@ button.history-dropdown {
   padding: 1rem;
   color: $green;
   font-weight: 500;
-  font-size: 1.4rem;
+  font-size: 1.12rem; // 1.4rem × 0.8 so compile instructions fit on a 14" laptop
   border-radius: $step-radius;
 
   /* Denis requested linebreaks for compiler instructions

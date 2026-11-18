@@ -16,7 +16,7 @@
  */
 import Papa from "papaparse";
 import type { GlossaryEntry } from "../../components/types";
-import type { EasyEyesError } from "../validation";
+import type { Alert } from "../validation";
 import type { NeededResource, UserResources } from "../resources";
 import { existsInUserResources, RESOURCE_TYPE_LABELS } from "../resources";
 import { resolveEntry, suggestibleEntries } from "../glossary";
@@ -53,8 +53,8 @@ import {
 /* ------------------------------------------------------------------ */
 
 export interface CheckReport {
-  errors: EasyEyesError[];
-  resourceErrors: EasyEyesError[];
+  errors: Alert[];
+  resourceErrors: Alert[];
   needed: NeededResource[];
 }
 
@@ -487,7 +487,7 @@ const withSpecMaps = (spec: unknown): unknown => {
 export const tableToCsv = (t: TableState): string =>
   Papa.unparse(stateToMatrix(t), { newline: "\n" });
 
-const errorLine = (e: EasyEyesError): string => {
+const errorLine = (e: Alert): string => {
   const who = e.parameters?.length ? ` [${e.parameters.join(", ")}]` : "";
   const hint = e.hint ? ` Hint: ${stripHtml(e.hint)}` : "";
   return `- ${e.kind.toUpperCase()}${who} ${e.name}: ${stripHtml(

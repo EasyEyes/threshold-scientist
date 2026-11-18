@@ -6,6 +6,7 @@ import {
 import { initGlossary } from "../../threshold/parameters/glossaryRegistry";
 import {
   __resetGlossaryRowsForTests,
+  linkGlossaryParameters,
   loadGlossaryRows,
 } from "../../threshold/parameters/glossaryLink";
 jest.mock("../../threshold/components/easyeyesBaseUrl", () => ({
@@ -57,7 +58,7 @@ it("C2 blocks unused study definitions with exact parameter-row links", async ()
     audit,
   );
   expect(errors[0].kind).toBe("error");
-  expect(errors[0].message).toContain("range=A3:B3");
+  expect(linkGlossaryParameters(errors[0].message)).toContain("range=A3:B3");
   expect(errors[0].parameters).toEqual(["oldFont"]);
 });
 it("C6 uses the numbered family row while displaying the actual study name", async () => {
@@ -74,7 +75,7 @@ it("C6 uses the numbered family row while displaying the actual study name", asy
     },
   );
   expect(errors[0].message).toContain("questionAndAnswer01");
-  expect(errors[0].message).toContain("range=A2:B2");
+  expect(linkGlossaryParameters(errors[0].message)).toContain("range=A2:B2");
 });
 it("C4 rejects mismatched, malformed, or incomplete reports rather than inventing unused keys", () => {
   for (const value of [

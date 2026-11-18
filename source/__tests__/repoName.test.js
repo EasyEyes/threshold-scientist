@@ -10,10 +10,10 @@ import {
 describe("repository naming diagnostics", () => {
   it("uses the shared value class for literal examples", () => {
     expect(REPO_NAME_RULES_HTML).toContain(
-      '<code class="error-value">--</code>',
+      '<code class="alert-value">--</code>',
     );
     expect(REPO_NAME_RULES_HTML).toContain(
-      '<code class="error-value">..</code>',
+      '<code class="alert-value">..</code>',
     );
     expect(REPO_NAME_RULES_HTML).not.toContain("<code>--</code>");
   });

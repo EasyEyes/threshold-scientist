@@ -904,29 +904,7 @@ main.ee-studio-wide {
   font-style: italic;
 }
 
-/* problems — green-status-banner when clean */
-
-.ee-studio .all-clear {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  background: var(--pale-green);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  color: var(--green);
-}
-
-.ee-studio .all-clear-mark {
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.ee-studio .all-clear-sub {
-  font-size: 12.5px;
-  color: var(--dark-green);
-}
-
-.ee-studio .error-summary {
+.ee-studio .alert-summary {
   display: flex;
   gap: 8px;
   margin-bottom: 10px;
@@ -954,7 +932,7 @@ main.ee-studio-wide {
   color: var(--green);
 }
 
-.ee-studio .error-list {
+.ee-studio .alert-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -963,14 +941,6 @@ main.ee-studio-wide {
   gap: 9px;
   max-height: 46vh;
   overflow-y: auto;
-}
-
-.ee-studio .error-parameter {
-  font-family: var(--mono);
-  font-size: 0.92em;
-  background: #f0f0f0;
-  border-radius: 4px;
-  padding: 0 4px;
 }
 
 /* glossary panel */
@@ -1182,7 +1152,7 @@ main.ee-studio-wide {
   margin-bottom: 8px;
 }
 
-.ee-studio .compiler-will-say .error-list {
+.ee-studio .compiler-will-say .alert-list {
   max-height: 32vh;
 }
 

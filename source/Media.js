@@ -15,7 +15,9 @@ import {
 } from "./components/mediaCompression";
 import { VIEWER_ACCESS, fetchMediaAccess } from "./components/mediaAuthApi";
 
-import CompilerDiagnostic from "./components/CompilerDiagnostic";
+import AlertCard from "./components/AlertCard";
+import { makeAlert } from "../threshold/preprocess/alerts";
+import { alertValue } from "../threshold/preprocess/alertHtml";
 
 import "./css/Media.scss";
 
@@ -30,7 +32,7 @@ export default class Media extends Component {
 
     this.state = {
       files: listMedia(),
-      errors: [],
+      alerts: [],
       compress: true,
       busy: false,
       showFiles: false,
@@ -79,22 +81,34 @@ export default class Media extends Component {
   async addFiles(droppedFiles) {
     if (!droppedFiles.length) return;
 
-    this.setState({ busy: true, errors: [] });
+    this.setState({ busy: true, alerts: [] });
 
-    const errors = [];
+    const alerts = [];
     const added = [];
 
     for (const file of droppedFiles) {
       if (!isAccepted(file)) {
-        errors.push(`${file.name} is not a supported media file.`);
+        alerts.push(
+          makeAlert({
+            context: "media",
+            name: "Unsupported media file",
+            message: `${alertValue(file.name)} is not a supported media file.`,
+          }),
+        );
         continue;
       }
 
       const path = sanitizeMediaFileName(file.name);
 
       if (isNameTaken(path) || added.some((record) => record.path === path)) {
-        errors.push(
-          `${file.name} matches a file already in the library. Rename it before adding, since existing media is never replaced.`,
+        alerts.push(
+          makeAlert({
+            context: "media",
+            name: "Media file already exists",
+            message: `${alertValue(
+              file.name,
+            )} matches a file already in the library. Rename it before adding, since existing media is never replaced.`,
+          }),
         );
         continue;
       }
@@ -105,8 +119,14 @@ export default class Media extends Component {
           const { blob } = await compressImageFile(file);
           finalSize = blob.size;
         } catch {
-          errors.push(
-            `${file.name} could not be compressed, so it was added unchanged.`,
+          alerts.push(
+            makeAlert({
+              context: "media",
+              name: "Media compression failed",
+              message: `${alertValue(
+                file.name,
+              )} could not be compressed, so it was added unchanged.`,
+            }),
           );
         }
       }
@@ -126,7 +146,7 @@ export default class Media extends Component {
 
     this.setState({
       files: listMedia(),
-      errors,
+      alerts,
       busy: false,
       showFiles: true,
     });
@@ -232,7 +252,7 @@ export default class Media extends Component {
   }
 
   render() {
-    const { files, errors, busy, showFiles, access } = this.state;
+    const { files, alerts, busy, showFiles, access } = this.state;
     const canUpload = !!access?.permissions?.upload;
 
     return (
@@ -288,30 +308,10 @@ export default class Media extends Component {
 
           {this.renderUploadAccess()}
 
-          {errors.length > 0 && (
-            <div className="compiler-diagnostics">
-              {errors.map((message, index) => (
-                <CompilerDiagnostic
-                  key={index}
-                  diagnostic={{
-                    kind: "error",
-                    context: "media",
-                    name: "Upload failed",
-                    message: String(message).replace(
-                      /[&<>"']/g,
-                      (character) =>
-                        ({
-                          "&": "&amp;",
-                          "<": "&lt;",
-                          ">": "&gt;",
-                          '"': "&quot;",
-                          "'": "&#39;",
-                        })[character],
-                    ),
-                    hint: "",
-                    parameters: [],
-                  }}
-                />
+          {alerts.length > 0 && (
+            <div className="alert-list">
+              {alerts.map((alert, index) => (
+                <AlertCard key={index} alert={alert} />
               ))}
             </div>
           )}

@@ -47,7 +47,7 @@ class DiagnosticTable extends Table {
     this.state = {
       ...this.state,
       tableName: "glossary-diagnostics.csv",
-      errors: [
+      alerts: [
         ...validateExperimentTable(new ExperimentTable(rows)).filter((e) =>
           [
             "Parameter is obsolete",

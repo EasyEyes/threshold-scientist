@@ -201,7 +201,7 @@ it("shows scientists the missing keys and what to do next", async () => {
     "<strong>Can I run the study?</strong> Yes",
   );
   expect(result.errors[0].message).toContain("Report the problem");
-  expect(result.errors[0].message).toContain('class="diagnostic-section"');
+  expect(result.errors[0].message).toContain('class="alert-section"');
   expect(result.errors[0].message).not.toContain("<br><br>");
 });
 
@@ -224,7 +224,7 @@ it("lists each missing source key and uses the plural count", async () => {
   expect(result.errors[0].message).toContain("3 keys that are not defined");
   for (const key of missingKeys) {
     expect(result.errors[0].message).toContain(
-      '<code class="error-value"><a href=',
+      '<code class="alert-value"><a href=',
     );
     expect(result.errors[0].message).toContain(`${key}</a></code>`);
   }

@@ -42,7 +42,7 @@ import {
   type Skill,
 } from "./skills";
 import { existsInUserResources } from "../resources";
-import type { EasyEyesError } from "../validation";
+import type { Alert } from "../validation";
 import {
   MAX_CONVERSATION_BYTES,
   attachmentBlocks,
@@ -75,8 +75,8 @@ export interface TurnResult {
   blocks: { block: string; conditions: string[] }[];
   conditionCount: number;
   parameterCount: number;
-  errors: EasyEyesError[];
-  warnings: EasyEyesError[];
+  errors: Alert[];
+  warnings: Alert[];
   /** Resource files the table names that are not in EasyEyesResources. */
   missing: string[];
   /** Files named but unverifiable (signed out). */

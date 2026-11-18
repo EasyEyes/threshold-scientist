@@ -23,27 +23,27 @@ test("compile warnings appear below the study controls on desktop and mobile", a
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/compiler/?warnings=1");
-  const summary = page.locator(".compiler-diagnostics");
+  const summary = page.locator(".alert-list");
   await expect(summary).toHaveAttribute("role", "group");
   await expect(summary).toBeFocused();
-  const warning = page.locator(".compiler-diagnostic-warning");
+  const warning = page.locator(".alert-card-warning");
   for (const width of [1280, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(warning).toContainText("⚠️ Warning: 1 missing phrase");
     await expect(warning).toContainText("Can I run the study? Yes");
     await expect(warning).toContainText("Report the problem.");
-    await expect(warning.locator(".error-name")).toHaveCSS("font-size", "18px");
-    await expect(warning.locator(".error-message")).toHaveCSS(
+    await expect(warning.locator(".alert-name")).toHaveCSS("font-size", "18px");
+    await expect(warning.locator(".alert-message")).toHaveCSS(
       "font-size",
       "16px",
     );
-    await expect(warning.locator(".diagnostic-section").first()).toHaveCSS(
+    await expect(warning.locator(".alert-section").first()).toHaveCSS(
       "display",
       "block",
     );
     await expect(warning).not.toContainText("HINT:");
     const colors = await warning.evaluate((element) => ({
-      foreground: getComputedStyle(element.querySelector(".error-name")).color,
+      foreground: getComputedStyle(element.querySelector(".alert-name")).color,
       background: getComputedStyle(element).backgroundColor,
     }));
     expect(
@@ -63,7 +63,7 @@ test("compile warnings appear below the study controls on desktop and mobile", a
       // The dismiss x lives inside the warnings box itself; every study
       // control must still precede the box.
       const insideWarnings = await button.evaluate(
-        (element) => element.closest(".compiler-diagnostics") !== null,
+        (element) => element.closest(".alert-list") !== null,
       );
       if (insideWarnings) continue;
       const box = await button.boundingBox();
@@ -82,7 +82,7 @@ test("compile warnings appear below the study controls on desktop and mobile", a
 test("warning text reflows at 320px, 200% text size, and WCAG spacing overrides", async ({
   page,
 }) => {
-  const warning = page.locator(".compiler-diagnostic-warning");
+  const warning = page.locator(".alert-card-warning");
   for (const mode of ["320px", "200%", "spacing"]) {
     await page.setViewportSize({
       width: mode === "200%" ? 1280 : 320,
@@ -116,8 +116,8 @@ test("warning text reflows at 320px, 200% text size, and WCAG spacing overrides"
     expect(bounds.left).toBeGreaterThanOrEqual(0);
     expect(bounds.right).toBeLessThanOrEqual(mode === "200%" ? 1280 : 320);
     expect(bounds.overflow).toBe(false);
-    await expect(warning.locator(".error-name")).toBeVisible();
-    await expect(warning.locator(".error-message")).toBeVisible();
+    await expect(warning.locator(".alert-name")).toBeVisible();
+    await expect(warning.locator(".alert-message")).toBeVisible();
   }
 });
 
@@ -127,10 +127,10 @@ test("warning cards dismiss with the shared x, like error and success cards", as
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/compiler/?warnings=1");
-  const warning = page.locator(".compiler-diagnostic-warning");
+  const warning = page.locator(".alert-card-warning");
   await expect(warning).toHaveCount(1);
   await page.getByRole("button", { name: "Dismiss warning message" }).click();
   await expect(warning).toHaveCount(0);
-  await expect(page.locator(".compiler-diagnostics")).toHaveCount(0);
+  await expect(page.locator(".alert-list")).toHaveCount(0);
   expect(errors).toEqual([]);
 });

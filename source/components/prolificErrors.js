@@ -1,17 +1,16 @@
 // Prolific validation details can be nested under filter indexes and arrays.
 // Keep the returned explanation readable without rendering API text as HTML.
-const errorMessages = (value, path = []) => {
+const alerts = (value, path = []) => {
   if (typeof value === "string") {
     const field = path
       .filter((key) => !/^\d+$/.test(key) && key !== "non_field_errors")
       .join(".");
     return [field ? `${field}: ${value}` : value];
   }
-  if (Array.isArray(value))
-    return value.flatMap((item) => errorMessages(item, path));
+  if (Array.isArray(value)) return value.flatMap((item) => alerts(item, path));
   if (value && typeof value === "object") {
     return Object.entries(value).flatMap(([key, item]) =>
-      errorMessages(item, [...path, key]),
+      alerts(item, [...path, key]),
     );
   }
   return [];
@@ -20,7 +19,7 @@ const errorMessages = (value, path = []) => {
 export const prolificStudyCreationError = (result, httpStatus, projectId) => {
   const error = result?.error ?? result;
   const status = error?.status ?? httpStatus;
-  const details = errorMessages(
+  const details = alerts(
     error?.detail ??
       error?.message ??
       (typeof error === "string" ? error : null),
@@ -35,7 +34,7 @@ export const prolificStudyCreationError = (result, httpStatus, projectId) => {
       interactive,
       ...fields
     } = error;
-    details.push(...errorMessages(fields));
+    details.push(...alerts(fields));
   }
   const explanation = [
     ...new Set(

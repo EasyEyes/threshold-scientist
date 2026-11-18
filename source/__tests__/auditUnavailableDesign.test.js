@@ -29,7 +29,7 @@ it.each([
     );
     expect(error.kind).toBe("error");
     expect(error.message).toContain(
-      '<span class="diagnostic-section"><strong>For developers.</strong>',
+      '<span class="alert-section"><strong>For developers.</strong>',
     );
     expect(error.hint).toBe("Reload the compiler and try again.");
   } finally {

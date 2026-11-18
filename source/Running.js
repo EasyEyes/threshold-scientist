@@ -29,7 +29,7 @@ import {
   endCompile,
   optimizationOn,
 } from "../threshold/preprocess/compileMode";
-import CompilerDiagnostic from "./components/CompilerDiagnostic";
+import AlertCard from "./components/AlertCard";
 import { captureError } from "./sentry";
 import { isEmptyRepository } from "./repositoryState";
 import { deriveStudyActions } from "./studyActions";
@@ -60,7 +60,7 @@ export default class Running extends Component {
 
     this._isActivating = false;
     this.setModeToRun = this.setModeToRun.bind(this);
-    this.diagnosticsRef = React.createRef();
+    this.alertsRef = React.createRef();
   }
 
   async componentDidMount() {
@@ -135,8 +135,7 @@ export default class Running extends Component {
   }
 
   focusDiagnostics() {
-    if (this.props.compileWarnings?.length)
-      this.diagnosticsRef.current?.focus();
+    if (this.props.compileWarnings?.length) this.alertsRef.current?.focus();
   }
 
   async setModeToRun(e = null) {
@@ -875,17 +874,17 @@ export default class Running extends Component {
             (warning) => !this.state.dismissedCompileWarnings.includes(warning),
           ) && (
             <div
-              className="compiler-diagnostics"
-              ref={this.diagnosticsRef}
+              className="alert-list"
+              ref={this.alertsRef}
               role="group"
               aria-label="Compiler warnings"
               tabIndex={-1}
             >
               {this.props.compileWarnings.map((warning, index) =>
                 this.state.dismissedCompileWarnings.includes(warning) ? null : (
-                  <CompilerDiagnostic
+                  <AlertCard
                     key={`compile-warning-${index}`}
-                    diagnostic={warning}
+                    alert={warning}
                     onClose={() =>
                       this.setState((prevState) => ({
                         dismissedCompileWarnings: [

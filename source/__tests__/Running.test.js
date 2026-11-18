@@ -38,11 +38,11 @@ jest.mock("../../threshold/parameters/glossaryLink", () => ({
   glossaryParameterUrl: (name) => mockGlossaryUrl(name),
   linkGlossaryParameters: (html) =>
     html.replace(
-      /<span class="error-parameter">([^<]+)<\/span>/g,
+      /<span class="alert-parameter">([^<]+)<\/span>/g,
       (span, name) => {
         const href = mockGlossaryUrl(name);
         return href
-          ? `<a class="error-parameter-link" href="${href}" target="_blank" rel="noopener noreferrer">${span}</a>`
+          ? `<a class="alert-parameter-link" href="${href}" target="_blank" rel="noopener noreferrer">${span}</a>`
           : span;
       },
     ),
@@ -93,7 +93,7 @@ describe("Running compile warnings", () => {
     const renderResult = (warnings) =>
       new Running({ ...baseProps, compileWarnings: warnings }).render();
     const { container, rerender } = render(renderResult([warning]));
-    const warnings = container.querySelector(".compiler-diagnostics");
+    const warnings = container.querySelector(".alert-list");
     for (const button of screen.getAllByRole("button")) {
       // The dismiss x lives inside the warnings box itself; every study
       // control must still precede the box.
@@ -103,17 +103,17 @@ describe("Running compile warnings", () => {
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
     }
-    expect(container.querySelector(".error-message")).toHaveTextContent(
+    expect(container.querySelector(".alert-message")).toHaveTextContent(
       "EE_exampleMissingPhrase",
     );
-    expect(container.querySelector(".error-hint")).toHaveTextContent(
+    expect(container.querySelector(".alert-hint")).toHaveTextContent(
       "Report bug",
     );
-    expect(container.querySelector(".error-name")).toHaveTextContent(
+    expect(container.querySelector(".alert-name")).toHaveTextContent(
       "⚠️ Warning: 1 missing phrase",
     );
     rerender(renderResult([]));
-    expect(container.querySelector(".compiler-diagnostics")).toBeNull();
+    expect(container.querySelector(".alert-list")).toBeNull();
     expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument();
   });
 
@@ -145,7 +145,7 @@ describe("Running compile warnings", () => {
       ],
     });
     const { container } = render(running.render());
-    const row = container.querySelector(".error-relevant-parameters");
+    const row = container.querySelector(".alert-parameters");
     expect(row.textContent).toBe("font");
     expect(row.querySelectorAll("a")).toHaveLength(1);
   });
@@ -180,10 +180,10 @@ describe("Running compile warnings", () => {
       ],
     });
     const { container } = render(running.render());
-    const item = container.querySelector(".compiler-diagnostic-warning");
-    expect(
-      item.firstElementChild.classList.contains("error-relevant-parameters"),
-    ).toBe(true);
+    const item = container.querySelector(".alert-card-warning");
+    expect(item.firstElementChild.classList.contains("alert-parameters")).toBe(
+      true,
+    );
   });
 
   it("labels and links the parameters of each warning", () => {
@@ -196,20 +196,20 @@ describe("Running compile warnings", () => {
           kind: "warning",
           name: "W",
           parameters: ["font"],
-          message: 'Set <span class="error-parameter">font</span> to taste.',
+          message: 'Set <span class="alert-parameter">font</span> to taste.',
         },
       ],
     });
     const { container } = render(running.render());
 
-    const row = container.querySelector(".error-relevant-parameters");
+    const row = container.querySelector(".alert-parameters");
     expect(row.textContent).toBe("font");
     const links = [...row.querySelectorAll("a")];
     expect(links).toHaveLength(1);
     expect(links[0].href).toContain("range=A288");
     expect(links[0].target).toBe("_blank");
 
-    const messageLink = container.querySelector(".error-message a");
+    const messageLink = container.querySelector(".alert-message a");
     expect(messageLink).not.toBeNull();
     expect(messageLink.href).toContain("range=A288");
   });
@@ -596,7 +596,7 @@ describe("Running warning dismissal", () => {
       compileWarnings: [warning(1), warning(2)],
     });
     const { container } = render(instance.render());
-    expect(container.querySelectorAll(".compiler-diagnostic")).toHaveLength(2);
+    expect(container.querySelectorAll(".alert-card")).toHaveLength(2);
     expect(
       screen.getAllByRole("button", { name: "Dismiss warning message" }),
     ).toHaveLength(2);
@@ -610,8 +610,8 @@ describe("Running warning dismissal", () => {
       dismissedCompileWarnings: [compileWarnings[0]],
     };
     const { container } = render(instance.render());
-    expect(container.querySelectorAll(".compiler-diagnostic")).toHaveLength(1);
-    expect(container.querySelector(".error-name").textContent).toContain(
+    expect(container.querySelectorAll(".alert-card")).toHaveLength(1);
+    expect(container.querySelector(".alert-name").textContent).toContain(
       "Warning 2",
     );
     // Last card dismissed → the whole (empty) box disappears.
@@ -620,7 +620,7 @@ describe("Running warning dismissal", () => {
       dismissedCompileWarnings: compileWarnings,
     };
     const cleared = render(instance.render());
-    expect(cleared.container.querySelector(".compiler-diagnostics")).toBeNull();
+    expect(cleared.container.querySelector(".alert-list")).toBeNull();
   });
 
   it("a new compile's warnings are all shown, ignoring stale dismissals", () => {
@@ -640,8 +640,8 @@ describe("Running warning dismissal", () => {
     });
     fresh.state = previous.state;
     const { container } = render(fresh.render());
-    expect(container.querySelectorAll(".compiler-diagnostic")).toHaveLength(1);
-    expect(container.querySelector(".error-name").textContent).toContain(
+    expect(container.querySelectorAll(".alert-card")).toHaveLength(1);
+    expect(container.querySelector(".alert-name").textContent).toContain(
       "Warning 3",
     );
   });

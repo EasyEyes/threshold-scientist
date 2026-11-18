@@ -12,25 +12,34 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
     }),
   );
   await page.goto("/compiler/?glossaryDiagnostics=1");
-  const errors = page.locator(".compiler-diagnostic");
+  const errors = page.locator(".alert-card");
   await expect(errors).toHaveCount(5);
+  for (const card of await errors.all()) {
+    const fields = await card.evaluate((el) =>
+      [...el.children].map((child) => child.className),
+    );
+    expect(fields[0]).toBe("alert-parameters");
+    expect(fields[fields.length - 1]).toBe("alert-hint");
+    await expect(card.locator(".alert-parameters")).not.toContainText(
+      "PARAMETER",
+    );
+  }
+
   await expect(errors.first()).toHaveCSS("border-top-style", "solid");
   // Bootstrap's `.table > :not(caption) > * > *` cell rule must not add
   // vertical padding to the diagnostic sections.
   for (const section of await errors
-    .locator(
-      ".error-flex, .error-message, .error-hint, .error-relevant-parameters",
-    )
+    .locator(".alert-flex, .alert-message, .alert-hint, .alert-parameters")
     .all()) {
     await expect(section).toHaveCSS("padding", "0px");
   }
   for (const replacement of ["_online2PayCurrencyCode", "fontDirection"]) {
     const error = errors.filter({
-      has: page.locator(".error-hint", {
+      has: page.locator(".alert-hint", {
         hasText: `Use ${replacement} instead.`,
       }),
     });
-    await expect(error.locator(".error-name")).toHaveText(
+    await expect(error.locator(".alert-name")).toHaveText(
       "Parameter is obsolete",
     );
     await expect(
@@ -66,7 +75,7 @@ test("compiler diagnostics can be dismissed from the keyboard", async ({
   page,
 }) => {
   await page.goto("/compiler/?glossaryDiagnostics=1");
-  const errors = page.locator(".compiler-diagnostic");
+  const errors = page.locator(".alert-card");
   await expect(errors).toHaveCount(5);
   const dismiss = page
     .getByRole("button", { name: "Dismiss error message" })
@@ -104,20 +113,19 @@ test("diagnostic values are legible and reflow without horizontal overflow", asy
         `,
       });
     const error = page
-      .locator(".compiler-diagnostic")
+      .locator(".alert-card")
       .filter({ hasText: "Parameter contains values of the wrong type" });
     await expect(error).toHaveCount(1);
     await expect(error).toHaveAttribute("role", "alert");
-    const hint = error.locator(".error-hint");
-    await expect(hint).toContainText("HINT The erroneous value is:");
-    await expect(hint).not.toContainText("HINT:");
+    const hint = error.locator(".alert-hint");
+    await expect(hint).toContainText("HINT: The erroneous value is:");
     // One multicategorical cell remains one semantic/highlighted value.
-    const supplied = hint.locator(".error-value");
+    const supplied = hint.locator(".alert-value");
     await expect(supplied).toHaveCount(1);
     await expect(supplied).toHaveText("Cgrome, Firefox, Edge");
     expect(await supplied.evaluate((el) => el.tagName)).toBe("CODE");
     const accessibleText = await error.ariaSnapshot();
-    expect(accessibleText).toContain("HINT The erroneous value is:");
+    expect(accessibleText).toContain("HINT: The erroneous value is:");
     expect(accessibleText).toContain("Cgrome, Firefox, Edge");
     if (mode === "default") {
       const css = await supplied.evaluate((el) => {
@@ -147,7 +155,7 @@ test("diagnostic values are legible and reflow without horizontal overflow", asy
     }
     const noOverflow = await error.evaluate((card) => {
       const cardRect = card.getBoundingClientRect();
-      const values = [...card.querySelectorAll(".error-value")].map((el) => {
+      const values = [...card.querySelectorAll(".alert-value")].map((el) => {
         const r = el.getBoundingClientRect();
         return {
           text: el.textContent,
