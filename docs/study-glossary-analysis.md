@@ -5,7 +5,7 @@ have been removed and before generating condition files. Blank rows and implicit
 defaults are outside the explicit usage check. Unknown parameter names remain the
 responsibility of the existing parameter-name validation.
 
-## Blocking usage check
+## Optional usage audit
 
 `GET /.netlify/functions/glossary-audit-compiler` reads the latest completed
 `glossaryAuditRuns` report. It does not start audits or write study data. Queued,
@@ -13,19 +13,20 @@ running, and failed newer runs do not hide the completed report. The adapter
 preserves the report's classifications: referenced `obsoleteUsed` entries remain
 in the used-key set for this check. Existing obsolete-parameter validation remains.
 
-A study-defined parameter classified as `unused` produces a blocking **Glossary
-parameter not audited as used** error. The message names the actual study parameter
+A study-defined parameter classified as `unused` produces a **Glossary
+parameter not audited as used** warning. The message names the actual study parameter
 and links to its definition's full row in the published Google Sheets glossary.
 For example, `questionAndAnswer01` is audited and linked through
 `questionAndAnswer@@`. The existing glossary CSV row map supplies the link;
 if the row map cannot be loaded, the existing whole-sheet fallback applies.
 HTML values in messages are escaped.
 
-The report must match the glossary version loaded by the compiler. Missing,
-malformed, overlapping, incomplete, or version-mismatched reports block compilation
-with **Glossary audit unavailable** rather than fabricating an unused result.
-Failures are not cached; the next compile retries. A new glossary version requires
-a completed audit of that version before this check can succeed.
+The compiler uses classifications only from a complete report for the loaded
+Glossary version. A missing, malformed, incomplete, or version-mismatched report
+produces a **Glossary audit unavailable** warning. Compilation can continue while
+an audit is pending or if the service is unavailable. The next compile checks
+again. Standard parameter validation still blocks unrecognized names, invalid
+values, and obsolete definitions.
 
 This usage audit records source references. In particular, a glossary-wide data
 logging loop can establish a source reference without establishing task-specific

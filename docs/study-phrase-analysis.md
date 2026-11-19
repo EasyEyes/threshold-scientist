@@ -11,7 +11,7 @@ Custom symbols and their replacement text remain outside the explicit-reference 
 
 The compiler first checks spreadsheet structure, resolves custom values, and validates parameter names, column placement, value types, allowed categories (including `_language`), and cross-parameter rules. A blocking error in those stages skips the glossary usage audit, so an audit outage cannot obscure an input error.
 
-Once those checks pass, the glossary audit runs against the original enabled parameter rows. A missing, stale, or failed audit still blocks an otherwise valid study. Resource and font checks follow. International Phrase key checks and phrase/glossary source analysis run only if no earlier blocking errors remain. Warnings alone do not skip the glossary audit or block compilation.
+Once those checks pass, the glossary audit runs against the original enabled parameter rows. A missing, stale, or failed audit produces a warning and compilation continues. Resource and font checks follow. International Phrase key checks and phrase/glossary source analysis run only if no earlier blocking errors remain. Warnings alone do not skip the glossary audit or block compilation.
 
 ## Source index and API
 
