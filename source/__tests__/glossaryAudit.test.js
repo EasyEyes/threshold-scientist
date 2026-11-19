@@ -47,7 +47,7 @@ it("C1/C6/C7 collects populated recognized rows and numbered definitions, not de
     { parameter: "questionAndAnswer01", key: "questionAndAnswer@@" },
   ]);
 });
-it("C2 blocks unused study definitions with exact parameter-row links", async () => {
+it("C2 warns about unused study definitions with exact parameter-row links", async () => {
   await loadGlossaryRows(async () => ({
     ok: true,
     text: async () =>
@@ -57,7 +57,7 @@ it("C2 blocks unused study definitions with exact parameter-row links", async ()
     [{ parameter: "oldFont", key: "oldFont" }],
     audit,
   );
-  expect(errors[0].kind).toBe("error");
+  expect(errors[0].kind).toBe("warning");
   expect(linkGlossaryParameters(errors[0].message)).toContain("range=A3:B3");
   expect(errors[0].parameters).toEqual(["oldFont"]);
 });
@@ -93,9 +93,12 @@ it("C5 retries an unavailable audit on the next compile", async () => {
     .fn()
     .mockResolvedValueOnce({ ok: false })
     .mockResolvedValueOnce({ ok: true, json: async () => audit });
-  expect((await checkGlossaryAudit([["font", "", "Arial"]]))[0].name).toBe(
-    "Glossary audit unavailable",
-  );
+  expect(await checkGlossaryAudit([["font", "", "Arial"]])).toEqual([
+    expect.objectContaining({
+      name: "Glossary audit unavailable",
+      kind: "warning",
+    }),
+  ]);
   expect(await checkGlossaryAudit([["font", "", "Arial"]])).toEqual([]);
   expect(global.fetch).toHaveBeenCalledTimes(2);
 });
@@ -128,5 +131,5 @@ it("escapes parameter HTML and omits internal audit metadata and removal history
   expect(errors[0].message + errors[0].hint).not.toMatch(
     /script|2026-|Removed from/,
   );
-  expect(errors[0].hint).toContain("No source usage was detected");
+  expect(errors[0].hint).toContain("Review the Glossary entry");
 });

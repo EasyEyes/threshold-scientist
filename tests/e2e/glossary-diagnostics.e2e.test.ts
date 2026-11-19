@@ -54,11 +54,15 @@ test("compiler errors show Glossary replacements and useful spelling suggestions
       .filter({ hasText: "Parameter is unrecognized" })
       .getByRole("link", { name: "fontDirection", exact: true }),
   ).toBeVisible();
-  await expect(
-    errors.filter({ hasText: "Glossary parameter not audited as used" }),
-  ).toContainText(
+  const auditWarning = page.locator(".alert-card-warning").filter({
+    hasText: "Glossary parameter not audited as used",
+  });
+  await expect(auditWarning).toContainText(
     "defined in the Parameter Glossary, but no source usage was detected",
   );
+  await expect(
+    auditWarning.getByRole("link", { name: "font", exact: true }).first(),
+  ).toHaveAttribute("href", /range=A\d+:B\d+/);
   expect(await errors.allTextContents()).not.toEqual(
     expect.arrayContaining([
       expect.stringMatching(/internal-audit-id|2026-11-12|Removed from/),
