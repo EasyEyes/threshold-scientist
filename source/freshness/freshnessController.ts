@@ -1,4 +1,7 @@
-import { formatLocalDeploymentTime } from "./formatLocalDeploymentTime";
+import {
+  formatLocalDeploymentTime,
+  formatPageUpToDateTime,
+} from "./formatLocalDeploymentTime";
 import { latestPublicationDate } from "./latestPublicationDate";
 
 export type FreshnessState =
@@ -74,7 +77,7 @@ const checkingState: FreshnessState = {
 
 const developmentState: FreshnessState = {
   status: "fresh",
-  message: "Fresh. The compiler is running in development mode.",
+  message: "The compiler is running in development mode.",
 };
 
 const automaticRetryDelays = [1000, 2000, 4000];
@@ -237,14 +240,14 @@ export const createFreshnessController = ({
         if (publishedAt) {
           publish({
             status: "fresh",
-            message: `Fresh. This page is up to date: ${formatLocalDeploymentTime(
+            message: `Page is up to date as of ${formatPageUpToDateTime(
               publishedAt,
             )}.`,
           });
         } else {
           publish({
             status: "fresh",
-            message: "Fresh. This page is up to date.",
+            message: "Page is up to date.",
           });
         }
       } else {

@@ -8,6 +8,8 @@ jest.mock("../freshness/formatLocalDeploymentTime", () => {
   return {
     formatLocalDeploymentTime: (value) =>
       actual.formatLocalDeploymentTime(value, "UTC"),
+    formatPageUpToDateTime: (value) =>
+      actual.formatPageUpToDateTime(value, "UTC"),
   };
 });
 
@@ -46,7 +48,7 @@ describe("FreshnessStatus", () => {
     expect(screen.getByText("✅", { exact: true })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Fresh. This page is up to date: Jul 14, 2026, 10:15 AM UTC+0.",
+        "Page is up to date as of Jul 14, 2026 at 10:15 AM (UTC+0).",
       ),
     ).toBeInTheDocument();
   });
@@ -56,7 +58,7 @@ describe("FreshnessStatus", () => {
 
     expect(screen.getByText("✅", { exact: true })).toBeInTheDocument();
     expect(
-      screen.getByText("Fresh. The compiler is running in development mode."),
+      screen.getByText("The compiler is running in development mode."),
     ).toBeInTheDocument();
   });
 
@@ -77,7 +79,7 @@ describe("FreshnessStatus", () => {
 
     expect(
       await screen.findByText(
-        "Fresh. This page is up to date: Jul 18, 2026, 9:00 AM UTC+0.",
+        "Page is up to date as of Jul 18, 2026 at 9:00 AM (UTC+0).",
       ),
     ).toBeInTheDocument();
     expect(onPublicationDate).toHaveBeenCalledWith("2026-07-18T09:00:00.000Z");
@@ -105,7 +107,7 @@ describe("FreshnessStatus", () => {
       />,
     );
     await screen.findByText(
-      "Fresh. This page is up to date: Jul 18, 2026, 9:00 AM UTC+0.",
+      "Page is up to date as of Jul 18, 2026 at 9:00 AM (UTC+0).",
     );
 
     await act(async () => {
@@ -177,7 +179,7 @@ describe("FreshnessStatus", () => {
     });
     const view = render(<FreshnessStatus controller={controller} />);
     await screen.findByText(
-      "Fresh. This page is up to date: Jul 14, 2026, 10:15 AM UTC+0.",
+      "Page is up to date as of Jul 14, 2026 at 10:15 AM (UTC+0).",
     );
 
     notify({

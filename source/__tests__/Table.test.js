@@ -187,7 +187,7 @@ describe("Table freshness status", () => {
     expect(banner).toContainElement(status);
     expect(banner.lastElementChild).toBe(status);
     expect(status.textContent).toBe(
-      "✅Fresh. The compiler is running in development mode.",
+      "✅The compiler is running in development mode.",
     );
     expect(fileInput).toBeEnabled();
   });

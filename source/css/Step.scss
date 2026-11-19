@@ -229,12 +229,50 @@ button.history-dropdown {
 }
 
 .green-status-banner {
+  line-height: 1.25;
   background-color: $light-light-green;
-  padding: 1rem;
+  padding: 0.55rem 0.85rem;
   color: $green;
   font-weight: 500;
   font-size: 1.12rem; // 1.4rem × 0.8 so compile instructions fit on a 14" laptop
   border-radius: $step-radius;
+
+  // uni.css sets `* { color: #333 }`, which beats inheritance from the banner.
+  * {
+    color: inherit;
+  }
+
+  h3,
+  ul,
+  li {
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  h3 {
+    margin: 0 0 0.2em;
+    font-weight: 700;
+  }
+
+  // Every section, including the last one before the freshness line, is
+  // followed by the same gap.
+  ul {
+    list-style: disc;
+    margin: 0 0 0.6em;
+    padding-left: 1.4em;
+  }
+
+  li {
+    padding: 0;
+  }
+
+  li + li {
+    margin-top: 0.2em;
+  }
+
+  strong {
+    font-weight: 700;
+  }
 
   /* Denis requested linebreaks for compiler instructions
    be 1.5x normal line spacing. */
@@ -244,8 +282,13 @@ button.history-dropdown {
     margin-top: 0.75em;
   }
 
-  li {
-    padding: 0;
-    color: $green;
+  .freshness-status {
+    margin-top: 0;
+
+    // The banner sits inside `.table`, so Bootstrap's
+    // `.table > :not(caption) > * > *` pads the icon and message.
+    > * {
+      padding: 0;
+    }
   }
 }
