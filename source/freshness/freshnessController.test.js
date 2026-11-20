@@ -64,11 +64,11 @@ describe("freshness controller", () => {
 
     expect(states).toEqual([
       "Checking compiler freshness...",
-      "Page is up to date as of Jul 14, 2026 at 10:15 AM (UTC+0).",
+      "Page up to date as of Jul 14, 2026 at 10:15 AM (UTC+0).",
     ]);
     expect(controller.getState()).toEqual({
       status: "fresh",
-      message: "Page is up to date as of Jul 14, 2026 at 10:15 AM (UTC+0).",
+      message: "Page up to date as of Jul 14, 2026 at 10:15 AM (UTC+0).",
     });
 
     unsubscribe();
@@ -86,7 +86,7 @@ describe("freshness controller", () => {
 
     expect(controller.getState()).toEqual({
       status: "fresh",
-      message: "Page is up to date as of Jul 16, 2026 at 12:30 PM (UTC+0).",
+      message: "Page up to date as of Jul 16, 2026 at 12:30 PM (UTC+0).",
     });
   });
 
@@ -117,7 +117,7 @@ describe("freshness controller", () => {
     expect(loadDeploymentNotification).toHaveBeenCalledTimes(2);
     expect(controller.getState()).toEqual({
       status: "fresh",
-      message: "Page is up to date as of Jul 18, 2026 at 12:30 PM (UTC+0).",
+      message: "Page up to date as of Jul 18, 2026 at 12:30 PM (UTC+0).",
     });
   });
 
@@ -142,7 +142,7 @@ describe("freshness controller", () => {
 
       expect(controller.getState()).toEqual({
         status: "fresh",
-        message: "Page is up to date.",
+        message: "Page up to date.",
       });
     },
   );
@@ -234,7 +234,7 @@ describe("freshness controller", () => {
     expect(loadManifest).toHaveBeenCalledTimes(2);
     expect(controller.getState()).toEqual({
       status: "fresh",
-      message: "Page is up to date as of Jul 14, 2026 at 12:15 PM (UTC+0).",
+      message: "Page up to date as of Jul 14, 2026 at 12:15 PM (UTC+0).",
     });
 
     controller.dispose();
@@ -411,7 +411,7 @@ describe("freshness controller", () => {
     expect(retry.replaceWithDeployment).not.toHaveBeenCalled();
     expect(controller.getState()).toEqual({
       status: "fresh",
-      message: "Page is up to date.",
+      message: "Page up to date.",
     });
   });
 

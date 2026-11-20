@@ -997,37 +997,44 @@ export default class Table extends Component {
           <h3>Open a compiled study</h3>
           <ul>
             <li>
-              Click <strong>SELECT COMPILED STUDY</strong> and choose your
+              Click <strong>Select compiled study</strong> and choose your
               study.
             </li>
           </ul>
-          <h3>Compile a study from a spreadsheet</h3>
-          <ul>
+          <h3>Compile a spreadsheet</h3>
+          <ol>
             <li>
               If your study needs resources that aren’t already in your Pavlovia
-              account, click <strong>SELECT FILE</strong> and upload them.
-              Resources can include fonts, sounds, images, and forms. EasyEyes
-              saves these resources in your Pavlovia account for reuse.
+              account (such as fonts, sounds, images, or forms), click{" "}
+              <strong>Select file</strong> to upload them. EasyEyes saves these
+              files in your Pavlovia account for reuse.
             </li>
             <li>
-              Click <strong>SELECT FILE</strong> again, and choose your
-              spreadsheet to compile it.
+              Click <strong>Select file</strong> and choose a spreadsheet to
+              compile.
             </li>
-          </ul>
-          <h3>Compile a study from a source.zip archive</h3>
+          </ol>
+          <h3>Compile a source.zip archive</h3>
           <ul>
             <li>
-              Click <strong>SELECT FILE</strong> and choose the source.zip
-              archive containing your spreadsheet and its resources. Resources
-              bundled in a source.zip are used for that compilation only.
+              Click <strong>Select file</strong> and choose the source.zip
+              archive containing your spreadsheet and its resources. EasyEyes
+              uses the bundled resources only for that compilation.
+            </li>
+          </ul>
+          <h3>Download a source.zip archive</h3>
+          <ul>
+            <li>
+              After compiling, click <strong>Download source</strong>.
             </li>
           </ul>
           <h3>Download a raw.source.zip archive</h3>
           <ul>
             <li>
-              To share your study without compiling it (e.g. to report a bug),
-              click <strong>SELECT FILE TO DOWNLOAD RAW SOURCE</strong> and
-              choose your spreadsheet.
+              If you can’t compile, then click{" "}
+              <strong>Select file to download raw source</strong> and choose
+              your spreadsheet. You can share the downloaded archive to report a
+              compilation error.
             </li>
           </ul>
           <FreshnessStatus

@@ -229,12 +229,14 @@ button.history-dropdown {
 }
 
 .green-status-banner {
-  line-height: 1.25;
+  line-height: 1.2;
   background-color: $light-light-green;
-  padding: 0.55rem 0.85rem;
+  padding: 0.45rem 0.75rem;
   color: $green;
   font-weight: 500;
-  font-size: 1.12rem; // 1.4rem × 0.8 so compile instructions fit on a 14" laptop
+  // Slightly under the earlier 0.8× size so the new fifth section still fits
+  // on a 14" laptop without scrolling.
+  font-size: 1.05rem;
   border-radius: $step-radius;
 
   // uni.css sets `* { color: #333 }`, which beats inheritance from the banner.
@@ -244,22 +246,32 @@ button.history-dropdown {
 
   h3,
   ul,
+  ol,
   li {
     font-size: inherit;
     line-height: inherit;
   }
 
   h3 {
-    margin: 0 0 0.2em;
+    margin: 0 0 0.15em;
     font-weight: 700;
   }
 
   // Every section, including the last one before the freshness line, is
-  // followed by the same gap.
+  // followed by the same gap. Spreadsheet steps use a numbered list; the
+  // other sections use bullets.
+  ul,
+  ol {
+    margin: 0 0 0.45em;
+    padding-left: 1.35em;
+  }
+
   ul {
     list-style: disc;
-    margin: 0 0 0.6em;
-    padding-left: 1.4em;
+  }
+
+  ol {
+    list-style: decimal;
   }
 
   li {
@@ -267,7 +279,7 @@ button.history-dropdown {
   }
 
   li + li {
-    margin-top: 0.2em;
+    margin-top: 0.15em;
   }
 
   strong {
