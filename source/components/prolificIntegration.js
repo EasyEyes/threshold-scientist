@@ -20,6 +20,7 @@ import {
 import { captureError } from "../sentry";
 import { prolificStudyCreationError } from "./prolificErrors";
 import { getGlossary } from "../../threshold/parameters/glossaryRegistry";
+import { getProlificParticipantGroups } from "../../threshold/preprocess/prolificMetadata";
 
 const prolificStudySubmissionStatus = {
   RESERVED: "RESERVED",
@@ -56,26 +57,14 @@ export const getProlificAccount = async (token) => {
 };
 
 const fetchProlificParticipantGroups = async (token) => {
-  const url = `/.netlify/functions/prolific/participant-groups/`;
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Token ${token}`,
-    },
-  })
-    .then((response) => {
-      return response.json();
-    })
-    .catch((error) => {
-      captureError(error, "Prolific Fetch Participant Groups", {
-        endpoint: `participant-groups/`,
-      });
-      return { results: [] };
+  try {
+    return await getProlificParticipantGroups(token);
+  } catch (error) {
+    captureError(error, "Prolific Fetch Participant Groups", {
+      endpoint: `participant-groups/`,
     });
-
-  return response?.results || [];
+    return [];
+  }
 };
 
 const findParticipantGroupId = (participantGroups, groupName) => {

@@ -4,6 +4,11 @@ import Table from "../Table";
 import Swal from "sweetalert2";
 import { preprocessExperimentFile } from "../../threshold/preprocess/main";
 import { loadGlossaryRows } from "../../threshold/parameters/glossaryLink";
+import {
+  failedResourceCatalog,
+  readyResourceListings,
+  settledResourceCatalog,
+} from "../../threshold/preprocess/resourceCatalog";
 
 // Row map for the glossary-link mock below. name → row; 0 = known parameter
 // with unknown row (whole-sheet link).
@@ -87,6 +92,7 @@ jest.mock("../../threshold/preprocess/main", () => ({
 }));
 
 jest.mock("../../threshold/preprocess/constants", () => ({
+  ...jest.requireActual("../../threshold/preprocess/constants"),
   userRepoFiles: {},
   resourcesRepoName: "EasyEyesResources",
 }));
@@ -157,8 +163,7 @@ function makeProps(overrides = {}) {
       projectList: Promise.resolve([]),
       initProjectList: jest.fn(),
     },
-    resources: { texts: [] },
-    resourcesLoaded: true,
+    resourceCatalog: settledResourceCatalog(readyResourceListings()),
     isCompiledFromArchiveBool: false,
     scrollToCurrentStep: jest.fn(),
     functions: {
@@ -814,7 +819,11 @@ describe("Table.handleTable — EasyEyesResources lookup uses searchProjectByNam
     searchProjectByName.mockResolvedValue({ id: "42" });
     getTextFileDataFromGitLab.mockResolvedValue("corpus contents");
 
-    const props = makeProps({ resources: { texts: ["corpus.txt"] } });
+    const props = makeProps({
+      resourceCatalog: settledResourceCatalog(
+        readyResourceListings({ texts: ["corpus.txt"] }),
+      ),
+    });
     const ref = React.createRef();
     render(<Table ref={ref} {...props} />);
 
@@ -825,6 +834,60 @@ describe("Table.handleTable — EasyEyesResources lookup uses searchProjectByNam
       "texts/corpus.txt",
       client,
     );
+  });
+
+  it("proceeds to preprocessing with typed unavailable availability when the whole catalog failed", async () => {
+    const props = makeProps({
+      resourceCatalog: failedResourceCatalog(new Error("search failed")),
+    });
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    // compileFiles records the drop before handleTable runs; mirror that here
+    // (the test calls handleTable directly, bypassing the dropzone).
+    ref.current.currentDropFileNames = ["exp.csv"];
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
+    const resources = preprocessExperimentFile.mock.calls[0][3];
+    for (const type of ["fonts", "texts", "images"]) {
+      expect(resources.availability[type]).toMatchObject({
+        type,
+        remote: { kind: "failed" },
+        localNames: ["exp.csv"],
+      });
+    }
+    expect(resources.unavailableResourceTypes).toBeUndefined();
+    expect(resources.locallySuppliedResourceNames).toBeUndefined();
+  });
+
+  it("passes typed failed listings and local drop names to resource checks", async () => {
+    const listings = readyResourceListings({ texts: ["corpus.txt"] });
+    listings.fonts = { kind: "failed", error: new Error("403") };
+    const props = makeProps({
+      resourceCatalog: settledResourceCatalog(listings),
+    });
+    const ref = React.createRef();
+    render(<Table ref={ref} {...props} />);
+    ref.current.currentDropFileNames = ["Local.woff2", "exp.csv"];
+
+    await ref.current.handleTable(new File(["a,b"], "exp.csv"));
+
+    const resources = preprocessExperimentFile.mock.calls[0][3];
+    expect(resources).toMatchObject({
+      fonts: [],
+      texts: ["corpus.txt"],
+    });
+    expect(resources.availability.fonts).toMatchObject({
+      type: "fonts",
+      remote: { kind: "failed" },
+      localNames: ["Local.woff2", "exp.csv"],
+    });
+    expect(resources.availability.texts).toMatchObject({
+      type: "texts",
+      remote: { kind: "ready", names: ["corpus.txt"] },
+      localNames: ["Local.woff2", "exp.csv"],
+    });
   });
 });
 
@@ -996,7 +1059,7 @@ describe("Table.handleTable preamble — Studio-only optimization", () => {
 
   const order = (mock) => mock.mock.invocationCallOrder[0];
 
-  it("classic compile: refreshes the glossary fully before probing phrases", async () => {
+  it("classic compile: probes phrases while the glossary is still downloading", async () => {
     beginCompile("compiler");
     const { fetchGlossaryData } = require("../components/glossaryApi");
     const { fetchPhrasesVersion } = require("../components/phrasesApi");
@@ -1005,9 +1068,7 @@ describe("Table.handleTable preamble — Studio-only optimization", () => {
     render(<Table ref={ref} {...makeProps()} />);
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(order(fetchPhrasesVersion)).toBeGreaterThan(
-      order(fetchGlossaryData),
-    );
+    expect(order(fetchPhrasesVersion)).toBeLessThan(order(fetchGlossaryData));
     expect(preprocessExperimentFile).toHaveBeenCalledTimes(1);
   });
 
@@ -1065,7 +1126,7 @@ describe("Table.handleTable preamble — Studio-only optimization", () => {
   const signedIn = () =>
     makeProps({ user: { ...makeProps().user, id: 1, username: "alice" } });
 
-  it("classic compile: waits for the project list, searches the repo name only after validation, and refreshes projects after the phrases pin", async () => {
+  it("classic compile: uses the same overlapped metadata flow as Studio", async () => {
     beginCompile("compiler");
     const {
       setRepoName,
@@ -1073,24 +1134,22 @@ describe("Table.handleTable preamble — Studio-only optimization", () => {
       getAllProjects,
     } = require("../../threshold/preprocess/gitlabUtils");
     const { pinPhrasesVersion } = require("../components/phrasesApi");
-    let projectListAwaited = false;
+    const matches = Promise.resolve([{ name: "exp1" }]);
+    searchRepoNameMatches.mockReturnValue(matches);
     const props = signedIn();
-    props.user.projectList = {
-      then: (resolve) => {
-        projectListAwaited = true;
-        return Promise.resolve(resolve([]));
-      },
-    };
+    props.user.projectList = new Promise(() => {}); // never resolves
     compileSucceeds();
 
     const ref = React.createRef();
     render(<Table ref={ref} {...props} />);
     await ref.current.handleTable(new File(["a,b"], "exp.csv"));
 
-    expect(projectListAwaited).toBe(true);
-    expect(searchRepoNameMatches).not.toHaveBeenCalled();
-    expect(setRepoName).toHaveBeenCalledWith(props.user, "exp", undefined);
-    expect(order(getAllProjects)).toBeGreaterThan(order(pinPhrasesVersion));
+    expect(searchRepoNameMatches).toHaveBeenCalledWith(props.user, "exp");
+    expect(order(searchRepoNameMatches)).toBeLessThan(
+      order(preprocessExperimentFile),
+    );
+    expect(setRepoName).toHaveBeenCalledWith(props.user, "exp", matches);
+    expect(order(getAllProjects)).toBeLessThan(order(pinPhrasesVersion));
     expect(props.functions.handleNextStep).toHaveBeenCalledWith("upload");
   });
 
@@ -1251,7 +1310,9 @@ describe("Table.handleTable preamble — Studio-only optimization", () => {
       () => new Promise((r) => setTimeout(() => r(mockGlossaryData), 30)),
     );
     const props = makeProps({
-      resources: { ...makeProps().resources, texts: ["corpus.txt"] },
+      resourceCatalog: settledResourceCatalog(
+        readyResourceListings({ texts: ["corpus.txt"] }),
+      ),
     });
 
     const ref = React.createRef();

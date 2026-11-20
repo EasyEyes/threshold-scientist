@@ -17,8 +17,13 @@
 import Papa from "papaparse";
 import type { GlossaryEntry } from "../../components/types";
 import type { Alert } from "../validation";
-import type { NeededResource, UserResources } from "../resources";
-import { existsInUserResources, RESOURCE_TYPE_LABELS } from "../resources";
+import type { NeededResource } from "../resources";
+import { RESOURCE_TYPE_LABELS, userResourceStatus } from "../resources";
+import {
+  resourceListingFor,
+  type ResourceCatalog,
+} from "../../../threshold/preprocess/resourceCatalog";
+import { resourcesFileTypes } from "../../../threshold/preprocess/constants";
 import { resolveEntry, suggestibleEntries } from "../glossary";
 import { categoryOf } from "../categories";
 import { EXAMPLES } from "../examples";
@@ -62,7 +67,7 @@ export interface AssistantContext {
   table: TableState;
   name: string;
   signedIn: boolean;
-  userResources: UserResources | null;
+  resourceCatalog: ResourceCatalog;
   /** Names of the files dropped in the Studio this session. */
   droppedFileNames: string[];
   /**
@@ -500,7 +505,7 @@ export function describeChecks(
   report: CheckReport,
   ctx: Pick<
     AssistantContext,
-    "userResources" | "droppedFileNames" | "signedIn"
+    "resourceCatalog" | "droppedFileNames" | "signedIn"
   >,
 ): string {
   const errors = report.errors.filter((e) => e.kind === "error");
@@ -520,18 +525,19 @@ export function describeChecks(
   if (report.needed.length) {
     out.push("Resources the table names:");
     for (const n of report.needed) {
-      const present =
-        existsInUserResources(n, ctx.userResources) ||
-        ctx.droppedFileNames.includes(n.filename);
-      out.push(
-        `- ${n.kind} ${n.filename} (${n.params.join(", ")}): ${
-          present
-            ? "present"
-            : ctx.signedIn
-            ? "MISSING from EasyEyesResources"
-            : "cannot check (not signed in)"
-        }`,
+      const status = userResourceStatus(
+        n,
+        ctx.resourceCatalog,
+        ctx.droppedFileNames,
       );
+      const present = status === "local" || status === "remote";
+      let note;
+      if (present) note = "present";
+      else if (!ctx.signedIn) note = "cannot check (not signed in)";
+      else if (status === "unverified")
+        note = "cannot verify (resource list unavailable)";
+      else note = "MISSING from EasyEyesResources";
+      out.push(`- ${n.kind} ${n.filename} (${n.params.join(", ")}): ${note}`);
     }
   }
   return out.join("\n");
@@ -1089,10 +1095,7 @@ export function runTool(
             ". Ask the scientist which files they have, or choose options that need no file (e.g. fontSource google).",
           activity: "Listed resources (signed out)",
         };
-      const res = ctx.userResources ?? {};
-      const folders = Object.keys(RESOURCE_TYPE_LABELS).filter(
-        (f) => !kind || f === kind,
-      );
+      const folders = resourcesFileTypes.filter((f) => !kind || f === kind);
       if (!folders.length)
         return {
           result: `Unknown folder "${kind}". Folders: ${Object.keys(
@@ -1102,9 +1105,13 @@ export function runTool(
           activity: "Listed resources — unknown folder",
         };
       const lines = folders.map((f) => {
-        const files = res[f] ?? [];
-        return `${f} (${files.length}): ${
-          files.length ? files.join(", ") : "none"
+        const listing = resourceListingFor(ctx.resourceCatalog, f);
+        if (listing.kind === "failed")
+          return `${f}: unavailable (retry loading EasyEyesResources)`;
+        if (listing.kind === "loading" || listing.kind === "idle")
+          return `${f}: unavailable (listing has not finished)`;
+        return `${f} (${listing.names.length}): ${
+          listing.names.length ? listing.names.join(", ") : "none"
         }`;
       });
       if (ctx.droppedFileNames.length)

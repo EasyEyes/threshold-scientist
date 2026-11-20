@@ -9,6 +9,7 @@ import {
   COMPLETION_CODE_TYPE,
 } from "../components/prolificConstants";
 import { getGlossary } from "../../threshold/parameters/glossaryRegistry";
+import { clearProlificMetadataCache } from "../../threshold/preprocess/prolificMetadata";
 
 jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
   getGlossary: jest.fn(),
@@ -29,6 +30,7 @@ describe("Prolific Integration - New Parameters", () => {
   beforeEach(() => {
     // Reset all mocks before each test
     jest.clearAllMocks();
+    clearProlificMetadataCache();
 
     // Setup default values
     mockToken = "test-prolific-token";

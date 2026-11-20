@@ -1,64 +1,45 @@
 import React, { Component } from "react";
 import Swal from "sweetalert2";
 
-const matchIcon = (name) => {
-  switch (name) {
-    case "fonts":
-      return "bi bi-fonts";
-    case "forms":
-      return "bi bi-file-pdf";
-    case "texts":
-      return "bi bi-blockquote-left";
-    case "sound":
-      return "bi bi-soundwave";
-    case "folders":
-      return "bi bi-file-zip";
-    case "code":
-      return "bi bi-file-code";
-    case "impulseResponses":
-      return "bi bi-sound-wave";
-    case "frequencyResponses":
-      return "bi bi-graph-up";
-    default:
-      return "bi bi-question-circle";
-  }
-};
-
 const processNameForSinglePlural = (name, length) => {
-  // Special case for sound which is already a singular word
-  if (name === "sound") {
-    return "folders and sound files";
-  }
-  // Singularize by stripping only a trailing "s" (e.g. "phrases" -> "phrase").
+  if (name === "sound") return "folders and sound files";
   return length <= 1 ? name.replace(/s$/, "") : name;
 };
 
+const namesOf = (listing) => (listing.kind === "ready" ? listing.names : []);
+
 export default class ResourceButton extends Component {
   render() {
-    const {
+    const { name, onRetry } = this.props;
+    const listings =
+      name === "sound" ? this.props.listings : [this.props.listing];
+    const [
       resourceList,
-      name,
       secondaryResourceList,
       tertiaryResourceList,
       targetSoundListList,
-    } = this.props;
-
-    // Calculate the total items for combined sound resources
+    ] = listings.map(namesOf);
+    const isLoading = listings.some(
+      (listing) => listing.kind === "idle" || listing.kind === "loading",
+    );
+    const isFailed = listings.some((listing) => listing.kind === "failed");
     const totalItems =
       name === "sound"
-        ? (resourceList ? resourceList.length : 0) +
-          (secondaryResourceList ? secondaryResourceList.length : 0) +
-          (tertiaryResourceList ? tertiaryResourceList.length : 0) +
-          (targetSoundListList ? targetSoundListList.length : 0)
+        ? resourceList.length +
+          secondaryResourceList.length +
+          tertiaryResourceList.length +
+          targetSoundListList.length
         : resourceList.length;
-
-    const isLoading = this.props.isLoading;
 
     return (
       <button
         className="button-grey button-small resource-button"
+        title={isFailed ? `Couldn’t load ${name}. Click to retry.` : undefined}
         onClick={() => {
-          // Special handling for sound to show both folders and impulse responses
+          if (isFailed) {
+            onRetry?.();
+            return;
+          }
           if (name === "sound") {
             const foldersHtml = resourceList.length
               ? "<h4>Folders</h4><ul>" +
@@ -114,7 +95,6 @@ export default class ResourceButton extends Component {
               },
             });
           } else {
-            // Standard handling for other resource types
             Swal.fire({
               icon: undefined,
               title: name.charAt(0).toUpperCase() + name.slice(1),
@@ -135,10 +115,11 @@ export default class ResourceButton extends Component {
           }
         }}
       >
-        {/* <i className={`resource-button-icon ${matchIcon(name)}`}></i> */}
         <span>
           {isLoading ? (
             <i className="bi bi-arrow-repeat icon-spin"></i>
+          ) : isFailed ? (
+            `Retry ${name}`
           ) : (
             <>
               {totalItems} {processNameForSinglePlural(name, totalItems)}

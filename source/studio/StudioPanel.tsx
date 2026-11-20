@@ -32,7 +32,7 @@ import { ResourcePanel } from "./components/ResourcePanel";
 import { ExistingFilesModal } from "./components/ExistingFilesModal";
 import { PastExperimentsModal } from "./components/PastExperimentsModal";
 import type { PastExperimentsApi } from "./pastExperiments";
-import type { UserResources } from "./resources";
+import type { ResourceCatalog } from "../../threshold/preprocess/resourceCatalog";
 import { ParamCatalog } from "./components/ParamCatalog";
 import { ParamAutocomplete } from "./components/ParamAutocomplete";
 import {
@@ -88,12 +88,9 @@ interface Props {
    * same file the compile will.
    */
   fetchUserPhraseFile?: (name: string) => Promise<File | null>;
-  /**
-   * The signed-in user's EasyEyesResources file lists (the compiler page's
-   * `resources` state); null when signed out.
-   */
-  userResources: UserResources | null;
-  resourcesLoaded: boolean;
+  /** EasyEyesResources listing states, shared with the Compiler tab. */
+  resourceCatalog: ResourceCatalog;
+  onRetryResources?: () => void;
   signedIn: boolean;
   /**
    * The signed-in scientist's past compiled experiments (pastExperiments.ts):
@@ -117,8 +114,8 @@ export default function StudioPanel({
   onPreview,
   onDownloadSource,
   fetchUserPhraseFile,
-  userResources,
-  resourcesLoaded,
+  resourceCatalog,
+  onRetryResources,
   signedIn,
   pastExperiments = null,
 }: Props) {
@@ -188,7 +185,7 @@ export default function StudioPanel({
   const repoPhraseFiles = useRef(new Map<string, Promise<File | null>>());
   useEffect(() => {
     repoPhraseFiles.current = new Map();
-  }, [userResources, signedIn]);
+  }, [resourceCatalog, signedIn]);
   useEffect(() => {
     if (!requestedPhraseFile) {
       setPhrase(null);
@@ -237,7 +234,7 @@ export default function StudioPanel({
     files,
     signedIn,
     fetchUserPhraseFile,
-    userResources,
+    resourceCatalog,
   ]);
 
   // Load the named phrase sheet used by the first replacement pass.
@@ -287,7 +284,7 @@ export default function StudioPanel({
     files,
     signedIn,
     fetchUserPhraseFile,
-    userResources,
+    resourceCatalog,
   ]);
 
   // Live validation waits while phrase files are read, so symbols are
@@ -324,8 +321,8 @@ export default function StudioPanel({
   // the pool a compile would have (EasyEyesResources + files dropped here).
   // Informational: what the compile will report, not a bar to compiling.
   const resourceReport = useMemo(
-    () => checkResources(checkedData, expTable, userResources, files),
-    [checkedData, expTable, userResources, files],
+    () => checkResources(checkedData, expTable, resourceCatalog, files),
+    [checkedData, expTable, resourceCatalog, files],
   );
   const needed = resourceReport.needed;
 
@@ -430,7 +427,7 @@ export default function StudioPanel({
     name,
     phrase,
     namedPhrase,
-    userResources,
+    resourceCatalog,
     files,
     signedIn,
     focus,
@@ -440,7 +437,7 @@ export default function StudioPanel({
     name,
     phrase,
     namedPhrase,
-    userResources,
+    resourceCatalog,
     files,
     signedIn,
     focus,
@@ -451,12 +448,12 @@ export default function StudioPanel({
       table: s.table,
       name: s.name,
       signedIn: s.signedIn,
-      userResources: s.userResources,
+      resourceCatalog: s.resourceCatalog,
       droppedFileNames: s.files.map((f) => f.name),
       focus: s.focus,
       check: (t) => {
         const v = runValidation(stateToMatrix(t), s.phrase, s.namedPhrase);
-        const r = checkResources(v.data, v.table, s.userResources, s.files);
+        const r = checkResources(v.data, v.table, s.resourceCatalog, s.files);
         return { errors: v.errors, resourceErrors: r.errors, needed: r.needed };
       },
     };
@@ -779,8 +776,8 @@ export default function StudioPanel({
               onJump={jumpTo}
               phrase={phrase}
               files={files}
-              userResources={userResources}
-              resourcesLoaded={resourcesLoaded}
+              resourceCatalog={resourceCatalog}
+              onRetryResources={onRetryResources}
               signedIn={signedIn}
               onBrowseExisting={() => setExistingOpen(true)}
               onAddFiles={(newFiles) =>
@@ -811,8 +808,8 @@ export default function StudioPanel({
 
         {existingOpen && (
           <ExistingFilesModal
-            resources={userResources ?? {}}
-            loaded={resourcesLoaded}
+            resourceCatalog={resourceCatalog}
+            onRetry={onRetryResources}
             needed={needed}
             onClose={() => setExistingOpen(false)}
           />

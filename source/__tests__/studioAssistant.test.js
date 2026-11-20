@@ -123,14 +123,22 @@ jest.mock("../../threshold/components/easyeyesBaseUrl", () => ({
 jest.mock("../studio/resources", () => ({
   RESOURCE_TYPE_LABELS: { fonts: "Fonts", forms: "Forms" },
   RESOURCE_TYPE_OF_KIND: { font: "fonts", form: "forms" },
-  existsInUserResources: (n, res) =>
-    !!res &&
-    (res[n.kind === "font" ? "fonts" : "forms"] ?? []).includes(n.filename),
+  userResourceStatus: (n, catalog, localNames = []) => {
+    if (localNames.includes(n.filename)) return "local";
+    const type = n.kind === "font" ? "fonts" : "forms";
+    const listing = catalog.listings?.[type];
+    if (!listing || listing.kind !== "ready") return "unverified";
+    return listing.names.includes(n.filename) ? "remote" : "missing";
+  },
 }));
 
 // Required (not imported) so the mock data above exists when the factories
 // run: ES imports would be hoisted above it.
 const { matrixToState, stateToMatrix } = require("../studio/tableModel");
+const {
+  readyResourceListings,
+  settledResourceCatalog,
+} = require("../../threshold/preprocess/resourceCatalog");
 const {
   applyEdits,
   ASSISTANT_TOOLS,
@@ -201,7 +209,9 @@ const ctxFor = (table, extra = {}) => ({
   table,
   name: "demo",
   signedIn: true,
-  userResources: { fonts: ["Sloan.woff2"], forms: [] },
+  resourceCatalog: settledResourceCatalog(
+    readyResourceListings({ fonts: ["Sloan.woff2"], forms: [] }),
+  ),
   droppedFileNames: [],
   focus: null,
   check: noErrors,

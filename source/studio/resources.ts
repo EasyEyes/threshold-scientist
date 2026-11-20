@@ -8,11 +8,11 @@
  *   getImageNames, getFolderNames, getCodeList, …);
  * - the verdicts come from the same checks main.ts runs against the
  *   scientist's EasyEyesResources name lists (preprocess/experimentFileChecks.ts:
- *   isFontMissing, isFormMissing, isTextMissing, …).
+ *   checkFontPresence, checkFormPresence, checkTextPresence, …).
  *
- * The lists the checks see are the user's EasyEyesResources lists (the
- * compiler page's `resources` state) plus the files dropped in the Studio —
- * exactly the pool a compile would have. Two checks need file contents from
+ * The checks consume typed availability constructed once from the resource
+ * catalog plus files dropped in the Studio — exactly the pool a compile has.
+ * Two checks need file contents from
  * GitLab (image-folder contents, target sound lists) and only run at compile
  * time; here their folders are checked by name.
  *
@@ -21,7 +21,24 @@
  */
 import type { ExperimentTable } from "../../threshold/preprocess/experimentTable";
 import type { Alert } from "../../threshold/preprocess/alerts";
-import { IMAGE_FOLDER_MISSING } from "../../threshold/preprocess/alerts";
+import {
+  checkCodePresence,
+  checkFontPresence,
+  checkFormPresence,
+  checkFrequencyResponsePresence,
+  checkImageFolderNamesPresence,
+  checkImagePresence,
+  checkImpulseResponsePresence,
+  checkPhraseFilePresence,
+  checkSoundFolderPresence,
+  checkTextPresence,
+} from "../../threshold/preprocess/experimentFileChecks";
+import {
+  resourceAvailabilities,
+  resourceListingFor,
+  type ResourceCatalog,
+  type ResourceType,
+} from "../../threshold/preprocess/resourceCatalog";
 import {
   getCodeList,
   getFolderNames,
@@ -34,18 +51,6 @@ import {
   getReadingCorpusFoilsList,
   getTextList,
 } from "../../threshold/preprocess/utils";
-import {
-  isCodeMissing,
-  isFontMissing,
-  isFormMissing,
-  isFrequencyResponseMissing,
-  isImageMissing,
-  isImpulseResponseMissing,
-  isPhraseFileMissing,
-  isSoundFolderMissing,
-  isTextMissing,
-} from "../../threshold/preprocess/experimentFileChecks";
-
 export type ResourceKind =
   | "font"
   | "form"
@@ -66,14 +71,7 @@ export interface NeededResource {
   params: string[];
 }
 
-/**
- * File names in the user's EasyEyesResources repository, per type folder —
- * the compiler page's `resources` state (App.js), filled by
- * getCommonResourcesNames after sign-in. Keys are resourcesFileTypes.
- */
-export type UserResources = Record<string, string[]>;
-
-export const RESOURCE_TYPE_LABELS: Record<string, string> = {
+export const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {
   fonts: "Fonts",
   forms: "Forms",
   texts: "Texts",
@@ -86,11 +84,11 @@ export const RESOURCE_TYPE_LABELS: Record<string, string> = {
   phrases: "Phrases",
 };
 
-export const resourceTypeLabel = (type: string): string =>
+export const resourceTypeLabel = (type: ResourceType): string =>
   RESOURCE_TYPE_LABELS[type] ?? type;
 
 /** Which EasyEyesResources folder each kind of needed file lives in. */
-export const RESOURCE_TYPE_OF_KIND: Record<ResourceKind, string> = {
+export const RESOURCE_TYPE_OF_KIND: Record<ResourceKind, ResourceType> = {
   font: "fonts",
   form: "forms",
   text: "texts",
@@ -98,18 +96,23 @@ export const RESOURCE_TYPE_OF_KIND: Record<ResourceKind, string> = {
   image: "images",
   "impulse response": "impulseResponses",
   "frequency response": "frequencyResponses",
-  "sound folder": "folders", // stored zipped: <name>.zip (see isSoundFolderMissing)
+  "sound folder": "folders", // stored zipped: <name>.zip (see checkSoundFolderPresence)
   "image folder": "folders", // likewise
   code: "code",
 };
 
-/** True when the user has already uploaded this file to EasyEyesResources. */
-export function existsInUserResources(
+export type UserResourceStatus = "local" | "remote" | "missing" | "unverified";
+
+/** One local/remote status rule for panels and assistant reports. */
+export function userResourceStatus(
   n: NeededResource,
-  res: UserResources | null,
-): boolean {
-  if (!res) return false;
-  return (res[RESOURCE_TYPE_OF_KIND[n.kind]] ?? []).includes(n.filename);
+  catalog: ResourceCatalog,
+  localNames: readonly string[] = [],
+): UserResourceStatus {
+  if (localNames.includes(n.filename)) return "local";
+  const listing = resourceListingFor(catalog, RESOURCE_TYPE_OF_KIND[n.kind]);
+  if (listing.kind !== "ready") return "unverified";
+  return listing.names.includes(n.filename) ? "remote" : "missing";
 }
 
 /** Look up which table parameters reference an existing file, if any. */
@@ -153,25 +156,19 @@ const valuesOf = (t: ExperimentTable, param: string): Set<string> => {
  *              checks: pre-cleaned rows with the font rows tilde-resolved
  *              (validation.ts hands this over).
  * @param table The tilde-resolved ExperimentTable of the same rows.
- * @param userResources  EasyEyesResources name lists (null when signed out).
+ * @param resourceCatalog EasyEyesResources listing states (idle when signed out).
  * @param droppedFiles   Files dropped in the Studio this session.
  */
 export function checkResources(
   data: string[][] | null,
   table: ExperimentTable | null,
-  userResources: UserResources | null,
+  resourceCatalog: ResourceCatalog,
   droppedFiles: File[],
 ): ResourceReport {
   if (!data || !table) return EMPTY_REPORT;
   const parsed = { data };
   const dropped = droppedFiles.map((f) => f.name);
-  // The pool a compile would have: the repo folder for the type plus what was
-  // dropped here (the compile files dropped resources into their type folder
-  // before checking, so a name match is what matters).
-  const pool = (type: string): string[] => [
-    ...(userResources?.[type] ?? []),
-    ...dropped,
-  ];
+  const availability = resourceAvailabilities(resourceCatalog, dropped);
 
   const needed = new Map<string, NeededResource>();
   const add = (kind: ResourceKind, filename: string, ...params: string[]) => {
@@ -195,45 +192,60 @@ export function checkResources(
       if (instructionFonts.has(f)) params.push("instructionFont");
       add("font", f, ...params);
     }
-    errors.push(...isFontMissing(fontList, pool("fonts")));
+    errors.push(
+      ...checkFontPresence(fontList, availability.fonts, [
+        "font",
+        "instructionFont",
+      ]),
+    );
 
     // Consent and debrief forms.
     const forms = getFormNames(parsed);
     if (forms.consentForm) {
       add("form", forms.consentForm, "_consentForm");
       errors.push(
-        ...isFormMissing(forms.consentForm, pool("forms"), "_consentForm"),
+        ...checkFormPresence(
+          forms.consentForm,
+          availability.forms,
+          "_consentForm",
+        ),
       );
     }
     if (forms.debriefForm) {
       add("form", forms.debriefForm, "_debriefForm");
       errors.push(
-        ...isFormMissing(forms.debriefForm, pool("forms"), "_debriefForm"),
+        ...checkFormPresence(
+          forms.debriefForm,
+          availability.forms,
+          "_debriefForm",
+        ),
       );
     }
 
     // Reading corpora and their foils.
     const texts = getTextList(table) as string[];
     for (const t of texts) add("text", t, "readingCorpus");
-    errors.push(...isTextMissing(texts, pool("texts")));
+    errors.push(...checkTextPresence(texts, availability.texts));
     const foils = getReadingCorpusFoilsList(table) as string[];
     for (const t of foils) add("text", t, "readingCorpusFoils");
-    errors.push(...isTextMissing(foils, pool("texts"), "readingCorpusFoils"));
+    errors.push(
+      ...checkTextPresence(foils, availability.texts, "readingCorpusFoils"),
+    );
 
     // Phrase spreadsheet.
     const phraseFile = (
       table.colBOrDefault("_languagePhrasesSpreadsheet") ?? ""
     ).trim();
     if (phraseFile) add("phrases", phraseFile, "_languagePhrasesSpreadsheet");
-    errors.push(...isPhraseFileMissing(phraseFile, pool("phrases")));
+    errors.push(...checkPhraseFilePresence(phraseFile, availability.phrases));
     const namedPhraseFile = (
       table.colBOrDefault("_phrasesSpreadsheet") ?? ""
     ).trim();
     if (namedPhraseFile) add("phrases", namedPhraseFile, "_phrasesSpreadsheet");
     errors.push(
-      ...isPhraseFileMissing(
+      ...checkPhraseFilePresence(
         namedPhraseFile,
-        pool("phrases"),
+        availability.phrases,
         "_phrasesSpreadsheet",
       ),
     );
@@ -241,7 +253,7 @@ export function checkResources(
     // Images.
     const images = getImageNames(parsed) as string[];
     for (const i of images) add("image", i, "showImage");
-    errors.push(...isImageMissing(images, pool("images")));
+    errors.push(...checkImagePresence(images, availability.images));
 
     // Impulse and frequency responses (sound calibration simulation).
     const simParams = [
@@ -254,9 +266,9 @@ export function checkResources(
     for (const f of impulse) add("impulse response", f, ...simParamsFor(f));
     if (impulse.length > 0)
       errors.push(
-        ...isImpulseResponseMissing(
+        ...checkImpulseResponsePresence(
           impulse,
-          pool("impulseResponses"),
+          availability.impulseResponses,
           "impulse response files",
         ),
       );
@@ -264,9 +276,9 @@ export function checkResources(
     for (const f of frequency) add("frequency response", f, ...simParamsFor(f));
     if (frequency.length > 0)
       errors.push(
-        ...isFrequencyResponseMissing(
+        ...checkFrequencyResponsePresence(
           frequency,
-          pool("frequencyResponses"),
+          availability.frequencyResponses,
           "frequency response files",
         ),
       );
@@ -282,29 +294,28 @@ export function checkResources(
       folders.targetSoundFolder.length > 0
     )
       errors.push(
-        ...isSoundFolderMissing(
+        ...checkSoundFolderPresence(
           {
             maskerSoundFolder: folders.maskerSoundFolder,
             targetSoundFolder: folders.targetSoundFolder,
           },
-          pool("folders"),
+          availability.folders,
         ),
       );
 
-    // Image folders — by name here; the compile also inspects their contents
-    // (isImageFolderMissing needs GitLab).
-    const imageFolders = getImageFolderNames(parsed)
-      .targetImageFolderList as string[];
-    for (const f of imageFolders) {
+    // Image folders — by name here; the compile also inspects their contents.
+    const imageFolderSpec = getImageFolderNames(parsed);
+    const imageFolders = imageFolderSpec.targetImageFolderList as string[];
+    for (const f of imageFolders)
       add("image folder", `${f}.zip`, "targetImageFolder");
-      if (!pool("folders").includes(`${f}.zip`))
-        errors.push(IMAGE_FOLDER_MISSING("targetImageFolder", f));
-    }
+    errors.push(
+      ...checkImageFolderNamesPresence(imageFolderSpec, availability.folders),
+    );
 
     // Code (movieComputeJS).
     const code = getCodeList(parsed) as string[];
     for (const c of code) add("code", c, "movieComputeJS");
-    errors.push(...isCodeMissing(code, pool("code")));
+    errors.push(...checkCodePresence(code, availability.code));
   } catch (e) {
     // A malformed table mid-edit must never take the panel down; the table
     // checks report the problem.

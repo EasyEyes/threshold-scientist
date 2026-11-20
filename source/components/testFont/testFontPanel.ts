@@ -41,6 +41,7 @@ import {
   glossaryFontPixiMetricsStringDefault,
 } from "../../../threshold/preprocess/fontPixiMetricsStringDefault";
 import { getTestFontContext } from "./testFontContext";
+import { resourceListingFor } from "../../../threshold/preprocess/resourceCatalog";
 
 const DEFAULT_LANGUAGE_CODE = "en";
 /** PIXI's own metrics string, used when nothing else is available. */
@@ -823,14 +824,18 @@ export const buildTestFontPanel = (): HTMLElement => {
 
   /* ------------------------------ initial state --------------------------- */
 
-  const { fonts, resourcesLoaded, signedIn } = getTestFontContext();
+  const { resourceCatalog, signedIn } = getTestFontContext();
+  const fontListing = resourceListingFor(resourceCatalog, "fonts");
+  const fonts = fontListing.kind === "ready" ? fontListing.names : [];
   const placeholder = element(
     "option",
     undefined,
     !signedIn
       ? "Sign in to list your fonts"
-      : !resourcesLoaded
+      : fontListing.kind === "idle" || fontListing.kind === "loading"
       ? "Listing your fonts…"
+      : fontListing.kind === "failed"
+      ? "Couldn’t list fonts — retry on the Compiler tab"
       : fonts.length
       ? "Choose a font…"
       : "No fonts in EasyEyesResources",

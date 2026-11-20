@@ -49,17 +49,26 @@ import {
   showFastCompileProgress,
 } from "./studio/fastCompileProgress";
 import { makePastExperimentsApi } from "./studio/pastExperiments";
-import { getRetryDelayMs } from "../threshold/preprocess/retry";
+import {
+  failedResourceCatalog,
+  idleResourceCatalog,
+  loadingResourceCatalog,
+  settledResourceCatalog,
+} from "../threshold/preprocess/resourceCatalog";
 import {
   handleAuthError,
   isAuthenticationError,
 } from "../threshold/preprocess/auth/errorHandler";
-import { resourcesFileTypes } from "../threshold/preprocess/constants";
 import { auth, db } from "./components/firebase";
 import {
   getProlificAccount,
   getProlificStudySubmissions,
 } from "./components/prolificIntegration";
+
+import {
+  clearProlificMetadataCache,
+  prefetchProlificParticipantGroups,
+} from "../threshold/preprocess/prolificMetadata";
 
 import { getCompatibilityRequirements } from "../threshold/components/compatibilityCheck";
 import { compatibilityRequirements } from "../threshold/preprocess/global";
@@ -91,24 +100,6 @@ import {
   createProlificExperimentUrl,
   createProlificStudyConfig,
 } from "./components/prolificStudyConfig";
-
-// Utility function to create empty resources object from constants
-const createEmptyResourcesObject = () => {
-  const resources = {};
-  resourcesFileTypes.forEach((type) => {
-    resources[type] = [];
-  });
-  return resources;
-};
-
-// Utility function to create resources object from loaded data
-const createResourcesObjectFromData = (loadedResources) => {
-  const resources = {};
-  resourcesFileTypes.forEach((type) => {
-    resources[type] = loadedResources[type] || [];
-  });
-  return resources;
-};
 
 const createEmptyRecruitmentInformation = () => ({
   recruitmentServiceName: null,
@@ -163,7 +154,7 @@ export default class App extends Component {
       prolificToken: null,
       currentProlificConfig: null,
       prolificAccount: null,
-      resources: createEmptyResourcesObject(),
+      resourceCatalog: idleResourceCatalog(),
       filename: null,
       projectName: null,
       newRepo: null,
@@ -191,6 +182,7 @@ export default class App extends Component {
       handleReturnToStep: this.handleReturnToStep.bind(this),
       handleUpdateUser: this.handleUpdateUser.bind(this),
       handleLogin: this.handleLogin.bind(this),
+      handleRetryResources: this.handleRetryResources.bind(this),
       handleUploadProlificToken: this.handleUploadProlificToken.bind(this),
       handleUpdateProlificToken: this.handleUpdateProlificToken.bind(this),
       handleAddResources: this.handleAddResources.bind(this),
@@ -229,6 +221,7 @@ export default class App extends Component {
     // The mounted Table (compiler step "table"), so the Studio can hand its
     // files to the same drop handler a scientist uses.
     this.tableRef = React.createRef();
+    this.resourceRetry = null;
   }
 
   async componentDidMount() {
@@ -511,7 +504,7 @@ export default class App extends Component {
       futureSteps: [...this.allSteps].slice(1),
       user: null,
       accessToken: null,
-      resources: createEmptyResourcesObject(),
+      resourceCatalog: idleResourceCatalog(),
       projectName: null,
       newRepo: null,
       compatibilityRequirements: "",
@@ -574,29 +567,45 @@ export default class App extends Component {
     this.publishTestFontContext();
   }
 
+  componentWillUnmount() {
+    this.cancelResourceRetry();
+  }
+
+  cancelResourceRetry() {
+    const retry = this.resourceRetry;
+    this.resourceRetry = null;
+    if (!retry) return;
+    // An aborted request must not settle as a failure over its replacement.
+    this.resourceLoadGeneration = (this.resourceLoadGeneration ?? 0) + 1;
+    retry.controller.abort();
+  }
+
   publishTestFontContext() {
-    const { accessToken, resources, resourcesLoaded } = this.state;
+    const { accessToken, resourceCatalog } = this.state;
     setTestFontContext({
-      fonts: resources?.fonts ?? [],
-      resourcesLoaded: Boolean(resourcesLoaded),
+      resourceCatalog,
       signedIn: Boolean(accessToken),
     });
   }
 
   handleUpdateUser(newUser) {
+    if (this.state.user !== newUser) {
+      this.cancelResourceRetry();
+      clearProlificMetadataCache();
+    }
     this.setState({
       user: newUser,
     });
   }
 
   async handleLogin(user, resources, accessToken, prolificToken) {
+    this.cancelResourceRetry();
     this.setState({
       user: user,
       accessToken: accessToken,
       prolificToken: prolificToken || null,
       prolificAccount: null, // Load asynchronously via handleUpdateProlificToken
-      resources: createEmptyResourcesObject(), // Initialize with empty arrays while resources load
-      resourcesLoaded: false,
+      resourceCatalog: loadingResourceCatalog(),
       ...this.nextStepStatus("table"),
     });
 
@@ -607,47 +616,48 @@ export default class App extends Component {
     // when the prolificTokenPromise resolves in Login.js
   }
 
-  handleResourcesLoaded(resourcesPromise, user, attempt = 0) {
-    resourcesPromise
-      .then((r) => {
-        // A pending retry can outlive an account switch; its result belongs
-        // to a user who is no longer current and must not clobber state.
-        if (this.state.user !== user) return r;
-        // Check if any resource type failed to fetch (null values)
-        const failedTypes = Object.entries(r)
-          .filter(([_, value]) => value === null)
-          .map(([key, _]) => key);
+  handleRetryResources() {
+    const { user } = this.state;
+    if (!user) return;
+    if (this.resourceRetry) return this.resourceRetry.settled;
 
-        if (failedTypes.length > 0) {
-          if (attempt >= 3) {
-            Swal.fire({
-              title: "Pavlovia server troubles",
-              text: "Failed to fetch some resources. Try refreshing the page.",
-              confirmButtonColor: "#666",
-            });
-          } else {
-            // Retry with exponential backoff - keep spinner showing
-            setTimeout(() => {
-              const retryPromise = getCommonResourcesNames(user);
-              this.handleResourcesLoaded(retryPromise, user, attempt + 1);
-            }, getRetryDelayMs(attempt));
-            return;
-          }
-        }
+    const retry = {
+      controller: new AbortController(),
+      promise: null,
+      settled: null,
+    };
+    this.resourceRetry = retry;
+    this.setState({ resourceCatalog: loadingResourceCatalog() });
+    retry.promise = getCommonResourcesNames(user, {
+      signal: retry.controller.signal,
+    });
+    retry.settled = this.handleResourcesLoaded(retry.promise, user);
+    retry.settled.finally(() => {
+      if (this.resourceRetry === retry) this.resourceRetry = null;
+    });
+    return retry.settled;
+  }
 
+  handleResourcesLoaded(resourcesPromise, user) {
+    if (this.resourceRetry && resourcesPromise !== this.resourceRetry.promise)
+      this.cancelResourceRetry();
+    const loadId = (this.resourceLoadGeneration ?? 0) + 1;
+    this.resourceLoadGeneration = loadId;
+    const isStale = () =>
+      this.state.user !== user || this.resourceLoadGeneration !== loadId;
+    return resourcesPromise
+      .then((listings) => {
+        // Account switches and newer same-account loads both invalidate this.
+        if (isStale()) return listings;
         this.setState({
-          resources: createResourcesObjectFromData(r),
-          resourcesLoaded: true,
+          resourceCatalog: settledResourceCatalog(listings),
         });
-        return r;
+        return listings;
       })
       .catch((error) => {
-        // Same staleness rule: never act on a failed load for a user who is
-        // no longer current — re-authenticating would clear the NEW session.
-        if (this.state.user !== user) return;
-        // getCommonResourcesNames resolves unless the failure is global:
-        // an auth failure (stale/expired session) re-authenticates silently;
-        // anything else is an unexpected bug.
+        // Never act on a stale failed load — re-authenticating could clear
+        // a newer session, and an old failure could hide a newer success.
+        if (isStale()) return;
         if (isAuthenticationError(error)) {
           handleAuthError(error).catch((redirectError) =>
             captureError(redirectError, "Re-authentication failed", {
@@ -660,10 +670,16 @@ export default class App extends Component {
         captureError(error, "Unexpected error loading resources", {
           type: "resources",
         });
+        // A whole-catalog failure is settled but unavailable. Waiting compile
+        // and UI code must not spin forever or invent empty resource lists.
+        this.setState({ resourceCatalog: failedResourceCatalog(error) });
       });
   }
 
   async handleUploadProlificToken(prolificToken) {
+    clearProlificMetadataCache();
+    if (prolificToken)
+      void prefetchProlificParticipantGroups(prolificToken).catch(() => {});
     this.setState({
       prolificToken: prolificToken,
       prolificAccount: prolificToken
@@ -673,6 +689,9 @@ export default class App extends Component {
   }
 
   async handleUpdateProlificToken(prolificToken) {
+    clearProlificMetadataCache();
+    if (prolificToken)
+      void prefetchProlificParticipantGroups(prolificToken).catch(() => {});
     this.setState({
       prolificToken: prolificToken,
     });
@@ -706,10 +725,10 @@ export default class App extends Component {
     this.setState({ profileStatement: profileStatement });
   }
 
-  handleAddResources(newResources) {
-    // override the resources in the state
+  handleAddResources(newListings) {
+    this.cancelResourceRetry();
     this.setState({
-      resources: { ...newResources },
+      resourceCatalog: settledResourceCatalog(newListings),
     });
   }
 
@@ -1199,7 +1218,7 @@ export default class App extends Component {
       prolificToken,
       currentProlificConfig,
       prolificAccount,
-      resources,
+      resourceCatalog,
       filename,
       projectName,
       newRepo,
@@ -1210,7 +1229,6 @@ export default class App extends Component {
       profileStatement,
       isCompiledFromArchiveBool,
       archivedZip,
-      resourcesLoaded,
       compileWarnings,
       compileErrorsVisible,
     } = this.state;
@@ -1235,7 +1253,7 @@ export default class App extends Component {
           user={user}
           prolificToken={prolificToken}
           currentProlificConfig={currentProlificConfig}
-          resources={resources}
+          resourceCatalog={resourceCatalog}
           projectName={activeExperiment.name}
           newRepo={null}
           activeExperiment={activeExperiment}
@@ -1247,7 +1265,6 @@ export default class App extends Component {
           prolificStudyStatus={prolificStudyStatus}
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
-          resourcesLoaded={resourcesLoaded}
         />,
       );
     else
@@ -1262,7 +1279,7 @@ export default class App extends Component {
           user={user}
           prolificToken={prolificToken}
           currentProlificConfig={currentProlificConfig}
-          resources={resources}
+          resourceCatalog={resourceCatalog}
           projectName={projectName}
           newRepo={newRepo}
           experimentStatus={experimentStatus}
@@ -1270,7 +1287,6 @@ export default class App extends Component {
           activeExperiment={activeExperiment}
           isCompiledFromArchiveBool={isCompiledFromArchiveBool}
           archivedZip={archivedZip}
-          resourcesLoaded={resourcesLoaded}
           compileWarnings={compileWarnings}
           tableRef={this.tableRef}
         />,
@@ -1302,8 +1318,8 @@ export default class App extends Component {
                 onPreview={this.previewFromStudio}
                 onDownloadSource={this.downloadSourceFromStudio}
                 fetchUserPhraseFile={this.fetchStudioPhraseFile}
-                userResources={accessToken ? resources : null}
-                resourcesLoaded={Boolean(resourcesLoaded)}
+                resourceCatalog={resourceCatalog}
+                onRetryResources={this.functions.handleRetryResources}
                 signedIn={Boolean(accessToken)}
                 pastExperiments={this.studioPastExperiments()}
               />
@@ -1341,7 +1357,7 @@ export default class App extends Component {
                 user={user}
                 prolificToken={prolificToken}
                 prolificAccount={prolificAccount}
-                resources={resources}
+                resourceCatalog={resourceCatalog}
                 filename={filename}
                 projectName={projectName}
                 newRepo={newRepo}

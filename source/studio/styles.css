@@ -1087,7 +1087,8 @@ main.ee-studio-wide {
   background: var(--pale-green);
 }
 
-.ee-studio .resource-list li.missing {
+.ee-studio .resource-list li.missing,
+.ee-studio .resource-list li.unverified {
   background: var(--warning-bg);
 }
 
@@ -1101,7 +1102,8 @@ main.ee-studio-wide {
   color: var(--green);
 }
 
-.ee-studio li.missing .resource-status {
+.ee-studio li.missing .resource-status,
+.ee-studio li.unverified .resource-status {
   color: var(--warning);
 }
 

@@ -5,6 +5,7 @@
 import { loadGlossaryForTests } from "../../threshold/tests/helpers/glossary";
 import { buildStudy, isBuildFailure } from "../studio/builder";
 import { matrixToState } from "../studio/tableModel";
+import { idleResourceCatalog } from "../../threshold/preprocess/resourceCatalog";
 import {
   effective,
   effectiveNum,
@@ -69,7 +70,7 @@ const ctx = (table, name = "t") => ({
   table,
   name,
   signedIn: true,
-  userResources: null,
+  resourceCatalog: idleResourceCatalog(),
   droppedFileNames: [],
   focus: null,
   check: () => ({ errors: [], resourceErrors: [], needed: [] }),

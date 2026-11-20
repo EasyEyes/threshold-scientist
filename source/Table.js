@@ -10,7 +10,13 @@ import AlertCard from "./components/AlertCard";
 import {
   userRepoFiles,
   resourcesRepoName,
+  resourcesFileTypes,
 } from "../threshold/preprocess/constants";
+import {
+  resourceAvailabilities,
+  resourceCatalogHasSettled,
+  resourceListingFor,
+} from "../threshold/preprocess/resourceCatalog";
 import {
   getAllProjects,
   copyUser,
@@ -129,6 +135,7 @@ export default class Table extends Component {
   compileFiles(files, source, preview = undefined) {
     beginCompile(source);
     this.pendingPreview = preview ?? null;
+    this.currentDropFileNames = files.map((file) => file.name);
     this.setState({ alerts: [] });
     const { user, functions } = this.props;
     if (!user || !user.initProjectList)
@@ -322,8 +329,9 @@ export default class Table extends Component {
    * "Compiling ..." dialog rather than firing a new one, so the modal stays
    * put; otherwise show the classic "Listing resources ..." dialog.
    */
-  waitForResourcesLoaded(parallel) {
-    if (this.props.resourcesLoaded) return Promise.resolve();
+  waitForResourceCatalog(parallel) {
+    if (resourceCatalogHasSettled(this.props.resourceCatalog))
+      return Promise.resolve();
     if (parallel) {
       manuallySetSwalTitle("Listing resources ...");
       this.showDialogSpinner();
@@ -342,7 +350,7 @@ export default class Table extends Component {
     }
     return new Promise((resolve) => {
       const checkResourcesLoaded = () => {
-        if (this.props.resourcesLoaded) {
+        if (resourceCatalogHasSettled(this.props.resourceCatalog)) {
           // Leave the dialog open; it seamlessly becomes the compiling dialog.
           manuallySetSwalTitle("Compiling ...");
           resolve();
@@ -360,16 +368,19 @@ export default class Table extends Component {
   }
 
   /**
-   * Content of every text file in the scientist's EasyEyesResources (from
-   * `this.props.resources.texts`, so the listing must be in), keyed by file
-   * name, for compile-time corpus length validation. Never rejects: read
-   * failures are reported and the affected files are left out.
+   * Content of every text file in a ready EasyEyesResources texts listing,
+   * keyed by filename, for compile-time corpus length validation. Never
+   * rejects: read failures are reported and the affected files are left out.
    */
   async readTextResources(operation, resourcesRepoPromise) {
     const textContents = {};
     try {
       const resourcesRepo = await resourcesRepoPromise;
-      const texts = this.props.resources?.texts;
+      const textsListing = resourceListingFor(
+        this.props.resourceCatalog,
+        "texts",
+      );
+      const texts = textsListing.kind === "ready" ? textsListing.names : [];
       if (resourcesRepo && texts?.length > 0) {
         const repoID = parseInt(resourcesRepo.id);
         const { clientId, redirectUri } = getAuthConfig();
@@ -496,7 +507,7 @@ export default class Table extends Component {
       // refresh keeps its own failure handling and reports false on failure;
       // the compile aborts on either, exactly as when they ran in sequence.
       resourcesRepoPromise = lookupResourcesRepo();
-      const resourcesListed = this.waitForResourcesLoaded(true);
+      const resourcesListed = this.waitForResourceCatalog(true);
       if (overlapMetadata)
         textContentsPromise = resourcesListed.then(() =>
           this.readTextResources(operation, resourcesRepoPromise),
@@ -531,7 +542,7 @@ export default class Table extends Component {
         closePlaceholder();
         return;
       }
-      await this.waitForResourcesLoaded(false);
+      await this.waitForResourceCatalog(false);
       await this.waitForProjectList();
     }
     // Restore the compiling status before handing off to the resource/compile
@@ -576,11 +587,19 @@ export default class Table extends Component {
         resolvedResources = {};
       }
     } else {
-      // Shallow-copy so the compile-time augmentation below (phrases File
-      // objects, textContents, fetchPhraseFromRepo) does not mutate the shared
-      // `resources` state. Mutating it in place overwrote the phrase filenames
-      // shown by the resource buttons with raw File objects ("[object File]").
-      resolvedResources = { ...this.props.resources };
+      // Keep ready names for the existing compiler pipeline, and carry failed
+      // types separately so its presence checks can report "unverified"
+      // instead of inventing an empty remote folder.
+      resolvedResources = {};
+      for (const type of resourcesFileTypes) {
+        const listing = resourceListingFor(this.props.resourceCatalog, type);
+        resolvedResources[type] =
+          listing.kind === "ready" ? [...listing.names] : [];
+      }
+      resolvedResources.availability = resourceAvailabilities(
+        this.props.resourceCatalog,
+        this.currentDropFileNames ?? [],
+      );
 
       // Corpus text file content for compile-time length validation. With
       // "overlapMetadataCalls" the read was started during the preamble and
@@ -942,44 +961,35 @@ export default class Table extends Component {
 
   render() {
     const resourceButtons = [];
-    for (const fileType in this.props.resources) {
-      // Skip folders, impulseResponses, and frequencyResponses as they'll be combined into a single "sound" button
-      if (
-        fileType !== "folders" &&
-        fileType !== "impulseResponses" &&
-        fileType !== "frequencyResponses" &&
-        fileType !== "targetSoundLists"
-      ) {
+    const soundTypes = [
+      "folders",
+      "impulseResponses",
+      "frequencyResponses",
+      "targetSoundLists",
+    ];
+    for (const fileType of resourcesFileTypes) {
+      if (!soundTypes.includes(fileType)) {
         resourceButtons.push(
           <ResourceButton
             key={`resource-button-${fileType}`}
             name={fileType}
-            resourceList={this.props.resources[fileType]}
-            isLoading={!this.props.resourcesLoaded}
+            listing={resourceListingFor(this.props.resourceCatalog, fileType)}
+            onRetry={this.props.functions.handleRetryResources}
           />,
         );
       }
     }
 
-    // Add the combined sound button if any of the sound-related resources exist
-    if (
-      this.props.resources.folders ||
-      this.props.resources.impulseResponses ||
-      this.props.resources.frequencyResponses ||
-      this.props.resources.targetSoundLists
-    ) {
-      resourceButtons.push(
-        <ResourceButton
-          key="resource-button-sound"
-          name="sound"
-          resourceList={this.props.resources.folders || []}
-          secondaryResourceList={this.props.resources.impulseResponses || []}
-          tertiaryResourceList={this.props.resources.frequencyResponses || []}
-          targetSoundListList={this.props.resources.targetSoundLists || []}
-          isLoading={!this.props.resourcesLoaded}
-        />,
-      );
-    }
+    resourceButtons.push(
+      <ResourceButton
+        key="resource-button-sound"
+        name="sound"
+        listings={soundTypes.map((type) =>
+          resourceListingFor(this.props.resourceCatalog, type),
+        )}
+        onRetry={this.props.functions.handleRetryResources}
+      />,
+    );
 
     return (
       <div className="table" ref={this.ref}>

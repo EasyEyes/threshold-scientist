@@ -41,7 +41,7 @@ import {
   skillsUsedIn,
   type Skill,
 } from "./skills";
-import { existsInUserResources } from "../resources";
+import { userResourceStatus } from "../resources";
 import type { Alert } from "../validation";
 import {
   MAX_CONVERSATION_BYTES,
@@ -93,11 +93,15 @@ function foldReport(
   const missing: string[] = [];
   const unverified: string[] = [];
   for (const n of r.check.needed) {
-    const present =
-      existsInUserResources(n, ctx.userResources) ||
-      ctx.droppedFileNames.includes(n.filename);
-    if (present) continue;
-    (ctx.signedIn ? missing : unverified).push(n.filename);
+    const status = userResourceStatus(
+      n,
+      ctx.resourceCatalog,
+      ctx.droppedFileNames,
+    );
+    if (status === "local" || status === "remote") continue;
+    (ctx.signedIn && status === "missing" ? missing : unverified).push(
+      n.filename,
+    );
   }
   const built = r.kind === "built" || acc?.kind === "built";
   return {

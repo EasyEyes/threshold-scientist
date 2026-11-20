@@ -1,9 +1,14 @@
 import React, { useRef, useState } from "react";
 import {
-  existsInUserResources,
+  resourceTypeLabel,
+  userResourceStatus,
   type NeededResource,
-  type UserResources,
 } from "../resources";
+import {
+  failedResourceTypes,
+  resourceCatalogHasSettled,
+  type ResourceCatalog,
+} from "../../../threshold/preprocess/resourceCatalog";
 import type { Alert, PhraseSource } from "../validation";
 import AlertCard from "../../components/AlertCard";
 
@@ -18,10 +23,9 @@ interface Props {
   onJump: (paramName: string) => void;
   phrase: PhraseSource | null;
   files: File[];
-  /** Files already in the user's EasyEyesResources (null when signed out). */
-  userResources: UserResources | null;
-  /** False while the compiler page is still fetching the resource lists. */
-  resourcesLoaded: boolean;
+  /** EasyEyesResources listing states (idle when signed out). */
+  resourceCatalog: ResourceCatalog;
+  onRetryResources?: () => void;
   signedIn: boolean;
   onAddFiles: (files: File[]) => void;
   onRemoveFile: (name: string) => void;
@@ -41,8 +45,8 @@ export function ResourcePanel({
   onJump,
   phrase,
   files,
-  userResources,
-  resourcesLoaded,
+  resourceCatalog,
+  onRetryResources,
   signedIn,
   onAddFiles,
   onRemoveFile,
@@ -50,25 +54,37 @@ export function ResourcePanel({
 }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const have = new Set(files.map((f) => f.name));
+  const localNames = files.map((f) => f.name);
   const referenced = new Set(needed.map((n) => n.filename));
   const extras = files.filter((f) => !referenced.has(f.name));
-  const checkingRemote = signedIn && !resourcesLoaded;
+  const checkingRemote =
+    signedIn && !resourceCatalogHasSettled(resourceCatalog);
+  const unavailableTypes = failedResourceTypes(resourceCatalog);
   const statusOf = (n: NeededResource) =>
-    have.has(n.filename)
-      ? "local"
-      : existsInUserResources(n, userResources)
-      ? "remote"
-      : "missing";
+    userResourceStatus(n, resourceCatalog, localNames);
   const missingCount = needed.filter((n) => statusOf(n) === "missing").length;
+  const unverifiedCount = needed.filter(
+    (n) => statusOf(n) === "unverified",
+  ).length;
+  const statusGlyph = {
+    local: "✓",
+    remote: "✓",
+    missing: "•",
+    unverified: "?",
+  };
 
   return (
     <div className="resource-panel">
       <div className="panel-title">
         Upload resources
         {needed.length > 0 && (
-          <span className={`count-chip ${missingCount ? "warnings" : "ok"}`}>
-            {needed.length - missingCount}/{needed.length} present
+          <span
+            className={`count-chip ${
+              missingCount + unverifiedCount ? "warnings" : "ok"
+            }`}
+          >
+            {needed.length - missingCount - unverifiedCount}/{needed.length}{" "}
+            present
           </span>
         )}
       </div>
@@ -86,18 +102,20 @@ export function ResourcePanel({
             return (
               <li
                 key={`${n.kind}:${n.filename}`}
-                className={status === "missing" ? "missing" : "present"}
+                className={
+                  status === "local" || status === "remote" ? "present" : status
+                }
                 title={
                   status === "remote"
                     ? "Already in your EasyEyesResources on Pavlovia — nothing to do"
                     : status === "local"
                     ? "Uploaded here"
+                    : status === "unverified"
+                    ? "The resource list is unavailable, so presence cannot be verified"
                     : "Not found — drop the file below"
                 }
               >
-                <span className="resource-status">
-                  {status === "missing" ? "•" : "✓"}
-                </span>
+                <span className="resource-status">{statusGlyph[status]}</span>
                 <span className="resource-name">{n.filename}</span>
                 <span className="resource-kind">{n.params.join(", ")}</span>
               </li>
@@ -110,24 +128,42 @@ export function ResourcePanel({
           Checking your EasyEyesResources on Pavlovia…
         </p>
       )}
-      {compilerErrors.length > 0 && signedIn && resourcesLoaded && (
-        <details className="compiler-will-say">
-          <summary>
-            What the compiler will report ({compilerErrors.length}) — you can
-            still compile; drop the files to clear these
-          </summary>
-          <ul className="alert-list">
-            {compilerErrors.map((e, i) => (
-              <AlertCard
-                key={i}
-                as="li"
-                headingLevel={3}
-                alert={e}
-                onParameter={onJump}
-              />
-            ))}
-          </ul>
-        </details>
+      {unverifiedCount > 0 && !checkingRemote && (
+        <p className="panel-note">
+          {unverifiedCount} resource{unverifiedCount === 1 ? "" : "s"} cannot be
+          verified until the resource list is available.
+        </p>
+      )}
+      {compilerErrors.length > 0 &&
+        signedIn &&
+        resourceCatalogHasSettled(resourceCatalog) && (
+          <details className="compiler-will-say">
+            <summary>
+              What the compiler will report ({compilerErrors.length}) — you can
+              still compile; drop the files to clear these
+            </summary>
+            <ul className="alert-list">
+              {compilerErrors.map((e, i) => (
+                <AlertCard
+                  key={i}
+                  as="li"
+                  headingLevel={3}
+                  alert={e}
+                  onParameter={onJump}
+                />
+              ))}
+            </ul>
+          </details>
+        )}
+      {signedIn && unavailableTypes.length > 0 && (
+        <p className="panel-note">
+          Couldn’t load {unavailableTypes.map(resourceTypeLabel).join(", ")}.{" "}
+          {onRetryResources && (
+            <button className="link-button" onClick={onRetryResources}>
+              Retry
+            </button>
+          )}
+        </p>
       )}
       {needed.length > 0 && !signedIn && (
         <p className="panel-note">

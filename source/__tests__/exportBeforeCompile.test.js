@@ -79,17 +79,19 @@ const {
 
 const user = { id: 1, username: "alice" };
 
+const ready = (names) => ({ kind: "ready", names });
+
 const emptyRepo = () => ({
-  fonts: [],
-  forms: [],
-  texts: [],
-  folders: [],
-  images: [],
-  code: [],
-  impulseResponses: [],
-  frequencyResponses: [],
-  targetSoundLists: [],
-  phrases: [],
+  fonts: ready([]),
+  forms: ready([]),
+  texts: ready([]),
+  folders: ready([]),
+  images: ready([]),
+  code: ready([]),
+  impulseResponses: ready([]),
+  frequencyResponses: ready([]),
+  targetSoundLists: ready([]),
+  phrases: ready([]),
 });
 
 const savedZip = async () => {
@@ -144,9 +146,9 @@ describe("exportStudyBeforeCompiling", () => {
   it("zips the spreadsheet verbatim with the repo resources it references", async () => {
     getCommonResourcesNames.mockResolvedValue({
       ...emptyRepo(),
-      fonts: ["Sloan.woff2", "Unused.woff2"],
-      folders: ["noise.zip"],
-      texts: ["story.txt"],
+      fonts: ready(["Sloan.woff2", "Unused.woff2"]),
+      folders: ready(["noise.zip"]),
+      texts: ready(["story.txt"]),
     });
     getBase64FileDataFromGitLab.mockImplementation(async (repoId, path) =>
       Buffer.from(`binary of ${path}`).toString("base64"),
@@ -205,7 +207,7 @@ describe("exportStudyBeforeCompiling", () => {
   it("still exports when a resource cannot be fetched (the later compile will complain)", async () => {
     getCommonResourcesNames.mockResolvedValue({
       ...emptyRepo(),
-      fonts: ["Sloan.woff2"],
+      fonts: ready(["Sloan.woff2"]),
     });
     getBase64FileDataFromGitLab.mockRejectedValue(new Error("network down"));
     const consoleWarn = jest

@@ -64,6 +64,11 @@ jest.mock("../components/prolificIntegration", () => ({
   getProlificStudySubmissions: jest.fn(),
 }));
 
+jest.mock("../../threshold/preprocess/prolificMetadata", () => ({
+  clearProlificMetadataCache: jest.fn(),
+  prefetchProlificParticipantGroups: jest.fn(() => Promise.resolve([])),
+}));
+
 jest.mock("../../threshold/components/compatibilityCheck", () => ({
   getCompatibilityRequirements: jest.fn(),
 }));
@@ -719,5 +724,39 @@ describe("App - footnote suppression while compiler errors show", () => {
         formatLocalDeploymentTime("2026-08-08T09:00:00.000Z"),
       ),
     );
+  });
+
+  it("clears the Prolific metadata cache when the user changes", () => {
+    const {
+      clearProlificMetadataCache,
+    } = require("../../threshold/preprocess/prolificMetadata");
+    const ref = React.createRef();
+    render(<App ref={ref} />);
+
+    ref.current.handleUpdateUser({ id: "different-user" });
+
+    expect(clearProlificMetadataCache).toHaveBeenCalled();
+  });
+
+  it("prefetches participant groups without waiting for the Prolific account", async () => {
+    const { getProlificAccount } = require("../components/prolificIntegration");
+    const {
+      prefetchProlificParticipantGroups,
+    } = require("../../threshold/preprocess/prolificMetadata");
+    let resolveAccount;
+    getProlificAccount.mockReturnValue(
+      new Promise((resolve) => (resolveAccount = resolve)),
+    );
+    const ref = React.createRef();
+    render(<App ref={ref} />);
+
+    const update = ref.current.handleUpdateProlificToken("prolific-token");
+    await Promise.resolve();
+    expect(prefetchProlificParticipantGroups).toHaveBeenCalledWith(
+      "prolific-token",
+    );
+
+    resolveAccount({ id: "account-1" });
+    await update;
   });
 });
