@@ -240,14 +240,14 @@ export const createFreshnessController = ({
         if (publishedAt) {
           publish({
             status: "fresh",
-            message: `Page up to date as of ${formatPageUpToDateTime(
+            message: `Compiler up to date as of ${formatPageUpToDateTime(
               publishedAt,
             )}.`,
           });
         } else {
           publish({
             status: "fresh",
-            message: "Page up to date.",
+            message: "Compiler up to date.",
           });
         }
       } else {

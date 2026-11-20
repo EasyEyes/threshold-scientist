@@ -1031,7 +1031,7 @@ export default class Table extends Component {
           <h3>Download a raw.source.zip archive</h3>
           <ul>
             <li>
-              If you can’t compile, then click{" "}
+              If you can’t compile, you can still click{" "}
               <strong>Select file to download raw source</strong> and choose
               your spreadsheet. You can share the downloaded archive to report a
               compilation error.
