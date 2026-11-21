@@ -1,7 +1,7 @@
 import {
   collectStudyGlossaryReferences,
   validateGlossaryAudit,
-  checkGlossaryAudit,
+  hasGlossaryAuditVersionMismatch,
 } from "../../threshold/preprocess/glossaryAudit";
 import { initGlossary } from "../../threshold/parameters/glossaryRegistry";
 import {
@@ -88,28 +88,29 @@ it("C4 rejects mismatched, malformed, or incomplete reports rather than inventin
       validateGlossaryAudit([{ parameter: "font", key: "font" }], value),
     ).toThrow();
 });
-it("C5 retries an unavailable audit on the next compile", async () => {
+it("C5 checks the next local compile after an unavailable audit", async () => {
   global.fetch = jest
     .fn()
     .mockResolvedValueOnce({ ok: false })
-    .mockResolvedValueOnce({ ok: true, json: async () => audit });
-  expect(await checkGlossaryAudit([["font", "", "Arial"]])).toEqual([
-    expect.objectContaining({
-      name: "Glossary audit unavailable",
-      kind: "warning",
-    }),
-  ]);
-  expect(await checkGlossaryAudit([["font", "", "Arial"]])).toEqual([]);
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ ...audit, glossaryVersion: "old" }),
+    });
+  const refs = [{ parameter: "font", key: "font" }];
+  expect(await hasGlossaryAuditVersionMismatch(refs)).toBe(false);
+  expect(await hasGlossaryAuditVersionMismatch(refs)).toBe(true);
   expect(global.fetch).toHaveBeenCalledTimes(2);
 });
 it("does not fetch reports for empty or unknown-only explicit input", async () => {
   global.fetch = jest.fn();
   expect(
-    await checkGlossaryAudit([
-      ["font", "", ""],
-      ["unknown", "", "x"],
-    ]),
-  ).toEqual([]);
+    await hasGlossaryAuditVersionMismatch(
+      collectStudyGlossaryReferences([
+        ["font", "", ""],
+        ["unknown", "", "x"],
+      ]),
+    ),
+  ).toBe(false);
   expect(global.fetch).not.toHaveBeenCalled();
 });
 it("escapes parameter HTML and omits internal audit metadata and removal history", () => {
@@ -133,3 +134,24 @@ it("escapes parameter HTML and omits internal audit metadata and removal history
   );
   expect(errors[0].hint).toContain("Review the Glossary entry");
 });
+
+it.each([
+  ["unused", { ...audit, usedKeys: [], unusedKeys: ["font"] }, false],
+  ["stale", { ...audit, glossaryVersion: "old" }, true],
+  ["malformed", {}, false],
+  [
+    "incomplete and stale",
+    { ...audit, glossaryVersion: "old", usedKeys: [] },
+    false,
+  ],
+])(
+  "reports a version mismatch only for a complete, stale audit (%s)",
+  async (_, report, mismatch) => {
+    expect(
+      await hasGlossaryAuditVersionMismatch(
+        [{ parameter: "font", key: "font" }],
+        report,
+      ),
+    ).toBe(mismatch);
+  },
+);

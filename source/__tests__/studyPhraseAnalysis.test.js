@@ -154,7 +154,7 @@ it("blocks unavailable and malformed analysis rather than reporting success", as
     ).toBe(true);
   }
 });
-it("reports uncertain missing source keys as warnings, not proven reachable errors", async () => {
+it("records uncertain missing source keys without compiler warnings", async () => {
   const table = setupStudy();
   initPhrases({ version: "test", phrases: {} });
   global.fetch = jest.fn().mockResolvedValue({
@@ -165,7 +165,8 @@ it("reports uncertain missing source keys as warnings, not proven reachable erro
       ]),
   });
   const result = await checkStudyPhraseAnalysis(table, []);
-  expect(result.errors[0].kind).toBe("warning");
+  expect(result.errors).toEqual([]);
+  expect(result.report.candidateDefinitionIssues).toEqual(["EE_test"]);
   expect(result.report.fullRuntimeAnswerAvailable).toBe(false);
 });
 
@@ -188,24 +189,7 @@ it("does not warn for source keys defined without translations", async () => {
   expect(result.errors).toEqual([]);
   expect(result.report.candidateDefinitionIssues).toEqual([]);
 });
-it("shows scientists the missing keys and what to do next", async () => {
-  const table = setupStudy();
-  initPhrases({ version: "test", phrases: {} });
-  const result = await checkStudyPhraseAnalysis(table, [], undefined, index);
-  expect(result.errors[0].name).toBe("Warning: 1 missing phrase");
-  expect(result.errors[0].message).toContain(
-    "not defined in International Phrases",
-  );
-  expect(result.errors[0].message).toContain("EE_test");
-  expect(result.errors[0].message).toContain(
-    "<strong>Can I run the study?</strong> Yes",
-  );
-  expect(result.errors[0].message).toContain("Report the problem");
-  expect(result.errors[0].message).toContain('class="alert-section"');
-  expect(result.errors[0].message).not.toContain("<br><br>");
-});
-
-it("lists each missing source key and uses the plural count", async () => {
+it("retains every missing source key in the report without warnings", async () => {
   const table = setupStudy();
   initPhrases({ version: "test", phrases: {} });
   const missingKeys = ["EE_missing", "RC_missing", "T_missing"];
@@ -219,14 +203,35 @@ it("lists each missing source key and uses the plural count", async () => {
     undefined,
     sourceIndex,
   );
-  expect(result.errors).toHaveLength(1);
-  expect(result.errors[0].name).toBe("Warning: 3 missing phrases");
-  expect(result.errors[0].message).toContain("3 keys that are not defined");
-  for (const key of missingKeys) {
-    expect(result.errors[0].message).toContain(
-      '<code class="alert-value"><a href=',
-    );
-    expect(result.errors[0].message).toContain(`${key}</a></code>`);
-  }
+  expect(result.errors).toEqual([]);
   expect(result.report.candidateDefinitionIssues).toEqual(missingKeys);
 });
+
+it.each([
+  ["unavailable", { ok: false }],
+  ["malformed", { ok: true, json: async () => ({}) }],
+  ["stale", { ok: true, json: async () => ({ fingerprint: "old" }) }],
+])(
+  "keeps optional %s analysis silent while preserving explicit definition errors",
+  async (_, response) => {
+    const table = setupStudy();
+    global.fetch = jest.fn().mockResolvedValue(response);
+    expect(
+      (await checkStudyPhraseAnalysis(table, [], undefined, undefined, false))
+        .errors,
+    ).toEqual([]);
+    const result = await checkStudyPhraseAnalysis(
+      table,
+      [{ key: "EE_missing", parameter: "instruction", column: 2 }],
+      undefined,
+      undefined,
+      false,
+    );
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        name: "International phrase not defined",
+        kind: "error",
+      }),
+    ]);
+  },
+);

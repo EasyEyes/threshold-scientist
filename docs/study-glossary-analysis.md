@@ -13,20 +13,14 @@ running, and failed newer runs do not hide the completed report. The adapter
 preserves the report's classifications: referenced `obsoleteUsed` entries remain
 in the used-key set for this check. Existing obsolete-parameter validation remains.
 
-A study-defined parameter classified as `unused` produces a **Glossary
-parameter not audited as used** warning. The message names the actual study parameter
-and links to its definition's full row in the published Google Sheets glossary.
-For example, `questionAndAnswer01` is audited and linked through
-`questionAndAnswer@@`. The existing glossary CSV row map supplies the link;
-if the row map cannot be loaded, the existing whole-sheet fallback applies.
-HTML values in messages are escaped.
+The web compiler skips the usage audit request. Standard parameter validation
+still blocks unrecognized names, invalid values, and obsolete definitions,
+including numbered parameters that inherit an obsolete definition.
 
-The compiler uses classifications only from a complete report for the loaded
-Glossary version. A missing, malformed, incomplete, or version-mismatched report
-produces a **Glossary audit unavailable** warning. Compilation can continue while
-an audit is pending or if the service is unavailable. The next compile checks
-again. Standard parameter validation still blocks unrecognized names, invalid
-values, and obsolete definitions.
+Local examples use a complete audit report to detect a Glossary version
+mismatch. A confirmed mismatch triggers one attempt per command to refresh both
+catalogs and recompile. Missing, malformed, incomplete, and unused-key findings
+produce no compiler warnings.
 
 This usage audit records source references. In particular, a glossary-wide data
 logging loop can establish a source reference without establishing task-specific
@@ -52,17 +46,18 @@ The report is stored in `user.currentExperiment.glossaryAnalysis`, with the load
 glossary version and explicit parameter references. It is cleared at the start of
 each compile. Source path states are `possible`, `excluded`, or `unresolved` for
 each enabled condition. Caller/runtime entry stays unresolved; a locally excluded
-site alone never causes a blocking unused-parameter error. An unavailable,
-malformed, or build-mismatched analysis blocks compilation like phrase analysis.
+site alone never causes a blocking unused-parameter error. Web compilation
+continues silently if the analysis is unavailable, malformed, or mismatched.
+Local examples require a valid source index.
 No browser replay or submitted source execution happens during compilation.
 
 ## Local compilation and tests
 
 `LocalCompileOptions.glossaryAudit` accepts a saved completed compiler-adapter
-report and validates it using the same rules as the web response. Without one,
-the normal API is required. `phraseAnalysisIndex` supplies the shared local source
-index for both phrase and glossary path analysis. Tests inject the external audit
-boundary explicitly; production never synthesizes a used-key list.
+report. Without one, local compilation checks the API when the study has explicit
+Glossary references and has passed parameter validation. The result exposes the
+version mismatch separately from compiler alerts. `phraseAnalysisIndex` supplies
+the shared local source index for both phrase and glossary path analysis.
 
 Run from website:
 

@@ -3,15 +3,15 @@
 The compiler combines phrase definition checks with source analysis:
 
 1. Explicit `EE_`, `RC_`, and `T_` references in enabled original study cells must exist in the phrase data loaded by the compiler (column A of International Phrases). A missing key blocks compilation; translation columns are not checked. Empty or absent translations are allowed. The compiler does not require membership in a source-usage audit, so a defined key such as `EE_Translator` is accepted even if that audit omits it.
-2. The final normalized condition parameters are evaluated against a source index built for the compiler deployment. An unavailable, malformed, or mismatched analysis blocks compilation. Source candidate keys absent from column A of International Phrases produce a warning with instructions for scientists. Translation values and the selected language do not affect this check. Invalid `_language` values are independently blocked by glossary category validation.
+2. The final normalized condition parameters are evaluated against a source index built for the compiler deployment. Web source analysis is optional: unavailable, malformed, or mismatched analysis does not block compilation. Source candidate keys absent from column A of International Phrases remain in the downloadable report without producing compiler warnings. Local examples require a valid source index. Translation values and the selected language do not affect this check. Invalid `_language` values are independently blocked by glossary category validation.
 
 Custom symbols and their replacement text remain outside the explicit-reference check. Custom values can still resolve parameters used by the source guard analysis. The study and stored audit formats are unchanged.
 
 ## Compiler validation order
 
-The compiler first checks spreadsheet structure, resolves custom values, and validates parameter names, column placement, value types, allowed categories (including `_language`), and cross-parameter rules. A blocking error in those stages skips the glossary usage audit, so an audit outage cannot obscure an input error.
+The compiler first checks spreadsheet structure, resolves custom values, and validates parameter names, column placement, value types, allowed categories (including `_language`), and cross-parameter rules. Local compilation checks the Glossary usage audit only after these checks pass. The web compiler skips the usage audit request.
 
-Once those checks pass, the glossary audit runs against the original enabled parameter rows. A missing, stale, or failed audit produces a warning and compilation continues. Resource and font checks follow. International Phrase key checks and phrase/glossary source analysis run only if no earlier blocking errors remain. Warnings alone do not skip the glossary audit or block compilation.
+The local usage audit uses the original enabled parameter rows. Its findings produce no compiler warnings. A confirmed version mismatch can trigger one refresh of the cached catalogs in the examples command. Resource and font checks follow. International Phrase key checks and phrase/glossary source analysis run only if no earlier blocking errors remain.
 
 ## Source index and API
 
@@ -40,11 +40,11 @@ Successful responses include the fingerprint, candidate keys, source sites, cond
 
 The compiler validates the response and adds phrase-data version, study language, original explicit references, definition errors, and uncertain candidate-definition issues. The current report can be downloaded from the **Phrase analysis** status line. The fingerprint prevents an old compiler tab from accepting an analysis for a newer source build; reload the compiler after a deployment mismatch.
 
-Local Node compilation uses the same evaluator with the build-generated index, without browser APIs or a network request for path analysis. `LocalCompileOptions.phraseAnalysisIndex` can supply an explicit trusted index. Explicit phrase references are checked against the loaded phrase catalog, without requesting a phrase-usage audit. The separate glossary-usage audit remains required.
+Local Node compilation uses the same evaluator with the build-generated index, without browser APIs or a network request for path analysis. `LocalCompileOptions.phraseAnalysisIndex` can supply an explicit trusted index. Explicit phrase references are checked against the loaded phrase catalog, without requesting a phrase-usage audit. The separate glossary-usage audit is optional and silent.
 
 ## Blocking policy and limits
 
-This integration does not execute Playwright, start Cloud Run jobs, or certify all runtime paths. Unproven source candidates are warnings rather than claims that a participant will execute those paths. Empty source matches and unobserved paths must not be treated as evidence of runtime unreachability.
+This integration does not execute Playwright, start Cloud Run jobs, or certify all runtime paths. Unproven source candidates are retained only in the report and do not produce compiler warnings. Empty source matches and unobserved paths must not be treated as evidence of runtime unreachability.
 
 To verify the integration locally:
 
@@ -58,10 +58,6 @@ npm test -- --runInBand --runTestsByPath source/__tests__/studyPhraseAnalysis.te
 npm run check:ts
 ```
 
-## Scientist warning preview
+## Optional audit diagnostics
 
-Missing source keys appear one per line below `⚠️ WARNING: N missing phrases`, followed by the “CAN I RUN THE STUDY?” and “REPORT THE PROBLEM.” instructions. The count uses the singular form for one key. The unused `simulateRuntimeError.js` helper was removed, so its intentionally absent `T_thisPhraseDoesNotExist` key no longer enters the source index.
-
-These screenshots use the compiler UI test harness with one missing key:
-
-[Desktop preview](screenshots/compiler-missing-phrases-desktop.png) · [Mobile preview](screenshots/compiler-missing-phrases-mobile.png)
+Glossary usage findings and uncertain missing phrase candidates do not appear as compiler warnings. Reports remain available for inspection. Ordinary study validation, including obsolete parameters and undefined explicit phrase keys, still blocks compilation.
