@@ -1,0 +1,70 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "jest",
+  "jest": {
+    "projectType": "custom",
+    "enableFindRelatedTests": false,
+    "configFile": "jest.mutation.config.js"
+  },
+  "mutate": [
+    "source/studyActions.js",
+    "source/repositoryState.js",
+    "source/glossaryTransformer.js",
+    "source/components/utils.ts",
+    "source/components/definition.ts",
+    "source/components/phrasesApi.js",
+    "source/components/glossaryApi.js",
+    "source/components/githubStatsApi.js",
+    "source/components/mediaLibrary.js",
+    "source/components/mediaCompression.js",
+    "source/components/prolificErrors.js",
+    "source/components/prolificStudyConfig.js",
+    "source/components/parsePhraseFile.ts",
+    "source/components/ParameterList.js",
+    "source/components/FreshnessStatus.js",
+    "source/freshness/*.ts",
+    "source/studio/{resources,validation,preview,exporters,tableModel,fileImport,categories,glossary,fastCompileProgress,pastExperiments,effective,templates,examples}.ts",
+    "source/studio/assistant/{effective,strictSchema,attachments,skills}.ts"
+  ],
+  "ignorePatterns": [
+    "dist",
+    "coverage",
+    "playwright-report",
+    "test-results",
+    "docs",
+    ".git",
+    ".jj",
+    ".netlify",
+    "threshold/node_modules",
+    "threshold/@rust",
+    "threshold/notes",
+    "threshold/examples",
+    "threshold/coverage",
+    "threshold/psychojs",
+    "threshold/models",
+    "threshold/fuzz",
+    "threshold/tools",
+    "threshold/js",
+    "threshold/dist",
+    "threshold/tests/fixtures",
+    "threshold/tests/sim",
+    "threshold/tests/e2e",
+    "threshold/tests/__cache__/phrases.json",
+    ".stryker-tmp"
+  ],
+  "coverageAnalysis": "perTest",
+  "reporters": ["clear-text", "html", "json"],
+  "htmlReporter": {
+    "fileName": "/tmp/stryker-reports/html/mutation.html"
+  },
+  "jsonReporter": {
+    "fileName": "/tmp/stryker-reports/mutation.json"
+  },
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": null
+  },
+  "timeoutMS": 60000,
+  "concurrency": 4
+}

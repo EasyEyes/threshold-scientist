@@ -144,6 +144,89 @@ const requestedLanguagePhraseFile = async (file: File): Promise<string> => {
   return String(row?.[1] ?? "").trim();
 };
 
+/** Where a dropped file goes, by the same order of tests as before. */
+type DroppedFileKind =
+  | "impulseResponse"
+  | "frequencyResponse"
+  | "targetSoundList"
+  | "namedPhrase"
+  | "phrase"
+  | "table"
+  | "resource";
+
+const classifyDroppedFile = async (file: File): Promise<DroppedFileKind> => {
+  if (isImpulseResponseFile(file)) return "impulseResponse";
+  if (isFrequencyResponseFile(file)) return "frequencyResponse";
+  if (isTargetSoundListFile(file)) return "targetSoundList";
+  if (await isNamedPhraseFile(file)) return "namedPhrase";
+  if (isPhraseFile(file)) return "phrase";
+  if (isExpTableFile(file)) return "table";
+  return "resource";
+};
+
+/**
+ * The first column of a csv or xlsx spreadsheet (the parameter column of an
+ * experiment table). An .xlsx upload is stored in the repository as its first
+ * sheet's rows in JSON, under the .xlsx name (fileUtils.readXLSXFile); a
+ * workbook a scientist dropped or exported is the real thing.
+ */
+const firstColumnOf = async (file: File): Promise<unknown[]> => {
+  if (/\.xlsx$/i.test(file.name)) {
+    const text = await file.text();
+    if (text.trimStart().startsWith("["))
+      return (JSON.parse(text) as unknown[]).map((row) =>
+        Array.isArray(row) ? row[0] : undefined,
+      );
+    const book = XLSX.read(new Uint8Array(await file.arrayBuffer()), {
+      type: "array",
+    });
+    const sheet = book.Sheets[book.SheetNames[0]];
+    return (XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][]).map(
+      (row) => row?.[0],
+    );
+  }
+  return (await file.text()).split(/\r?\n/).map((line) =>
+    (line.split(",")[0] ?? "")
+      .trim()
+      .replace(/^"(.*)"$/, "$1")
+      .trim(),
+  );
+};
+
+/**
+ * Whether a spreadsheet is an experiment table: it has the `block` row
+ * every experiment table has, and no phrases or response sheet has.
+ */
+export const looksLikeExperimentTable = async (
+  file: File,
+): Promise<boolean> => {
+  try {
+    return (await firstColumnOf(file)).some(
+      (cell) => String(cell ?? "").trim() === "block",
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * The experiment table among an archive's csv/xlsx entries that are not
+ * resources. A study archive can hold more than one: a phrases spreadsheet
+ * need not follow the *.phrases.xlsx naming convention (and one whose Ⓝ rows
+ * start late reads as no named-phrase sheet), and a response sheet is known
+ * by its name only. Tell the table by its content rather than by which entry
+ * happened to finish decompressing last; the first candidate stands in when
+ * none does.
+ */
+export const chooseExperimentFile = async (
+  candidates: File[],
+): Promise<File | null> => {
+  if (candidates.length <= 1) return candidates[0] ?? null;
+  for (const candidate of candidates)
+    if (await looksLikeExperimentTable(candidate)) return candidate;
+  return candidates[0];
+};
+
 export const handleDrop = async (
   user: User,
   files: File[],
@@ -163,7 +246,19 @@ export const handleDrop = async (
   const targetSoundListList: File[] = [];
   const phraseFileList: File[] = [];
   const namedPhraseFileList: File[] = [];
-  let experimentFile = null;
+  // Every csv/xlsx that is not a resource; the table is chosen from these
+  // once the drop has been read.
+  const tableCandidates: File[] = [];
+  let experimentFile: File | null = null;
+  const put = (kind: DroppedFileKind, file: File) => {
+    if (kind === "impulseResponse") impulseResponseList.push(file);
+    else if (kind === "frequencyResponse") frequencyResponseList.push(file);
+    else if (kind === "targetSoundList") targetSoundListList.push(file);
+    else if (kind === "namedPhrase") namedPhraseFileList.push(file);
+    else if (kind === "phrase") phraseFileList.push(file);
+    else if (kind === "table") tableCandidates.push(file);
+    else resourcesList.push(file);
+  };
   let isCompiledFromArchiveBool = false;
   let archivedZip = null;
 
@@ -198,53 +293,26 @@ export const handleDrop = async (
       continue;
     }
 
-    if (isImpulseResponseFile(file)) {
-      // Validate impulse response file right away
-      impulseResponseList.push(file);
-    } else if (isFrequencyResponseFile(file)) {
-      // Add frequency response file
-      frequencyResponseList.push(file);
-    } else if (isTargetSoundListFile(file)) {
-      targetSoundListList.push(file);
-    } else if (await isNamedPhraseFile(file)) {
-      namedPhraseFileList.push(file);
-    } else if (isPhraseFile(file)) {
-      phraseFileList.push(file);
-    } else if (isExpTableFile(file)) {
-      experimentFile = file;
-    } else {
-      resourcesList.push(file);
-    }
+    put(await classifyDroppedFile(file), file);
   }
 
   if (isCompiledFromArchiveBool) {
     const Zip = new JSZip();
-    await Zip.loadAsync(archivedZip as unknown as File).then((zip) => {
-      return Promise.all(
-        flattenZipEntries(zip).map(async ({ name, entry }) => {
-          return entry.async("arraybuffer").then(async (arrayBuffer) => {
-            const blob = new Blob([arrayBuffer]);
-            const fileObject = new File([blob], name);
-
-            if (isImpulseResponseFile(fileObject)) {
-              impulseResponseList.push(fileObject);
-            } else if (isFrequencyResponseFile(fileObject)) {
-              frequencyResponseList.push(fileObject);
-            } else if (isTargetSoundListFile(fileObject)) {
-              targetSoundListList.push(fileObject);
-            } else if (await isNamedPhraseFile(fileObject)) {
-              namedPhraseFileList.push(fileObject);
-            } else if (isPhraseFile(fileObject)) {
-              phraseFileList.push(fileObject);
-            } else if (isExpTableFile(fileObject)) {
-              experimentFile = fileObject;
-            } else {
-              resourcesList.push(fileObject);
-            }
-          });
-        }),
-      );
-    });
+    const zip = await Zip.loadAsync(archivedZip as unknown as File);
+    // Read every entry, then distribute them in zip order — never in the
+    // order the decompressions happen to complete, which once let the largest
+    // csv/xlsx stand in for the experiment table.
+    const classified = await Promise.all(
+      flattenZipEntries(zip).map(async ({ name, entry }) => {
+        const fileObject = new File(
+          [new Blob([await entry.async("arraybuffer")])],
+          name,
+        );
+        return { fileObject, kind: await classifyDroppedFile(fileObject) };
+      }),
+    );
+    for (const { fileObject, kind } of classified) put(kind, fileObject);
+    experimentFile = await chooseExperimentFile(tableCandidates);
     openCompilingDialog();
     if (experimentFile) {
       // Store impulse response files
@@ -264,6 +332,7 @@ export const handleDrop = async (
     return;
   }
 
+  experimentFile = await chooseExperimentFile(tableCandidates);
   // A study only needs its requested language phrase sheet translated.
   // Standalone phrase uploads still translate the supplied files.
   const requestedLanguageFile = experimentFile

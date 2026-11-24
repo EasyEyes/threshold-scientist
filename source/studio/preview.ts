@@ -40,7 +40,9 @@ let registration: Promise<ServiceWorkerRegistration | null> | null = null;
 /**
  * Register the preview worker (idempotent; safe to call at Studio mount so
  * it is active by the time a preview is requested). Resolves once the worker
- * is active, or to null when service workers are unavailable.
+ * is active, or to null when there will be none: service workers are
+ * unavailable, registration was rejected, or the worker failed to install.
+ * A failure is not remembered, so the next preview tries again.
  */
 export const registerPreviewWorker =
   (): Promise<ServiceWorkerRegistration | null> => {
@@ -51,25 +53,36 @@ export const registerPreviewWorker =
         .then(waitForActive)
         .catch((error) => {
           console.warn("Preview worker registration failed:", error);
-          registration = null;
           return null;
+        })
+        .then((reg) => {
+          if (!reg) registration = null;
+          return reg;
         });
     }
     return registration;
   };
 
+/**
+ * Resolves with the registration once its worker is active, or with null
+ * when it never will be: the worker was relegated to "redundant" during
+ * installation, or the registration holds no worker at all. register()
+ * resolves before installation runs, so a worker script that fails at the
+ * top level (or an install handler that is rejected) surfaces here — as a
+ * worker that never activates — never as a rejection of register(). Waiting
+ * for it regardless would leave "Preparing preview ..." up forever.
+ */
 const waitForActive = (
   reg: ServiceWorkerRegistration,
-): Promise<ServiceWorkerRegistration> =>
+): Promise<ServiceWorkerRegistration | null> =>
   new Promise((resolve) => {
     if (reg.active) return resolve(reg);
     const worker = reg.installing ?? reg.waiting;
-    if (!worker) return resolve(reg);
+    if (!worker) return resolve(null);
     const onChange = () => {
-      if (worker.state === "activated") {
-        worker.removeEventListener("statechange", onChange);
-        resolve(reg);
-      }
+      if (worker.state !== "activated" && worker.state !== "redundant") return;
+      worker.removeEventListener("statechange", onChange);
+      resolve(worker.state === "activated" ? reg : null);
     };
     worker.addEventListener("statechange", onChange);
   });
@@ -134,7 +147,10 @@ export const stagePreview = async (
   actions: ICommitAction[],
 ): Promise<string> => {
   const reg = await registerPreviewWorker();
-  if (!reg) throw new Error("Preview needs a browser with service workers.");
+  if (!reg)
+    throw new Error(
+      "Preview needs the preview service worker, which this browser does not support or could not start. Reload the page and try again.",
+    );
 
   const id = `${Date.now().toString(36)}${Math.random()
     .toString(36)
