@@ -32,7 +32,7 @@ const prolificStudySubmissionStatus = {
   REJECTED: "REJECTED",
 };
 
-export const getProlificAccount = async (token) => {
+export const getProlificAccount = async (token, signal) => {
   const headers = new Headers();
   headers.append("authorization", `Token ${token}`);
 
@@ -40,6 +40,7 @@ export const getProlificAccount = async (token) => {
     method: "GET",
     headers: headers,
     redirect: "follow",
+    signal,
   };
 
   const response = await fetch(
@@ -49,11 +50,20 @@ export const getProlificAccount = async (token) => {
     .then((response) => {
       return response.json();
     })
-    .catch((error) =>
-      captureError(error, "Prolific Get Account", { endpoint: "users/me" }),
-    );
+    .catch((error) => {
+      if (!signal?.aborted)
+        captureError(error, "Prolific Get Account", { endpoint: "users/me" });
+    });
 
   if (response) return response;
+};
+
+export const getProlificProject = async (token, projectId, signal) => {
+  const response = await fetch(
+    `/.netlify/functions/prolific/projects/${encodeURIComponent(projectId)}/`,
+    { headers: { authorization: `Token ${token}` }, signal },
+  );
+  if (response.ok) return response.json();
 };
 
 const fetchProlificParticipantGroups = async (token) => {

@@ -7,6 +7,8 @@ import { db } from "./components/firebase";
 import {
   prolificCreateDraft,
   downloadDemographicData,
+  getProlificAccount,
+  getProlificProject,
 } from "./components/prolificIntegration";
 import {
   downloadDataFolder,
@@ -33,7 +35,11 @@ import AlertCard from "./components/AlertCard";
 import { captureError } from "./sentry";
 import { isEmptyRepository } from "./repositoryState";
 import { deriveStudyActions } from "./studyActions";
-import { prolificStudyCreationError } from "./components/prolificErrors";
+import {
+  ProlificProjectAccessError,
+  prolificProjectAccessMessage,
+  prolificStudyCreationError,
+} from "./components/prolificErrors";
 
 import "./css/Running.scss";
 import { Dropdown } from "./components/Dropdown";
@@ -104,6 +110,7 @@ export default class Running extends Component {
       this.focusDiagnostics();
     const repositoryIsEmpty = isEmptyRepository(this.props.activeExperiment);
     if (this.props.activeExperiment !== prevProps.activeExperiment) {
+      this.prolificProjectAccessLookup?.abort();
       let dataFolderLength = 0;
       let latestDateForDataCollection = false;
       if (!repositoryIsEmpty) {
@@ -132,6 +139,10 @@ export default class Running extends Component {
     if (needSetModeToRun) {
       await this.setModeToRun();
     }
+  }
+
+  componentWillUnmount() {
+    this.prolificProjectAccessLookup?.abort();
   }
 
   focusDiagnostics() {
@@ -429,18 +440,44 @@ export default class Running extends Component {
       }
     } catch (err) {
       studyWindow?.close();
+      let title = "Fatal error: Prolific study creation failed";
+      let message = err.message || String(err);
+      const projectAccessError = err instanceof ProlificProjectAccessError;
+      if (!projectAccessError) captureError(err, "Prolific study creation");
+      if (createdStudyId) {
+        message = `Prolific created study ${createdStudyId}, but EasyEyes could not finish preparing it. Check your Prolific project before retrying.\n\n${message}`;
+      } else if (projectAccessError) {
+        if (activeExperiment !== this.props.activeExperiment) return;
+        const lookup = new AbortController();
+        this.prolificProjectAccessLookup = lookup;
+        const [account, project] = await Promise.allSettled([
+          getProlificAccount(prolificToken, lookup.signal),
+          getProlificProject(prolificToken, err.projectId, lookup.signal),
+        ]);
+        if (this.prolificProjectAccessLookup === lookup)
+          this.prolificProjectAccessLookup = null;
+        if (
+          lookup.signal.aborted ||
+          activeExperiment !== this.props.activeExperiment
+        )
+          return;
+        title = "Couldn’t create the Prolific study";
+        message = prolificProjectAccessMessage(
+          err.projectId,
+          account.value,
+          project.value,
+        );
+      }
       this.setState({
         prolificStudyState: createdStudyId ? "ready" : "idle",
         preparedProlificStudyId: createdStudyId || null,
       });
-      captureError(err, "Prolific study creation");
       await Swal.fire({
-        title: "Fatal error: Prolific study creation failed",
-        text: createdStudyId
-          ? `Prolific created study ${createdStudyId}, but EasyEyes could not finish preparing it. Check your Prolific project before retrying.\n\n${
-              err.message || String(err)
-            }`
-          : err.message || String(err),
+        title,
+        text: message,
+        ...(projectAccessError && {
+          customClass: { htmlContainer: "prolific-project-access-message" },
+        }),
         confirmButtonColor: "#666",
       });
     }

@@ -16,6 +16,33 @@ const alerts = (value, path = []) => {
   return [];
 };
 
+export class ProlificProjectAccessError extends Error {
+  constructor(message, projectId) {
+    super(message);
+    this.name = "ProlificProjectAccessError";
+    this.projectId = projectId;
+  }
+}
+
+const nonemptyText = (value) => (typeof value === "string" ? value.trim() : "");
+
+export const prolificProjectAccessMessage = (projectId, account, project) => {
+  const accountEmail = nonemptyText(account?.email);
+  const projectTitle = nonemptyText(project?.title);
+  const ownerEmail = nonemptyText(project?.ownerEmail);
+  const projectLabel = projectTitle
+    ? `“${projectTitle}” (${projectId})`
+    : projectId;
+  const accountLabel = accountEmail || "the connected Prolific account";
+  const ownerLabel = ownerEmail
+    ? `the project owner (${ownerEmail})`
+    : "the project owner";
+
+  return `The connected Prolific account${
+    accountEmail ? ` (${accountEmail})` : ""
+  } may need permission to create studies in project ${projectLabel}.\n\nCheck that _prolific1ProjectID points to the intended project. If the ID is correct, ask ${ownerLabel} to add ${accountLabel} to the project or update that account’s permissions, then try again.`;
+};
+
 export const prolificStudyCreationError = (result, httpStatus, projectId) => {
   const error = result?.error ?? result;
   const status = error?.status ?? httpStatus;
@@ -58,14 +85,6 @@ export const prolificStudyCreationError = (result, httpStatus, projectId) => {
   let message = parameters.length
     ? `Prolific rejected ${parameters.join(" and ")} in your spreadsheet.`
     : "Prolific could not create the study.";
-  if (
-    Number(status) === 404 &&
-    projectId &&
-    !parameters.includes("_prolific1ProjectID")
-  ) {
-    message +=
-      " Check _prolific1ProjectID in your spreadsheet: the specified project may not exist or your connected Prolific account may not have permission to access it.";
-  }
   if (explanation) {
     message += `\n\nProlific${
       status ? ` (HTTP ${status})` : ""
@@ -74,6 +93,13 @@ export const prolificStudyCreationError = (result, httpStatus, projectId) => {
     message += `\n\nThe response${
       status ? ` (HTTP ${status})` : ""
     } did not confirm a valid unpublished study. Check your Prolific project before retrying.`;
+  }
+  if (
+    projectId &&
+    [403, 404].includes(Number(status)) &&
+    parameters.every((parameter) => parameter === "_prolific1ProjectID")
+  ) {
+    return new ProlificProjectAccessError(message, projectId);
   }
   return new Error(message);
 };

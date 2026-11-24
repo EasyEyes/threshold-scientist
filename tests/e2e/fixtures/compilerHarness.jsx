@@ -12,7 +12,7 @@ const studyConfig = (title, url) => ({
   _online2Pay: 2,
   _online2PayPerHour: 8,
   _prolific2CompletionPath: "approveAndPay",
-  prolificWorkspaceProjectId: "workspace-e2e",
+  prolificWorkspaceProjectId: "62fce6fff0a78eb4f3ebc09c",
 });
 
 const studies = {

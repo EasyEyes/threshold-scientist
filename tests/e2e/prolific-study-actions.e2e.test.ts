@@ -93,6 +93,78 @@ test("reopening a study with an ID opens it without creating a draft", async ({
   expect((await repositoryState(page, "existing")).commits).toHaveLength(0);
 });
 
+for (const hasProjectDetails of [true, false]) {
+  test(`project access error with ${
+    hasProjectDetails ? "visible" : "hidden"
+  } metadata`, async ({ page }) => {
+    const projectId = "62fce6fff0a78eb4f3ebc09c";
+    await page.route("**/.netlify/functions/prolific/users/me/", (route) =>
+      route.fulfill({ json: { email: "researcher@example.test" } }),
+    );
+    await page.route(
+      `**/.netlify/functions/prolific/projects/${projectId}/`,
+      (route) =>
+        route.fulfill({
+          json: hasProjectDetails
+            ? { title: "Vision studies", ownerEmail: "owner@example.test" }
+            : {},
+        }),
+    );
+    let draftRequests = 0;
+    await page.route("**/.netlify/functions/prolific/studies/", (route) => {
+      draftRequests += 1;
+      expect(route.request().postDataJSON().project).toBe(projectId);
+      return route.fulfill({
+        json:
+          draftRequests === 1
+            ? {
+                error: {
+                  status: 404,
+                  detail:
+                    "The resource requested was not found or you do not have permissions.",
+                },
+              }
+            : { id: "retried-study", status: "UNPUBLISHED" },
+      });
+    });
+
+    const create = page.getByRole("button", {
+      name: "Create Prolific study to run online",
+    });
+    const firstPopup = page.waitForEvent("popup");
+    await create.click();
+    const failedPopup = await firstPopup;
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toHaveAccessibleName(
+      "Couldn’t create the Prolific study",
+    );
+    await expect(dialog).toContainText(projectId);
+    await expect(dialog).toContainText("_prolific1ProjectID");
+    await expect(dialog).toContainText("researcher@example.test");
+    await expect(dialog).toContainText(
+      "to add researcher@example.test to the project",
+    );
+    await expect(dialog).toContainText(
+      hasProjectDetails ? "owner@example.test" : "the project owner",
+    );
+    if (hasProjectDetails) await expect(dialog).toContainText("Vision studies");
+    await expect.poll(() => failedPopup.isClosed()).toBe(true);
+    const repository = await repositoryState(page, "newlyCompiled");
+    expect(repository.files["ProlificStudyId.txt"]).toBeUndefined();
+
+    await dialog.getByRole("button", { name: "OK" }).click();
+    const retryPopup = page.waitForEvent("popup");
+    await create.click();
+    await expect(await retryPopup).toHaveURL(/retried-study$/);
+    expect(draftRequests).toBe(2);
+    expect(
+      (await repositoryState(page, "newlyCompiled")).files[
+        "ProlificStudyId.txt"
+      ],
+    ).toBe("retried-study");
+  });
+}
+
 test("reopening without an ID uses the selected repository config", async ({
   page,
 }) => {
