@@ -289,15 +289,21 @@ export function checkResources(
       add("sound folder", `${f}.zip`, "maskerSoundFolder");
     for (const f of folders.targetSoundFolder as string[])
       add("sound folder", `${f}.zip`, "targetSoundFolder");
+    for (const f of (folders.soundBackgroundFolder ?? []) as string[])
+      add("sound folder", `${f}.zip`, "soundBackground");
     if (
       folders.maskerSoundFolder.length > 0 ||
-      folders.targetSoundFolder.length > 0
+      folders.targetSoundFolder.length > 0 ||
+      (folders.soundBackgroundFolder?.length ?? 0) > 0
     )
       errors.push(
         ...checkSoundFolderPresence(
           {
             maskerSoundFolder: folders.maskerSoundFolder,
             targetSoundFolder: folders.targetSoundFolder,
+            ...(folders.soundBackgroundFolder?.length
+              ? { soundBackground: folders.soundBackgroundFolder }
+              : {}),
           },
           availability.folders,
         ),
