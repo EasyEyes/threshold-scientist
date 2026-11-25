@@ -21,6 +21,7 @@ import { captureError } from "../sentry";
 import { prolificStudyCreationError } from "./prolificErrors";
 import { getGlossary } from "../../threshold/parameters/glossaryRegistry";
 import { getProlificParticipantGroups } from "../../threshold/preprocess/prolificMetadata";
+import { prolificRequest } from "../../threshold/preprocess/prolificRequest";
 
 const prolificStudySubmissionStatus = {
   RESERVED: "RESERVED",
@@ -59,7 +60,7 @@ export const getProlificAccount = async (token, signal) => {
 };
 
 export const getProlificProject = async (token, projectId, signal) => {
-  const response = await fetch(
+  const response = await prolificRequest(
     `/.netlify/functions/prolific/projects/${encodeURIComponent(projectId)}/`,
     { headers: { authorization: `Token ${token}` }, signal },
   );

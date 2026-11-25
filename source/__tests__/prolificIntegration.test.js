@@ -1,6 +1,7 @@
 import {
   prolificCreateDraft,
   getProlificAccount,
+  getProlificProject,
   getProlificStudySubmissions,
   downloadDemographicData,
 } from "../components/prolificIntegration";
@@ -17,6 +18,35 @@ jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
 
 // Mock global fetch
 global.fetch = jest.fn();
+
+it("retries a rate-limited Prolific project lookup", async () => {
+  jest.useFakeTimers();
+  const project = { title: "Vision studies", ownerEmail: "owner@example.test" };
+  global.fetch
+    .mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      headers: new Headers({ "Retry-After": "1" }),
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => project,
+    });
+
+  try {
+    const lookup = getProlificProject(
+      "test-prolific-token",
+      "62fce6fff0a78eb4f3ebc09c",
+    );
+    await jest.advanceTimersByTimeAsync(1000);
+    await expect(lookup).resolves.toEqual(project);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  } finally {
+    jest.useRealTimers();
+    global.fetch.mockReset();
+  }
+});
 
 describe("Prolific Integration - New Parameters", () => {
   let mockUser;
