@@ -1,3 +1,5 @@
+@import "root.scss";
+
 .link-set {
   display: flex;
   flex-direction: row;
@@ -55,6 +57,16 @@
 }
 
 /* -------------------------------------------------------------------------- */
+
+// Run / Create Prolific study when Pavlovia refused activation for lack of
+// credit. Overrides `.button-green:disabled` (light green, wait cursor) so the
+// button keeps its usual green and reads as struck out, not as busy.
+button.button-green.button-needs-credit:disabled {
+  background: $green !important;
+  cursor: not-allowed !important;
+  text-decoration: line-through;
+  text-decoration-thickness: 3px;
+}
 
 .smaller-text {
   font-size: 1rem !important;

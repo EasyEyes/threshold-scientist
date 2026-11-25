@@ -19,6 +19,7 @@ jest.mock("../../threshold/preprocess/gitlabUtils", () => ({
   getAllProjects: jest.fn(),
   getDataFolderCsvLength: jest.fn(),
   getExperimentStatus: jest.fn(),
+  getPavloviaNeedsCredit: jest.fn(),
   getProlificStudyId: jest.fn(),
   runExperiment: jest.fn(),
 }));
@@ -55,9 +56,125 @@ import { prolificCreateDraft } from "../components/prolificIntegration";
 import {
   createProlificStudyIdFile,
   generateAndUploadCompletionURL,
+  getAllProjects,
   getDataFolderCsvLength,
+  getPavloviaNeedsCredit,
   getProlificStudyId,
+  runExperiment,
 } from "../../threshold/preprocess/gitlabUtils";
+import { beginCompile } from "../../threshold/preprocess/compileMode";
+import { showFastCompileProgress } from "../studio/fastCompileProgress";
+
+describe("Pavlovia activation", () => {
+  it.each(["compiler", "studio"])(
+    "records a credit rejection after a %s activation, with no dialog left open",
+    async (source) => {
+      beginCompile(source);
+      getAllProjects.mockResolvedValue([]);
+      runExperiment.mockResolvedValue({
+        activationFailure: "insufficient-credits",
+      });
+      const running = new Running({
+        activeExperiment: { id: 42, name: "compiled-study" },
+        user: { currentExperiment: { experimentUrl: "https://example.test" } },
+        functions: { handleSetProjectList: jest.fn() },
+      });
+      const setState = jest
+        .spyOn(running, "setState")
+        .mockImplementation(() => {});
+      const waitForReady = jest.spyOn(running, "waitForPavloviaReady");
+
+      if (source === "studio") showFastCompileProgress("compile");
+      try {
+        await running.setModeToRun();
+        expect(setState).toHaveBeenCalledWith({ needsPavloviaCredit: true });
+        expect(waitForReady).not.toHaveBeenCalled();
+        expect(Swal.isVisible()).toBe(false);
+        expect(running._isActivating).toBe(false);
+      } finally {
+        Swal.close();
+      }
+    },
+  );
+
+  it("treats a RUNNING study without license or credit as needing credit, without waiting for Pavlovia", async () => {
+    getAllProjects.mockResolvedValue([]);
+    runExperiment.mockResolvedValue({ newStatus: "RUNNING" });
+    getPavloviaNeedsCredit.mockResolvedValue(true);
+    const running = new Running({
+      activeExperiment: { id: 42, name: "compiled-study" },
+      user: { currentExperiment: { experimentUrl: "https://example.test" } },
+      functions: { handleSetProjectList: jest.fn() },
+    });
+    const setState = jest
+      .spyOn(running, "setState")
+      .mockImplementation(() => {});
+    const waitForReady = jest.spyOn(running, "waitForPavloviaReady");
+    try {
+      await running.setModeToRun();
+      expect(setState).toHaveBeenLastCalledWith({ needsPavloviaCredit: true });
+      expect(waitForReady).not.toHaveBeenCalled();
+    } finally {
+      Swal.close();
+    }
+  });
+
+  it("explains the missing credit for a RUNNING study too", () => {
+    const running = new Running({
+      user: {
+        username: "scientist",
+        currentExperiment: {},
+        projectList: Promise.resolve([]),
+      },
+      activeExperiment: { id: 42, name: "ColorRsvp12" },
+      projectName: "ColorRsvp12",
+      experimentStatus: "RUNNING",
+      viewingPreviousExperiment: true,
+      previousExperimentViewed: { previousExperimentStatus: "RUNNING" },
+      functions: { handleSetActivateExperiment: jest.fn() },
+    });
+    running.state.needsPavloviaCredit = true;
+    const { container } = render(running.render());
+    expect(container.querySelector(".green-status-banner")).toHaveTextContent(
+      "needs Pavlovia participant-testing credits",
+    );
+    expect(screen.getByRole("button", { name: "Run" })).toBeDisabled();
+  });
+
+  it("explains the missing credit and strikes through Run and Create Prolific study", () => {
+    const running = new Running({
+      user: {
+        username: "scientist",
+        currentExperiment: {},
+        projectList: Promise.resolve([]),
+      },
+      activeExperiment: { id: 42, name: "ColorRsvp12" },
+      projectName: "ColorRsvp12",
+      experimentStatus: "INACTIVE",
+      viewingPreviousExperiment: false,
+      previousExperimentViewed: { previousExperimentStatus: "INACTIVE" },
+      functions: { handleSetActivateExperiment: jest.fn() },
+    });
+    running.state.needsPavloviaCredit = true;
+    const { container } = render(running.render());
+
+    const banner = container.querySelector(".green-status-banner");
+    expect(banner).toHaveTextContent(
+      "Study compiled successfully, but needs Pavlovia participant-testing credits to run.",
+    );
+    expect(banner).toHaveTextContent("Use an institutional license.");
+    expect(banner).toHaveTextContent("Buy and assign credits.");
+    expect(banner).toHaveTextContent("Test in Pilot mode.");
+    expect(
+      screen.getByRole("link", { name: "study dashboard" }),
+    ).toHaveAttribute("href", "https://pavlovia.org/scientist/ColorRsvp12");
+    for (const name of ["Run", "Create Prolific study to run online"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button).toBeDisabled();
+      expect(button).toHaveClass("button-green", "button-needs-credit");
+    }
+  });
+});
 
 describe("Running compile warnings", () => {
   const baseProps = {

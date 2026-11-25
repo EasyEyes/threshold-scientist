@@ -11,6 +11,37 @@ describe("deriveStudyActions", () => {
     ).toEqual({
       showRun: true,
       showCreateProlificStudy: true,
+      actionsDisabled: false,
+    });
+  });
+
+  it("shows both actions disabled when Pavlovia refused activation for lack of credit", () => {
+    expect(
+      deriveStudyActions({
+        repositoryIsEmpty: false,
+        isRunning: false,
+        pavloviaIsReady: false,
+        needsPavloviaCredit: true,
+      }),
+    ).toEqual({
+      showRun: true,
+      showCreateProlificStudy: true,
+      actionsDisabled: true,
+    });
+  });
+
+  it("disables both actions for a RUNNING study that has no license or credit", () => {
+    expect(
+      deriveStudyActions({
+        repositoryIsEmpty: false,
+        isRunning: true,
+        pavloviaIsReady: true,
+        needsPavloviaCredit: true,
+      }),
+    ).toEqual({
+      showRun: true,
+      showCreateProlificStudy: true,
+      actionsDisabled: true,
     });
   });
 
@@ -30,6 +61,7 @@ describe("deriveStudyActions", () => {
       ).toEqual({
         showRun: false,
         showCreateProlificStudy: false,
+        actionsDisabled: false,
       });
     },
   );
@@ -38,13 +70,16 @@ describe("deriveStudyActions", () => {
     for (const repositoryIsEmpty of [false, true]) {
       for (const isRunning of [false, true]) {
         for (const pavloviaIsReady of [false, true]) {
-          const actions = deriveStudyActions({
-            repositoryIsEmpty,
-            isRunning,
-            pavloviaIsReady,
-          });
+          for (const needsPavloviaCredit of [false, true]) {
+            const actions = deriveStudyActions({
+              repositoryIsEmpty,
+              isRunning,
+              pavloviaIsReady,
+              needsPavloviaCredit,
+            });
 
-          expect(actions.showRun).toBe(actions.showCreateProlificStudy);
+            expect(actions.showRun).toBe(actions.showCreateProlificStudy);
+          }
         }
       }
     }

@@ -13,6 +13,7 @@ import {
   generateAndUploadCompletionURL,
   getDataFolderCsvLength,
   getExperimentStatus,
+  getPavloviaNeedsCredit,
   runExperiment,
   createProlificStudyIdFile,
   getProlificStudyId,
@@ -38,6 +39,8 @@ import { prolificStudyCreationError } from "./components/prolificErrors";
 import "./css/Running.scss";
 import { Dropdown } from "./components/Dropdown";
 
+const PAVLOVIA_STORE_URL = "https://pavlovia.org/store";
+
 export default class Running extends Component {
   constructor(props) {
     super(props);
@@ -56,6 +59,8 @@ export default class Running extends Component {
       // a new compile replaces the whole warnings array, so stale
       // dismissals never apply to the new warnings.
       dismissedCompileWarnings: [],
+      // Pavlovia refused to set this study to RUNNING for lack of credit.
+      needsPavloviaCredit: false,
     };
 
     this._isActivating = false;
@@ -119,6 +124,7 @@ export default class Running extends Component {
         completionCode: undefined,
         prolificStudyState: "idle",
         preparedProlificStudyId: null,
+        needsPavloviaCredit: false,
       });
     }
 
@@ -129,8 +135,37 @@ export default class Running extends Component {
           "INACTIVE") ||
         (!this.props.viewingPreviousExperiment &&
           this.props.experimentStatus === "INACTIVE"));
-    if (needSetModeToRun) {
+    const activationTargetChanged =
+      this.props.activeExperiment?.id !== prevProps.activeExperiment?.id ||
+      this.props.viewingPreviousExperiment !==
+        prevProps.viewingPreviousExperiment ||
+      this.props.experimentStatus !== prevProps.experimentStatus ||
+      this.props.previousExperimentViewed?.previousExperimentStatus !==
+        prevProps.previousExperimentViewed?.previousExperimentStatus;
+    if (needSetModeToRun && activationTargetChanged) {
       await this.setModeToRun();
+    } else if (activationTargetChanged && !repositoryIsEmpty) {
+      await this.checkPavloviaCredit();
+    }
+  }
+
+  /** Ask Pavlovia whether this study has a license or credit to run on. */
+  async checkPavloviaCredit() {
+    const { user, activeExperiment } = this.props;
+    if (!activeExperiment?.id) return false;
+    try {
+      const needsPavloviaCredit = await getPavloviaNeedsCredit(
+        user,
+        activeExperiment,
+      );
+      if (this.props.activeExperiment?.id !== activeExperiment.id) return false;
+      this.setState({ needsPavloviaCredit });
+      return needsPavloviaCredit;
+    } catch (error) {
+      captureError(error, "Failed to check Pavlovia credit", {
+        step: "checkPavloviaCredit",
+      });
+      return false;
     }
   }
 
@@ -143,61 +178,56 @@ export default class Running extends Component {
       return;
     }
     this._isActivating = true;
-    const activate = async () => {
-      getAllProjects(this.props.user).then((updatedProjects) => {
-        this.props.functions.handleSetProjectList(updatedProjects);
-      });
-      const { user, activeExperiment } = this.props;
-      // Timing marks and progress-view phases only (timing is a no-op unless
-      // a compile is being timed).
-      markCompilePhase("activation-requested");
-      const result = await runExperiment(
-        user,
-        activeExperiment,
-        user.currentExperiment.experimentUrl,
-      );
-      if (result && result.newStatus === "RUNNING") {
-        markCompilePhase("activation-set-running");
-        await this.waitForPavloviaReady();
-        markCompilePhase("pavlovia-ready");
-        printCompileTiming("compile → upload → Pavlovia ready");
-        endCompileTiming();
-        endCompile();
-        if (e !== null) e.target.removeAttribute("disabled");
-      } else {
-        // Activation did not happen (runExperiment reported the failure);
-        // the compile is over, so the progress view can step aside.
-        endCompileTiming();
-        endCompile();
-      }
-    };
+    const showActivationProgress = !optimizationOn("singleProgressUi");
+    const activationProgressClass = "pavlovia-activation-progress";
+    let result;
     try {
-      if (!optimizationOn("singleProgressUi")) {
-        await Swal.fire({
+      if (showActivationProgress) {
+        void Swal.fire({
           title: "Activating ...",
           allowOutsideClick: false,
           allowEscapeKey: false,
           showConfirmButton: false,
-          didOpen: async () => {
-            Swal.showLoading(null);
-            await activate();
-            Swal.close();
-          },
+          customClass: { popup: activationProgressClass },
         });
-      } else {
-        // The Studio's progress view is showing the compile (its "Starting on
-        // Pavlovia" stretch); no dialog.
-        await activate();
+        Swal.showLoading();
+      }
+
+      const { user, activeExperiment } = this.props;
+      getAllProjects(user).then((updatedProjects) => {
+        this.props.functions.handleSetProjectList(updatedProjects);
+      });
+      markCompilePhase("activation-requested");
+      result = await runExperiment(
+        user,
+        activeExperiment,
+        user.currentExperiment.experimentUrl,
+      );
+      this.setState({
+        needsPavloviaCredit:
+          result?.activationFailure === "insufficient-credits",
+      });
+      if (
+        result?.newStatus === "RUNNING" &&
+        !(await this.checkPavloviaCredit())
+      ) {
+        markCompilePhase("activation-set-running");
+        await this.waitForPavloviaReady();
+        markCompilePhase("pavlovia-ready");
+        printCompileTiming("compile → upload → Pavlovia ready");
       }
     } catch (error) {
-      // Whatever went wrong, the compile is over.
-      endCompileTiming();
-      endCompile();
       captureError(error, "Failed to setModeToRun", {
         step: "setModeToRun",
         info: "Experiment Activation",
       });
     } finally {
+      if (Swal.getPopup()?.classList.contains(activationProgressClass)) {
+        Swal.close();
+      }
+      endCompileTiming();
+      endCompile();
+      e?.target.removeAttribute("disabled");
       this._isActivating = false;
     }
   }
@@ -245,6 +275,11 @@ export default class Running extends Component {
         }
         return;
       } catch (error) {
+        if (tries === 0)
+          console.warn(
+            "[Pavlovia activation] Pavlovia accepted RUNNING, but the study page is not available yet; still checking.",
+            error?.message,
+          );
         if (tries === maxTries - 1) {
           captureError(error, "Pavlovia Readiness Check", {
             step: "checkPavloviaReady",
@@ -462,6 +497,7 @@ export default class Running extends Component {
       dataFolderLength,
       latestDateForDataCollection,
       prolificStudyState,
+      needsPavloviaCredit,
     } = this.state;
     const repositoryIsEmpty = isEmptyRepository(activeExperiment);
     const isRunning =
@@ -475,7 +511,29 @@ export default class Running extends Component {
       repositoryIsEmpty,
       isRunning,
       pavloviaIsReady,
+      needsPavloviaCredit,
     });
+    const pavloviaDashboardUrl = `https://pavlovia.org/${user.username}/${
+      this.state.useLowercaseProjectName
+        ? projectName?.toLowerCase()
+        : projectName
+    }`;
+    const creditDisabledButton = studyActions.actionsDisabled
+      ? {
+          disabled: true,
+          "aria-disabled": true,
+          title:
+            "Needs Pavlovia participant-testing credits. See the green status box.",
+        }
+      : {};
+    const creditDisabledClass = studyActions.actionsDisabled
+      ? " button-needs-credit"
+      : "";
+    const externalLink = (href, text) => (
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        {text}
+      </a>
+    );
 
     // const offerPilotingOption =
     //   this.props.user.currentExperiment.pavloviaOfferPilotingOptionBool;
@@ -487,14 +545,7 @@ export default class Running extends Component {
       <button
         className={`button-grey button-small`}
         onClick={() => {
-          window.open(
-            `https://pavlovia.org/${user.username}/${
-              this.state.useLowercaseProjectName
-                ? projectName.toLowerCase()
-                : projectName
-            }`,
-            "_blank",
-          );
+          window.open(pavloviaDashboardUrl, "_blank");
         }}
       >
         {displayText}
@@ -520,19 +571,61 @@ export default class Running extends Component {
     return (
       <>
         <div className="green-status-banner">
-          {repositoryIsEmpty
-            ? "Compilation did not produce any experiment files. Select New to compile the experiment again."
-            : isRunning
-            ? pavloviaIsReady
-              ? "Study ready to run."
-              : "Local. Study compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new study, you need to assign tokens to it in Pavlovia."
-            : viewingPreviousExperiment
-            ? "Study not running. Please go to Pavlovia to set it to RUNNING mode."
-            : `Local. Upload successful! ${
-                offerPilotingOption
-                  ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
-                  : "Setting mode to RUNNING ..."
-              }`}
+          {repositoryIsEmpty ? (
+            "Compilation did not produce any experiment files. Select New to compile the experiment again."
+          ) : needsPavloviaCredit ? (
+            <>
+              <div>
+                Study compiled successfully, but needs Pavlovia
+                participant-testing credits to run. To run it, choose one of
+                three options:
+              </div>
+              <ol>
+                <li>
+                  <strong>Use an institutional license.</strong> Sign in to the{" "}
+                  {externalLink(PAVLOVIA_STORE_URL, "Pavlovia Store")} with an
+                  email address from an institution that has a Pavlovia site
+                  license, such as easyeyes.app or nyu.edu. Your institution’s
+                  license will appear in the store. To request an easyeyes.app
+                  email account, contact{" "}
+                  {externalLink(
+                    "mailto:denis.pelli@nyu.edu",
+                    "denis.pelli@nyu.edu",
+                  )}
+                  .
+                </li>
+                <li>
+                  <strong>Buy and assign credits.</strong> Buy credits in the{" "}
+                  {externalLink(PAVLOVIA_STORE_URL, "Pavlovia Store")}, then
+                  assign them to this study. EasyEyes normally creates a new
+                  Pavlovia study each time you compile. To keep using the same
+                  study and its assigned credits, set{" "}
+                  <strong>_pavloviaNewStudyBool</strong> to FALSE in your study
+                  spreadsheet.
+                </li>
+                <li>
+                  <strong>Test in Pilot mode.</strong> Open your{" "}
+                  {externalLink(pavloviaDashboardUrl, "study dashboard")} in
+                  Pavlovia and click Pilot. Pilot mode is free, and lets you
+                  test your study without any participant-testing credit.
+                </li>
+              </ol>
+            </>
+          ) : isRunning ? (
+            pavloviaIsReady ? (
+              "Study ready to run."
+            ) : (
+              "Local. Study compiled and uploaded. Waiting for Pavlovia's approval to run ... Unless your university has a Pavlovia license, to run your new study, you need to assign tokens to it in Pavlovia."
+            )
+          ) : viewingPreviousExperiment ? (
+            "Study not running. Please go to Pavlovia to set it to RUNNING mode."
+          ) : (
+            `Local. Upload successful! ${
+              offerPilotingOption
+                ? "You can go to Pavlovia and set it to PILOTING or RUNNING mode."
+                : "Setting mode to RUNNING ..."
+            }`
+          )}
         </div>
         <div style={{ marginTop: "8px", marginBottom: "10px" }}>
           <span
@@ -586,10 +679,11 @@ export default class Running extends Component {
             {studyActions.showRun && (
               <>
                 <button
-                  className="button-green button-large-font"
+                  className={`button-green button-large-font${creditDisabledClass}`}
                   onClick={() => {
                     window.open(this._getPavloviaExperimentUrl(), "_blank");
                   }}
+                  {...creditDisabledButton}
                 >
                   Run
                 </button>
@@ -643,9 +737,10 @@ export default class Running extends Component {
                       activeExperiment,
                     );
 
-                    if (result === "RUNNING")
+                    if (result === "RUNNING") {
+                      await this.checkPavloviaCredit();
                       functions.handleSetExperimentStatus("RUNNING");
-                    else {
+                    } else {
                       await this.setModeToRun();
                     }
 
@@ -681,7 +776,7 @@ export default class Running extends Component {
                 <p><strong>3. UNLICENSED. RUNNING WITH TOKENS.</strong> Or you can buy tokens from Pavlovia, assign some to this experiment, and run it in RUNNING mode. Pavlovia currently charges 20 pence per participant.</p>
 
                 <p><strong>4. UNLICENSED. RUNNING WITH TOKENS. REUSING OLD REPOSITORY.</strong> Normally, every time you compile, it's a new experiment. Tokens don't transfer automatically to a new experiment, so you have to assign tokens to each new experiment, every time you compile. To minimize this hassle, EasyEyes allows you to set<br/>
-                <code>_pavloviaNewExperimentBool = FALSE</code><br/>
+                <code>_pavloviaNewStudyBool = FALSE</code><br/>
                 In that case, the EasyEyes compiler will reuse the most recent repository for this experiment spreadsheet. Thus any assigned tokens will remain assigned to the current experiment, saving you a trip to Pavlovia. However, all your data from multiple versions of the experiment will all share one repository. Every download of results will download all the data. And you won't be able to go back to an old version.</p>
               `}
             />
@@ -704,9 +799,10 @@ export default class Running extends Component {
                         prolificStudyState === "preparing"
                           ? " button-disabled button-wait"
                           : ""
-                      }`}
+                      }${creditDisabledClass}`}
                       disabled={prolificStudyState === "preparing"}
                       onClick={this.createOrOpenProlificStudy}
+                      {...creditDisabledButton}
                     >
                       {prolificStudyState === "preparing" && (
                         <>
@@ -855,6 +951,7 @@ export default class Running extends Component {
                       user,
                       activeExperiment,
                     );
+                    await this.checkPavloviaCredit();
                     functions.handleSetExperimentStatus(result);
                   }}
                 >
