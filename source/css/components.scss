@@ -8,7 +8,7 @@
   line-height: 100%;
 
   &:hover {
-    background: #fff;
+    background: var(--paper-2);
   }
 }
 
@@ -18,8 +18,8 @@
 }
 
 .icon-i {
-  font-size: 1.2rem;
-  color: #666;
+  font-size: 1.1rem;
+  color: var(--ink-3);
   line-height: 100%;
 }
 
@@ -144,6 +144,17 @@ table {
   margin: 0 !important;
   flex: 1 !important;
   width: auto !important;
+  // Let the field shrink, so Refresh stays inside the dialog on a phone.
+  min-width: 0;
+
+  // The glow around the field while typing is the EasyEyes green, not
+  // SweetAlert's default blue.
+  &:focus {
+    border-color: var(--green, #019267) !important;
+    box-shadow:
+      inset 0 1px 1px rgba(0, 0, 0, 0.06),
+      0 0 0 3px rgba(1, 146, 103, 0.3) !important;
+  }
 }
 
 .experiment-refresh-btn {
@@ -221,17 +232,38 @@ table {
 
         &.experiment-name-cell {
           font-weight: 500;
-          width: 80%;
+          // A long study name wraps inside its cell and never pushes the
+          // date out of view.
+          overflow-wrap: anywhere;
         }
 
         &.experiment-date-cell {
           color: #666;
           font-size: 0.9rem;
-          width: 20%;
+          // As wide as the date and no wider; the name takes the rest.
+          width: 1%;
+          white-space: nowrap;
         }
       }
     }
   }
+}
+
+// The study that is selected now: a check mark before its name and a
+// faint green row, so it can be found in a long list.
+.experiment-table tbody .experiment-row.experiment-row-current {
+  background-color: #f0f9f4;
+
+  td.experiment-name-cell {
+    font-weight: 600;
+  }
+}
+
+.experiment-current-mark {
+  margin-right: 0.45rem;
+  color: #019267;
+  font-size: 1.05em;
+  vertical-align: -0.1em;
 }
 
 .experiment-empty-cell {
@@ -244,5 +276,335 @@ table {
 @media screen and (max-width: 900px) {
   .swal2-popup.experiment-modal-popup {
     width: 95% !important;
+  }
+}
+
+// On a phone: tighter cells and a narrower Refresh, so the list fits the
+// dialog without scrolling sideways.
+@media screen and (max-width: 600px) {
+  .experiment-refresh-btn {
+    min-width: 0;
+    padding: 0 0.6rem;
+  }
+
+  // Each study takes two lines: its name, then its date under it, so a
+  // name has the full width and is not broken in the middle.
+  .experiment-table {
+    thead th {
+      padding: 0.6rem 0.7rem;
+
+      &:last-child {
+        display: none;
+      }
+    }
+
+    tbody .experiment-row {
+      display: block;
+      border-bottom: 1px solid #e0e0e0;
+
+      td {
+        display: block;
+        width: auto;
+        // One line per study, under the row; none between name and date
+        // (the shared popup style puts a top border on every cell).
+        border: 0;
+        border-radius: 0;
+
+        &.experiment-name-cell {
+          padding: 0.6rem 0.7rem 0.1rem;
+        }
+
+        &.experiment-date-cell {
+          width: auto;
+          padding: 0 0.7rem 0.6rem;
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+}
+
+// Resource dialog (fonts, forms, images, ...): the files on the left, a
+// preview of the selected file on the right. See components/ResourceDialog.js.
+.swal2-popup.resource-modal-popup {
+  max-width: 95vw;
+}
+
+.resource-modal-html-container {
+  text-align: left !important;
+  overflow: visible !important;
+}
+
+.resource-dialog {
+  display: grid;
+  grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+  gap: 1rem;
+  height: min(34rem, 66vh);
+
+  // Resources with nothing to preview: the list alone, in a narrower dialog
+  // that is only as tall as it needs to be.
+  &.resource-dialog-list-only {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+
+    .resource-list {
+      max-height: min(24rem, 55vh);
+    }
+  }
+}
+
+.resource-list-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.resource-search-input {
+  flex: none;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 2.5rem !important;
+  font-size: 1rem !important;
+
+  &:focus {
+    border-color: var(--green, #019267) !important;
+    box-shadow:
+      inset 0 1px 1px rgba(0, 0, 0, 0.06),
+      0 0 0 3px rgba(1, 146, 103, 0.3) !important;
+  }
+}
+
+// Named with the dialog in front: the Studio has a .resource-list of its own.
+.resource-dialog .resource-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.resource-group-heading {
+  position: sticky;
+  top: 0;
+  margin: 0 !important;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.resource-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-bottom: 1px solid #eee;
+  background: none;
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: #222;
+  cursor: pointer;
+
+  &[hidden] {
+    display: none;
+  }
+
+  &:hover {
+    background: #f0f9f4;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #019267;
+    outline-offset: -2px;
+  }
+
+  // In a list without previews a file is not something to click.
+  &.resource-row-plain {
+    cursor: default;
+
+    &:hover {
+      background: none;
+    }
+  }
+
+  // The file being previewed.
+  &.is-selected {
+    background: #f0f9f4;
+    box-shadow: inset 3px 0 0 #019267;
+    font-weight: 600;
+  }
+}
+
+.resource-row-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.resource-row-ext {
+  flex: none;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.resource-empty {
+  margin: 0 !important;
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+  color: #888;
+
+  &.resource-empty-group {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+}
+
+.resource-preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  background: #fafafa;
+}
+
+.resource-preview-name {
+  flex: none;
+  margin: 0 0 0.75rem !important;
+  font-size: 0.75rem;
+  color: #666;
+  overflow-wrap: anywhere;
+}
+
+.resource-preview-hint {
+  margin: auto !important;
+  text-align: center;
+  color: #888;
+}
+
+.resource-font-sample {
+  color: #111;
+
+  p {
+    // The sample lines take the previewed font from their container; the
+    // site's own paragraph font must not win here.
+    font-family: inherit !important;
+    margin: 0 0 0.5rem !important;
+    font-size: 1.25rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .resource-font-big {
+    margin-bottom: 0.75rem !important;
+    font-size: 4.5rem;
+    line-height: 1.05;
+  }
+}
+
+// The image is scaled to fit the space left under its name, whole.
+.resource-preview-image {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+}
+
+// A PDF fills the whole preview side, edge to edge, under its name.
+.resource-preview-pane.resource-preview-pdf {
+  padding: 0;
+  overflow: hidden;
+
+  .resource-preview-name {
+    margin: 0 !important;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+}
+
+.resource-preview-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: #fff;
+}
+
+.resource-preview-text {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: left;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #222;
+}
+
+// On a phone the preview goes under the list.
+@media screen and (max-width: 700px) {
+  .resource-dialog {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .resource-dialog .resource-list {
+    max-height: 13rem;
+  }
+
+  .resource-preview-pane {
+    min-height: 11rem;
+    max-height: 20rem;
+
+    // A PDF needs more room than other previews to be readable.
+    &.resource-preview-pdf {
+      height: 24rem;
+      max-height: none;
+    }
+  }
+}
+
+// While the list of resources is loading, each resource button shows a small
+// spinning ring where its number will be: a thin pale circle with one green
+// arc going round. The var() fallbacks are the values of the design tokens
+// in docs/uni.css.
+@keyframes resource-count-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.resource-count-spinner {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 0.85em;
+  height: 0.85em;
+  vertical-align: -0.1em;
+  border: 2px solid var(--fill-hover, #e4e2dc);
+  border-top-color: var(--green, #019267);
+  border-radius: 50%;
+  animation: resource-count-spin 0.7s linear infinite;
+
+  // Visitors who prefer less motion get a slow turn, so it still reads as
+  // "working" and not as a stuck icon.
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 2.4s;
   }
 }

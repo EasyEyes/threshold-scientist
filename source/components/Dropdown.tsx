@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Swal from "sweetalert2";
-import {
-  User,
-  getProjectsPage,
-} from "../../threshold/preprocess/gitlabUtils";
+import { User, getProjectsPage } from "../../threshold/preprocess/gitlabUtils";
 import { searchProjectsByName } from "../../threshold/preprocess/gitlabSearch";
 import { ensureValidToken } from "../../threshold/preprocess/auth/ensureValidToken";
 import { redirectToOauth2 } from "../../threshold/preprocess/user";
@@ -68,7 +65,8 @@ const attachRowHandlers = (
 const sanitize = (str: string): string =>
   str.replace(/[<>"&]/g, (c) => `&#${c.charCodeAt(0)};`);
 
-const buildTableRows = (projects: Project[]): string =>
+// selectedId: the study that is selected now, if any. Its row is marked.
+const buildTableRows = (projects: Project[], selectedId?: number): string =>
   projects.length
     ? projects
         .map((proj, i) => {
@@ -76,16 +74,25 @@ const buildTableRows = (projects: Project[]): string =>
           const projectDate = formatProjectDate(proj.created_at);
           const projectName = sanitize(proj.name);
           const projectId = proj.id.toString();
-          return `<tr data-project-id="${projectId}" class="experiment-row" style="animation-delay:${animationDelay}">
-                    <td class="experiment-name-cell">${projectName}</td>
+          const isCurrent = selectedId !== undefined && proj.id === selectedId;
+          const rowClass = isCurrent
+            ? "experiment-row experiment-row-current"
+            : "experiment-row";
+          const mark = isCurrent
+            ? `<i class="bi bi-check2 experiment-current-mark" aria-hidden="true"></i>`
+            : "";
+          return `<tr data-project-id="${projectId}" class="${rowClass}"${
+            isCurrent ? ` aria-current="true"` : ""
+          } style="animation-delay:${animationDelay}">
+                    <td class="experiment-name-cell">${mark}${projectName}</td>
                     <td class="experiment-date-cell">${projectDate}</td>
                   </tr>`;
         })
         .join("")
     : `<tr><td colspan="2" class="experiment-empty-cell">No experiments found.</td></tr>`;
 
-const buildModalHTML = (projects: Project[]): string => {
-  const rows = buildTableRows(projects);
+const buildModalHTML = (projects: Project[], selectedId?: number): string => {
+  const rows = buildTableRows(projects, selectedId);
 
   return `
     <div class="experiment-modal-container">
@@ -114,6 +121,7 @@ const openModal = (
   onRefresh: () => Promise<Project[]>,
   pagination?: PaginationOptions,
   user?: User,
+  selectedId?: number,
 ) => {
   void Swal.fire({
     title: "Select an Experiment",
@@ -125,7 +133,7 @@ const openModal = (
       htmlContainer: "experiment-modal-html-container",
       popup: "experiment-modal-popup",
     },
-    html: buildModalHTML(list),
+    html: buildModalHTML(list, selectedId),
     didOpen: () => {
       const searchInput = document.getElementById(
         "experiment-search",
@@ -160,7 +168,7 @@ const openModal = (
         debounceTimer = setTimeout(async () => {
           if (!term) {
             isSearchActive = false;
-            tableBody.innerHTML = buildTableRows(list);
+            tableBody.innerHTML = buildTableRows(list, selectedId);
             attachRowHandlers(tableBody, list, onSelect);
             return;
           }
@@ -178,7 +186,7 @@ const openModal = (
             const results = await searchProjectsByName(user, term);
             document.getElementById("experiment-spinner-row")?.remove();
             const experiments = results.filter(isExperiment);
-            tableBody.innerHTML = buildTableRows(experiments);
+            tableBody.innerHTML = buildTableRows(experiments, selectedId);
             attachRowHandlers(tableBody, experiments, onSelect);
           } catch {
             document.getElementById("experiment-spinner-row")?.remove();
@@ -216,7 +224,7 @@ const openModal = (
             document.getElementById("experiment-spinner-row")?.remove();
             tableBody.insertAdjacentHTML(
               "beforeend",
-              buildTableRows(newProjects),
+              buildTableRows(newProjects, selectedId),
             );
             attachRowHandlers(tableBody, newProjects, onSelect);
             paginationHasMore = nextHasMore;
@@ -231,7 +239,7 @@ const openModal = (
           '<i class="bi bi-arrow-clockwise icon-spin"></i>';
 
         const freshList = await onRefresh();
-        tableBody.innerHTML = buildTableRows(freshList);
+        tableBody.innerHTML = buildTableRows(freshList, selectedId);
         attachRowHandlers(tableBody, freshList, onSelect);
 
         if (pagination) {
@@ -361,6 +369,7 @@ export const Dropdown = ({
           }
         : undefined,
       user,
+      selected?.id,
     );
   }, [resolvedList, fetchFreshList, selected, setSelectedProject, user]);
 

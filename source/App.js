@@ -28,6 +28,8 @@ const studioInUrl = () =>
 
 // import StatusBar from "./StatusBar";
 import StatusLines from "./StatusLines";
+import NavAccount from "./components/NavAccount";
+import { closeMenuListOnChoice } from "./components/menuList";
 
 import { allSteps } from "./components/steps";
 import {
@@ -226,6 +228,8 @@ export default class App extends Component {
 
   async componentDidMount() {
     this.initMediaMenu();
+    closeMenuListOnChoice();
+    this.syncDesign();
     this.initStudio();
     // The Test Font item in the navbar is plain HTML in the page shell, so it
     // reaches the tool through a global rather than through props.
@@ -565,6 +569,20 @@ export default class App extends Component {
 
   componentDidUpdate() {
     this.publishTestFontContext();
+    this.syncDesign();
+  }
+
+  // The Compiler's own screens are on the site's new design. Media, the
+  // Studio and the Glossary are not yet. The page shell marks the page as
+  // new-design (class "redesign" on <html>; docs/uni.css explains it), and
+  // this takes the mark off while one of those three is showing, so they
+  // look exactly as they did.
+  syncDesign() {
+    const { managingMedia, usingStudio, readingGlossary } = this.state;
+    document.documentElement.classList.toggle(
+      "redesign",
+      !(managingMedia || usingStudio || readingGlossary),
+    );
   }
 
   componentWillUnmount() {
@@ -1294,6 +1312,9 @@ export default class App extends Component {
 
     return (
       <>
+        {/* The signed-in account, drawn into the top menu of the page shell. */}
+        <NavAccount user={user} />
+
         {readingGlossary && (
           <Suspense fallback={<></>}>
             <Glossary

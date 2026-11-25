@@ -5,7 +5,7 @@ $table-step-padding: 0.4rem;
 .freshness-status {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   margin-top: 0.75rem;
   color: inherit;
 
@@ -18,98 +18,157 @@ $table-step-padding: 0.4rem;
   }
 }
 
+// The Table step: guide card, one row of three actions, then the resource
+// chips. `.file-zone` is flattened (display: contents) so its two dropzones
+// share a row with the "Select compiled study" button above it in the DOM.
+//
+// The three actions run left to right in order of time (Denis's rule):
+// "Select compiled study" is about the past, "Select file" the present, and
+// "Select file to download raw source" the future. "Select file" stays the
+// one green button, which is what draws the eye to it first.
 .step-table {
-  // padding-left: $table-step-padding !important;
-  // padding-right: $table-step-padding !important;
-
   .table {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.45fr);
+    gap: 0.5rem;
     margin: 0;
+
+    > * {
+      grid-column: 1 / -1;
+    }
+
+    // The holder of the "Select compiled study" button: first, the past.
+    > div:nth-child(2) {
+      grid-column: 1;
+      grid-row: 2;
+      margin: 0 !important;
+
+      > span {
+        height: 100%;
+        padding: 0;
+      }
+    }
+  }
+
+  .history-dropdown-wrapper {
+    width: 100% !important;
+  }
+
+  // The three main actions (Select compiled study, Select file, Select file
+  // to download raw source) are the only bold buttons.
+  button.history-dropdown {
+    height: 3rem;
+    min-width: 0;
+    padding: 0 1rem !important;
+    font-weight: var(--button-font-weight-strong) !important;
   }
 
   .dropzone-around-text {
-    // margin: 0 0 0 calc(1.2rem - $table-step-padding) !important;
     margin: 0;
-
-    &:not(:first-child) {
-      margin-top: 0.7rem;
-    }
+    padding: 0;
 
     &.has-error {
       color: $error;
     }
   }
 
+  // Resources already in the account: small outlined chips.
   .resource-button {
-    display: flex;
+    display: inline-flex;
     flex-wrap: nowrap;
     align-items: center;
-    justify-content: space-around;
-    gap: 0.5rem;
+    gap: 0.3rem;
     white-space: nowrap;
-    // width: 6rem;
     flex-grow: 0;
+    min-width: 0 !important;
+    padding: 0.45rem 0.65rem !important;
+    border: 1px solid var(--rule) !important;
+    border-radius: 999px;
+    background-color: var(--paper) !important;
 
-    padding: 1rem !important;
+    &:hover {
+      border-color: var(--ink-4) !important;
+      background-color: var(--paper-2) !important;
+    }
 
+    // A small icon for each kind of resource, in the one accent color (the
+    // brand green) rather than a different color per icon: these chips are
+    // the quietest level on the page and should not outshout the buttons.
+    // The gray-button rule forces dark text on everything inside, hence
+    // !important.
     .resource-button-icon {
-      font-size: 1.2rem;
+      font-size: 0.95rem;
+      line-height: 1;
+      color: var(--green) !important;
     }
   }
 
   .file-zone {
-    width: 100%;
-    display: flex;
-    gap: 0.7rem;
+    display: contents;
 
+    // "Select file": second, the present.
     .dropzone {
-      flex-grow: 2;
-      flex-basis: 0;
+      grid-column: 2;
+      grid-row: 2;
     }
 
+    // "Select file to download raw source": third, the future.
     .dropzone-export {
-      flex-grow: 1;
+      grid-column: 3;
+      grid-row: 2;
     }
 
     .resource-buttons {
+      grid-column: 1 / -1;
+      grid-row: 3;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 0.3rem;
-      // flex-grow: 1;
-      // width: min-content;
-      // flex-direction: column;
-      // margin-left: 0.3rem;
-
-      // .resource-button:not(:first-child) {
-      //   margin: 0.3rem 0 0 0;
-      // }
+      padding: 0.15rem 0 0;
     }
   }
 
-  .dropzone {
+  // "Select file" is the one green button on the screen. It is also a drop
+  // target, so it stays large.
+  .file-zone .dropzone {
     position: relative;
-    border-radius: $icon-radius !important;
-    outline-offset: -2px;
+    height: 3rem;
+    padding: 0 1rem;
+    border-radius: 12px !important;
+    outline-offset: 2px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    background: $green;
+    background-color: var(--green);
+    background-image: var(--button-shine);
+    box-shadow: var(--button-depth);
     transition:
-      color 0.1s ease-in-out,
-      outline 0.1s ease-in-out;
+      background-color 0.15s ease,
+      transform 0.1s ease;
 
-    .dropzone-sub-text {
-      font-size: 1.2rem;
-      font-weight: 500;
-      color: white;
-      padding: 0 0.7rem;
+    &:hover {
+      background-color: var(--green-deep);
     }
 
+    &:active {
+      transform: scale(0.99);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--green);
+    }
+
+    .dropzone-sub-text,
     .dropzone-sub-text * {
-      font-size: 1.2rem;
+      margin: 0;
+      padding: 0;
+      font-size: var(--button-font-size);
+      font-weight: var(--button-font-weight-strong);
+      line-height: 1.1;
       color: white;
     }
 
@@ -117,18 +176,43 @@ $table-step-padding: 0.4rem;
       cursor: wait !important;
     }
 
-    &:hover {
-      .dropzone-sub-text {
-        color: white;
-      }
-
-      .dropzone-sub-text * {
-        color: white;
-      }
+    // While a file is being dragged over the page (the shell page sets
+    // .file-dragging on <html>), the two buttons that accept a dropped
+    // file show a dashed outline, so it is plain where to drop it.
+    .file-dragging & {
+      outline: 2px dashed var(--green-deep);
+      outline-offset: 4px;
     }
 
+    .file-dragging &.dropzone-export {
+      outline-color: var(--secondary-deep);
+    }
+
+    // Second level of the button hierarchy: neutral gray, white label.
     &.dropzone-export {
-      background: #999;
+      background-color: var(--secondary);
+
+      &:hover {
+        background-color: var(--secondary-deep);
+      }
+
+      &:focus-visible {
+        outline-color: var(--secondary);
+      }
+    }
+  }
+
+  @media screen and (max-width: 760px) {
+    .table {
+      grid-template-columns: minmax(0, 1fr);
+
+      > div:nth-child(2),
+      .file-zone .dropzone,
+      .file-zone .dropzone-export,
+      .file-zone .resource-buttons {
+        grid-column: 1;
+        grid-row: auto;
+      }
     }
   }
 }

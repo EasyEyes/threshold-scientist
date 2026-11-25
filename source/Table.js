@@ -3,7 +3,7 @@ import Dropzone from "react-dropzone";
 import Swal from "sweetalert2";
 
 import { handleDrop } from "./components/dropzone";
-import ResourceButton from "./ResourceButton";
+import ResourceButtons from "./ResourceButtons";
 import { preprocessExperimentFile } from "../threshold/preprocess/main";
 import { loadGlossaryRows } from "../threshold/parameters/glossaryLink";
 import AlertCard from "./components/AlertCard";
@@ -960,35 +960,12 @@ export default class Table extends Component {
   }
 
   render() {
-    const resourceButtons = [];
-    const soundTypes = [
-      "folders",
-      "impulseResponses",
-      "frequencyResponses",
-      "targetSoundLists",
-    ];
-    for (const fileType of resourcesFileTypes) {
-      if (!soundTypes.includes(fileType)) {
-        resourceButtons.push(
-          <ResourceButton
-            key={`resource-button-${fileType}`}
-            name={fileType}
-            listing={resourceListingFor(this.props.resourceCatalog, fileType)}
-            onRetry={this.props.functions.handleRetryResources}
-          />,
-        );
-      }
-    }
-
-    resourceButtons.push(
-      <ResourceButton
-        key="resource-button-sound"
-        name="sound"
-        listings={soundTypes.map((type) =>
-          resourceListingFor(this.props.resourceCatalog, type),
-        )}
+    const resourceButtons = (
+      <ResourceButtons
+        resourceCatalog={this.props.resourceCatalog}
         onRetry={this.props.functions.handleRetryResources}
-      />,
+        user={this.props.user}
+      />
     );
 
     return (

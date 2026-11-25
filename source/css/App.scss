@@ -44,6 +44,15 @@
   margin-top: 10px;
   line-height: normal;
 
+  // This footnote also shows under Media and the Studio, which are not on
+  // the new design yet. Only the Compiler's own screens (class "redesign"
+  // on <html>) get the new look: a divider above, and the new gray.
+  :where(html.redesign) & {
+    margin-top: 0.5rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--rule);
+  }
+
   .info-paragraph {
     display: flex;
     align-items: center;
@@ -63,6 +72,10 @@
     color: #999;
     font-size: 11px;
     line-height: 150%;
+  }
+
+  :where(html.redesign) & .info-paragraph div {
+    color: var(--ink-3);
   }
 
   .compiler-update-date {

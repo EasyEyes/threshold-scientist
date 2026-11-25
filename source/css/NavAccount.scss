@@ -1,0 +1,90 @@
+// The Pavlovia account icon at the far right of the top menu, and the small
+// panel it opens. The colors and shapes are the site's design tokens, set in
+// docs/uni.css with the rest of the top menu.
+
+.nav-account {
+  display: flex;
+  align-items: center;
+  flex: none;
+  margin-left: auto;
+  padding-left: 0.9rem;
+
+  // Nobody signed in: the slot takes no room.
+  &:empty {
+    display: none;
+  }
+}
+
+// Narrow screens, where the menu is folded away behind a button: the icon
+// sits just before that button, at the right end of the bar.
+@media screen and (max-width: 960px) {
+  .nav-account {
+    order: 1;
+    padding-left: 0;
+    margin-right: 0.6rem;
+  }
+}
+
+.nav-account-button {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  // The same diagonal fill as the items of the menu; docs/uni.css explains
+  // how it works.
+  background-color: transparent;
+  background-image: linear-gradient(
+    45deg,
+    var(--menu-highlight) 50%,
+    transparent 50%
+  );
+  background-repeat: no-repeat;
+  background-size: 210% 210%;
+  background-position: 100% 0%;
+  transition:
+    color var(--menu-fill-time) ease,
+    background-position var(--menu-fill-time) ease;
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:hover,
+  &.show {
+    color: var(--menu-highlight-ink);
+    background-position: 0% 100%;
+  }
+
+  .bi {
+    font-size: 1.3rem;
+    line-height: 1;
+  }
+}
+
+// The panel is not a list of links, so a click inside it should not look
+// like it does something.
+.nav-account-panel {
+  padding: 0.75rem 1rem;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.nav-account-title {
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+
+.nav-account-name {
+  display: flex;
+  align-items: center;
+  margin-top: 0.25rem;
+  color: var(--ink);
+}
+
+.nav-account-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+}

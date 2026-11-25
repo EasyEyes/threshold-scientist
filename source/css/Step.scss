@@ -3,7 +3,7 @@
 .step {
   p {
     margin: 0;
-    font-size: $font-reg;
+    font-size: 1.05rem;
     line-height: 150%;
   }
 
@@ -18,7 +18,7 @@
     }
 
     &.success {
-      color: $green;
+      color: var(--accent-ink);
     }
 
     &.compile-count {
@@ -54,23 +54,41 @@
       margin-left: 0px;
     }
   }
+
+  // Buttons. One filled green button per screen for the main action;
+  // everything else is a quiet gray fill with dark text. Label size and bold
+  // weight come from the master button tokens in uni.css.
   button {
-    border-radius: $icon-radius;
+    border-radius: 10px;
+    background-image: var(--button-shine);
+    box-shadow: var(--button-depth);
     color: white;
-    font-size: $font-reg;
-    font-weight: 600;
+    font-size: var(--button-font-size);
+    font-weight: var(--button-font-weight);
     text-align: center;
     line-height: 100%;
     cursor: pointer;
-    // transition: all 0.1s ease-in-out;
     outline: none !important;
     border: none !important;
     padding: 0.7rem 1.1rem;
+    transition:
+      background-color 0.15s ease,
+      transform 0.1s ease;
 
+    &:focus-visible {
+      outline: 2px solid var(--green) !important;
+      outline-offset: 2px;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    // Smaller buttons keep a smaller size (they show hierarchy) but are bold
+    // like every other button.
     &.button-small {
-      font-weight: 400;
       font-size: $font-small;
-      padding: 0.7rem 1rem;
+      padding: 0.6rem 0.95rem;
       min-width: 7rem;
       @media screen and (max-width: 560px) {
         min-width: auto;
@@ -98,11 +116,10 @@
     }
 
     &.button-large-font {
-      font-weight: 500;
       font-size: 1.2rem;
       padding: 7px 1rem;
       min-width: 7rem;
-      height: 33px;
+      height: 36px;
       @media screen and (max-width: 560px) {
         height: unset;
         min-width: auto;
@@ -110,45 +127,43 @@
     }
 
     &.button-black {
-      background: #333;
+      background-color: var(--ink);
       &:hover {
-        background: #333;
-      }
-      &:active {
-        background: #000;
+        background-color: var(--ink-2);
       }
     }
 
+    // Several callers set white text inline, so the dark text is forced.
     &.button-grey {
-      background: #999;
+      background-color: var(--fill);
+      color: var(--ink) !important;
+      text-shadow: none !important;
       &:hover {
-        background: #aaa;
-      }
-      &:active {
-        background: #666;
+        background-color: var(--fill-hover);
       }
       * {
-        color: white !important;
+        color: var(--ink) !important;
       }
     }
 
     &.button-green {
-      background: $green;
+      background-color: var(--green);
       &:hover {
-        background: $dark-green;
-      }
-      &:active {
-        background: $green;
+        background-color: var(--green-deep);
       }
       &:disabled {
-        background: $light-green;
+        opacity: 0.55;
         cursor: wait;
       }
     }
 
     &.button-disabled {
       pointer-events: none;
-      background: #bbb;
+      background-color: var(--paper-2);
+      color: var(--ink-4) !important;
+      * {
+        color: var(--ink-4) !important;
+      }
     }
 
     &.button-wait {
@@ -157,8 +172,26 @@
   }
 }
 
+// A step fades up when it appears, in place of the head shake.
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.step.animate__animated {
+  animation-name: step-in;
+  animation-duration: 0.35s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
 .step-completed {
-  background: $step-background-complete;
+  background: var(--paper-2);
 
   // * {
   //   pointer-events: none;
@@ -171,7 +204,7 @@
   top: 0;
   left: 0;
   border-radius: 999px;
-  background: $green;
+  background: var(--green);
   padding: 0.35rem 0.7rem 0.45rem;
   line-height: 100% !important;
   font-size: $font-small !important;
@@ -196,30 +229,43 @@
   margin: 0 !important;
   padding: 0 !important;
 }
+// "Select compiled study". The Table step passes a gray background and its
+// size inline, hence !important.
 button.history-dropdown {
   display: inline-block;
   width: 100%;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   min-width: 297px;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   vertical-align: middle;
   pointer-events: auto !important;
   -moz-appearance: none;
   -webkit-appearance: none;
-  color: rgb(255, 255, 255) !important;
-  font-weight: 400;
-  font-size: $font-reg;
+  color: #fff !important;
+  font-weight: var(--button-font-weight) !important;
+  font-size: var(--button-font-size) !important;
   line-height: 100%;
   border: none;
   cursor: pointer;
   text-align: center;
-  background-color: #999;
+  // Second level of the button hierarchy: neutral gray, white label.
+  background-color: var(--secondary) !important;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--secondary-deep) !important;
+  }
+
+  i {
+    color: #fff !important;
+  }
 }
 
 @media screen and (max-width: 560px) {
   button.history-dropdown {
-    /* you can still enforce a minimum on small screens if you want */
-    min-width: 297px;
+    min-width: 0;
   }
 }
 
@@ -228,6 +274,8 @@ button.history-dropdown {
   color: #666;
 }
 
+// The compile instructions: the same green banner as before (light green
+// behind green text, bold headings, bullets, one column).
 .green-status-banner {
   line-height: 1.2;
   background-color: $light-light-green;
@@ -239,7 +287,7 @@ button.history-dropdown {
   font-size: 1.05rem;
   border-radius: $step-radius;
 
-  // uni.css sets `* { color: #333 }`, which beats inheritance from the banner.
+  // uni.css sets a color on `*`, which beats inheritance from the banner.
   * {
     color: inherit;
   }

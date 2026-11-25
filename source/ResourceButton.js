@@ -1,8 +1,41 @@
 import React, { Component } from "react";
-import Swal from "sweetalert2";
+import { openResourceDialog } from "./components/ResourceDialog";
+import { makeResourceLoader } from "./components/resourcePreviewLoader";
 
+const matchIcon = (name) => {
+  switch (name) {
+    case "fonts":
+      return "bi bi-fonts";
+    case "forms":
+      return "bi bi-file-pdf";
+    case "texts":
+      return "bi bi-blockquote-left";
+    case "sound":
+      return "bi bi-soundwave";
+    case "folders":
+      return "bi bi-file-zip";
+    case "code":
+      return "bi bi-file-code";
+    case "images":
+      return "bi bi-image";
+    case "phrases":
+      return "bi bi-translate";
+    case "impulseResponses":
+      return "bi bi-sound-wave";
+    case "frequencyResponses":
+      return "bi bi-graph-up";
+    default:
+      return "bi bi-question-circle";
+  }
+};
+
+// A folder is a zip file of sounds or of images. Folders have no button of
+// their own and the word is not in any button's name: a scientist should not
+// have to look in a different place for one file and for a folder of files
+// (Denis). A folder of images is listed under Images and a folder of sounds
+// under Sound; ResourceButtons.js decides which folders each button is given.
 const processNameForSinglePlural = (name, length) => {
-  if (name === "sound") return "folders and sound files";
+  if (name === "sound") return length <= 1 ? "sound file" : "sound files";
   return length <= 1 ? name.replace(/s$/, "") : name;
 };
 
@@ -10,26 +43,32 @@ const namesOf = (listing) => (listing.kind === "ready" ? listing.names : []);
 
 export default class ResourceButton extends Component {
   render() {
-    const { name, onRetry } = this.props;
+    const { name, onRetry, folderListing } = this.props;
+    // Sound: folders, impulse responses, frequency responses, target sound
+    // lists. Images: the images, then the folders. Anything else: one list.
     const listings =
-      name === "sound" ? this.props.listings : [this.props.listing];
+      name === "sound"
+        ? this.props.listings
+        : folderListing
+        ? [this.props.listing, folderListing]
+        : [this.props.listing];
+    const lists = listings.map(namesOf);
     const [
       resourceList,
       secondaryResourceList,
       tertiaryResourceList,
       targetSoundListList,
-    ] = listings.map(namesOf);
-    const isLoading = listings.some(
-      (listing) => listing.kind === "idle" || listing.kind === "loading",
-    );
+    ] = lists;
+    // `counting`: the lists are here, but the number is not final yet (the
+    // folders are still being sorted into Images and Sound), so the spinner
+    // stays in its place. The button can be clicked meanwhile.
+    const isLoading =
+      this.props.counting ||
+      listings.some(
+        (listing) => listing.kind === "idle" || listing.kind === "loading",
+      );
     const isFailed = listings.some((listing) => listing.kind === "failed");
-    const totalItems =
-      name === "sound"
-        ? resourceList.length +
-          secondaryResourceList.length +
-          tertiaryResourceList.length +
-          targetSoundListList.length
-        : resourceList.length;
+    const totalItems = lists.reduce((sum, list) => sum + list.length, 0);
 
     return (
       <button
@@ -40,84 +79,77 @@ export default class ResourceButton extends Component {
             onRetry?.();
             return;
           }
+          // Fonts, forms, images and texts open with a preview beside the
+          // list. Code (its files are too large), phrases and sound open as
+          // a plain list. See components/ResourceDialog.js.
+          const canPreview = ["fonts", "forms", "images", "texts"].includes(
+            name,
+          );
+          const loadFile =
+            canPreview && this.props.user
+              ? makeResourceLoader(this.props.user)
+              : undefined;
           if (name === "sound") {
-            const foldersHtml = resourceList.length
-              ? "<h4>Folders</h4><ul>" +
-                resourceList
-                  .map((resource) => {
-                    return `<li key=${resource}>${resource}</li>`;
-                  })
-                  .join("") +
-                "</ul>"
-              : "<h4>Folders</h4><p>No folders found</p>";
-
-            const impulseResponsesHtml = secondaryResourceList.length
-              ? "<br><h4>Impulse Responses</h4><ul>" +
-                secondaryResourceList
-                  .map((resource) => {
-                    return `<li key=${resource}>${resource}</li>`;
-                  })
-                  .join("") +
-                "</ul>"
-              : "<br><h4>Impulse Responses</h4><p></p>";
-
-            const frequencyResponsesHtml = tertiaryResourceList.length
-              ? "<br><h4>Frequency Responses</h4><ul>" +
-                tertiaryResourceList
-                  .map((resource) => {
-                    return `<li key=${resource}>${resource}</li>`;
-                  })
-                  .join("") +
-                "</ul>"
-              : "<br><h4>Frequency Responses</h4><p></p>";
-
-            const targetSoundListsHtml = targetSoundListList.length
-              ? "<br><h4>targetSoundList</h4><ul>" +
-                targetSoundListList
-                  .map((resource) => {
-                    return `<li key=${resource}>${resource}</li>`;
-                  })
-                  .join("") +
-                "</ul>"
-              : "<br><h4>targetSoundList</h4><p></p>";
-
-            Swal.fire({
-              icon: undefined,
-              title: "Folders and Sound Files",
-              html:
-                foldersHtml +
-                impulseResponsesHtml +
-                frequencyResponsesHtml +
-                targetSoundListsHtml,
-              confirmButtonColor: "#019267",
-              customClass: {
-                htmlContainer: "popup-text-container smaller-text",
-              },
+            // Four lists in one dialog. Their contents are not previewed.
+            // The first list is the folders; as before, it alone says so
+            // when it is empty, and the other three are simply empty.
+            openResourceDialog({
+              title: "Sound Files",
+              emptyText: "No sounds found",
+              groups: [
+                {
+                  heading: "Sounds",
+                  folder: null,
+                  files: resourceList,
+                  emptyText: "No sounds found",
+                },
+                {
+                  heading: "Impulse Responses",
+                  folder: null,
+                  files: secondaryResourceList,
+                },
+                {
+                  heading: "Frequency Responses",
+                  folder: null,
+                  files: tertiaryResourceList,
+                },
+                {
+                  heading: "targetSoundList",
+                  folder: null,
+                  files: targetSoundListList,
+                },
+              ],
             });
           } else {
-            Swal.fire({
-              icon: undefined,
+            // Images are followed, in the same list, by the folders.
+            const groups = [{ folder: name, files: resourceList }];
+            if (folderListing)
+              groups.push({ folder: "folders", files: secondaryResourceList });
+            openResourceDialog({
               title: name.charAt(0).toUpperCase() + name.slice(1),
-              html: resourceList.length
-                ? "<ul>" +
-                  resourceList
-                    .map((resource) => {
-                      return `<li key=${resource}>${resource}</li>`;
-                    })
-                    .join("") +
-                  "</ul>"
-                : `No ${name} found :(`,
-              confirmButtonColor: "#019267",
-              customClass: {
-                htmlContainer: "popup-text-container smaller-text",
-              },
+              emptyText: `No ${name} found :(`,
+              groups,
+              loadFile,
             });
           }
         }}
       >
-        <span>
+        <i
+          className={`resource-button-icon ${matchIcon(name)}`}
+          aria-hidden="true"
+        ></i>
+        {/* While the list is on its way the button already says what it is
+            ("fonts"); only the number is missing, and a small spinning ring
+            holds its place. */}
+        <span aria-busy={isLoading ? "true" : undefined}>
           {isLoading ? (
-            <i className="bi bi-arrow-repeat icon-spin"></i>
+            <>
+              <span
+                className="resource-count-spinner"
+                aria-hidden="true"
+              ></span>{" "}
+              {processNameForSinglePlural(name, 2)}
+            </>
           ) : isFailed ? (
             `Retry ${name}`
           ) : (

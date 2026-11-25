@@ -1,23 +1,37 @@
 @import "root.scss";
 
+// Account and study facts, as a plain list: label, value, trailing action.
+// There is no box around the list and no line between its rows. A rounded
+// outline makes a row look like a button, and these rows are not buttons;
+// the alignment of the labels is enough to hold them together.
 .status-lines {
   list-style: none;
+  margin: 0 0 0.5rem !important;
   padding: 0;
   line-height: normal;
 
+  // Nothing to show before sign-in.
+  &:not(:has(.status-line-activated)) {
+    display: none;
+  }
+
   .status-line {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: flex-start;
-    gap: 0.3rem;
+    gap: 0.4rem;
+    min-height: 2rem;
+    padding: 0.2rem 0;
+    font-size: 1rem;
 
-    &.pavlovia-account-status {
-      margin-bottom: 0.3rem;
-    }
-
+    // The label is as wide as its words, so the value follows it directly
+    // ("Pavlovia account: Name"), with no column of empty space between.
     .line-title {
       display: flex;
+      flex: 0 0 auto;
       white-space: nowrap;
+      color: var(--ink-3);
+
       .line-title-icon {
         height: 2rem;
       }
@@ -25,7 +39,9 @@
 
     .line-content {
       display: flex;
+      align-items: center;
       justify-content: space-between;
+      gap: 0.75rem;
       flex: 1;
       overflow: hidden;
 
@@ -42,37 +58,28 @@
         }
       }
 
-      .prolific-account-button {
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-        height: 20px;
-        @media screen and (max-width: 560px) {
-          height: unset;
-        }
-      }
-
+      .prolific-account-button,
       .signed-out-button {
         display: flex;
         align-items: center;
         gap: 0.3rem;
-        margin-left: 0.5rem;
-        height: 20px;
-        @media screen and (max-width: 560px) {
-          height: unset;
-        }
       }
 
+      .signed-out-button {
+        margin-left: 0.5rem;
+      }
+
+      // These sit in a line of text, so they stay small.
       .button-small {
         white-space: nowrap;
-        font-size: 0.7rem;
-        padding: 4px;
-        color: #fff;
-        height: 20px;
-        padding-left: 10px;
-        padding-right: 10px;
+        min-width: 0;
+        height: 1.75rem;
+        padding: 0 0.8rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
         @media screen and (max-width: 560px) {
           height: unset;
+          padding: 0.4rem 0.8rem;
           white-space: unset;
         }
       }
@@ -95,14 +102,29 @@
         pointer-events: none;
       }
     }
+
+    @media screen and (max-width: 560px) {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.15rem;
+      padding: 0.6rem 0.8rem;
+
+      .line-title {
+        flex: none;
+        font-size: 0.8rem;
+      }
+    }
   }
 
   .status-line-activated {
     * {
-      color: #333;
+      color: var(--ink);
+    }
+    .line-title {
+      color: var(--ink-3);
     }
     .icon-i {
-      color: #666;
+      color: var(--ink-3);
       cursor: pointer;
     }
   }
