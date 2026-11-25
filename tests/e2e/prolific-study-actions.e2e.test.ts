@@ -67,6 +67,7 @@ test("newly compiled study shows stable, preparing, and ready states", async ({
   await expect(actionArea(page)).toHaveScreenshot("ready.png");
   expect(draftPayload).toMatchObject({
     name: "Newly compiled study",
+    project: "workspace-e2e",
     total_available_places: 20,
   });
   const repository = await repositoryState(page, "newlyCompiled");
@@ -93,30 +94,35 @@ test("reopening a study with an ID opens it without creating a draft", async ({
   expect((await repositoryState(page, "existing")).commits).toHaveLength(0);
 });
 
-for (const hasProjectDetails of [true, false]) {
-  test(`project access error with ${
+const validProjectId = "62fce6fff0a78eb4f3ebc09c";
+const projectAccessCases = [
+  { projectId: "workspace-e2e", hasProjectDetails: false },
+  { projectId: validProjectId, hasProjectDetails: false },
+  { projectId: validProjectId, hasProjectDetails: true },
+];
+
+for (const { projectId, hasProjectDetails } of projectAccessCases) {
+  test(`project access error for ${projectId} with ${
     hasProjectDetails ? "visible" : "hidden"
   } metadata`, async ({ page }) => {
-    const projectId = "62fce6fff0a78eb4f3ebc09c";
     await page.route("**/.netlify/functions/prolific/users/me/", (route) =>
       route.fulfill({ json: { email: "researcher@example.test" } }),
     );
-    await page.route(
-      `**/.netlify/functions/prolific/projects/${projectId}/`,
-      (route) =>
-        route.fulfill({
-          json: hasProjectDetails
-            ? { title: "Vision studies", ownerEmail: "owner@example.test" }
-            : {},
-        }),
-    );
-    let draftRequests = 0;
+    const projectLookups: string[] = [];
+    await page.route("**/.netlify/functions/prolific/projects/*/", (route) => {
+      projectLookups.push(new URL(route.request().url()).pathname);
+      return route.fulfill({
+        json: hasProjectDetails
+          ? { title: "Vision studies", ownerEmail: "owner@example.test" }
+          : {},
+      });
+    });
+    const draftProjects: string[] = [];
     await page.route("**/.netlify/functions/prolific/studies/", (route) => {
-      draftRequests += 1;
-      expect(route.request().postDataJSON().project).toBe(projectId);
+      draftProjects.push(route.request().postDataJSON().project);
       return route.fulfill({
         json:
-          draftRequests === 1
+          draftProjects.length === 1
             ? {
                 error: {
                   status: 404,
@@ -128,6 +134,10 @@ for (const hasProjectDetails of [true, false]) {
       });
     });
 
+    if (projectId === validProjectId) {
+      const query = new URLSearchParams({ prolificProjectId: projectId });
+      await page.goto(`/compiler/?${query}`);
+    }
     const create = page.getByRole("button", {
       name: "Create Prolific study to run online",
     });
@@ -138,6 +148,10 @@ for (const hasProjectDetails of [true, false]) {
     await expect(dialog).toHaveAccessibleName(
       "Couldn’t create the Prolific study",
     );
+    expect(draftProjects).toEqual([projectId]);
+    expect(projectLookups).toEqual([
+      `/.netlify/functions/prolific/projects/${projectId}/`,
+    ]);
     await expect(dialog).toContainText(projectId);
     await expect(dialog).toContainText("_prolific1ProjectID");
     await expect(dialog).toContainText("researcher@example.test");
@@ -156,7 +170,7 @@ for (const hasProjectDetails of [true, false]) {
     const retryPopup = page.waitForEvent("popup");
     await create.click();
     await expect(await retryPopup).toHaveURL(/retried-study$/);
-    expect(draftRequests).toBe(2);
+    expect(draftProjects).toEqual([projectId, projectId]);
     expect(
       (await repositoryState(page, "newlyCompiled")).files[
         "ProlificStudyId.txt"
