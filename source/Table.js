@@ -1010,8 +1010,8 @@ export default class Table extends Component {
               files in your Pavlovia account for reuse.
             </li>
             <li>
-              Click <strong>Select file</strong> and choose a spreadsheet to
-              compile.
+              Click <strong>Select file</strong> again and choose a spreadsheet
+              to compile.
             </li>
           </ol>
           <h3>Compile a source.zip archive</h3>
