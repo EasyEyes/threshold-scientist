@@ -60,8 +60,9 @@ export const getProlificAccount = async (token, signal) => {
 };
 
 export const getProlificProject = async (token, projectId, signal) => {
+  const query = new URLSearchParams({ projectId });
   const response = await prolificRequest(
-    `/.netlify/functions/prolific/projects/${encodeURIComponent(projectId)}/`,
+    `/.netlify/functions/prolific-project-details?${query}`,
     { headers: { authorization: `Token ${token}` }, signal },
   );
   if (response.ok) return response.json();
