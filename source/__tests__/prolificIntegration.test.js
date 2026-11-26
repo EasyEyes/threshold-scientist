@@ -1,6 +1,7 @@
 import {
   prolificCreateDraft,
   getProlificAccount,
+  getProlificProject,
   getProlificStudySubmissions,
   downloadDemographicData,
 } from "../components/prolificIntegration";
@@ -17,6 +18,35 @@ jest.mock("../../threshold/parameters/glossaryRegistry", () => ({
 
 // Mock global fetch
 global.fetch = jest.fn();
+
+it("retries a rate-limited Prolific project lookup", async () => {
+  jest.useFakeTimers();
+  const project = { title: "Vision studies", ownerEmail: "owner@example.test" };
+  global.fetch
+    .mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      headers: new Headers({ "Retry-After": "1" }),
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => project,
+    });
+
+  try {
+    const lookup = getProlificProject(
+      "test-prolific-token",
+      "62fce6fff0a78eb4f3ebc09c",
+    );
+    await jest.advanceTimersByTimeAsync(1000);
+    await expect(lookup).resolves.toEqual(project);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  } finally {
+    jest.useRealTimers();
+    global.fetch.mockReset();
+  }
+});
 
 describe("Prolific Integration - New Parameters", () => {
   let mockUser;
@@ -146,25 +176,28 @@ describe("Prolific Integration - New Parameters", () => {
       );
     });
 
-    it("explains the reported permission error without claiming the API identified its field", async () => {
-      mockUser.currentExperiment.prolificWorkspaceProjectId = "project-123";
-      respond(404, {
-        error: {
-          status: 404,
-          title:
+    it.each([404, 200])(
+      "keeps the selected project when the draft request returns HTTP %s with a Prolific 404",
+      async (status) => {
+        mockUser.currentExperiment.prolificWorkspaceProjectId = "project-123";
+        respond(status, {
+          error: {
+            status: 404,
+            title:
+              "The resource requested was not found or you do not have permissions.",
+            detail:
+              "The resource requested was not found or you do not have permissions.",
+            error_code: 140401,
+          },
+        });
+        await expect(createDraft()).rejects.toMatchObject({
+          projectId: "project-123",
+          message: expect.stringContaining(
             "The resource requested was not found or you do not have permissions.",
-          detail:
-            "The resource requested was not found or you do not have permissions.",
-          error_code: 140401,
-        },
-      });
-      await expect(createDraft()).rejects.toThrow(
-        "Check _prolific1ProjectID in your spreadsheet",
-      );
-      await expect(createDraft()).rejects.toThrow(
-        "The resource requested was not found or you do not have permissions.",
-      );
-    });
+          ),
+        });
+      },
+    );
 
     it("preserves other returned validation explanations", async () => {
       respond(400, rejected(400, { reward: ["Reward is too low."] }));

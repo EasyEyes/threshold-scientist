@@ -8,21 +8,21 @@ import {
 const actionArea = (page: Page) => page.getByTestId("running-actions");
 let unexpectedBrowserErrors: string[];
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ context, page }) => {
   unexpectedBrowserErrors = [];
   page.on("pageerror", (error) => unexpectedBrowserErrors.push(error.message));
   page.on("console", (message) => {
     if (message.type() === "error")
       unexpectedBrowserErrors.push(message.text());
   });
-  await page.route("https://app.prolific.com/**", (route) =>
+  await context.route("https://app.prolific.com/**", (route) =>
     route.fulfill({
       status: 200,
       contentType: "text/html",
       body: "Prolific fake",
     }),
   );
-  await page.goto("/compiler/");
+  await page.goto("/compiler/", { waitUntil: "domcontentloaded" });
 });
 
 test.afterEach(() => {
@@ -67,6 +67,7 @@ test("newly compiled study shows stable, preparing, and ready states", async ({
   await expect(actionArea(page)).toHaveScreenshot("ready.png");
   expect(draftPayload).toMatchObject({
     name: "Newly compiled study",
+    project: "workspace-e2e",
     total_available_places: 20,
   });
   const repository = await repositoryState(page, "newlyCompiled");
@@ -92,6 +93,96 @@ test("reopening a study with an ID opens it without creating a draft", async ({
   expect(posts).toBe(0);
   expect((await repositoryState(page, "existing")).commits).toHaveLength(0);
 });
+
+const validProjectId = "62fce6fff0a78eb4f3ebc09c";
+const projectAccessCases = [
+  { projectId: "workspace-e2e", hasProjectDetails: false },
+  { projectId: validProjectId, hasProjectDetails: false },
+  { projectId: validProjectId, hasProjectDetails: true },
+];
+
+for (const { projectId, hasProjectDetails } of projectAccessCases) {
+  test(`project access error for ${projectId} with ${
+    hasProjectDetails ? "visible" : "hidden"
+  } metadata`, async ({ page }) => {
+    await page.route("**/.netlify/functions/prolific/users/me/", (route) =>
+      route.fulfill({ json: { email: "researcher@example.test" } }),
+    );
+    const projectLookups: Array<string | null> = [];
+    await page.route(
+      (url) => url.pathname === "/.netlify/functions/prolific-project-details",
+      (route) => {
+        projectLookups.push(
+          new URL(route.request().url()).searchParams.get("projectId"),
+        );
+        return route.fulfill({
+          json: hasProjectDetails
+            ? { title: "Vision studies", ownerEmail: "owner@example.test" }
+            : {},
+        });
+      },
+    );
+    const draftProjects: string[] = [];
+    await page.route("**/.netlify/functions/prolific/studies/", (route) => {
+      draftProjects.push(route.request().postDataJSON().project);
+      return route.fulfill({
+        json:
+          draftProjects.length === 1
+            ? {
+                error: {
+                  status: 404,
+                  detail:
+                    "The resource requested was not found or you do not have permissions.",
+                },
+              }
+            : { id: "retried-study", status: "UNPUBLISHED" },
+      });
+    });
+
+    if (projectId === validProjectId) {
+      const query = new URLSearchParams({ prolificProjectId: projectId });
+      await page.goto(`/compiler/?${query}`, { waitUntil: "domcontentloaded" });
+    }
+    const create = page.getByRole("button", {
+      name: "Create Prolific study to run online",
+    });
+    const firstPopup = page.waitForEvent("popup");
+    await create.click();
+    const failedPopup = await firstPopup;
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toHaveAccessibleName(
+      "Couldn’t create the Prolific study",
+    );
+    expect(draftProjects).toEqual([projectId]);
+    expect(projectLookups).toEqual([projectId]);
+    await expect(dialog).toContainText(projectId);
+    await expect(dialog).toContainText("_prolific1ProjectID");
+    await expect(dialog).toContainText("researcher@example.test");
+    await expect(dialog).toContainText(
+      "to add researcher@example.test to the project",
+    );
+    await expect(dialog).toContainText(
+      hasProjectDetails ? "owner@example.test" : "the project owner",
+    );
+    if (hasProjectDetails) await expect(dialog).toContainText("Vision studies");
+    await expect.poll(() => failedPopup.isClosed()).toBe(true);
+    const repository = await repositoryState(page, "newlyCompiled");
+    expect(repository.files["ProlificStudyId.txt"]).toBeUndefined();
+
+    await dialog.getByRole("button", { name: "OK" }).click();
+    const retryPopup = page.waitForEvent("popup");
+    await create.click();
+    const popup = await retryPopup;
+    await expect(popup).toHaveURL(/retried-study$/);
+    await expect(popup.getByText("Prolific fake")).toBeVisible();
+    expect(draftProjects).toEqual([projectId, projectId]);
+    expect(
+      (await repositoryState(page, "newlyCompiled")).files[
+        "ProlificStudyId.txt"
+      ],
+    ).toBe("retried-study");
+  });
+}
 
 test("reopening without an ID uses the selected repository config", async ({
   page,

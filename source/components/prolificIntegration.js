@@ -21,6 +21,7 @@ import { captureError } from "../sentry";
 import { prolificStudyCreationError } from "./prolificErrors";
 import { getGlossary } from "../../threshold/parameters/glossaryRegistry";
 import { getProlificParticipantGroups } from "../../threshold/preprocess/prolificMetadata";
+import { prolificRequest } from "../../threshold/preprocess/prolificRequest";
 
 const prolificStudySubmissionStatus = {
   RESERVED: "RESERVED",
@@ -32,7 +33,7 @@ const prolificStudySubmissionStatus = {
   REJECTED: "REJECTED",
 };
 
-export const getProlificAccount = async (token) => {
+export const getProlificAccount = async (token, signal) => {
   const headers = new Headers();
   headers.append("authorization", `Token ${token}`);
 
@@ -40,6 +41,7 @@ export const getProlificAccount = async (token) => {
     method: "GET",
     headers: headers,
     redirect: "follow",
+    signal,
   };
 
   const response = await fetch(
@@ -49,11 +51,21 @@ export const getProlificAccount = async (token) => {
     .then((response) => {
       return response.json();
     })
-    .catch((error) =>
-      captureError(error, "Prolific Get Account", { endpoint: "users/me" }),
-    );
+    .catch((error) => {
+      if (!signal?.aborted)
+        captureError(error, "Prolific Get Account", { endpoint: "users/me" });
+    });
 
   if (response) return response;
+};
+
+export const getProlificProject = async (token, projectId, signal) => {
+  const query = new URLSearchParams({ projectId });
+  const response = await prolificRequest(
+    `/.netlify/functions/prolific-project-details?${query}`,
+    { headers: { authorization: `Token ${token}` }, signal },
+  );
+  if (response.ok) return response.json();
 };
 
 const fetchProlificParticipantGroups = async (token) => {

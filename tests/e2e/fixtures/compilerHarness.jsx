@@ -2,7 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import Running from "../../../source/Running";
 
-const studyConfig = (title, url) => ({
+const studyConfig = (title, url, projectId = "workspace-e2e") => ({
   titleOfStudy: title,
   descriptionOfStudy: `${title} description`,
   _online1InternalName: title,
@@ -12,8 +12,15 @@ const studyConfig = (title, url) => ({
   _online2Pay: 2,
   _online2PayPerHour: 8,
   _prolific2CompletionPath: "approveAndPay",
-  prolificWorkspaceProjectId: "workspace-e2e",
+  prolificWorkspaceProjectId: projectId,
 });
+
+const searchParams = new URLSearchParams(window.location.search);
+const newlyCompiledConfig = studyConfig(
+  "Newly compiled study",
+  "https://run.invalid/new",
+  searchParams.get("prolificProjectId") ?? undefined,
+);
 
 const studies = {
   newlyCompiled: {
@@ -21,11 +28,10 @@ const studies = {
     name: "Newly compiled study",
     runnable: true,
     previous: false,
-    config: studyConfig("Newly compiled study", "https://run.invalid/new"),
+    config: newlyCompiledConfig,
     files: {
-      ".easyeyes/prolific-study-config.json": JSON.stringify(
-        studyConfig("Newly compiled study", "https://run.invalid/new"),
-      ),
+      ".easyeyes/prolific-study-config.json":
+        JSON.stringify(newlyCompiledConfig),
     },
   },
   existing: {
@@ -140,8 +146,7 @@ function CompilerHarness() {
           }}
           functions={functions}
           compileWarnings={
-            study.id === "newlyCompiled" &&
-            new URLSearchParams(window.location.search).has("warnings")
+            study.id === "newlyCompiled" && searchParams.has("warnings")
               ? [
                   {
                     kind: "warning",
@@ -162,7 +167,7 @@ function CompilerHarness() {
 }
 
 const root = createRoot(document.getElementById("root"));
-if (new URLSearchParams(window.location.search).has("glossaryDiagnostics")) {
+if (searchParams.has("glossaryDiagnostics")) {
   // Keep Table's styles isolated from the existing Running fixtures.
   import("./glossaryDiagnostics.jsx").then(({ default: GlossaryDiagnostics }) =>
     root.render(<GlossaryDiagnostics />),
