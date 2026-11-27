@@ -18,7 +18,10 @@ import {
   VR_HEADSET_USAGE_PROLIFIC_MAPPING,
 } from "./prolificConstants";
 import { captureError } from "../sentry";
-import { prolificStudyCreationError } from "./prolificErrors";
+import {
+  isProjectAccessError,
+  prolificStudyCreationError,
+} from "./prolificErrors";
 import { getGlossary } from "../../threshold/parameters/glossaryRegistry";
 import { getProlificParticipantGroups } from "../../threshold/preprocess/prolificMetadata";
 
@@ -627,7 +630,20 @@ export const prolificCreateDraft = async (
     result?.status !== "UNPUBLISHED" ||
     !result?.id
   ) {
-    throw prolificStudyCreationError(result, response.status, payload.project);
+    // When the account cannot use the project, the message names the account.
+    const account = isProjectAccessError(
+      result,
+      response.status,
+      payload.project,
+    )
+      ? await getProlificAccount(token)
+      : null;
+    throw prolificStudyCreationError(
+      result,
+      response.status,
+      payload.project,
+      typeof account?.email === "string" ? account.email : undefined,
+    );
   }
 
   return result;

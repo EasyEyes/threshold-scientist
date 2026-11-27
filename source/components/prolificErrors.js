@@ -16,9 +16,36 @@ const alerts = (value, path = []) => {
   return [];
 };
 
-export const prolificStudyCreationError = (result, httpStatus, projectId) => {
+// Prolific's status for a response: the one inside its error, else the HTTP one.
+const errorStatus = (result, httpStatus) =>
+  (result?.error ?? result)?.status ?? httpStatus;
+
+// Prolific answers 404 both when the project does not exist and when the
+// account is not one of its members, so the message has to cover both.
+export const isProjectAccessError = (result, httpStatus, projectId) =>
+  Number(errorStatus(result, httpStatus)) === 404 && Boolean(projectId);
+
+// The line that gives the project id. The popup shows it in a box of its own.
+const projectIdLine = (projectId) => `_prolific1ProjectID: ${projectId}`;
+
+const projectAccessMessage = (projectId, accountEmail) =>
+  [
+    "Prolific couldn't create your study. Either your account isn't a member of the selected project, or the project ID is wrong.",
+    projectIdLine(projectId),
+    `Check the ID in your spreadsheet. If it is correct, ask the project owner to add your Prolific account${
+      accountEmail ? ` (${accountEmail})` : ""
+    } to the project. Once you have access, try creating the study again.`,
+  ].join("\n");
+
+// accountEmail is the email of the scientist's Prolific account, when known.
+export const prolificStudyCreationError = (
+  result,
+  httpStatus,
+  projectId,
+  accountEmail,
+) => {
   const error = result?.error ?? result;
-  const status = error?.status ?? httpStatus;
+  const status = errorStatus(result, httpStatus);
   const details = alerts(
     error?.detail ??
       error?.message ??
@@ -55,17 +82,18 @@ export const prolificStudyCreationError = (result, httpStatus, projectId) => {
   )
     parameters.push("_prolific1ProjectID");
 
+  if (
+    isProjectAccessError(result, httpStatus, projectId) &&
+    !parameters.includes("_prolific1ProjectID")
+  )
+    return Object.assign(
+      new Error(projectAccessMessage(projectId, accountEmail)),
+      { idLine: projectIdLine(projectId) },
+    );
+
   let message = parameters.length
     ? `Prolific rejected ${parameters.join(" and ")} in your spreadsheet.`
     : "Prolific could not create the study.";
-  if (
-    Number(status) === 404 &&
-    projectId &&
-    !parameters.includes("_prolific1ProjectID")
-  ) {
-    message +=
-      " Check _prolific1ProjectID in your spreadsheet: the specified project may not exist or your connected Prolific account may not have permission to access it.";
-  }
   if (explanation) {
     message += `\n\nProlific${
       status ? ` (HTTP ${status})` : ""

@@ -146,9 +146,8 @@ describe("Prolific Integration - New Parameters", () => {
       );
     });
 
-    it("explains the reported permission error without claiming the API identified its field", async () => {
-      mockUser.currentExperiment.prolificWorkspaceProjectId = "project-123";
-      respond(404, {
+    describe("when Prolific cannot find the project (HTTP 404)", () => {
+      const notFound = {
         error: {
           status: 404,
           title:
@@ -157,13 +156,44 @@ describe("Prolific Integration - New Parameters", () => {
             "The resource requested was not found or you do not have permissions.",
           error_code: 140401,
         },
+      };
+      // The studies POST fails; the account lookup that follows answers with
+      // the given body.
+      const respondNotFound = (accountBody) =>
+        global.fetch.mockImplementation(async (url) =>
+          url === "/.netlify/functions/prolific/users/me/"
+            ? { ok: true, status: 200, json: async () => accountBody }
+            : { ok: false, status: 404, json: async () => notFound },
+        );
+
+      beforeEach(() => {
+        mockUser.currentExperiment.prolificWorkspaceProjectId = "project-123";
       });
-      await expect(createDraft()).rejects.toThrow(
-        "Check _prolific1ProjectID in your spreadsheet",
-      );
-      await expect(createDraft()).rejects.toThrow(
-        "The resource requested was not found or you do not have permissions.",
-      );
+
+      it("names the project and the scientist's Prolific account", async () => {
+        respondNotFound({ id: "user-1", email: "scientist@example.com" });
+        await expect(createDraft()).rejects.toThrow(
+          [
+            "Prolific couldn't create your study. Either your account isn't a member of the selected project, or the project ID is wrong.",
+            "_prolific1ProjectID: project-123",
+            "Check the ID in your spreadsheet. If it is correct, ask the project owner to add your Prolific account (scientist@example.com) to the project. Once you have access, try creating the study again.",
+          ].join("\n"),
+        );
+      });
+
+      it("marks the project id line for the popup to set apart", async () => {
+        respondNotFound({ id: "user-1", email: "scientist@example.com" });
+        await expect(createDraft()).rejects.toMatchObject({
+          idLine: "_prolific1ProjectID: project-123",
+        });
+      });
+
+      it("leaves the account out when its email cannot be read", async () => {
+        respondNotFound(notFound);
+        await expect(createDraft()).rejects.toThrow(
+          "ask the project owner to add your Prolific account to the project.",
+        );
+      });
     });
 
     it("preserves other returned validation explanations", async () => {

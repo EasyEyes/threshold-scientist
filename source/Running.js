@@ -38,6 +38,22 @@ import { prolificStudyCreationError } from "./components/prolificErrors";
 import "./css/Running.scss";
 import { Dropdown } from "./components/Dropdown";
 
+// A message as page elements, one per line, with the line that gives an id
+// marked so that it shows in a box. The lines are placed as text, never as
+// HTML: parts of them come from the spreadsheet and from Prolific.
+const messageWithIdLine = (message, idLine) => {
+  const lines = document.createElement("div");
+  lines.className = "popup-lines";
+  for (const line of message.split("\n")) {
+    if (!line) continue;
+    const element = document.createElement("p");
+    element.textContent = line;
+    if (line === idLine) element.className = "popup-id-line";
+    lines.append(element);
+  }
+  return lines;
+};
+
 export default class Running extends Component {
   constructor(props) {
     super(props);
@@ -434,14 +450,21 @@ export default class Running extends Component {
         preparedProlificStudyId: createdStudyId || null,
       });
       captureError(err, "Prolific study creation");
+      const text = createdStudyId
+        ? `Prolific created study ${createdStudyId}, but EasyEyes could not finish preparing it. Check your Prolific project before retrying.\n\n${
+            err.message || String(err)
+          }`
+        : err.message || String(err);
       await Swal.fire({
         title: "Fatal error: Prolific study creation failed",
-        text: createdStudyId
-          ? `Prolific created study ${createdStudyId}, but EasyEyes could not finish preparing it. Check your Prolific project before retrying.\n\n${
-              err.message || String(err)
-            }`
-          : err.message || String(err),
+        // An explanation that gives an id on a line of its own shows that
+        // line in a box.
+        ...(err.idLine
+          ? { html: messageWithIdLine(text, err.idLine) }
+          : { text }),
         confirmButtonColor: "#666",
+        // The explanation has line breaks, which the popup shows as written.
+        customClass: { htmlContainer: "popup-text-lines" },
       });
     }
   };

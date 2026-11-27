@@ -76,6 +76,28 @@ table {
 
   .swal2-html-container {
     line-height: 150%;
+
+    // A message written on several lines keeps its line breaks.
+    &.popup-text-lines {
+      white-space: pre-line;
+    }
+
+    // A message built line by line (Running.js). The line that gives an id
+    // sits in a gray box, with a little room above and below it.
+    .popup-lines p {
+      margin: 0;
+    }
+
+    .popup-lines .popup-id-line {
+      margin: 0.75rem 0;
+      padding: 0.55rem 0.75rem;
+      border-radius: var(--radius, 6px);
+      background: var(--paper-2, #f6f5f1);
+      font-family: var(--mono, monospace);
+      font-size: 0.9rem;
+      color: var(--ink, #111);
+      overflow-wrap: anywhere;
+    }
   }
 
   .swal2-loader {

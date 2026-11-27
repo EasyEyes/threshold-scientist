@@ -54,6 +54,24 @@
   }
 }
 
+// The gray buttons of this screen (New, Go to Pavlovia, Download results
+// ...) are the darker gray with a white label, as "Select compiled study"
+// is. Elsewhere in the Compiler a gray button is the light fill with dark
+// text (Step.scss), which forces its label color, hence !important. A
+// button that is switched off keeps the look Step.scss gives it.
+.step .link-set button.button-grey:not(.button-disabled) {
+  background-color: var(--secondary);
+  color: #fff !important;
+
+  &:hover {
+    background-color: var(--secondary-deep);
+  }
+
+  * {
+    color: #fff !important;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 
 .smaller-text {

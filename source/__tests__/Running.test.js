@@ -422,6 +422,45 @@ describe("Running Prolific study creation", () => {
     expect(Swal.fire.mock.calls[0][0]).not.toHaveProperty("icon");
   });
 
+  it("shows the id line of a fatal error in a box, as text", async () => {
+    const idLine = "_prolific1ProjectID <b>project-123</b>";
+    const running = new Running({
+      user: {},
+      activeExperiment: { id: 42 },
+      projectName: "Study",
+      currentProlificConfig: {},
+      functions: { handleUpdateUser: jest.fn() },
+    });
+    running.setState = (update) => {
+      running.state = { ...running.state, ...update };
+    };
+    getProlificStudyId.mockResolvedValue(null);
+    generateAndUploadCompletionURL.mockResolvedValue({
+      code: "complete",
+      incompatibleCompletionCode: "incompatible",
+      abortedCompletionCode: "aborted",
+    });
+    prolificCreateDraft.mockRejectedValue(
+      Object.assign(new Error(`First line.\n${idLine}\nLast line.`), {
+        idLine,
+      }),
+    );
+    window.open = jest.fn(() => ({ close: jest.fn() }));
+
+    await running.createOrOpenProlificStudy();
+
+    const options = Swal.fire.mock.calls[0][0];
+    expect(options).not.toHaveProperty("text");
+    expect(
+      [...options.html.querySelectorAll("p")].map((line) => line.textContent),
+    ).toEqual(["First line.", idLine, "Last line."]);
+    expect(options.html.querySelector(".popup-id-line").textContent).toBe(
+      idLine,
+    );
+    // The id came from the spreadsheet, so it is never read as HTML.
+    expect(options.html.querySelector("b")).toBeNull();
+  });
+
   it.each(["draft", "Pavlovia completion codes", "missing settings"])(
     "shows an icon-free fatal error for %s failures",
     async (stage) => {
