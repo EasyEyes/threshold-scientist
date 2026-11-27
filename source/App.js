@@ -572,16 +572,16 @@ export default class App extends Component {
     this.syncDesign();
   }
 
-  // The Compiler's own screens are on the site's new design. Media, the
+  // The Compiler's own screens and Media are on the site's new design. The
   // Studio and the Glossary are not yet. The page shell marks the page as
   // new-design (class "redesign" on <html>; docs/uni.css explains it), and
-  // this takes the mark off while one of those three is showing, so they
-  // look exactly as they did.
+  // this takes the mark off while one of those two is showing, so they look
+  // exactly as they did.
   syncDesign() {
-    const { managingMedia, usingStudio, readingGlossary } = this.state;
+    const { usingStudio, readingGlossary } = this.state;
     document.documentElement.classList.toggle(
       "redesign",
-      !(managingMedia || usingStudio || readingGlossary),
+      !(usingStudio || readingGlossary),
     );
   }
 

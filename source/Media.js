@@ -264,13 +264,17 @@ export default class Media extends Component {
         </div>
 
         <div className="media-body">
-          <div className="green-status-banner">
+          <div className="media-description">
             To add a media file for use in an international phrase:
             <ul>
-              <li>Click UPLOAD MEDIA FILES to add your media files.</li>
               <li>
-                Then click SHOW MEDIA FILES, and click COPY LINK to paste the
-                link into the respective phrase.
+                Click <strong>Upload media files</strong> to add your media
+                files.
+              </li>
+              <li>
+                Then click <strong>Show media files</strong>, and click{" "}
+                <strong>Copy link</strong> to paste the link into the respective
+                phrase.
               </li>
             </ul>
             Media files are never replaced or deleted here, so a link that works
@@ -316,25 +320,28 @@ export default class Media extends Component {
             </div>
           )}
 
-          {showFiles &&
-            (files.length === 0 ? (
-              <p className="media-empty">
-                No media files yet. Anything you upload will be listed here with
-                its size, the date you added it, and its link.
-              </p>
-            ) : (
-              <table className="media-table">
-                <thead>
-                  <tr className="table-header">
-                    <th className="header-cell name">Name</th>
-                    <th className="header-cell size">Size</th>
-                    <th className="header-cell added">Added</th>
-                    <th className="header-cell link">Link</th>
-                  </tr>
-                </thead>
-                <tbody>{files.map((record) => this.renderRow(record))}</tbody>
-              </table>
-            ))}
+          {showFiles && (
+            <div className="media-files">
+              {files.length === 0 ? (
+                <p className="media-empty">
+                  No media files yet. Anything you upload will be listed here
+                  with its size, the date you added it, and its link.
+                </p>
+              ) : (
+                <table className="media-table">
+                  <thead>
+                    <tr className="table-header">
+                      <th className="header-cell name">Name</th>
+                      <th className="header-cell size">Size</th>
+                      <th className="header-cell added">Added</th>
+                      <th className="header-cell link">Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>{files.map((record) => this.renderRow(record))}</tbody>
+                </table>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
